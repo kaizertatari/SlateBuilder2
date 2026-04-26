@@ -97,11 +97,20 @@ Do NOT output anything outside the JSON. No markdown. No explanation. Raw JSON o
     const data = await response.json();
     if (data.error) return Response.json({ error: data.error.message }, { status: 500 });
 
-    const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const jsonMatch = textContent.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return Response.json({ error: 'No JSON found', raw: textContent }, { status: 500 });
+    let textContent = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    
+    textContent = textContent.replace(/```json\n?/gi, '').replace(/```\n?/gi, '').trim();
+    
+    let jsonMatch = textContent.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return Response.json({ error: 'No JSON found', raw: textContent }, { status: 500 });
+    }
 
-    return Response.json(JSON.parse(jsonMatch[0]));
+    try {
+      return Response.json(JSON.parse(jsonMatch[0]));
+    } catch (e) {
+      return Response.json({ error: 'Invalid JSON', raw: textContent }, { status: 500 });
+    }
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
