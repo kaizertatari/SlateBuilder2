@@ -35,7 +35,7 @@ Output a JSON object like this:
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: 0.1,
-            maxOutputTokens: 2048,
+            maxOutputTokens: 4096,
           },
         }),
       }
@@ -64,8 +64,16 @@ Output a JSON object like this:
     if (textContent.startsWith('{') && textContent.endsWith('}')) {
       jsonStr = textContent;
     } else {
-      const match = textContent.match(/\{[\s\S]*\}/);
-      if (match) jsonStr = match[0];
+      const match = textContent.match(/\{[\s\S]*\{[^}]*\}[^}]*\}/);
+      if (match) {
+        jsonStr = match[0];
+      } else {
+        const startBrace = textContent.indexOf('{');
+        const endBrace = textContent.lastIndexOf('}');
+        if (startBrace !== -1 && endBrace !== -1 && endBrace > startBrace) {
+          jsonStr = textContent.substring(startBrace, endBrace + 1);
+        }
+      }
     }
 
     if (!jsonStr) {
