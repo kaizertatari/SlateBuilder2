@@ -10,39 +10,13 @@ export async function POST(req) {
     }
 
     const googleKey = process.env.GOOGLE_API_KEY || process.env.VITE_GOOGLE_API_KEY;
-    const searchKey = process.env.WEBSEARCH_API_KEY || process.env.VITE_WEBSEARCH_API_KEY;
 
     if (!googleKey) {
       return Response.json({ error: 'Google API key not configured' }, { status: 500 });
     }
 
     const searchQuery = `${player} NBA ${propType} ${line} 2025 season stats last 5 games injury report`;
-    let searchContext = 'No external search performed.';
-    
-    if (searchKey) {
-      try {
-        const searchRes = await fetch('https://api.websearchapi.ai/v1/search', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': searchKey,
-          },
-          body: JSON.stringify({
-            query: searchQuery,
-            search_type: 'general',
-            max_results: 5,
-            include_answer: true,
-          }),
-        });
-
-        const searchData = await searchRes.json();
-        searchContext = searchData.answer 
-          ? `Web search results:\n${searchData.answer}\n\nSources: ${searchData.results?.map(r => r.url).join(', ')}`
-          : 'Web search performed but no results returned.';
-      } catch (e) {
-        searchContext = 'Search failed, using LLM knowledge only.';
-      }
-    }
+    const searchContext = 'No external search performed (search disabled for debugging).';
 
     const prompt = `You are operating as the NBA PrizePicks Model v3.3. Your job is to analyze a player prop bet using the framework below, then return a structured verdict.
 
