@@ -15,17 +15,16 @@ export async function POST(req) {
       return Response.json({ error: 'Google API key not configured' }, { status: 500 });
     }
 
-    const searchContext = 'No external search performed (search disabled for debugging).';
-
-    const prompt = `Analyze this NBA prop bet and respond with ONLY valid JSON. No explanation. No markdown. No thinking. Just raw JSON.
+    const prompt = `Analyze this NBA prop bet and respond with ONLY valid JSON. No explanation. No markdown. Just output the JSON object.
 
 Player: ${player}
 Prop: ${propType} at line ${line}
 
+Framework rules:
 ${framework}
 
-Output this exact JSON structure with your analysis:
-{"verdict":"OVER|UNDER|SKIP","tier":"S|A|B|SKIP","confidence":0-100,"justification":"brief text","flags":["flag1"],"data_used":{"season_avg":0,"l5_avg":0,"home_away":"home|away","win_prob":0,"opponent":"team","game_context":"context"}}`;
+Output a JSON object like this:
+{"verdict":"OVER|UNDER|SKIP","tier":"S|A|B|SKIP","confidence":75,"justification":"text","flags":[],"data_used":{"season_avg":25.5,"l5_avg":27.0,"home_away":"home","win_prob":65,"opponent":"Team","game_context":"regular season"}}`;
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${googleKey}`,
@@ -35,9 +34,8 @@ Output this exact JSON structure with your analysis:
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
-            temperature: 0.2,
+            temperature: 0.1,
             maxOutputTokens: 2048,
-            responseMimeType: "application/json",
           },
         }),
       }
@@ -46,31 +44,47 @@ Output this exact JSON structure with your analysis:
     const data = await response.json();
     if (data.error) return Response.json({ error: data.error.message }, { status: 500 });
 
-    let textContent = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const rawResponse = JSON.stringify(data, null, 2);
     
-    textContent = textContent.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
-    textContent = textContent.replace(/<[^>]+>/g, '').replace(/THINKING:|REASONING:/gi, '');
-    
-    let jsonMatch = textContent.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      const lines = textContent.split('\n');
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed.startsWith('{')) {
-          jsonMatch = [trimmed];
-          break;
-        }
-      }
+    let textContent = '';
+    try {
+      textContent = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    } catch (e) {
+      return Response.json({ error: 'Failed to extract text', debug: rawResponse }, { status: 500 });
     }
+
+    if (!textContent) {
+      return Response.json({ error: 'Empty response from Gemini', debug: rawResponse }, { status: 500 });
+    }
+
+    textContent = textContent.trim();
     
-    if (!jsonMatch) {
-      return Response.json({ error: 'No JSON found', raw: textContent }, { status: 500 });
+    let jsonStr = null;
+    
+    if (textContent.startsWith('{') && textContent.endsWith('}')) {
+      jsonStr = textContent;
+    } else {
+      const match = textContent.match(/\{[\s\S]*\}/);
+      if (match) jsonStr = match[0];
+    }
+
+    if (!jsonStr) {
+      return Response.json({ 
+        error: 'No JSON found', 
+        raw: textContent.substring(0, 500),
+        length: textContent.length
+      }, { status: 500 });
     }
 
     try {
-      return Response.json(JSON.parse(jsonMatch[0]));
+      const result = JSON.parse(jsonStr);
+      return Response.json(result);
     } catch (e) {
-      return Response.json({ error: 'Invalid JSON', raw: textContent }, { status: 500 });
+      return Response.json({ 
+        error: 'JSON parse failed', 
+        raw: jsonStr,
+        parseError: e.message
+      }, { status: 500 });
     }
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
