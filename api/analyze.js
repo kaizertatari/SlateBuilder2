@@ -80,7 +80,7 @@ TASK: Using the framework rules above and the search data provided, analyze this
 Do NOT output anything outside the JSON. No markdown. No explanation. Raw JSON only.`;
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${googleKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${googleKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
