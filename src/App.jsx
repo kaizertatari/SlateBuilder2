@@ -24,87 +24,6 @@ const PROP_TYPES = [
   "3-Pointers Made OVER", "3-Pointers Made UNDER"
 ];
 
-const MODEL_FRAMEWORK = `You are operating as the NBA PrizePicks Model v3.3. Your job is to analyze a player prop bet using the framework below, then return a structured verdict.
-
-=== NBA PRIZEPICKS MODEL v3.3 FRAMEWORK ===
-
-TIERS: S (82-90%, playoff 85-90%), A (70-81%), B (62-69%), Skip (<62%)
-
-PLAYOFF MODE RULES (active when NBA postseason is ongoing):
-- Game 1: B-tier MAX both directions (hard cap)
-- Game 2: A-tier MAX both directions (hard cap)  
-- Game 3+: Standard playoff rules
-- S-tier playoff floor: 85% (vs 82% regular season)
-- Rule 5h: Named defensive assignment check required for all playoff scoring props
-
-HARD GATES (cannot be bypassed):
-- Post-injury return gate: first 5 games back = A-tier max
-- Assist win probability gate: team win prob must be 40-75%
-- Multi-star compression (Rule 4c): 3rd/4th scorer on team with 3+ players at 15+ PPG, favored 10+ = A-tier max
-- UNDER mechanism gate: no named mechanism = Skip, not UNDER
-- Rule 4b active (sole alpha boost): UNDER invalid on that player
-- Game 1 hard cap: B-tier max ALL props both directions (playoff only)
-- Game 2 hard cap: A-tier max ALL props both directions (playoff only)
-
-ROAD DEDUCTION (Rule 5a): Subtract 1.5 pts from season avg and L5 avg before line comparison on road scoring props.
-
-OVER BUFFER RULES:
-- Line must be 1.5+ pts BELOW road-adjusted baseline to qualify
-- Poor FT shooters (<70%): extra 2pt buffer
-
-WIN PROBABILITY BLOWOUT SUPPRESSOR (Rule 5f):
-- 85-90% win prob: A-tier max OVER
-- >90% win prob: A-tier max OVER
-- Playoff series tied: suppressor disabled for leading team stars
-- Team leads 3-0 or 3-1: suppressor FULLY ENGAGED
-
-UNDER MECHANISMS (must identify one to issue UNDER):
-1. Minutes Compression: confirmed restriction/rest
-2. Role Compression: teammate availability documented to compress opportunities
-3. Matchup Ceiling: opponent top-5 in specific defensive metric (standalone = B-tier max)
-
-UNDER CONFIDENCE TABLE:
-- 3 mechanisms = S possible
-- 2 mechanisms = A max
-- Mechanism 1 alone = A max
-- Mechanism 2 alone = B max
-- Mechanism 3 alone = B max
-- No mechanism = Skip
-
-L5 vs Season Average: When L5 and season avg conflict by 3+ pts, L5 governs as baseline.
-
-SUPPRESSOR STACKING: Two+ suppressors active = drop one additional tier beyond highest-priority cap.
-
-S-TIER GATE (ALL must pass):
-1. Line clears 1.5pt buffer after road deduction
-2. 3+ independent signals align
-3. No active suppressor flag
-4. Confidence scores above BOTH season avg AND L5 avg
-5. (Playoff) confidence >= 85%
-6. (Playoff) Game 3+ in series
-
-=== END FRAMEWORK ===
-
-TASK: Given the player, prop type, line, and current game context you'll research, apply ALL rules silently and output ONLY this JSON:
-
-{
-  "verdict": "OVER" | "UNDER" | "SKIP",
-  "tier": "S" | "A" | "B" | "SKIP",
-  "confidence": 75,
-  "justification": "2-3 sentences max. Include: baseline used (season avg vs L5), key signal, any active suppressors or hard caps applied.",
-  "flags": ["⚠️ flag1", "⚠️ flag2"],
-  "data_used": {
-    "season_avg": 26.0,
-    "l5_avg": 28.2,
-    "home_away": "home",
-    "win_prob": 73,
-    "opponent": "Atlanta Hawks",
-    "game_context": "2026 NBA Playoffs Game 2, series 1-0 NYK"
-  }
-}
-
-Do NOT output anything outside the JSON. No markdown. No explanation. Raw JSON only.`;
-
 const TIER_CONFIG = {
   S: { color: "#FFD700", bg: "#2a2200", label: "S-TIER", glow: "0 0 20px #FFD70066" },
   A: { color: "#00FF88", bg: "#002218", label: "A-TIER", glow: "0 0 20px #00FF8866" },
@@ -139,12 +58,7 @@ export default function App() {
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          player,
-          propType,
-          line,
-          framework: MODEL_FRAMEWORK,
-        }),
+        body: JSON.stringify({ player, propType, line }),
       });
 
       const data = await response.json();
@@ -162,6 +76,17 @@ export default function App() {
 
   const tierCfg = result ? TIER_CONFIG[result.tier] || TIER_CONFIG.SKIP : null;
   const verdictCfg = result ? VERDICT_CONFIG[result.verdict] || VERDICT_CONFIG.SKIP : null;
+  // SKIPs that came from data unavailability (orchestrator-level early exit OR
+  // missing-required-fields) have data_used: null. Gemini-level "I analyzed
+  // this and reject it" SKIPs include data_used and render in the standard panel.
+  const isUnable = result?.tier === "SKIP" && !result?.data_used;
+  const missingFlags = (result?.flags ?? []).filter((f) => /missing:/i.test(f));
+  const otherFlags = (result?.flags ?? []).filter((f) => !/missing:/i.test(f));
+  const winProbDisplay = (() => {
+    const wp = result?.data_used?.win_prob;
+    if (wp == null) return "—";
+    return (wp <= 1 ? Math.round(wp * 100) : Math.round(wp)) + "%";
+  })();
 
   return (
     <div style={{
@@ -280,8 +205,67 @@ export default function App() {
           </div>
         )}
 
-        {/* Result */}
-        {result && tierCfg && verdictCfg && (
+        {/* UNABLE panel — orchestrator early-skip or missing-required-fields */}
+        {result && isUnable && (
+          <div style={{
+            border: "1px solid #FFA50044",
+            background: "#2a1a00",
+            boxShadow: "0 0 20px #FFA50033",
+          }}>
+            <div style={{
+              background: "#FFA50018",
+              borderBottom: "1px solid #FFA50044",
+              padding: "14px 20px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}>
+              <div>
+                <div style={{ fontSize: 18, fontWeight: "bold", color: "#FFA500", letterSpacing: 2 }}>
+                  UNABLE TO ANALYZE
+                </div>
+                <div style={{ fontSize: 11, color: "#cc8833", letterSpacing: 2, marginTop: 2 }}>
+                  DATA UNAVAILABLE
+                </div>
+              </div>
+            </div>
+
+            <div style={{
+              padding: "10px 20px",
+              borderBottom: "1px solid #1e3040",
+              fontSize: 12,
+              color: "#7799bb",
+              letterSpacing: 1,
+            }}>
+              {player} · {propType} {line}
+            </div>
+
+            <div style={{ padding: "16px 20px", borderBottom: missingFlags.length > 0 ? "1px solid #1e3040" : undefined }}>
+              <div style={{ fontSize: 10, color: "#446688", letterSpacing: 2, marginBottom: 8 }}>
+                REASON
+              </div>
+              <div style={{ fontSize: 13, color: "#c8d8e8", lineHeight: 1.6 }}>
+                {result.justification}
+              </div>
+            </div>
+
+            {missingFlags.length > 0 && (
+              <div style={{ padding: "12px 20px" }}>
+                <div style={{ fontSize: 10, color: "#446688", letterSpacing: 2, marginBottom: 8 }}>
+                  MISSING DATA
+                </div>
+                {missingFlags.map((f, i) => (
+                  <div key={i} style={{ fontSize: 12, color: "#FFA500", marginBottom: 4 }}>
+                    • {f.replace(/^⚠️\s*missing:\s*/i, "")}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Standard tier panel — verdict + tier card */}
+        {result && !isUnable && tierCfg && verdictCfg && (
           <div style={{
             border: `1px solid ${tierCfg.color}44`,
             background: tierCfg.bg,
@@ -343,13 +327,13 @@ export default function App() {
               </div>
             </div>
 
-            {/* Flags */}
-            {result.flags && result.flags.length > 0 && (
+            {/* Flags (excluding missing-data flags, which only appear in the UNABLE panel) */}
+            {otherFlags.length > 0 && (
               <div style={{ padding: "12px 20px", borderBottom: "1px solid #1e3040" }}>
                 <div style={{ fontSize: 10, color: "#446688", letterSpacing: 2, marginBottom: 8 }}>
                   ACTIVE FLAGS
                 </div>
-                {result.flags.map((f, i) => (
+                {otherFlags.map((f, i) => (
                   <div key={i} style={{ fontSize: 12, color: "#ffaa44", marginBottom: 4 }}>
                     {f}
                   </div>
@@ -371,8 +355,8 @@ export default function App() {
                   {[
                     ["SEASON AVG", result.data_used.season_avg],
                     ["L5 AVG", result.data_used.l5_avg],
-                    ["WIN PROB", result.data_used.win_prob ? result.data_used.win_prob + "%" : "—"],
-                    ["LOCATION", result.data_used.home_away?.toUpperCase() || "—"],
+                    ["WIN PROB", winProbDisplay === "—" ? null : winProbDisplay],
+                    ["LOCATION", result.data_used.home_away?.toUpperCase() || null],
                     ["OPP", result.data_used.opponent],
                     ["CONTEXT", result.data_used.game_context],
                   ].map(([label, val]) => val && (

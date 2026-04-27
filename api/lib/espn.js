@@ -1,0 +1,150 @@
+// ESPN public APIs. No auth, no special headers required.
+// Used for game schedule, win probability, and injury reports — fields that
+// stats.nba.com doesn't expose cleanly.
+
+const SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard";
+const CORE = "https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba";
+const SITE = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba";
+
+async function jsonFetch(url) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.error(`espn ${url} ${res.status}`);
+      return null;
+    }
+    return await res.json();
+  } catch (err) {
+    console.error(`espn ${url} threw:`, err.message);
+    return null;
+  }
+}
+
+function parseEvent(event) {
+  const comp = event.competitions?.[0];
+  if (!comp) return null;
+  const home = comp.competitors?.find((c) => c.homeAway === "home");
+  const away = comp.competitors?.find((c) => c.homeAway === "away");
+  if (!home || !away) return null;
+  return {
+    game_id: event.id,
+    competition_id: comp.id,
+    date: event.date,
+    status: event.status?.type?.name,
+    state: event.status?.type?.state, // "pre" | "in" | "post"
+    home: {
+      team_id: home.team.id,
+      name: home.team.displayName,
+      abbr: home.team.abbreviation,
+    },
+    away: {
+      team_id: away.team.id,
+      name: away.team.displayName,
+      abbr: away.team.abbreviation,
+    },
+  };
+}
+
+export async function getTodaysGames(date) {
+  // date: optional "YYYYMMDD"
+  const url = date ? `${SCOREBOARD}?dates=${date}` : SCOREBOARD;
+  const data = await jsonFetch(url);
+  if (!data) return null;
+  return (data.events || []).map(parseEvent).filter(Boolean);
+}
+
+export function findGameForTeamAbbr(games, abbr) {
+  if (!games || !abbr) return null;
+  const upper = abbr.toUpperCase();
+  return (
+    games.find(
+      (g) => g.home.abbr === upper || g.away.abbr === upper
+    ) || null
+  );
+}
+
+export function homeAwayForTeam(game, abbr) {
+  if (!game) return null;
+  const upper = abbr.toUpperCase();
+  if (game.home.abbr === upper) return "home";
+  if (game.away.abbr === upper) return "away";
+  return null;
+}
+
+export function opponentFor(game, abbr) {
+  if (!game) return null;
+  const upper = abbr.toUpperCase();
+  if (game.home.abbr === upper) return game.away;
+  if (game.away.abbr === upper) return game.home;
+  return null;
+}
+
+function pickGameProjection(side) {
+  const stat = side?.statistics?.find((s) => s.name === "gameProjection");
+  if (!stat || stat.value == null) return null;
+  return stat.value > 1 ? stat.value / 100 : stat.value; // ESPN reports 0–100; normalise to 0–1
+}
+
+export async function getWinProbability(eventId, competitionId) {
+  if (!eventId || !competitionId) return null;
+  // Pre-game: ESPN's BPI predictor.
+  const predictor = await jsonFetch(
+    `${CORE}/events/${eventId}/competitions/${competitionId}/predictor`
+  );
+  if (predictor) {
+    const home = pickGameProjection(predictor.homeTeam);
+    const away = pickGameProjection(predictor.awayTeam);
+    if (home != null || away != null) {
+      return {
+        source: "predictor",
+        home_win_pct: home ?? (away != null ? 1 - away : null),
+        away_win_pct: away ?? (home != null ? 1 - home : null),
+      };
+    }
+  }
+  // In-game / post-game fallback.
+  const probs = await jsonFetch(
+    `${CORE}/events/${eventId}/competitions/${competitionId}/probabilities?limit=200`
+  );
+  const items = probs?.items || [];
+  if (!items.length) return null;
+  const latest = items[items.length - 1];
+  const home = latest.homeWinPercentage;
+  const away = latest.awayWinPercentage;
+  if (home == null && away == null) return null;
+  return {
+    source: "probabilities",
+    home_win_pct: home,
+    away_win_pct: away ?? (home != null ? 1 - home : null),
+  };
+}
+
+function normalizeInjury(entry) {
+  return {
+    player: entry.athlete?.displayName || entry.athlete?.fullName || null,
+    status: entry.status || entry.type?.description || null,
+    type: entry.type?.description || entry.details?.type || null,
+    detail: entry.shortComment || entry.longComment || entry.details?.detail || null,
+    date: entry.date || null,
+  };
+}
+
+export async function getAllInjuries() {
+  const data = await jsonFetch(`${SITE}/injuries`);
+  if (!data) return null;
+  const groups = data.injuries || [];
+  return groups.map((g) => ({
+    team_id: String(g.id),
+    team_name: g.displayName,
+    injuries: (g.injuries || []).map(normalizeInjury),
+  }));
+}
+
+export async function getTeamInjuries(teamId) {
+  if (!teamId) return null;
+  const all = await getAllInjuries();
+  if (!all) return null;
+  const id = String(teamId);
+  const group = all.find((g) => g.team_id === id);
+  return group?.injuries ?? [];
+}
