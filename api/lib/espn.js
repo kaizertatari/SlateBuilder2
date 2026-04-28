@@ -32,6 +32,10 @@ function parseEvent(event) {
     date: event.date,
     status: event.status?.type?.name,
     state: event.status?.type?.state, // "pre" | "in" | "post"
+    // Playoff series state, present only on playoff events. Authoritative —
+    // ground-truth uses this to avoid reconstructing series from gamelog.
+    series: comp.series ?? null,
+    round: comp.type?.abbreviation ?? null, // e.g. "RD16" | "RD8" | "RD4" | "RD2"
     home: {
       team_id: home.team.id,
       name: home.team.displayName,

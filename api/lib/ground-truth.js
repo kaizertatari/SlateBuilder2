@@ -43,9 +43,7 @@ export function composeGroundTruth({
     (i) => i.player && namesMatch(i.player, player)
   );
 
-  const series = (seasonType === "Playoffs" && l5?.games && opponentSide)
-    ? deriveSeries(l5.games, opponentSide.abbr)
-    : null;
+  const series = buildSeriesState({ game, playerSide, opponentSide, l5, seasonType });
 
   const winPctForPlayer = winProb
     ? (homeAway === "home" ? winProb.home_win_pct : winProb.away_win_pct)
@@ -166,7 +164,44 @@ function namesMatch(a, b) {
   return normalize(a) === normalize(b);
 }
 
-function deriveSeries(games, oppAbbr) {
+function buildSeriesState({ game, playerSide, opponentSide, l5, seasonType }) {
+  // Authoritative path: ESPN attaches series state to playoff scoreboard
+  // events. Match by ESPN team_id (no abbreviation aliasing). Pre-formatted
+  // summary string ("BOS leads series 3-1") comes straight from ESPN.
+  const espn = game?.series;
+  if (espn && espn.type === "playoff" && playerSide && opponentSide) {
+    const playerComp = espn.competitors?.find(
+      (c) => String(c.id) === String(playerSide.team_id)
+    );
+    const oppComp = espn.competitors?.find(
+      (c) => String(c.id) === String(opponentSide.team_id)
+    );
+    const playerWins = playerComp?.wins ?? 0;
+    const opponentWins = oppComp?.wins ?? 0;
+    const gamesPlayed = playerWins + opponentWins;
+    return {
+      games_played: gamesPlayed,
+      player_team_wins: playerWins,
+      opponent_wins: opponentWins,
+      next_game_number: gamesPlayed + 1,
+      series_record: `${playerWins}-${opponentWins}`,
+      series_summary: espn.summary ?? null,
+      round: game.round ?? null,
+      source: "espn_event",
+    };
+  }
+
+  // Fallback: ESPN didn't tag the event with series data but we forced
+  // seasonType=Playoffs upstream. Reconstruct from gamelog (less reliable
+  // — capped at L5, substring matching).
+  if (seasonType === "Playoffs" && l5?.games?.length && opponentSide) {
+    return { ...deriveSeriesFromL5(l5.games, opponentSide.abbr), source: "l5_fallback" };
+  }
+
+  return null;
+}
+
+function deriveSeriesFromL5(games, oppAbbr) {
   const upper = oppAbbr.toUpperCase();
   const vs = games.filter(
     (g) => g.matchup && g.matchup.toUpperCase().includes(upper)
@@ -180,5 +215,9 @@ function deriveSeries(games, oppAbbr) {
     games_played: vs.length,
     player_team_wins: pw,
     opponent_wins: ow,
+    next_game_number: vs.length + 1,
+    series_record: `${pw}-${ow}`,
+    series_summary: null,
+    round: null,
   };
 }

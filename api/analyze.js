@@ -196,7 +196,7 @@ WHERE TO FIND VALUES (path → meaning):
 - groundTruth.win_prob.player_team_pct                                                        → 0-1 float (multiply by 100 for the % the framework uses)
 - groundTruth.injuries.player_team / opponent                                                 → {player,status,detail,date}[] (used for role compression / matchup ceiling)
 - groundTruth.player_recent.is_listed_injured                                                 → boolean — TRUE means post-injury return gate (Section 6) applies
-- groundTruth.series                                                                          → playoff series state {games_played, player_team_wins, opponent_wins}; null in regular season
+- groundTruth.series                                                                          → playoff series state {games_played, player_team_wins, opponent_wins, next_game_number, series_record, series_summary, round, source}; null in regular season
 
 For this prop ("${groundTruth.prop_type}" line ${groundTruth.line}), the relevant averages field is "${field ?? "(unknown — output SKIP)"}". Use season.averages.${field ?? "?"} and l5.averages.${field ?? "?"} as the baselines.
 
@@ -213,7 +213,7 @@ OUTPUT (single JSON object):
     "home_away":   <copy groundTruth.home_away>,
     "win_prob":    <copy groundTruth.win_prob.player_team_pct, or null>,
     "opponent":    <copy groundTruth.opponent_team.name>,
-    "game_context": <short string referencing season.label, season.type, and series state if playoff, e.g. "2025-26 Playoffs G5, DEN trails 1-3">
+    "game_context": <if groundTruth.series is non-null, format as "{season.label} {series.round} G{series.next_game_number} ({series.series_summary})" — copy series.next_game_number and series.series_summary verbatim from GROUND TRUTH; do NOT compute, infer, or recall the game number, series record, or series leader from any other source. Example with the values supplied: "2025-26 RD16 G5 (BOS leads series 3-1)". If series is null, format as "{season.label} Regular Season".>
   }
 }`;
 }
