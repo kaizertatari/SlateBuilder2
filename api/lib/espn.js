@@ -53,9 +53,26 @@ export async function getTodaysGames(date) {
   return (data.events || []).map(parseEvent).filter(Boolean);
 }
 
+// stats.nba.com and ESPN disagree on a handful of team abbreviations. Normalise
+// NBA stats abbrs onto ESPN's spelling before comparing scoreboard events.
+const NBA_TO_ESPN_ABBR = {
+  NYK: "NY",
+  SAS: "SA",
+  NOP: "NO",
+  GSW: "GS",
+  UTA: "UTAH",
+  WAS: "WSH",
+};
+
+export function toEspnAbbr(abbr) {
+  if (!abbr) return null;
+  const upper = abbr.toUpperCase();
+  return NBA_TO_ESPN_ABBR[upper] || upper;
+}
+
 export function findGameForTeamAbbr(games, abbr) {
   if (!games || !abbr) return null;
-  const upper = abbr.toUpperCase();
+  const upper = toEspnAbbr(abbr);
   return (
     games.find(
       (g) => g.home.abbr === upper || g.away.abbr === upper
@@ -74,7 +91,7 @@ function formatYYYYMMDD(d) {
 // game. Returns { game, days_out } or null if nothing within `daysAhead`.
 export async function findNextGameForTeamAbbr(abbr, daysAhead = 7) {
   if (!abbr) return null;
-  const upper = abbr.toUpperCase();
+  const upper = toEspnAbbr(abbr);
   const today = new Date();
   for (let i = 0; i <= daysAhead; i++) {
     const d = new Date(today);
@@ -91,7 +108,7 @@ export async function findNextGameForTeamAbbr(abbr, daysAhead = 7) {
 
 export function homeAwayForTeam(game, abbr) {
   if (!game) return null;
-  const upper = abbr.toUpperCase();
+  const upper = toEspnAbbr(abbr);
   if (game.home.abbr === upper) return "home";
   if (game.away.abbr === upper) return "away";
   return null;
@@ -99,7 +116,7 @@ export function homeAwayForTeam(game, abbr) {
 
 export function opponentFor(game, abbr) {
   if (!game) return null;
-  const upper = abbr.toUpperCase();
+  const upper = toEspnAbbr(abbr);
   if (game.home.abbr === upper) return game.away;
   if (game.away.abbr === upper) return game.home;
   return null;

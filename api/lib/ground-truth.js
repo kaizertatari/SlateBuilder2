@@ -2,6 +2,8 @@
 // the typed groundTruth payload + a list of missing required fields.
 // No fetches here.
 
+import { toEspnAbbr } from "./espn.js";
+
 export function composeGroundTruth({
   player,
   propType,
@@ -17,10 +19,11 @@ export function composeGroundTruth({
   allInjuries,   // ESPN league-wide injury list
 }) {
   const playerAbbr = info?.team_abbr ?? null;
+  const playerEspnAbbr = toEspnAbbr(playerAbbr);
 
-  const homeAway = (playerAbbr && game)
-    ? (game.home.abbr === playerAbbr ? "home"
-      : game.away.abbr === playerAbbr ? "away"
+  const homeAway = (playerEspnAbbr && game)
+    ? (game.home.abbr === playerEspnAbbr ? "home"
+      : game.away.abbr === playerEspnAbbr ? "away"
       : null)
     : null;
 
