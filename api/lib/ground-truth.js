@@ -8,6 +8,7 @@ export function composeGroundTruth({
   line,
   info,           // commonPlayerInfo (NBA stats)
   game,           // ESPN game (or null)
+  daysOut = 0,   // 0 = today, 1+ = upcoming game found via lookahead
   seasonType,    // "Regular Season" | "Playoffs"
   seasonAvg,     // Regular-season averages, used as stable baseline
   l5,            // Last 5 in current seasonType
@@ -54,6 +55,7 @@ export function composeGroundTruth({
     game: game ? {
       date: game.date,
       state: game.state,
+      days_out: daysOut,
       home_team: game.home.name,
       away_team: game.away.name,
     } : null,

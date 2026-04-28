@@ -63,6 +63,32 @@ export function findGameForTeamAbbr(games, abbr) {
   );
 }
 
+function formatYYYYMMDD(d) {
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}${m}${day}`;
+}
+
+// Walks the scoreboard day-by-day until it finds the team's next scheduled
+// game. Returns { game, days_out } or null if nothing within `daysAhead`.
+export async function findNextGameForTeamAbbr(abbr, daysAhead = 7) {
+  if (!abbr) return null;
+  const upper = abbr.toUpperCase();
+  const today = new Date();
+  for (let i = 0; i <= daysAhead; i++) {
+    const d = new Date(today);
+    d.setUTCDate(today.getUTCDate() + i);
+    const games = await getTodaysGames(formatYYYYMMDD(d));
+    if (!games?.length) continue;
+    const found = games.find(
+      (g) => g.home.abbr === upper || g.away.abbr === upper
+    );
+    if (found) return { game: found, days_out: i };
+  }
+  return null;
+}
+
 export function homeAwayForTeam(game, abbr) {
   if (!game) return null;
   const upper = abbr.toUpperCase();

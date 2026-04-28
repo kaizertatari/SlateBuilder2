@@ -11,6 +11,7 @@ import * as espnStats from "./lib/espn-stats.js";
 import {
   getTodaysGames,
   findGameForTeamAbbr,
+  findNextGameForTeamAbbr,
   getWinProbability,
   getAllInjuries,
 } from "./lib/espn.js";
@@ -55,8 +56,14 @@ export async function gatherGroundTruth({ player, propType, line }) {
     };
   }
 
-  const game = findGameForTeamAbbr(games, info.team_abbr);
-  if (!game) return { skipReason: "no_game", message: `${info.team_name ?? info.team_abbr} is not scheduled today` };
+  let game = findGameForTeamAbbr(games, info.team_abbr);
+  let daysOut = 0;
+  if (!game) {
+    const next = await findNextGameForTeamAbbr(info.team_abbr, 7);
+    if (!next) return { skipReason: "no_upcoming_game", message: `${info.team_name ?? info.team_abbr} has no game in the next 7 days` };
+    game = next.game;
+    daysOut = next.days_out;
+  }
 
   // Detect season type: playoffs first, then regular season. Each tier tries
   // stats.nba.com then ESPN gamelog before giving up.
@@ -78,7 +85,7 @@ export async function gatherGroundTruth({ player, propType, line }) {
 
   const { groundTruth, missing } = composeGroundTruth({
     player, propType, line,
-    info, game, seasonType,
+    info, game, daysOut, seasonType,
     seasonAvg, l5, splits, winProb, allInjuries,
   });
 
@@ -162,13 +169,17 @@ export function propTypeToField(propType) {
 
 export function buildPrompt(framework, groundTruth) {
   const field = propTypeToField(groundTruth.prop_type);
+  const daysOut = groundTruth.game?.days_out ?? 0;
+  const forwardLookingNote = daysOut > 0
+    ? `\n\nFORWARD-LOOKING GAME: groundTruth.game.days_out is ${daysOut} — this game is NOT today, it is ${daysOut} day(s) away. Injury reports, win probability, and lineup state may shift before tip-off. You MUST add a flag "📅 forward-looking pick (game ${daysOut}d out) — re-verify injuries closer to tip" and treat any UNDER mechanism that depends on a teammate's confirmed status (e.g., role compression) as A-tier max unless the absence is clearly long-term.`
+    : "";
   return `You are the NBA PrizePicks Model v3.3 verdict engine. Output exactly one JSON object — no prose, no markdown, no code fences.
 
 DATA RULES — non-negotiable:
 1. Use ONLY values from the GROUND TRUTH block below. Do NOT invent, estimate, recall from prior knowledge, or guess any number. Treat your training-data memory of player stats as forbidden.
 2. Arithmetic on values supplied in GROUND TRUTH is permitted (it is already pre-computed for you in averages.pra / pr / pa). Producing any number that cannot be derived from GROUND TRUTH is a violation.
 3. The "data_used" field of your output must echo values directly from GROUND TRUTH. Do not put your own numbers there.
-4. If applying a hard gate from the framework requires a value that is null or absent in GROUND TRUTH, set verdict to "SKIP" with a flag like "⚠️ missing: <field>". Do not substitute a guessed value.
+4. If applying a hard gate from the framework requires a value that is null or absent in GROUND TRUTH, set verdict to "SKIP" with a flag like "⚠️ missing: <field>". Do not substitute a guessed value.${forwardLookingNote}
 
 FRAMEWORK:
 ${framework}
