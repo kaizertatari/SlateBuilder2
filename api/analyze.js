@@ -219,7 +219,7 @@ async function callGemini(apiKey, prompt) {
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: 0,
-            maxOutputTokens: 4096,
+            maxOutputTokens: 8192,
             responseMimeType: "application/json",
           },
         }),
@@ -232,8 +232,10 @@ async function callGemini(apiKey, prompt) {
   const data = await res.json();
   if (data.error) return { error: data.error.message };
 
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-  if (!text) return { error: "Empty Gemini response", debug: data };
+  const cand = data.candidates?.[0];
+  const finishReason = cand?.finishReason;
+  const text = cand?.content?.parts?.[0]?.text?.trim() || "";
+  if (!text) return { error: `Empty Gemini response (finishReason: ${finishReason})`, debug: data };
 
   let jsonStr = null;
   if (text.startsWith("{") && text.endsWith("}")) {
@@ -243,11 +245,18 @@ async function callGemini(apiKey, prompt) {
     const end = text.lastIndexOf("}");
     if (start !== -1 && end > start) jsonStr = text.substring(start, end + 1);
   }
-  if (!jsonStr) return { error: "No JSON in Gemini response", debug: text.slice(0, 500) };
+  if (!jsonStr) {
+    return {
+      error: finishReason === "MAX_TOKENS"
+        ? "Gemini response truncated (hit max tokens). Try again or shorten prompt."
+        : `No JSON in Gemini response (finishReason: ${finishReason})`,
+      debug: text.slice(0, 800),
+    };
+  }
 
   try {
     return { json: JSON.parse(jsonStr) };
   } catch (e) {
-    return { error: `JSON parse failed: ${e.message}`, debug: jsonStr.slice(0, 500) };
+    return { error: `JSON parse failed: ${e.message} (finishReason: ${finishReason})`, debug: jsonStr.slice(0, 800) };
   }
 }
