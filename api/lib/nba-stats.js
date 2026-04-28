@@ -25,11 +25,21 @@ export function currentSeason(date = new Date()) {
   return `${startYear}-${String((startYear + 1) % 100).padStart(2, "0")}`;
 }
 
+// Vercel egress IPs are often silently dropped by stats.nba.com (no response,
+// not a 4xx). Without a timeout, each call hangs until Node's socket timeout
+// fires (~60-120s), so a single request through the orchestrator's cascade
+// can take 3+ minutes before falling through to ESPN. 6s is enough for a
+// healthy response from a working IP and short enough to not dominate latency.
+const NBA_FETCH_TIMEOUT_MS = 6000;
+
 async function nbaFetch(endpoint, params) {
   const qs = new URLSearchParams(params).toString();
   const url = `${BASE}/${endpoint}?${qs}`;
   try {
-    const res = await fetch(url, { headers: HEADERS });
+    const res = await fetch(url, {
+      headers: HEADERS,
+      signal: AbortSignal.timeout(NBA_FETCH_TIMEOUT_MS),
+    });
     if (!res.ok) {
       console.error(`stats.nba.com ${endpoint} ${res.status}`);
       return null;
