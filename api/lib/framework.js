@@ -12,7 +12,7 @@ PLAYOFF MODE RULES (active when NBA postseason is ongoing):
 - Game 2: A-tier MAX both directions (hard cap)
 - Game 3+: Standard playoff rules
 - S-tier playoff floor: 85% (vs 82% regular season)
-- Rule 5h: Named defensive assignment check required for all playoff scoring props
+- Rule 5h: Named defensive assignment / opponent defensive rank — use if present in groundTruth.opponent_defense; if absent, do NOT skip — cap the pick at A-tier max instead and add flag "⚠️ no defensive matchup data (5h capped)".
 
 HARD GATES (cannot be bypassed):
 - Post-injury return gate: first 5 games back = A-tier max
@@ -38,7 +38,7 @@ WIN PROBABILITY BLOWOUT SUPPRESSOR (Rule 5f):
 UNDER MECHANISMS (must identify one to issue UNDER):
 1. Minutes Compression: confirmed restriction/rest
 2. Role Compression: teammate availability documented to compress opportunities
-3. Matchup Ceiling: opponent top-5 in specific defensive metric (standalone = B-tier max)
+3. Matchup Ceiling: opponent top-5 in specific defensive metric (standalone = B-tier max). If groundTruth.opponent_defense is absent, this mechanism is unavailable — do not invoke it; rely on mechanisms 1 and 2.
 
 UNDER CONFIDENCE TABLE:
 - 3 mechanisms = S possible
