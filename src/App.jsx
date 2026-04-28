@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 
 const NBA_PLAYERS = [
   "A.J. Lawson", "Aaron Gordon", "Aaron Holiday", "Aaron Wiggins",
@@ -71,6 +71,8 @@ const VERDICT_CONFIG = {
   SKIP: { color: "#888888", symbol: "✕" },
 };
 
+const SORTED_PLAYERS = [...NBA_PLAYERS].sort();
+
 export default function App() {
   const [player, setPlayer] = useState("");
   const [propType, setPropType] = useState("");
@@ -78,6 +80,41 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [playerQuery, setPlayerQuery] = useState("");
+  const [playerOpen, setPlayerOpen] = useState(false);
+  const [playerHighlight, setPlayerHighlight] = useState(0);
+
+  const filteredPlayers = useMemo(() => {
+    const q = playerQuery.trim().toLowerCase();
+    if (!q) return SORTED_PLAYERS;
+    return SORTED_PLAYERS.filter((p) => p.toLowerCase().includes(q));
+  }, [playerQuery]);
+
+  const selectPlayer = (name) => {
+    setPlayer(name);
+    setPlayerQuery(name);
+    setPlayerOpen(false);
+    setPlayerHighlight(0);
+  };
+
+  const handlePlayerKeyDown = (e) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setPlayerOpen(true);
+      setPlayerHighlight((h) => Math.min(h + 1, filteredPlayers.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setPlayerHighlight((h) => Math.max(h - 1, 0));
+    } else if (e.key === "Enter") {
+      if (playerOpen && filteredPlayers[playerHighlight]) {
+        e.preventDefault();
+        selectPlayer(filteredPlayers[playerHighlight]);
+      }
+    } else if (e.key === "Escape") {
+      setPlayerOpen(false);
+      setPlayerQuery(player);
+    }
+  };
 
   const analyze = useCallback(async () => {
     if (!player || !propType || !line) {
@@ -148,16 +185,85 @@ export default function App() {
         {/* Inputs */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <select
-              value={player}
-              onChange={(e) => setPlayer(e.target.value)}
-              style={selectStyle}
-            >
-              <option value="">— SELECT PLAYER —</option>
-              {NBA_PLAYERS.sort().map((p) => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
+            <div style={{ position: "relative", flex: 1, minWidth: 180 }}>
+              <input
+                type="text"
+                value={playerQuery}
+                onChange={(e) => {
+                  setPlayerQuery(e.target.value);
+                  setPlayerOpen(true);
+                  setPlayerHighlight(0);
+                }}
+                onFocus={(e) => {
+                  setPlayerOpen(true);
+                  e.target.select();
+                }}
+                onBlur={() => {
+                  setPlayerOpen(false);
+                  if (player && playerQuery !== player) setPlayerQuery(player);
+                }}
+                onKeyDown={handlePlayerKeyDown}
+                placeholder="— SEARCH PLAYER —"
+                role="combobox"
+                aria-expanded={playerOpen}
+                aria-controls="player-listbox"
+                aria-activedescendant={
+                  playerOpen && filteredPlayers[playerHighlight]
+                    ? `player-opt-${playerHighlight}`
+                    : undefined
+                }
+                style={{ ...selectStyle, flex: undefined, minWidth: undefined, width: "100%", boxSizing: "border-box" }}
+              />
+              {playerOpen && (
+                <ul
+                  id="player-listbox"
+                  role="listbox"
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 2px)",
+                    left: 0,
+                    right: 0,
+                    maxHeight: 280,
+                    overflowY: "auto",
+                    background: "#0a1420",
+                    border: "1px solid #1e3040",
+                    margin: 0,
+                    padding: 0,
+                    listStyle: "none",
+                    zIndex: 10,
+                  }}
+                >
+                  {filteredPlayers.length === 0 ? (
+                    <li style={{ padding: "10px 12px", fontSize: 12, color: "#446688" }}>
+                      no matches
+                    </li>
+                  ) : (
+                    filteredPlayers.map((p, i) => (
+                      <li
+                        key={p}
+                        id={`player-opt-${i}`}
+                        role="option"
+                        aria-selected={i === playerHighlight}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          selectPlayer(p);
+                        }}
+                        onMouseEnter={() => setPlayerHighlight(i)}
+                        style={{
+                          padding: "8px 12px",
+                          fontSize: 12,
+                          cursor: "pointer",
+                          background: i === playerHighlight ? "#0066cc" : "transparent",
+                          color: i === playerHighlight ? "#ffffff" : "#c8d8e8",
+                        }}
+                      >
+                        {p}
+                      </li>
+                    ))
+                  )}
+                </ul>
+              )}
+            </div>
 
             <select
               value={propType}
