@@ -219,10 +219,37 @@ OUTPUT (single JSON object):
 }
 
 async function callGemini(apiKey, prompt) {
+  // Try primary model up to 3 times (1 initial + 2 retries) on transient
+  // overload, then fall back to flash-lite once before surfacing the error.
+  const PRIMARY = "gemini-2.5-flash";
+  const FALLBACK = "gemini-2.5-flash-lite";
+  const primaryDelays = [0, 500, 1500];
+
+  let last;
+  for (const delay of primaryDelays) {
+    if (delay) await sleep(delay);
+    last = await geminiAttempt(apiKey, prompt, PRIMARY);
+    if (!last.error || !last.retryable) return stripRetryable(last);
+  }
+
+  await sleep(500);
+  last = await geminiAttempt(apiKey, prompt, FALLBACK);
+  return stripRetryable(last);
+}
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+function stripRetryable({ retryable: _r, ...rest }) {
+  return rest;
+}
+
+async function geminiAttempt(apiKey, prompt, model) {
   let res;
   try {
     res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -237,11 +264,18 @@ async function callGemini(apiKey, prompt) {
       }
     );
   } catch (err) {
-    return { error: `Gemini fetch failed: ${err.message}` };
+    return { error: `Gemini fetch failed: ${err.message}`, retryable: true };
   }
 
   const data = await res.json();
-  if (data.error) return { error: data.error.message };
+  if (data.error) {
+    const status = data.error.status;
+    const code = data.error.code;
+    const retryable =
+      code === 503 || code === 429 || code === 500 ||
+      status === "UNAVAILABLE" || status === "RESOURCE_EXHAUSTED" || status === "INTERNAL";
+    return { error: data.error.message, retryable };
+  }
 
   const cand = data.candidates?.[0];
   const finishReason = cand?.finishReason;
