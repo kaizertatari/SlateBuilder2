@@ -1,10 +1,13 @@
-import { resolvePlayerId } from "./lib/player-ids.js";
+import { resolvePlayerId, resolveEspnId } from "./lib/player-ids.js";
 import {
+  currentSeason,
   getCommonPlayerInfo,
   getSeasonAverages,
   getLastNGames,
   getHomeAwaySplits,
 } from "./lib/nba-stats.js";
+import * as bdl from "./lib/balldontlie.js";
+import * as espnStats from "./lib/espn-stats.js";
 import {
   getTodaysGames,
   findGameForTeamAbbr,
@@ -24,32 +27,54 @@ export async function gatherGroundTruth({ player, propType, line }) {
     return { skipReason: "player_not_configured", message: `No PlayerID configured for ${player}` };
   }
 
-  const [info, games, allInjuries] = await Promise.all([
+  const season = currentSeason();
+  const espnId = resolveEspnId(player);
+
+  const [nbaInfo, games, allInjuries] = await Promise.all([
     getCommonPlayerInfo(playerId),
     getTodaysGames(),
     getAllInjuries(),
   ]);
 
-  if (!info)  return { skipReason: "nba_stats_unavailable", message: "Could not fetch player info from stats.nba.com" };
   if (!games) return { skipReason: "schedule_unavailable", message: "Could not fetch ESPN scoreboard" };
 
-  const game = findGameForTeamAbbr(games, info.team_abbr);
-  if (!game) return { skipReason: "no_game", message: `${info.team_name} is not scheduled today` };
+  // Identity: stats.nba.com primary, balldontlie fallback (free-tier OK).
+  // Only team_abbr is strictly required downstream.
+  let info = nbaInfo;
+  if (!info) {
+    const bdlPlayer = await bdl.findPlayer(player);
+    if (!bdlPlayer || !bdlPlayer.team_abbr) {
+      return { skipReason: "player_lookup_failed", message: `Could not resolve ${player} via stats.nba.com or balldontlie` };
+    }
+    info = {
+      player_id: playerId,
+      full_name: bdlPlayer.full_name,
+      team_id: null,
+      team_name: bdlPlayer.team_name,
+      team_abbr: bdlPlayer.team_abbr,
+    };
+  }
 
-  // Detect season type: try playoffs first; fall back to regular season.
+  const game = findGameForTeamAbbr(games, info.team_abbr);
+  if (!game) return { skipReason: "no_game", message: `${info.team_name ?? info.team_abbr} is not scheduled today` };
+
+  // Detect season type: playoffs first, then regular season. Each tier tries
+  // stats.nba.com then ESPN gamelog before giving up.
   let seasonType = "Playoffs";
   let l5 = await getLastNGames(playerId, 5, { seasonType });
+  if (!l5 || !l5.games?.length) l5 = await espnStats.getLastNGames(espnId, 5, { season, postseason: true });
   if (!l5 || !l5.games?.length) {
     seasonType = "Regular Season";
     l5 = await getLastNGames(playerId, 5, { seasonType });
+    if (!l5 || !l5.games?.length) l5 = await espnStats.getLastNGames(espnId, 5, { season, postseason: false });
   }
 
-  // Season averages + splits stay on regular-season for a stable, large-sample baseline.
-  const [seasonAvg, splits, winProb] = await Promise.all([
+  const [nbaSeasonAvg, splits, winProb] = await Promise.all([
     getSeasonAverages(playerId, { seasonType: "Regular Season" }),
     getHomeAwaySplits(playerId, { seasonType: "Regular Season" }),
     getWinProbability(game.game_id, game.competition_id),
   ]);
+  const seasonAvg = nbaSeasonAvg ?? await espnStats.getSeasonAverages(espnId, { season });
 
   const { groundTruth, missing } = composeGroundTruth({
     player, propType, line,

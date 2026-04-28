@@ -1,0 +1,187 @@
+// balldontlie.io client. Used as a fallback when stats.nba.com 4xx's
+// (e.g. Vercel's egress IPs are blocked from stats.nba.com).
+//
+// Auth: header `Authorization: <key>` (no "Bearer" prefix).
+// Season convention: balldontlie uses the START year. 2025-26 → season=2025.
+
+const BASE = "https://api.balldontlie.io/v1";
+
+let teamsCache = null;
+const playerCache = new Map();
+
+function authHeader() {
+  const key = process.env.BALLDONTLIE_API_KEY;
+  return key ? { Authorization: key } : null;
+}
+
+async function bdlFetch(path, params = {}) {
+  const auth = authHeader();
+  if (!auth) {
+    console.error("BALLDONTLIE_API_KEY not set");
+    return null;
+  }
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (Array.isArray(v)) for (const val of v) qs.append(k, val);
+    else if (v != null) qs.set(k, String(v));
+  }
+  const url = `${BASE}${path}${qs.toString() ? "?" + qs.toString() : ""}`;
+  try {
+    const res = await fetch(url, { headers: auth });
+    if (!res.ok) {
+      console.error(`balldontlie ${path} ${res.status}`);
+      return null;
+    }
+    return await res.json();
+  } catch (err) {
+    console.error(`balldontlie ${path} threw:`, err.message);
+    return null;
+  }
+}
+
+function seasonStartYear(label) {
+  if (typeof label === "number") return label;
+  const m = String(label).match(/^(\d{4})/);
+  return m ? Number(m[1]) : null;
+}
+
+function parseMinutes(min) {
+  if (typeof min !== "string") return min ?? null;
+  const [m, s] = min.split(":").map(Number);
+  if (Number.isNaN(m)) return null;
+  return Number((m + (s || 0) / 60).toFixed(1));
+}
+
+function fmtDate(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${months[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2, "0")}, ${d.getUTCFullYear()}`;
+}
+
+async function getTeams() {
+  if (teamsCache) return teamsCache;
+  const data = await bdlFetch("/teams");
+  if (!data?.data) return null;
+  const map = new Map();
+  for (const t of data.data) map.set(t.id, t.abbreviation);
+  teamsCache = map;
+  return map;
+}
+
+export async function findPlayer(name) {
+  if (playerCache.has(name)) return playerCache.get(name);
+  const last = name.split(" ").slice(-1)[0];
+  const data = await bdlFetch("/players", { search: last, per_page: 25 });
+  if (!data?.data?.length) return null;
+  const lower = name.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
+  const norm = (s) => s.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
+  const exact = data.data.find(
+    (p) => norm(`${p.first_name} ${p.last_name}`) === lower
+  );
+  const match = exact ?? data.data.find(
+    (p) => norm(p.last_name) === norm(last)
+  );
+  if (!match) return null;
+  const result = {
+    id: match.id,
+    full_name: `${match.first_name} ${match.last_name}`,
+    team_id: match.team?.id ?? null,
+    team_abbr: match.team?.abbreviation ?? null,
+    team_name: match.team?.full_name ?? null,
+  };
+  playerCache.set(name, result);
+  return result;
+}
+
+export async function getSeasonAverages(playerName, { season } = {}) {
+  const player = await findPlayer(playerName);
+  if (!player) return null;
+  const startYear = seasonStartYear(season);
+  if (!startYear) return null;
+  const data = await bdlFetch("/season_averages", {
+    season: startYear,
+    "player_ids[]": player.id,
+  });
+  const row = data?.data?.[0];
+  if (!row) return null;
+  return {
+    season,
+    season_type: "Regular Season",
+    games: row.games_played,
+    minutes: parseMinutes(row.min),
+    ppg: row.pts,
+    rpg: row.reb,
+    apg: row.ast,
+    fgm: row.fgm,
+    fga: row.fga,
+    fg_pct: row.fg_pct,
+    fg3m: row.fg3m,
+    fg3a: row.fg3a,
+    fg3_pct: row.fg3_pct,
+    ftm: row.ftm,
+    fta: row.fta,
+    ft_pct: row.ft_pct,
+  };
+}
+
+export async function getLastNGames(playerName, n = 5, { season, postseason = false } = {}) {
+  const player = await findPlayer(playerName);
+  if (!player) return null;
+  const startYear = seasonStartYear(season);
+  if (!startYear) return null;
+
+  const teams = await getTeams();
+
+  const data = await bdlFetch("/stats", {
+    "player_ids[]": player.id,
+    "seasons[]": startYear,
+    postseason: postseason,
+    per_page: 100,
+  });
+  if (!data?.data?.length) return null;
+
+  const sorted = [...data.data].sort(
+    (a, b) => new Date(b.game.date).getTime() - new Date(a.game.date).getTime()
+  );
+  const games = sorted.slice(0, n).map((s) => {
+    const g = s.game;
+    const isHome = s.team.id === g.home_team_id;
+    const oppId = isHome ? g.visitor_team_id : g.home_team_id;
+    const oppAbbr = teams?.get(oppId) ?? "?";
+    const ownAbbr = s.team.abbreviation;
+    const teamScore = isHome ? g.home_team_score : g.visitor_team_score;
+    const oppScore = isHome ? g.visitor_team_score : g.home_team_score;
+    return {
+      game_id: String(g.id),
+      date: fmtDate(g.date),
+      matchup: `${ownAbbr} ${isHome ? "vs." : "@"} ${oppAbbr}`,
+      result: teamScore > oppScore ? "W" : teamScore < oppScore ? "L" : null,
+      minutes: parseMinutes(s.min),
+      pts: s.pts,
+      reb: s.reb,
+      ast: s.ast,
+      fg3m: s.fg3m,
+      pra: (s.pts ?? 0) + (s.reb ?? 0) + (s.ast ?? 0),
+    };
+  });
+  if (!games.length) return null;
+
+  const avg = (key) => Number(
+    (games.reduce((a, g) => a + (g[key] ?? 0), 0) / games.length).toFixed(2)
+  );
+  return {
+    season,
+    season_type: postseason ? "Playoffs" : "Regular Season",
+    n: games.length,
+    games,
+    averages: {
+      ppg: avg("pts"),
+      rpg: avg("reb"),
+      apg: avg("ast"),
+      fg3m: avg("fg3m"),
+      pra: avg("pra"),
+      minutes: avg("minutes"),
+    },
+  };
+}
