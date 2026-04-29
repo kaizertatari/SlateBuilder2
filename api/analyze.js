@@ -76,6 +76,9 @@ export async function gatherGroundTruth({ player, propType, line }) {
     if (!l5 || !l5.games?.length) l5 = await espnStats.getLastNGames(espnId, 5, { season, postseason: false });
   }
 
+  // Splits are regular-season only — playoff samples are too small (5–28 games)
+  // to be load-bearing for road deduction (Rule 5a). Regular-season home/road
+  // averages are the stable baseline.
   const [nbaSeasonAvg, splits, winProb] = await Promise.all([
     getSeasonAverages(playerId, { seasonType: "Regular Season" }),
     getHomeAwaySplits(playerId, { seasonType: "Regular Season" }),
@@ -99,6 +102,15 @@ export async function POST(req) {
 
     if (!player || !propType || !line) {
       return Response.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    if (!/\s+(OVER|UNDER)\s*$/i.test(propType) || propTypeToField(propType) == null) {
+      return Response.json(
+        {
+          error: `Unknown prop type: "${propType}". Supported: ${Object.keys(PROP_TO_FIELD).map((k) => `${k} OVER/UNDER`).join(", ")}`,
+        },
+        { status: 400 }
+      );
     }
 
     const gathered = await gatherGroundTruth({ player, propType, line });

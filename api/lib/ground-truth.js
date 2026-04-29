@@ -119,6 +119,7 @@ function enrichL5Averages(a) {
   const apg = a.apg ?? 0;
   return {
     ...a,
+    pra: round1(ppg + rpg + apg),
     pr: round1(ppg + rpg),
     pa: round1(ppg + apg),
   };
@@ -155,7 +156,7 @@ function normalize(s) {
     .normalize("NFD")
     .replace(/\p{M}/gu, "")
     .toLowerCase()
-    .replace(/[.'’\-]/g, "")
+    .replace(/[.'’-]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 }
