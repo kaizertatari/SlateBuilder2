@@ -1,5 +1,7 @@
 // Enumerate the active 2026 NBA playoff player pool, look up nba+espn IDs,
-// and rewrite api/lib/player-ids.js + src/App.jsx with the merged set.
+// and rewrite data/players.json with the merged set. Both the server
+// (api/lib/player-ids.js) and client (src/App.jsx) read that file directly,
+// so this script touches a single source of truth.
 //
 // Sources:
 //   - ESPN scoreboard (last 14 days, RD16/RD8/RD4/RD2 events)
@@ -16,8 +18,7 @@ import { fileURLToPath } from "url";
 import { PLAYER_INFO } from "../api/lib/player-ids.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const PLAYER_IDS_PATH = path.join(ROOT, "api/lib/player-ids.js");
-const APP_JSX_PATH = path.join(ROOT, "src/App.jsx");
+const PLAYERS_JSON_PATH = path.join(ROOT, "data/players.json");
 
 const SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard";
 const SUMMARY = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary";
@@ -166,53 +167,11 @@ async function espnSearch(name) {
   return { team: match.subtitle ?? null, espnId };
 }
 
-async function writePlayerIds(merged) {
-  const sorted = Object.entries(merged).sort(([a], [b]) => a.localeCompare(b));
-  const maxName = Math.max(...sorted.map(([n]) => n.length));
-  const lines = sorted.map(([name, ids]) => {
-    const padded = `"${name}":`.padEnd(maxName + 4);
-    return `  ${padded} { nba: ${ids.nba}, espn: ${ids.espn} },`;
-  });
-  const content = `// Display name -> { nba: stats.nba.com PERSON_ID, espn: ESPN athlete id }.
-// Names match src/App.jsx NBA_PLAYERS exactly.
-//
-// Regenerate via: node scripts/refresh-playoff-players.mjs
-// Players omitted here resolve to null and the orchestrator returns SKIP
-// with a clear flag.
-
-export const PLAYER_INFO = {
-${lines.join("\n")}
-};
-
-// Back-compat helper used by analyze.js + smoke scripts.
-export function resolvePlayerId(name) {
-  return PLAYER_INFO[name]?.nba ?? null;
-}
-
-export function resolveEspnId(name) {
-  return PLAYER_INFO[name]?.espn ?? null;
-}
-
-// Legacy export retained for build-espn-ids.mjs and any other consumers
-// that just want { name: nba_id }.
-export const PLAYER_IDS = Object.fromEntries(
-  Object.entries(PLAYER_INFO).map(([k, v]) => [k, v.nba])
-);
-`;
-  await fs.writeFile(PLAYER_IDS_PATH, content);
-}
-
-async function patchAppJsx(allNames) {
-  const sorted = [...new Set(allNames)].sort();
-  const lines = [];
-  for (let i = 0; i < sorted.length; i += 4) {
-    const row = sorted.slice(i, i + 4).map((n) => `"${n}"`).join(", ");
-    lines.push("  " + row + (i + 4 < sorted.length ? "," : ""));
-  }
-  const block = `const NBA_PLAYERS = [\n${lines.join("\n")}\n];`;
-  const current = await fs.readFile(APP_JSX_PATH, "utf8");
-  const updated = current.replace(/const NBA_PLAYERS = \[[\s\S]*?\];/, block);
-  await fs.writeFile(APP_JSX_PATH, updated);
+async function writePlayersJson(merged) {
+  const sorted = Object.fromEntries(
+    Object.entries(merged).sort(([a], [b]) => a.localeCompare(b))
+  );
+  await fs.writeFile(PLAYERS_JSON_PATH, JSON.stringify(sorted, null, 2) + "\n");
 }
 
 async function main() {
@@ -274,9 +233,8 @@ async function main() {
     await sleep(120);
   }
 
-  console.log(`\n[5/5] writing player-ids.js + App.jsx...`);
-  await writePlayerIds(merged);
-  await patchAppJsx(Object.keys(merged));
+  console.log(`\n[5/5] writing data/players.json...`);
+  await writePlayersJson(merged);
 
   console.log("\n=== ADDED ===");
   for (const a of newAdds.sort((x, y) => x.name.localeCompare(y.name))) {

@@ -1,52 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
+import playersData from "../data/players.json";
 
-const NBA_PLAYERS = [
-  "A.J. Lawson", "Aaron Gordon", "Aaron Holiday", "Aaron Wiggins",
-  "Adem Bona", "Ajay Mitchell", "Alex Caruso", "Alperen Sengun",
-  "Amen Thompson", "Andre Drummond", "Anthony Black", "Anthony Davis",
-  "Anthony Edwards", "Ausar Thompson", "Ayo Dosunmu", "Bam Adebayo",
-  "Baylor Scheierman", "Bones Hyland", "Brandon Ingram", "Bronny James",
-  "Bruce Brown", "CJ McCollum", "Cade Cunningham", "Cameron Johnson",
-  "Caris LeVert", "Carter Bryant", "Cason Wallace", "Chet Holmgren",
-  "Christian Braun", "Clint Capela", "Collin Gillespie", "Collin Murray-Boyles",
-  "Corey Kispert", "Damian Lillard", "Daniss Jenkins", "Darius Garland",
-  "De'Aaron Fox", "DeMar DeRozan", "Dean Wade", "Deandre Ayton",
-  "Deni Avdija", "Dennis Schroder", "Derrick White", "Desmond Bane",
-  "Devin Booker", "Devin Vassell", "Dillon Brooks", "Dominick Barlow",
-  "Donovan Clingan", "Donovan Mitchell", "Donte DiVincenzo", "Dorian Finney-Smith",
-  "Duncan Robinson", "Dylan Harper", "Dyson Daniels", "Evan Mobley",
-  "Franz Wagner", "Fred VanVleet", "Gabe Vincent", "Giannis Antetokounmpo",
-  "Goga Bitadze", "Grayson Allen", "Harrison Barnes", "Isaiah Hartenstein",
-  "Isaiah Joe", "Isaiah Stewart", "Ja'Kobe Walter", "Jabari Smith Jr.",
-  "Jaden McDaniels", "Jae'Sean Tate", "Jake LaRavia", "Jakob Poeltl",
-  "Jalen Brunson", "Jalen Duren", "Jalen Green", "Jalen Johnson",
-  "Jalen Suggs", "Jalen Williams", "Jamal Cain", "Jamal Murray",
-  "Jamal Shead", "James Harden", "Jamison Battle", "Jared McCain",
-  "Jarred Vanderbilt", "Jarrett Allen", "Javonte Green", "Jaxson Hayes",
-  "Jaylen Brown", "Jaylen Clark", "Jaylin Williams", "Jaylon Tyson",
-  "Jayson Tatum", "Jerami Grant", "Jimmy Butler", "Joel Embiid",
-  "Jonas Valanciunas", "Jonathan Kuminga", "Jordan Clarkson", "Jordan Walsh",
-  "Jose Alvarado", "Josh Hart", "Josh Okogie", "Jrue Holiday",
-  "Julian Champagnie", "Julian Strawther", "Julius Randle", "Justin Edwards",
-  "Karl-Anthony Towns", "Keldon Johnson", "Kelly Oubre Jr.", "Keon Ellis",
-  "Kevin Durant", "Kevin Huerter", "Khaman Maluach", "Kris Murray",
-  "Kyle Anderson", "LaMelo Ball", "Landry Shamet", "LeBron James",
-  "Luguentz Dort", "Luka Doncic", "Luka Garza", "Luke Kennard",
-  "Luke Kornet", "Marcus Smart", "Matisse Thybulle", "Max Strus",
-  "Mikal Bridges", "Mike Conley", "Miles McBride", "Mitchell Robinson",
-  "Mouhamed Gueye", "Naz Reid", "Neemias Queta", "Nickeil Alexander-Walker",
-  "Nikola Jokic", "Nikola Vucevic", "OG Anunoby", "Onyeka Okongwu",
-  "Oso Ighodaro", "Paolo Banchero", "Paul George", "Payton Pritchard",
-  "Quentin Grimes", "RJ Barrett", "Reed Sheppard", "Robert Williams III",
-  "Ronald Holland II", "Royce O'Neale", "Rudy Gobert", "Rui Hachimura",
-  "Ryan Dunn", "Sam Hauser", "Sam Merrill", "Sandro Mamukelashvili",
-  "Scoot Henderson", "Scottie Barnes", "Shaedon Sharpe", "Shai Gilgeous-Alexander",
-  "Spencer Jones", "Stephen Curry", "Stephon Castle", "Tari Eason",
-  "Terrence Shannon Jr.", "Tim Hardaway Jr.", "Tobias Harris", "Tony Bradley",
-  "Toumani Camara", "Trae Young", "Tristan da Silva", "Tyler Herro",
-  "Tyrese Haliburton", "Tyrese Maxey", "Tyus Jones", "VJ Edgecombe",
-  "Victor Wembanyama", "Wendell Carter Jr.", "Zach LaVine", "Zeke Nnaji"
-];
+const NBA_PLAYERS = Object.keys(playersData);
 
 const PROP_TYPES = [
   "Points OVER", "Points UNDER",
@@ -72,6 +27,20 @@ const VERDICT_CONFIG = {
 };
 
 const SORTED_PLAYERS = [...NBA_PLAYERS].sort();
+
+const selectStyle = {
+  background: "#0a1420",
+  color: "#c8d8e8",
+  border: "1px solid #1e3040",
+  padding: "10px 12px",
+  fontFamily: "'Courier New', monospace",
+  fontSize: 12,
+  flex: 1,
+  minWidth: 180,
+  appearance: "none",
+  cursor: "pointer",
+  outline: "none",
+};
 
 export default function App() {
   const [player, setPlayer] = useState("");
@@ -519,32 +488,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Footer */}
-        <div style={{
-          marginTop: 32,
-          paddingTop: 12,
-          borderTop: "1px solid #0e1f2a",
-          fontSize: 10,
-          color: "#223344",
-          letterSpacing: 1,
-        }}>
-          MODEL RECORD (tracked): 14–6 OVER · 0–0 UNDER · PLAYOFF TRACKING BEGINS v3.3
-        </div>
       </div>
     </div>
   );
 }
-
-const selectStyle = {
-  background: "#0a1420",
-  color: "#c8d8e8",
-  border: "1px solid #1e3040",
-  padding: "10px 12px",
-  fontFamily: "'Courier New', monospace",
-  fontSize: 12,
-  flex: 1,
-  minWidth: 180,
-  appearance: "none",
-  cursor: "pointer",
-  outline: "none",
-};

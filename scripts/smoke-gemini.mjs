@@ -2,34 +2,13 @@
 // Loads GOOGLE_API_KEY from .env.local automatically.
 // Usage: node scripts/smoke-gemini.mjs ["Player"] ["Prop"] [line]
 
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import {
   gatherGroundTruth,
   buildPrompt,
   propTypeToField,
 } from "../api/analyze.js";
 import { MODEL_FRAMEWORK } from "../api/lib/framework.js";
-
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-
-function loadEnvLocal() {
-  const file = path.join(ROOT, ".env.local");
-  if (!fs.existsSync(file)) return;
-  for (const raw of fs.readFileSync(file, "utf8").split(/\r?\n/)) {
-    const line = raw.trim();
-    if (!line || line.startsWith("#")) continue;
-    const eq = line.indexOf("=");
-    if (eq === -1) continue;
-    const k = line.slice(0, eq).trim();
-    let v = line.slice(eq + 1).trim();
-    if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
-      v = v.slice(1, -1);
-    }
-    if (!(k in process.env)) process.env[k] = v;
-  }
-}
+import { loadEnvLocal } from "./_env.mjs";
 
 loadEnvLocal();
 const apiKey = process.env.GOOGLE_API_KEY || process.env.VITE_GOOGLE_API_KEY;
