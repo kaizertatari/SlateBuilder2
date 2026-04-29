@@ -17,6 +17,7 @@ import {
 } from "./lib/espn.js";
 import { composeGroundTruth } from "./lib/ground-truth.js";
 import { MODEL_FRAMEWORK } from "./lib/framework.js";
+import { rateLimit } from "./lib/rate-limit.js";
 
 export const runtime = "nodejs";
 
@@ -97,6 +98,15 @@ export async function gatherGroundTruth({ player, propType, line }) {
 
 export async function POST(req) {
   try {
+    const ip = (req.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim();
+    const limit = rateLimit(`analyze:${ip}`, { windowMs: 60_000, max: 10 });
+    if (!limit.ok) {
+      return Response.json(
+        { error: "Rate limit exceeded. Try again shortly." },
+        { status: 429, headers: { "Retry-After": String(Math.ceil(limit.retryAfterMs / 1000)) } }
+      );
+    }
+
     const body = await req.json();
     const { player, propType, line } = body;
 
