@@ -9,7 +9,8 @@ const CORE = "https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba"
 const SITE = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba";
 
 const TTL_SCOREBOARD_MS = 60_000;
-const TTL_INJURIES_MS = 120_000;
+const TTL_INJURIES_FRESH_MS = 120_000;
+const TTL_INJURIES_STALE_MS = 600_000;
 
 async function jsonFetch(url) {
   try {
@@ -196,19 +197,20 @@ function normalizeInjury(entry) {
 }
 
 export async function getAllInjuries() {
-  const cacheKey = "injuries:all";
-  const cached = cache.get(cacheKey);
-  if (cached) return cached;
-  const data = await jsonFetch(`${SITE}/injuries`);
-  if (!data) return null;
-  const groups = data.injuries || [];
-  const normalized = groups.map((g) => ({
-    team_id: String(g.id),
-    team_name: g.displayName,
-    injuries: (g.injuries || []).map(normalizeInjury),
-  }));
-  cache.set(cacheKey, normalized, TTL_INJURIES_MS);
-  return normalized;
+  return cache.swr(
+    "injuries:all",
+    async () => {
+      const data = await jsonFetch(`${SITE}/injuries`);
+      if (!data) return null;
+      const groups = data.injuries || [];
+      return groups.map((g) => ({
+        team_id: String(g.id),
+        team_name: g.displayName,
+        injuries: (g.injuries || []).map(normalizeInjury),
+      }));
+    },
+    { freshTtlMs: TTL_INJURIES_FRESH_MS, staleTtlMs: TTL_INJURIES_STALE_MS }
+  );
 }
 
 export async function getTeamInjuries(teamId) {
