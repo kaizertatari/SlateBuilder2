@@ -12,9 +12,12 @@ const TTL_SCOREBOARD_MS = 60_000;
 const TTL_INJURIES_FRESH_MS = 120_000;
 const TTL_INJURIES_STALE_MS = 600_000;
 
+// 8s upstream timeout. Bounds inflight SWR promise lifetime — without it, a
+// hung connection would pin the inflight entry past the stale window and
+// cold callers would await a dead promise.
 async function jsonFetch(url) {
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (!res.ok) {
       console.error(`espn ${url} ${res.status}`);
       return null;
