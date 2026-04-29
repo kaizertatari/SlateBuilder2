@@ -2,9 +2,14 @@
 // Used for game schedule, win probability, and injury reports — fields that
 // stats.nba.com doesn't expose cleanly.
 
+import * as cache from "./cache.js";
+
 const SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard";
 const CORE = "https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba";
 const SITE = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba";
+
+const TTL_SCOREBOARD_MS = 60_000;
+const TTL_INJURIES_MS = 120_000;
 
 async function jsonFetch(url) {
   try {
@@ -51,10 +56,15 @@ function parseEvent(event) {
 
 export async function getTodaysGames(date) {
   // date: optional "YYYYMMDD"
+  const cacheKey = `scoreboard:${date ?? "today"}`;
+  const cached = cache.get(cacheKey);
+  if (cached) return cached;
   const url = date ? `${SCOREBOARD}?dates=${date}` : SCOREBOARD;
   const data = await jsonFetch(url);
   if (!data) return null;
-  return (data.events || []).map(parseEvent).filter(Boolean);
+  const events = (data.events || []).map(parseEvent).filter(Boolean);
+  cache.set(cacheKey, events, TTL_SCOREBOARD_MS);
+  return events;
 }
 
 // stats.nba.com and ESPN disagree on a handful of team abbreviations. Normalise
@@ -91,16 +101,25 @@ function formatYYYYMMDD(d) {
   return `${y}${m}${day}`;
 }
 
-// Walks the scoreboard day-by-day until it finds the team's next scheduled
-// game. Returns { game, days_out } or null if nothing within `daysAhead`.
+// Fetches the next `daysAhead` scoreboards in parallel, then picks the
+// smallest days_out match. Returns { game, days_out } or null. The serial
+// version's worst case was ~8s on cold days; parallel is bounded by ESPN's
+// slowest single-day response (~1-2s). Cached scoreboard hits become free.
 export async function findNextGameForTeamAbbr(abbr, daysAhead = 7) {
   if (!abbr) return null;
   const upper = toEspnAbbr(abbr);
   const today = new Date();
-  for (let i = 0; i <= daysAhead; i++) {
-    const d = new Date(today);
-    d.setUTCDate(today.getUTCDate() + i);
-    const games = await getTodaysGames(formatYYYYMMDD(d));
+
+  const dayResults = await Promise.all(
+    Array.from({ length: daysAhead + 1 }, (_, i) => {
+      const d = new Date(today);
+      d.setUTCDate(today.getUTCDate() + i);
+      return getTodaysGames(formatYYYYMMDD(d));
+    })
+  );
+
+  for (let i = 0; i < dayResults.length; i++) {
+    const games = dayResults[i];
     if (!games?.length) continue;
     const found = games.find(
       (g) => g.home.abbr === upper || g.away.abbr === upper
@@ -177,14 +196,19 @@ function normalizeInjury(entry) {
 }
 
 export async function getAllInjuries() {
+  const cacheKey = "injuries:all";
+  const cached = cache.get(cacheKey);
+  if (cached) return cached;
   const data = await jsonFetch(`${SITE}/injuries`);
   if (!data) return null;
   const groups = data.injuries || [];
-  return groups.map((g) => ({
+  const normalized = groups.map((g) => ({
     team_id: String(g.id),
     team_name: g.displayName,
     injuries: (g.injuries || []).map(normalizeInjury),
   }));
+  cache.set(cacheKey, normalized, TTL_INJURIES_MS);
+  return normalized;
 }
 
 export async function getTeamInjuries(teamId) {
