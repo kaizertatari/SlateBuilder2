@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "refresh-players": "node scripts/refresh-playoff-players.mjs"
+    "refresh-players": "node scripts/refresh-playoff-players.mjs",
+    "refresh-team-defense": "node scripts/refresh-team-defense.mjs"
   },
   "dependencies": {
     "react": "^19.2.5",

@@ -17,6 +17,7 @@ export function composeGroundTruth({
   splits,        // Home/Away splits (regular season)
   winProb,       // ESPN predictor result
   allInjuries,   // ESPN league-wide injury list
+  opponentDefense, // { def_rating, def_rank, source } | null
 }) {
   const playerAbbr = info?.team_abbr ?? null;
   const playerEspnAbbr = toEspnAbbr(playerAbbr);
@@ -98,6 +99,7 @@ export function composeGroundTruth({
     player_recent: {
       is_listed_injured: isListedInjured,
     },
+    opponent_defense: opponentDefense ?? null,
     series,
   };
 

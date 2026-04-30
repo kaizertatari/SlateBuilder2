@@ -8,12 +8,14 @@ import {
 } from "./lib/nba-stats.js";
 import * as bdl from "./lib/balldontlie.js";
 import * as espnStats from "./lib/espn-stats.js";
+import { getOpponentDefense } from "./lib/team-defense.js";
 import {
   getTodaysGames,
   findGameForTeamAbbr,
   findNextGameForTeamAbbr,
   getWinProbability,
   getAllInjuries,
+  opponentFor,
 } from "./lib/espn.js";
 import { composeGroundTruth } from "./lib/ground-truth.js";
 import { MODEL_FRAMEWORK } from "./lib/framework.js";
@@ -79,20 +81,22 @@ export async function gatherGroundTruth({ player, propType, line }) {
     if (!l5 || !l5.games?.length) l5 = await espnStats.getLastNGames(espnId, 5, { season, postseason: false });
   }
 
-  // Splits are regular-season only — playoff samples are too small (5–28 games)
-  // to be load-bearing for road deduction (Rule 5a). Regular-season home/road
-  // averages are the stable baseline.
-  const [nbaSeasonAvg, splits, winProb] = await Promise.all([
+  // Splits and opponent defense use regular season — playoff samples are too
+  // small (5–28 games) to be a stable baseline. Same logic as Rule 5a road
+  // deduction.
+  const opponentSide = opponentFor(game, info.team_abbr);
+  const [nbaSeasonAvg, splits, winProb, opponentDefense] = await Promise.all([
     getSeasonAverages(playerId, { seasonType: "Regular Season" }),
     getHomeAwaySplits(playerId, { seasonType: "Regular Season" }),
     getWinProbability(game.game_id, game.competition_id),
+    opponentSide ? getOpponentDefense(opponentSide.abbr, { seasonType: "Regular Season" }) : null,
   ]);
   const seasonAvg = nbaSeasonAvg ?? await espnStats.getSeasonAverages(espnId, { season });
 
   const { groundTruth, missing } = composeGroundTruth({
     player, propType, line,
     info, game, daysOut, seasonType,
-    seasonAvg, l5, splits, winProb, allInjuries,
+    seasonAvg, l5, splits, winProb, allInjuries, opponentDefense,
   });
 
   return { groundTruth, missing };
@@ -225,6 +229,7 @@ WHERE TO FIND VALUES (path → meaning):
 - groundTruth.win_prob.player_team_pct                                                        → 0-1 float (multiply by 100 for the % the framework uses)
 - groundTruth.injuries.player_team / opponent                                                 → {player,status,detail,date}[] (used for role compression / matchup ceiling)
 - groundTruth.player_recent.is_listed_injured                                                 → boolean — TRUE means post-injury return gate (Section 6) applies
+- groundTruth.opponent_defense                                                                → {def_rating, def_rank (1-30, 1=best), source}; null only when both live and snapshot fail. Use to satisfy Rule 5h (no cap when present) and Rule 3 matchup ceiling (top-5 = def_rank<=5).
 - groundTruth.series                                                                          → playoff series state {games_played, player_team_wins, opponent_wins, next_game_number, series_record, series_summary, round, source}; null in regular season
 
 For this prop ("${groundTruth.prop_type}" line ${groundTruth.line}), the relevant averages field is "${field ?? "(unknown — output SKIP)"}". Use season.averages.${field ?? "?"} and l5.averages.${field ?? "?"} as the baselines.

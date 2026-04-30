@@ -83,10 +83,20 @@ const NBA_TO_ESPN_ABBR = {
   WAS: "WSH",
 };
 
+const ESPN_TO_NBA_ABBR = Object.fromEntries(
+  Object.entries(NBA_TO_ESPN_ABBR).map(([nba, espn]) => [espn, nba])
+);
+
 export function toEspnAbbr(abbr) {
   if (!abbr) return null;
   const upper = abbr.toUpperCase();
   return NBA_TO_ESPN_ABBR[upper] || upper;
+}
+
+export function toNbaAbbr(abbr) {
+  if (!abbr) return null;
+  const upper = abbr.toUpperCase();
+  return ESPN_TO_NBA_ABBR[upper] || upper;
 }
 
 export function findGameForTeamAbbr(games, abbr) {

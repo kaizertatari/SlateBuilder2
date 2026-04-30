@@ -1,0 +1,286 @@
+{
+  "season": "2025-26",
+  "fetched_at": "2026-04-30T06:05:18.785Z",
+  "seasons": {
+    "Regular Season": {
+      "OKC": {
+        "team_id": 1610612760,
+        "team_name": "Oklahoma City Thunder",
+        "def_rating": 106.5,
+        "def_rank": 1
+      },
+      "DET": {
+        "team_id": 1610612765,
+        "team_name": "Detroit Pistons",
+        "def_rating": 108.9,
+        "def_rank": 2
+      },
+      "SAS": {
+        "team_id": 1610612759,
+        "team_name": "San Antonio Spurs",
+        "def_rating": 110.4,
+        "def_rank": 3
+      },
+      "BOS": {
+        "team_id": 1610612738,
+        "team_name": "Boston Celtics",
+        "def_rating": 111.7,
+        "def_rank": 4
+      },
+      "HOU": {
+        "team_id": 1610612745,
+        "team_name": "Houston Rockets",
+        "def_rating": 112.1,
+        "def_rank": 5
+      },
+      "TOR": {
+        "team_id": 1610612761,
+        "team_name": "Toronto Raptors",
+        "def_rating": 112.1,
+        "def_rank": 6
+      },
+      "NYK": {
+        "team_id": 1610612752,
+        "team_name": "New York Knicks",
+        "def_rating": 112.3,
+        "def_rank": 7
+      },
+      "MIN": {
+        "team_id": 1610612750,
+        "team_name": "Minnesota Timberwolves",
+        "def_rating": 112.5,
+        "def_rank": 8
+      },
+      "ATL": {
+        "team_id": 1610612737,
+        "team_name": "Atlanta Hawks",
+        "def_rating": 112.9,
+        "def_rank": 9
+      },
+      "PHX": {
+        "team_id": 1610612756,
+        "team_name": "Phoenix Suns",
+        "def_rating": 112.9,
+        "def_rank": 10
+      },
+      "CHA": {
+        "team_id": 1610612766,
+        "team_name": "Charlotte Hornets",
+        "def_rating": 113.5,
+        "def_rank": 11
+      },
+      "POR": {
+        "team_id": 1610612757,
+        "team_name": "Portland Trail Blazers",
+        "def_rating": 113.5,
+        "def_rank": 12
+      },
+      "MIA": {
+        "team_id": 1610612748,
+        "team_name": "Miami Heat",
+        "def_rating": 113.6,
+        "def_rank": 13
+      },
+      "ORL": {
+        "team_id": 1610612753,
+        "team_name": "Orlando Magic",
+        "def_rating": 113.6,
+        "def_rank": 14
+      },
+      "CLE": {
+        "team_id": 1610612739,
+        "team_name": "Cleveland Cavaliers",
+        "def_rating": 114.1,
+        "def_rank": 15
+      },
+      "GSW": {
+        "team_id": 1610612744,
+        "team_name": "Golden State Warriors",
+        "def_rating": 114.4,
+        "def_rank": 16
+      },
+      "PHI": {
+        "team_id": 1610612755,
+        "team_name": "Philadelphia 76ers",
+        "def_rating": 114.4,
+        "def_rank": 17
+      },
+      "LAC": {
+        "team_id": 1610612746,
+        "team_name": "LA Clippers",
+        "def_rating": 115.2,
+        "def_rank": 18
+      },
+      "DAL": {
+        "team_id": 1610612742,
+        "team_name": "Dallas Mavericks",
+        "def_rating": 115.5,
+        "def_rank": 19
+      },
+      "LAL": {
+        "team_id": 1610612747,
+        "team_name": "Los Angeles Lakers",
+        "def_rating": 115.5,
+        "def_rank": 20
+      },
+      "DEN": {
+        "team_id": 1610612743,
+        "team_name": "Denver Nuggets",
+        "def_rating": 116,
+        "def_rank": 21
+      },
+      "CHI": {
+        "team_id": 1610612741,
+        "team_name": "Chicago Bulls",
+        "def_rating": 117.4,
+        "def_rank": 22
+      },
+      "NOP": {
+        "team_id": 1610612740,
+        "team_name": "New Orleans Pelicans",
+        "def_rating": 117.6,
+        "def_rank": 23
+      },
+      "IND": {
+        "team_id": 1610612754,
+        "team_name": "Indiana Pacers",
+        "def_rating": 117.9,
+        "def_rank": 24
+      },
+      "BKN": {
+        "team_id": 1610612751,
+        "team_name": "Brooklyn Nets",
+        "def_rating": 118.2,
+        "def_rank": 25
+      },
+      "MIL": {
+        "team_id": 1610612749,
+        "team_name": "Milwaukee Bucks",
+        "def_rating": 118.3,
+        "def_rank": 26
+      },
+      "MEM": {
+        "team_id": 1610612763,
+        "team_name": "Memphis Grizzlies",
+        "def_rating": 118.4,
+        "def_rank": 27
+      },
+      "SAC": {
+        "team_id": 1610612758,
+        "team_name": "Sacramento Kings",
+        "def_rating": 120.3,
+        "def_rank": 28
+      },
+      "UTA": {
+        "team_id": 1610612762,
+        "team_name": "Utah Jazz",
+        "def_rating": 120.8,
+        "def_rank": 29
+      },
+      "WAS": {
+        "team_id": 1610612764,
+        "team_name": "Washington Wizards",
+        "def_rating": 121.5,
+        "def_rank": 30
+      }
+    },
+    "Playoffs": {
+      "SAS": {
+        "team_id": 1610612759,
+        "team_name": "San Antonio Spurs",
+        "def_rating": 102.2,
+        "def_rank": 1
+      },
+      "DET": {
+        "team_id": 1610612765,
+        "team_name": "Detroit Pistons",
+        "def_rating": 104.1,
+        "def_rank": 2
+      },
+      "ORL": {
+        "team_id": 1610612753,
+        "team_name": "Orlando Magic",
+        "def_rating": 104.3,
+        "def_rank": 3
+      },
+      "NYK": {
+        "team_id": 1610612752,
+        "team_name": "New York Knicks",
+        "def_rating": 106.9,
+        "def_rank": 4
+      },
+      "HOU": {
+        "team_id": 1610612745,
+        "team_name": "Houston Rockets",
+        "def_rating": 107.6,
+        "def_rank": 5
+      },
+      "MIN": {
+        "team_id": 1610612750,
+        "team_name": "Minnesota Timberwolves",
+        "def_rating": 108.7,
+        "def_rank": 6
+      },
+      "OKC": {
+        "team_id": 1610612760,
+        "team_name": "Oklahoma City Thunder",
+        "def_rating": 109,
+        "def_rank": 7
+      },
+      "LAL": {
+        "team_id": 1610612747,
+        "team_name": "Los Angeles Lakers",
+        "def_rating": 109.4,
+        "def_rank": 8
+      },
+      "BOS": {
+        "team_id": 1610612738,
+        "team_name": "Boston Celtics",
+        "def_rating": 110.6,
+        "def_rank": 9
+      },
+      "DEN": {
+        "team_id": 1610612743,
+        "team_name": "Denver Nuggets",
+        "def_rating": 111.7,
+        "def_rank": 10
+      },
+      "TOR": {
+        "team_id": 1610612761,
+        "team_name": "Toronto Raptors",
+        "def_rating": 113.4,
+        "def_rank": 11
+      },
+      "CLE": {
+        "team_id": 1610612739,
+        "team_name": "Cleveland Cavaliers",
+        "def_rating": 113.7,
+        "def_rank": 12
+      },
+      "POR": {
+        "team_id": 1610612757,
+        "team_name": "Portland Trail Blazers",
+        "def_rating": 116.6,
+        "def_rank": 13
+      },
+      "ATL": {
+        "team_id": 1610612737,
+        "team_name": "Atlanta Hawks",
+        "def_rating": 117.9,
+        "def_rank": 14
+      },
+      "PHI": {
+        "team_id": 1610612755,
+        "team_name": "Philadelphia 76ers",
+        "def_rating": 119.7,
+        "def_rank": 15
+      },
+      "PHX": {
+        "team_id": 1610612756,
+        "team_name": "Phoenix Suns",
+        "def_rating": 126.9,
+        "def_rank": 16
+      }
+    }
+  }
+}
