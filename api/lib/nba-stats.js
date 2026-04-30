@@ -2,6 +2,8 @@
 // NBA stats edge — every helper returns null on failure so the orchestrator
 // can surface a missing-data SKIP rather than crash.
 
+import { logPrefix } from "./request-context.js";
+
 const BASE = "https://stats.nba.com/stats";
 
 const HEADERS = {
@@ -41,12 +43,12 @@ async function nbaFetch(endpoint, params) {
       signal: AbortSignal.timeout(NBA_FETCH_TIMEOUT_MS),
     });
     if (!res.ok) {
-      console.error(`stats.nba.com ${endpoint} ${res.status}`);
+      console.error(`${logPrefix()}stats.nba.com ${endpoint} ${res.status}`);
       return null;
     }
     return await res.json();
   } catch (err) {
-    console.error(`stats.nba.com ${endpoint} threw:`, err.message);
+    console.error(`${logPrefix()}stats.nba.com ${endpoint} threw:`, err.message);
     return null;
   }
 }

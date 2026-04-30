@@ -18,6 +18,8 @@ import {
 import { composeGroundTruth } from "./lib/ground-truth.js";
 import { MODEL_FRAMEWORK } from "./lib/framework.js";
 import { rateLimit } from "./lib/rate-limit.js";
+import { runWithRequestContext } from "./lib/request-context.js";
+import { randomUUID } from "node:crypto";
 
 export const runtime = "nodejs";
 
@@ -97,6 +99,11 @@ export async function gatherGroundTruth({ player, propType, line }) {
 }
 
 export async function POST(req) {
+  const reqId = randomUUID().slice(0, 8);
+  return runWithRequestContext({ reqId }, () => handlePost(req));
+}
+
+async function handlePost(req) {
   try {
     const ip = (req.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim();
     const limit = rateLimit(`analyze:${ip}`, { windowMs: 60_000, max: 10 });
@@ -143,7 +150,7 @@ export async function POST(req) {
       });
     }
 
-    const googleKey = process.env.GOOGLE_API_KEY || process.env.VITE_GOOGLE_API_KEY;
+    const googleKey = process.env.GOOGLE_API_KEY;
     if (!googleKey) {
       return Response.json({ error: "Google API key not configured" }, { status: 500 });
     }
@@ -321,9 +328,48 @@ async function geminiAttempt(apiKey, prompt, model) {
     };
   }
 
+  let parsed;
   try {
-    return { json: JSON.parse(jsonStr) };
+    parsed = JSON.parse(jsonStr);
   } catch (e) {
     return { error: `JSON parse failed: ${e.message} (finishReason: ${finishReason})`, debug: jsonStr.slice(0, 800) };
   }
+
+  const invalid = validateGeminiOutput(parsed);
+  if (invalid) {
+    return {
+      error: `Gemini output failed schema validation: ${invalid}`,
+      retryable: false,
+      debug: jsonStr.slice(0, 800),
+    };
+  }
+  return { json: parsed };
+}
+
+const VALID_VERDICTS = new Set(["OVER", "UNDER", "SKIP"]);
+const VALID_TIERS = new Set(["S", "A", "B", "SKIP"]);
+
+function validateGeminiOutput(o) {
+  if (!o || typeof o !== "object" || Array.isArray(o)) return "not an object";
+  if (!VALID_VERDICTS.has(o.verdict)) return `verdict "${o.verdict}" not in {OVER,UNDER,SKIP}`;
+  if (!VALID_TIERS.has(o.tier)) return `tier "${o.tier}" not in {S,A,B,SKIP}`;
+  if (!Number.isInteger(o.confidence) || o.confidence < 0 || o.confidence > 100) {
+    return `confidence ${o.confidence} not integer 0..100`;
+  }
+  if (typeof o.justification !== "string" || o.justification.trim() === "") {
+    return "justification missing or empty";
+  }
+  if (!Array.isArray(o.flags) || o.flags.some((f) => typeof f !== "string")) {
+    return "flags not an array of strings";
+  }
+  if (o.verdict === "SKIP") {
+    if (o.data_used != null && (typeof o.data_used !== "object" || Array.isArray(o.data_used))) {
+      return "data_used must be object or null on SKIP";
+    }
+  } else {
+    if (!o.data_used || typeof o.data_used !== "object" || Array.isArray(o.data_used)) {
+      return "data_used required object on non-SKIP verdict";
+    }
+  }
+  return null;
 }

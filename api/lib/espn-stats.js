@@ -6,6 +6,8 @@
 // Endpoint: site.web.api.espn.com/.../athletes/{id}/gamelog?season={endYear}
 // where season is the END year of the season label, e.g. 2026 for "2025-26".
 
+import { logPrefix } from "./request-context.js";
+
 const GAMELOG = "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes";
 
 // Statistic positions in event.stats[] are defined by the response's `names`
@@ -81,14 +83,14 @@ function fmtDate(iso) {
 async function fetchGamelog(athleteId, endYear) {
   const url = `${GAMELOG}/${athleteId}/gamelog?season=${endYear}`;
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (!res.ok) {
-      console.error(`espn gamelog ${athleteId} ${res.status}`);
+      console.error(`${logPrefix()}espn gamelog ${athleteId} ${res.status}`);
       return null;
     }
     return await res.json();
   } catch (err) {
-    console.error(`espn gamelog ${athleteId} threw:`, err.message);
+    console.error(`${logPrefix()}espn gamelog ${athleteId} threw:`, err.message);
     return null;
   }
 }
@@ -104,6 +106,43 @@ function flatEvents(bucket) {
   return bucket.categories.flatMap((c) => c.events ?? []).filter((e) => Array.isArray(e.stats));
 }
 
+// ESPN's gamelog response carries a column-name array on the season-type
+// bucket (or per category). If they ever reorder or insert a column, the
+// hard-coded IDX positions silently produce wrong averages. Validate the
+// layout matches expectations before trusting parseStatsRow output.
+const EXPECTED_LABELS = [
+  "MIN", "FG", "FG%", "3PT", "3P%", "FT", "FT%",
+  "REB", "AST", "BLK", "STL", "PF", "TO", "PTS",
+];
+
+function findLabels(bucket) {
+  if (!bucket) return null;
+  if (Array.isArray(bucket.labels) && bucket.labels.length) return bucket.labels;
+  if (Array.isArray(bucket.names) && bucket.names.length) return bucket.names;
+  if (Array.isArray(bucket.displayNames) && bucket.displayNames.length) return bucket.displayNames;
+  for (const c of bucket.categories ?? []) {
+    if (Array.isArray(c.labels) && c.labels.length) return c.labels;
+    if (Array.isArray(c.names) && c.names.length) return c.names;
+  }
+  return null;
+}
+
+function bucketLayoutOk(bucket) {
+  const labels = findLabels(bucket);
+  if (!labels) return true; // absent — happy path, IDX assumed
+  if (labels.length < EXPECTED_LABELS.length) {
+    console.error(`${logPrefix()}espn gamelog layout diverged: expected >=${EXPECTED_LABELS.length} cols, got ${labels.length}`);
+    return false;
+  }
+  for (let i = 0; i < EXPECTED_LABELS.length; i++) {
+    if (String(labels[i]).toUpperCase() !== EXPECTED_LABELS[i]) {
+      console.error(`${logPrefix()}espn gamelog layout diverged at col ${i}: expected "${EXPECTED_LABELS[i]}", got "${labels[i]}"`);
+      return false;
+    }
+  }
+  return true;
+}
+
 export async function getSeasonAverages(athleteId, { season } = {}) {
   if (!athleteId) return null;
   const endYear = endYearFromSeasonLabel(season);
@@ -111,6 +150,7 @@ export async function getSeasonAverages(athleteId, { season } = {}) {
   const data = await fetchGamelog(athleteId, endYear);
   if (!data) return null;
   const bucket = findBucket(data.seasonTypes, false);
+  if (!bucketLayoutOk(bucket)) return null;
   const events = flatEvents(bucket);
   if (!events.length) return null;
   const rows = events.map((e) => parseStatsRow(e.stats));
@@ -142,6 +182,7 @@ export async function getLastNGames(athleteId, n = 5, { season, postseason = fal
   const data = await fetchGamelog(athleteId, endYear);
   if (!data) return null;
   const bucket = findBucket(data.seasonTypes, postseason);
+  if (!bucketLayoutOk(bucket)) return null;
   const events = flatEvents(bucket);
   if (!events.length) return null;
 

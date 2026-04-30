@@ -50,7 +50,7 @@ export function composeGroundTruth({
     : null;
 
   const groundTruth = {
-    player,
+    player: info?.full_name ?? player,
     prop_type: propType,
     line: Number(line),
     game: game ? {

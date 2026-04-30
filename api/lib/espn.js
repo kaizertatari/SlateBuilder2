@@ -3,6 +3,7 @@
 // stats.nba.com doesn't expose cleanly.
 
 import * as cache from "./cache.js";
+import { logPrefix } from "./request-context.js";
 
 const SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard";
 const CORE = "https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba";
@@ -19,12 +20,12 @@ async function jsonFetch(url) {
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (!res.ok) {
-      console.error(`espn ${url} ${res.status}`);
+      console.error(`${logPrefix()}espn ${url} ${res.status}`);
       return null;
     }
     return await res.json();
   } catch (err) {
-    console.error(`espn ${url} threw:`, err.message);
+    console.error(`${logPrefix()}espn ${url} threw:`, err.message);
     return null;
   }
 }

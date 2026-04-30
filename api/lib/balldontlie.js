@@ -4,6 +4,8 @@
 // Auth: header `Authorization: <key>` (no "Bearer" prefix).
 // Season convention: balldontlie uses the START year. 2025-26 → season=2025.
 
+import { logPrefix } from "./request-context.js";
+
 const BASE = "https://api.balldontlie.io/v1";
 
 let teamsCache = null;
@@ -17,7 +19,7 @@ function authHeader() {
 async function bdlFetch(path, params = {}) {
   const auth = authHeader();
   if (!auth) {
-    console.error("BALLDONTLIE_API_KEY not set");
+    console.error(`${logPrefix()}BALLDONTLIE_API_KEY not set`);
     return null;
   }
   const qs = new URLSearchParams();
@@ -27,14 +29,14 @@ async function bdlFetch(path, params = {}) {
   }
   const url = `${BASE}${path}${qs.toString() ? "?" + qs.toString() : ""}`;
   try {
-    const res = await fetch(url, { headers: auth });
+    const res = await fetch(url, { headers: auth, signal: AbortSignal.timeout(8000) });
     if (!res.ok) {
-      console.error(`balldontlie ${path} ${res.status}`);
+      console.error(`${logPrefix()}balldontlie ${path} ${res.status}`);
       return null;
     }
     return await res.json();
   } catch (err) {
-    console.error(`balldontlie ${path} threw:`, err.message);
+    console.error(`${logPrefix()}balldontlie ${path} threw:`, err.message);
     return null;
   }
 }

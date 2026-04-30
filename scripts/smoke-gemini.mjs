@@ -11,7 +11,7 @@ import { MODEL_FRAMEWORK } from "../api/lib/framework.js";
 import { loadEnvLocal } from "./_env.mjs";
 
 loadEnvLocal();
-const apiKey = process.env.GOOGLE_API_KEY || process.env.VITE_GOOGLE_API_KEY;
+const apiKey = process.env.GOOGLE_API_KEY;
 if (!apiKey) {
   console.error("GOOGLE_API_KEY not found in .env.local");
   process.exit(1);
@@ -49,7 +49,7 @@ const res = await fetch(
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: {
         temperature: 0,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 8192,
         responseMimeType: "application/json",
       },
     }),
