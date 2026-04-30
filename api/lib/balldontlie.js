@@ -69,19 +69,38 @@ async function getTeams() {
   return map;
 }
 
+// Generational suffixes. We search by *first* name when one is present
+// because the suffix implies a shared last name (e.g. Jabari Smith vs.
+// Jabari Smith Jr.), so first name is more discriminative.
+const SUFFIX_RE = /\s+(jr|sr|ii|iii|iv|v)\.?$/i;
+
+function normalize(s) {
+  return s.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").trim();
+}
+
+function normName(s) {
+  return normalize(s.replace(SUFFIX_RE, ""));
+}
+
 export async function findPlayer(name) {
   if (playerCache.has(name)) return playerCache.get(name);
-  const last = name.split(" ").slice(-1)[0];
-  const data = await bdlFetch("/players", { search: last, per_page: 25 });
+  const stripped = name.replace(SUFFIX_RE, "").trim();
+  const hasSuffix = stripped !== name.trim();
+  const parts = stripped.split(/\s+/).filter(Boolean);
+  const searchToken = hasSuffix ? parts[0] : parts[parts.length - 1];
+  const data = await bdlFetch("/players", { search: searchToken, per_page: 25 });
   if (!data?.data?.length) return null;
-  const lower = name.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
-  const norm = (s) => s.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
-  const exact = data.data.find(
-    (p) => norm(`${p.first_name} ${p.last_name}`) === lower
+  const fullLower = normalize(name);
+  // Tier 1: exact match with suffix preserved — disambiguates "Jabari Smith"
+  // (elder, drafted 2000) from "Jabari Smith Jr." (current Rockets).
+  const exactWithSuffix = data.data.find(
+    (p) => normalize(`${p.first_name} ${p.last_name}`) === fullLower
   );
-  const match = exact ?? data.data.find(
-    (p) => norm(p.last_name) === norm(last)
-  );
+  const target = normName(name);
+  const lastNorm = normName(parts[parts.length - 1]);
+  const match = exactWithSuffix ??
+    data.data.find((p) => normName(`${p.first_name} ${p.last_name}`) === target) ??
+    data.data.find((p) => normName(p.last_name) === lastNorm);
   if (!match) return null;
   const result = {
     id: match.id,
