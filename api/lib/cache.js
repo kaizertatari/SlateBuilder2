@@ -14,6 +14,8 @@
 // Only successful fetches should be cached — fetchers must return null on
 // failure so transient outages don't pin a stale value for the TTL window.
 
+import { logPrefix } from "./request-context.js";
+
 const store = new Map();
 const inflight = new Map();
 
@@ -71,8 +73,9 @@ export async function swr(key, fetcher, { freshTtlMs, staleTtlMs }) {
   }
 
   if (entry && entry.isStale) {
-    // Stale hit: don't await; just suppress unhandled-rejection noise.
-    refresh.catch(() => {});
+    // Stale hit: don't await, but log refresh failures so a degraded backend
+    // doesn't silently serve stale data for the entire stale window.
+    refresh.catch((err) => console.warn(`${logPrefix()}swr refresh failed for ${key}: ${err?.message}`));
     return entry.value;
   }
 

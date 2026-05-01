@@ -9,6 +9,7 @@
 import * as cache from "./cache.js";
 import { getLeagueTeamDefense, currentSeason } from "./nba-stats.js";
 import { toNbaAbbr } from "./espn.js";
+import { logPrefix } from "./request-context.js";
 import snapshot from "../../data/team-defense.json" with { type: "json" };
 
 const FRESH_TTL_MS = 6 * 60 * 60 * 1000;
@@ -59,5 +60,6 @@ export async function getOpponentDefense(opponentEspnAbbr, {
     };
   }
 
+  console.warn(`${logPrefix()}team-defense miss for ${nbaAbbr} (espn=${opponentEspnAbbr}); live and snapshot both empty`);
   return null;
 }

@@ -61,6 +61,12 @@ export async function gatherGroundTruth({ player, propType, line }) {
     };
   }
 
+  const trace = {
+    scoreboard: "espn",
+    injuries: allInjuries ? "espn" : "missing",
+    info: nbaInfo ? "nba_stats" : (info !== nbaInfo ? "balldontlie" : "missing"),
+  };
+
   let game = findGameForTeamAbbr(games, info.team_abbr);
   let daysOut = 0;
   if (!game) {
@@ -69,16 +75,18 @@ export async function gatherGroundTruth({ player, propType, line }) {
     game = next.game;
     daysOut = next.days_out;
   }
+  trace.game = daysOut === 0 ? "espn_today" : "espn_lookahead";
 
-  // Detect season type: playoffs first, then regular season. Each tier tries
-  // stats.nba.com then ESPN gamelog before giving up.
-  let seasonType = "Playoffs";
+  // Season type is decided by the ESPN scoreboard event, not by which gamelog
+  // tier returned data. Otherwise a transient playoff-tier failure would
+  // silently mislabel a playoff game as regular season.
+  const isPlayoff = !!(game.series || game.round);
+  const seasonType = isPlayoff ? "Playoffs" : "Regular Season";
   let l5 = await getLastNGames(playerId, 5, { seasonType });
-  if (!l5 || !l5.games?.length) l5 = await espnStats.getLastNGames(espnId, 5, { season, postseason: true });
-  if (!l5 || !l5.games?.length) {
-    seasonType = "Regular Season";
-    l5 = await getLastNGames(playerId, 5, { seasonType });
-    if (!l5 || !l5.games?.length) l5 = await espnStats.getLastNGames(espnId, 5, { season, postseason: false });
+  trace.l5 = l5?.games?.length ? "nba_stats" : null;
+  if (!trace.l5) {
+    l5 = await espnStats.getLastNGames(espnId, 5, { season, postseason: isPlayoff });
+    trace.l5 = l5?.games?.length ? "espn_gamelog" : "missing";
   }
 
   // Splits and opponent defense use regular season — playoff samples are too
@@ -91,7 +99,12 @@ export async function gatherGroundTruth({ player, propType, line }) {
     getWinProbability(game.game_id, game.competition_id),
     opponentSide ? getOpponentDefense(opponentSide.abbr, { seasonType: "Regular Season" }) : null,
   ]);
+  trace.splits = splits ? "nba_stats" : "missing";
+  trace.win_prob = winProb ? `espn_${winProb.source}` : "missing";
+  trace.opponent_defense = opponentDefense ? `team_defense_${opponentDefense.source}` : "missing";
+
   const seasonAvg = nbaSeasonAvg ?? await espnStats.getSeasonAverages(espnId, { season });
+  trace.season_avg = nbaSeasonAvg ? "nba_stats" : (seasonAvg ? "espn_gamelog" : "missing");
 
   const { groundTruth, missing } = composeGroundTruth({
     player, propType, line,
@@ -99,7 +112,7 @@ export async function gatherGroundTruth({ player, propType, line }) {
     seasonAvg, l5, splits, winProb, allInjuries, opponentDefense,
   });
 
-  return { groundTruth, missing };
+  return { groundTruth, missing, trace };
 }
 
 export async function POST(req) {
@@ -140,15 +153,18 @@ async function handlePost(req) {
       return Response.json(skipResult(gathered.skipReason, gathered.message));
     }
 
-    const { groundTruth, missing } = gathered;
+    const { groundTruth, missing, trace } = gathered;
 
     if (missing.length > 0) {
+      const traceFlags = Object.entries(trace || {})
+        .filter(([, v]) => v === "missing")
+        .map(([k]) => `📡 source: ${k} → all tiers null`);
       return Response.json({
         verdict: "SKIP",
         tier: "SKIP",
         confidence: 0,
         justification: `Missing required data: ${missing.join(", ")}. Cannot apply framework.`,
-        flags: missing.map((f) => `⚠️ missing: ${f}`),
+        flags: [...missing.map((f) => `⚠️ missing: ${f}`), ...traceFlags],
         data_used: null,
         ground_truth: groundTruth,
       });

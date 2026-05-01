@@ -100,10 +100,20 @@ export async function findPlayer(name) {
   );
   const target = normName(name);
   const lastNorm = normName(parts[parts.length - 1]);
-  const match = exactWithSuffix ??
-    data.data.find((p) => normName(`${p.first_name} ${p.last_name}`) === target) ??
-    data.data.find((p) => normName(p.last_name) === lastNorm);
+  const exactFull = data.data.find((p) => normName(`${p.first_name} ${p.last_name}`) === target);
+  // Tier 3: fuzzy match on last name + first initial. Prevents wrong-player
+  // hits on common surnames ("Tyrese Smith" → first random "Smith") while
+  // still resolving "Steph Curry" → "Stephen Curry".
+  const firstInitial = normalize(parts[0] ?? "").charAt(0);
+  const firstInitialMatch = firstInitial && data.data.find((p) =>
+    normName(p.last_name) === lastNorm &&
+    normalize(p.first_name).charAt(0) === firstInitial
+  );
+  const match = exactWithSuffix ?? exactFull ?? firstInitialMatch;
   if (!match) return null;
+  if (!exactWithSuffix && !exactFull && firstInitialMatch) {
+    console.warn(`${logPrefix()}balldontlie fuzzy match for "${name}" → "${firstInitialMatch.first_name} ${firstInitialMatch.last_name}"`);
+  }
   const result = {
     id: match.id,
     full_name: `${match.first_name} ${match.last_name}`,
