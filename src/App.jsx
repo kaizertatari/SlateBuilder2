@@ -3,15 +3,8 @@ import playersData from "../data/players.json";
 
 const NBA_PLAYERS = Object.keys(playersData);
 
-const PROP_TYPES = [
-  "Points OVER", "Points UNDER",
-  "Rebounds OVER", "Rebounds UNDER",
-  "Assists OVER", "Assists UNDER",
-  "PRA OVER", "PRA UNDER",
-  "PR OVER", "PR UNDER",
-  "PA OVER", "PA UNDER",
-  "3-Pointers Made OVER", "3-Pointers Made UNDER"
-];
+const STATS = ["Points", "Rebounds", "Assists", "PRA", "PR", "PA", "3-Pointers Made"];
+const DIRECTIONS = ["Over", "Under"];
 
 const TIER_CONFIG = {
   S: { color: "#FFD700", bg: "#2a2200", label: "S-TIER", glow: "0 0 20px #FFD70066" },
@@ -44,8 +37,10 @@ const selectStyle = {
 
 export default function App() {
   const [player, setPlayer] = useState("");
-  const [propType, setPropType] = useState("");
+  const [stat, setStat] = useState("");
+  const [direction, setDirection] = useState("");
   const [line, setLine] = useState("");
+  const propType = stat && direction ? `${stat} ${direction.toUpperCase()}` : "";
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
@@ -235,13 +230,24 @@ export default function App() {
             </div>
 
             <select
-              value={propType}
-              onChange={(e) => setPropType(e.target.value)}
+              value={stat}
+              onChange={(e) => setStat(e.target.value)}
               style={selectStyle}
             >
               <option value="">— SELECT PROP —</option>
-              {PROP_TYPES.map((p) => (
-                <option key={p} value={p}>{p}</option>
+              {STATS.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+
+            <select
+              value={direction}
+              onChange={(e) => setDirection(e.target.value)}
+              style={selectStyle}
+            >
+              <option value="">— OVER / UNDER —</option>
+              {DIRECTIONS.map((d) => (
+                <option key={d} value={d}>{d}</option>
               ))}
             </select>
           </div>
