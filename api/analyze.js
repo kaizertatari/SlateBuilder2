@@ -207,6 +207,7 @@ export const PROP_TO_FIELD = {
   PRA: "pra",
   PR: "pr",
   PA: "pa",
+  RA: "ra",
   "3-Pointers Made": "fg3m",
 };
 
@@ -226,7 +227,7 @@ export function buildPrompt(framework, groundTruth) {
 
 DATA RULES — non-negotiable:
 1. Use ONLY values from the GROUND TRUTH block below. Do NOT invent, estimate, recall from prior knowledge, or guess any number. Treat your training-data memory of player stats as forbidden.
-2. Arithmetic on values supplied in GROUND TRUTH is permitted (it is already pre-computed for you in averages.pra / pr / pa). Producing any number that cannot be derived from GROUND TRUTH is a violation.
+2. Arithmetic on values supplied in GROUND TRUTH is permitted (it is already pre-computed for you in averages.pra / pr / pa / ra). Producing any number that cannot be derived from GROUND TRUTH is a violation.
 3. The "data_used" field of your output must echo values directly from GROUND TRUTH. Do not put your own numbers there.
 4. If applying a hard gate from the framework requires a value that is null or absent in GROUND TRUTH, set verdict to "SKIP" with a flag like "⚠️ missing: <field>". Do not substitute a guessed value.${forwardLookingNote}
 
@@ -237,8 +238,8 @@ GROUND TRUTH (the only data you may cite):
 ${JSON.stringify(groundTruth, null, 2)}
 
 WHERE TO FIND VALUES (path → meaning):
-- groundTruth.season.averages.{ppg,rpg,apg,pra,pr,pa,fg3m,fg_pct,ft_pct,fg3_pct,minutes}  → regular-season per-game averages
-- groundTruth.l5.averages.{ppg,rpg,apg,pra,pr,pa,fg3m,minutes}                              → most-recent 5 games (playoff if l5.type==="Playoffs")
+- groundTruth.season.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fg_pct,ft_pct,fg3_pct,minutes}  → regular-season per-game averages
+- groundTruth.l5.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,minutes}                              → most-recent 5 games (playoff if l5.type==="Playoffs")
 - groundTruth.splits.{home,road}.{...}                                                       → regular-season home/away splits
 - groundTruth.home_away                                                                       → "home" | "away" for tonight's game
 - groundTruth.opponent_team.name / abbr                                                       → tonight's opponent

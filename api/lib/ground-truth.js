@@ -124,6 +124,7 @@ function enrichL5Averages(a) {
     pra: round1(ppg + rpg + apg),
     pr: round1(ppg + rpg),
     pa: round1(ppg + apg),
+    ra: round1(rpg + apg),
   };
 }
 
@@ -141,6 +142,7 @@ function pickAverages(s) {
     pra: round1(ppg + rpg + apg),
     pr: round1(ppg + rpg),
     pa: round1(ppg + apg),
+    ra: round1(rpg + apg),
     fg_pct: s.fg_pct,
     fg3m: s.fg3m,
     fg3_pct: s.fg3_pct,
