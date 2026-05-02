@@ -146,6 +146,8 @@ function pickAverages(s) {
     fg_pct: s.fg_pct,
     fg3m: s.fg3m,
     fg3_pct: s.fg3_pct,
+    ftm: s.ftm,
+    fta: s.fta,
     ft_pct: s.ft_pct,
   };
 }

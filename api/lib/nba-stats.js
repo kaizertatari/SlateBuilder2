@@ -171,6 +171,9 @@ export async function getLastNGames(playerId, n = 5, {
       reb: o.REB,
       ast: o.AST,
       fg3m: o.FG3M,
+      fgm: o.FGM,
+      fga: o.FGA,
+      fg_pct: o.FG_PCT,
       pra: (o.PTS ?? 0) + (o.REB ?? 0) + (o.AST ?? 0),
     };
   });

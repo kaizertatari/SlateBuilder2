@@ -193,6 +193,9 @@ export async function getLastNGames(playerName, n = 5, { season, postseason = fa
       reb: s.reb,
       ast: s.ast,
       fg3m: s.fg3m,
+      fgm: s.fgm,
+      fga: s.fga,
+      fg_pct: s.fg_pct,
       pra: (s.pts ?? 0) + (s.reb ?? 0) + (s.ast ?? 0),
     };
   });

@@ -215,6 +215,9 @@ export async function getLastNGames(athleteId, n = 5, { season, postseason = fal
     reb: g.reb,
     ast: g.ast,
     fg3m: g.fg3m,
+    fgm: g.fgm,
+    fga: g.fga,
+    fg_pct: g.fg_pct,
     pra: g.pts + g.reb + g.ast,
   }));
   if (!games.length) return null;
