@@ -2,22 +2,7 @@
 // NBA stats edge — every helper returns null on failure so the orchestrator
 // can surface a missing-data SKIP rather than crash.
 
-import { logPrefix } from "./request-context.js";
-
-const BASE = "https://stats.nba.com/stats";
-
-const HEADERS = {
-  "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-  "Accept": "application/json, text/plain, */*",
-  "Accept-Language": "en-US,en;q=0.9",
-  "Origin": "https://www.nba.com",
-  "Referer": "https://www.nba.com/",
-  "x-nba-stats-origin": "stats",
-  "x-nba-stats-token": "true",
-  "Connection": "keep-alive",
-};
+import { nbaFetch, rowToObj, findResultSet } from "./nba-http.js";
 
 export function currentSeason(date = new Date()) {
   const y = date.getUTCFullYear();
@@ -27,38 +12,31 @@ export function currentSeason(date = new Date()) {
   return `${startYear}-${String((startYear + 1) % 100).padStart(2, "0")}`;
 }
 
-// Vercel egress IPs are often silently dropped by stats.nba.com (no response,
-// not a 4xx). Without a timeout, each call hangs until Node's socket timeout
-// fires (~60-120s), so a single request through the orchestrator's cascade
-// can take 3+ minutes before falling through to ESPN. 6s is enough for a
-// healthy response from a working IP and short enough to not dominate latency.
-const NBA_FETCH_TIMEOUT_MS = 6000;
+// Concurrent in-flight de-dupe for playerdashboardbygeneralsplits — the
+// season-averages and home/road-splits helpers both extract from the same
+// payload, and the orchestrator fires them in parallel. Without this they'd
+// hit stats.nba.com twice for one logical request. Promise resolves and the
+// entry clears, so a later, separate request still re-fetches.
+const dashInflight = new Map();
 
-async function nbaFetch(endpoint, params) {
-  const qs = new URLSearchParams(params).toString();
-  const url = `${BASE}/${endpoint}?${qs}`;
-  try {
-    const res = await fetch(url, {
-      headers: HEADERS,
-      signal: AbortSignal.timeout(NBA_FETCH_TIMEOUT_MS),
+function dashboardKey(playerId, season, seasonType) {
+  return `${playerId}:${season}:${seasonType}`;
+}
+
+async function fetchPlayerDashboard(playerId, season, seasonType) {
+  const key = dashboardKey(playerId, season, seasonType);
+  let p = dashInflight.get(key);
+  if (!p) {
+    p = nbaFetch("playerdashboardbygeneralsplits", {
+      ...DASH_DEFAULTS,
+      PlayerID: playerId,
+      Season: season,
+      SeasonType: seasonType,
     });
-    if (!res.ok) {
-      console.error(`${logPrefix()}stats.nba.com ${endpoint} ${res.status}`);
-      return null;
-    }
-    return await res.json();
-  } catch (err) {
-    console.error(`${logPrefix()}stats.nba.com ${endpoint} threw:`, err.message);
-    return null;
+    dashInflight.set(key, p);
+    p.finally(() => dashInflight.delete(key));
   }
-}
-
-function rowToObj(headers, row) {
-  return Object.fromEntries(headers.map((h, i) => [h, row[i]]));
-}
-
-function findResultSet(payload, name) {
-  return payload?.resultSets?.find((rs) => rs.name === name) ?? null;
+  return p;
 }
 
 const DASH_DEFAULTS = {
@@ -107,12 +85,7 @@ export async function getSeasonAverages(playerId, {
   seasonType = "Regular Season",
 } = {}) {
   if (!playerId) return null;
-  const data = await nbaFetch("playerdashboardbygeneralsplits", {
-    ...DASH_DEFAULTS,
-    PlayerID: playerId,
-    Season: season,
-    SeasonType: seasonType,
-  });
+  const data = await fetchPlayerDashboard(playerId, season, seasonType);
   const rs = findResultSet(data, "OverallPlayerDashboard");
   if (!rs?.rowSet?.length) return null;
   return {
@@ -127,12 +100,7 @@ export async function getHomeAwaySplits(playerId, {
   seasonType = "Regular Season",
 } = {}) {
   if (!playerId) return null;
-  const data = await nbaFetch("playerdashboardbygeneralsplits", {
-    ...DASH_DEFAULTS,
-    PlayerID: playerId,
-    Season: season,
-    SeasonType: seasonType,
-  });
+  const data = await fetchPlayerDashboard(playerId, season, seasonType);
   const rs = findResultSet(data, "LocationPlayerDashboard");
   if (!rs?.rowSet?.length) return null;
   const out = { home: null, road: null };

@@ -37,8 +37,9 @@ OVER BUFFER RULES:
 WIN PROBABILITY BLOWOUT SUPPRESSOR (Rule 5f):
 - 85-90% win prob: A-tier max OVER
 - >90% win prob: A-tier max OVER, require line 3+ below L5 avg
-- Playoff series tied: suppressor disabled for leading team stars EXCEPT when [v3.4] pre-tip blowout-projection override fires (see below)
-- Team leads 3-0 or 3-1: suppressor FULLY ENGAGED
+- Playoff series tied (groundTruth.series.leading_team_abbr === null): suppressor DISABLED — competitive game, no team in blowout-protection mode — EXCEPT when [v3.4] pre-tip blowout-projection override fires (see below)
+- Player's team leads series 3-0 or 3-1 (series.leading_team_abbr === player_team.abbr AND series.player_team_wins >= 3): suppressor FULLY ENGAGED on this player's OVER
+- Opponent leads series 3-0 or 3-1 (series.leading_team_abbr === opponent_team.abbr AND series.opponent_wins >= 3): suppressor DISABLED — trailing team plays desperate
 
 [v3.4] RULE 5f PRE-TIP BLOWOUT-PROJECTION OVERRIDE (series-tied games only):
 When ALL THREE hold pre-tip — (a) leading team's win_prob ≥ 0.80, (b) opposing team has 2+ starters listed OUT/DOUBTFUL in injuries.opponent, (c) leading team is at home — treat as if win_prob ≥ 0.90 and apply >90% rules regardless of actual figure.

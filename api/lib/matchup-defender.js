@@ -6,25 +6,8 @@
 // Contract mirrors the rest of api/lib/*: returns null on any failure or
 // insufficient signal so the orchestrator never hard-fails on this lookup.
 
-import { logPrefix } from "./request-context.js";
+import { nbaFetch, rowToObj, findResultSet } from "./nba-http.js";
 import { currentSeason } from "./nba-stats.js";
-
-const BASE = "https://stats.nba.com/stats";
-
-const HEADERS = {
-  "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-  "Accept": "application/json, text/plain, */*",
-  "Accept-Language": "en-US,en;q=0.9",
-  "Origin": "https://www.nba.com",
-  "Referer": "https://www.nba.com/",
-  "x-nba-stats-origin": "stats",
-  "x-nba-stats-token": "true",
-  "Connection": "keep-alive",
-};
-
-const FETCH_TIMEOUT_MS = 6000;
 
 const TEAM_ID_BY_ABBR = {
   ATL: 1610612737, BOS: 1610612738, CLE: 1610612739, NOP: 1610612740,
@@ -53,8 +36,8 @@ function cacheKey(offPlayerId, defTeamId, season, seasonType) {
   return `${offPlayerId}:${defTeamId}:${season}:${seasonType}`;
 }
 
-async function fetchMatchups({ offPlayerId, defTeamId, season, seasonType }) {
-  const params = new URLSearchParams({
+function fetchMatchups({ offPlayerId, defTeamId, season, seasonType }) {
+  return nbaFetch("leagueseasonmatchups", {
     LeagueID: "00",
     PerMode: "Totals",
     Season: season,
@@ -62,25 +45,6 @@ async function fetchMatchups({ offPlayerId, defTeamId, season, seasonType }) {
     OffPlayerID: String(offPlayerId),
     DefTeamID: String(defTeamId),
   });
-  const url = `${BASE}/leagueseasonmatchups?${params}`;
-  try {
-    const res = await fetch(url, {
-      headers: HEADERS,
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    });
-    if (!res.ok) {
-      console.error(`${logPrefix()}leagueseasonmatchups ${seasonType} ${res.status}`);
-      return null;
-    }
-    return await res.json();
-  } catch (err) {
-    console.error(`${logPrefix()}leagueseasonmatchups ${seasonType} threw:`, err.message);
-    return null;
-  }
-}
-
-function rowToObj(headers, row) {
-  return Object.fromEntries(headers.map((h, i) => [h, row[i]]));
 }
 
 // Parse a leagueseasonmatchups payload → top-defender object, or null.
@@ -88,7 +52,7 @@ function rowToObj(headers, row) {
 // pulled from a fallback (e.g. regular season standing in for empty
 // playoff matchup history).
 function pickTopDefender(payload, { proxy = false }) {
-  const rs = payload?.resultSets?.find((r) => r.name === "SeasonMatchups");
+  const rs = findResultSet(payload, "SeasonMatchups");
   if (!rs?.rowSet?.length) return null;
   const rows = rs.rowSet.map((r) => rowToObj(rs.headers, r));
 

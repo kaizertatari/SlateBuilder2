@@ -174,6 +174,12 @@ function namesMatch(a, b) {
   return normalize(a) === normalize(b);
 }
 
+function leadingTeamAbbr({ playerWins, opponentWins, playerSide, opponentSide }) {
+  if (playerWins > opponentWins) return playerSide?.abbr ?? null;
+  if (opponentWins > playerWins) return opponentSide?.abbr ?? null;
+  return null; // tied — no leader
+}
+
 function buildSeriesState({ game, playerSide, opponentSide, l5, seasonType }) {
   // Authoritative path: ESPN attaches series state to playoff scoreboard
   // events. Match by ESPN team_id (no abbreviation aliasing). Pre-formatted
@@ -196,6 +202,7 @@ function buildSeriesState({ game, playerSide, opponentSide, l5, seasonType }) {
       next_game_number: gamesPlayed + 1,
       series_record: `${playerWins}-${opponentWins}`,
       series_summary: espn.summary ?? null,
+      leading_team_abbr: leadingTeamAbbr({ playerWins, opponentWins, playerSide, opponentSide }),
       round: game.round ?? null,
       source: "espn_event",
     };
@@ -203,18 +210,33 @@ function buildSeriesState({ game, playerSide, opponentSide, l5, seasonType }) {
 
   // Fallback: ESPN didn't tag the event with series data but we forced
   // seasonType=Playoffs upstream. Reconstruct from gamelog (less reliable
-  // — capped at L5, substring matching).
+  // — capped at L5, anchored substring match).
   if (seasonType === "Playoffs" && l5?.games?.length && opponentSide) {
-    return { ...deriveSeriesFromL5(l5.games, opponentSide.abbr), source: "l5_fallback" };
+    const derived = deriveSeriesFromL5(l5.games, opponentSide.abbr);
+    return {
+      ...derived,
+      leading_team_abbr: leadingTeamAbbr({
+        playerWins: derived.player_team_wins,
+        opponentWins: derived.opponent_wins,
+        playerSide,
+        opponentSide,
+      }),
+      source: "l5_fallback",
+    };
   }
 
   return null;
 }
 
+// NBA team abbreviations are unique 3-letter strings, so we anchor the match
+// to a word boundary on each side of the opponent abbr to avoid the rare
+// risk of a substring overlap (e.g. an unrelated 3-letter sequence inside
+// a future schema change).
 function deriveSeriesFromL5(games, oppAbbr) {
   const upper = oppAbbr.toUpperCase();
+  const re = new RegExp(`(^|[^A-Z])${upper}([^A-Z]|$)`);
   const vs = games.filter(
-    (g) => g.matchup && g.matchup.toUpperCase().includes(upper)
+    (g) => g.matchup && re.test(g.matchup.toUpperCase())
   );
   let pw = 0, ow = 0;
   for (const g of vs) {
