@@ -139,7 +139,7 @@ export default function App() {
             NBA PRIZEPICKS
           </div>
           <div style={{ fontSize: 22, fontWeight: "bold", color: "#ffffff", letterSpacing: 1 }}>
-            MODEL v3.3
+            MODEL v3.4
           </div>
           <div style={{ fontSize: 11, color: "#446688", marginTop: 4 }}>
             PLAYOFF CALIBRATED · LIVE DATA · ALL RULES APPLIED
