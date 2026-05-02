@@ -71,7 +71,11 @@ UNDER CONFIDENCE TABLE (v3.4):
 - No mechanism = SKIP
 
 [v3.4] RULE 5h FT-LEAK MODIFIER:
-When the named defender is elite AND the target player averages 5+ FTA/game (season.averages.fta ≥ 5), the standard 10-15% FG-output reduction widens to 20-25% for FG-scoring expectations only — FT scoring is independent of defensive assignment and must be gated via Rule 5i. Do not issue UNDER on this player without clearing 5i first.
+Two-tier gating — the modifier requires either a confirmed named matchup OR a strong team-level proxy. Target must average 5+ FTA/game (season.averages.fta ≥ 5) regardless of tier.
+- TIER 1 (named matchup confirmed): groundTruth.opponent_defense.primary_defender is non-null with confirmed=true (share_pct ≥ 0.40, n_games ≥ 2). Apply the full 20-25% FG-output reduction. Cite the defender by name in the justification (e.g., "Tatum primary defender, 0.42 share over 4 GP").
+- TIER 2 (team-rank proxy): primary_defender is null OR confirmed=false, AND opponent_defense.def_rank ≤ 3. Apply lighter 10-15% FG-output reduction and add flag "⚠️ 5h applied via team-rank proxy (no named-defender data)".
+- DO NOT INVOKE: primary_defender is null AND def_rank > 3. The 5h FT-leak modifier does not apply on this matchup.
+FT scoring is independent of defensive assignment in all tiers and must be gated via Rule 5i. Do not issue UNDER on this player without clearing 5i first.
 
 [v3.4] INJURY-TYPE MODULATION (Rule 6 extension):
 Parse injuries.player_team[].detail for body-region keywords:

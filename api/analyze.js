@@ -9,6 +9,7 @@ import {
 import * as bdl from "./lib/balldontlie.js";
 import * as espnStats from "./lib/espn-stats.js";
 import { getOpponentDefense } from "./lib/team-defense.js";
+import { getPrimaryDefender } from "./lib/matchup-defender.js";
 import {
   getTodaysGames,
   findGameForTeamAbbr,
@@ -93,15 +94,17 @@ export async function gatherGroundTruth({ player, propType, line }) {
   // small (5–28 games) to be a stable baseline. Same logic as Rule 5a road
   // deduction.
   const opponentSide = opponentFor(game, info.team_abbr);
-  const [nbaSeasonAvg, splits, winProb, opponentDefense] = await Promise.all([
+  const [nbaSeasonAvg, splits, winProb, opponentDefense, primaryDefender] = await Promise.all([
     getSeasonAverages(playerId, { seasonType: "Regular Season" }),
     getHomeAwaySplits(playerId, { seasonType: "Regular Season" }),
     getWinProbability(game.game_id, game.competition_id),
     opponentSide ? getOpponentDefense(opponentSide.abbr, { seasonType: "Regular Season" }) : null,
+    opponentSide ? getPrimaryDefender(playerId, opponentSide.abbr, { seasonType }) : null,
   ]);
   trace.splits = splits ? "nba_stats" : "missing";
   trace.win_prob = winProb ? `espn_${winProb.source}` : "missing";
   trace.opponent_defense = opponentDefense ? `team_defense_${opponentDefense.source}` : "missing";
+  trace.primary_defender = primaryDefender ? primaryDefender.source : "missing";
 
   const seasonAvg = nbaSeasonAvg ?? await espnStats.getSeasonAverages(espnId, { season });
   trace.season_avg = nbaSeasonAvg ? "nba_stats" : (seasonAvg ? "espn_gamelog" : "missing");
@@ -109,7 +112,7 @@ export async function gatherGroundTruth({ player, propType, line }) {
   const { groundTruth, missing } = composeGroundTruth({
     player, propType, line,
     info, game, daysOut, seasonType,
-    seasonAvg, l5, splits, winProb, allInjuries, opponentDefense,
+    seasonAvg, l5, splits, winProb, allInjuries, opponentDefense, primaryDefender,
   });
 
   return { groundTruth, missing, trace };
@@ -247,7 +250,7 @@ WHERE TO FIND VALUES (path → meaning):
 - groundTruth.win_prob.player_team_pct                                                        → 0-1 float (multiply by 100 for the % the framework uses)
 - groundTruth.injuries.player_team / opponent                                                 → {player,status,detail,date}[] (used for role compression / matchup ceiling)
 - groundTruth.player_recent.is_listed_injured                                                 → boolean — TRUE means post-injury return gate (Section 6) applies
-- groundTruth.opponent_defense                                                                → {def_rating, def_rank (1-30, 1=best), source}; null only when both live and snapshot fail. Use to satisfy Rule 5h (no cap when present) and Rule 3 matchup ceiling (top-5 = def_rank<=5).
+- groundTruth.opponent_defense                                                                → {def_rating, def_rank (1-30, 1=best), primary_defender: {player, share_pct, n_games, confirmed} | null, source}; null only when both live and snapshot fail. primary_defender is the season-aggregated top defender vs this player from stats.nba.com matchup data; confirmed=true when share_pct >= 0.40. Use def_rank for Rule 5h baseline + Mechanism 3 matchup ceiling (top-5 = def_rank<=5); use primary_defender to gate the v3.4 5h FT-leak modifier on a named matchup.
 - groundTruth.series                                                                          → playoff series state {games_played, player_team_wins, opponent_wins, next_game_number, series_record, series_summary, round, source}; null in regular season
 
 For this prop ("${groundTruth.prop_type}" line ${groundTruth.line}), the relevant averages field is "${field ?? "(unknown — output SKIP)"}". Use season.averages.${field ?? "?"} and l5.averages.${field ?? "?"} as the baselines.

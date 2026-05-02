@@ -18,6 +18,7 @@ export function composeGroundTruth({
   winProb,       // ESPN predictor result
   allInjuries,   // ESPN league-wide injury list
   opponentDefense, // { def_rating, def_rank, source } | null
+  primaryDefender, // { player, defender_id, share_pct, n_games, total_poss, confirmed, source } | null
 }) {
   const playerAbbr = info?.team_abbr ?? null;
   const playerEspnAbbr = toEspnAbbr(playerAbbr);
@@ -99,7 +100,9 @@ export function composeGroundTruth({
     player_recent: {
       is_listed_injured: isListedInjured,
     },
-    opponent_defense: opponentDefense ?? null,
+    opponent_defense: opponentDefense
+      ? { ...opponentDefense, primary_defender: primaryDefender ?? null }
+      : (primaryDefender ? { primary_defender: primaryDefender } : null),
     series,
   };
 
