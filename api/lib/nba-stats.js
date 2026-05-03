@@ -158,6 +158,7 @@ export async function getLastNGames(playerId, n = 5, {
       rpg: avg("reb"),
       apg: avg("ast"),
       fg3m: avg("fg3m"),
+      fga: avg("fga"),
       pra: avg("pra"),
       minutes: avg("minutes"),
     },

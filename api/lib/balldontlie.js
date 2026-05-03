@@ -214,6 +214,7 @@ export async function getLastNGames(playerName, n = 5, { season, postseason = fa
       rpg: avg("reb"),
       apg: avg("ast"),
       fg3m: avg("fg3m"),
+      fga: avg("fga"),
       pra: avg("pra"),
       minutes: avg("minutes"),
     },

@@ -146,6 +146,8 @@ function pickAverages(s) {
     pr: round1(ppg + rpg),
     pa: round1(ppg + apg),
     ra: round1(rpg + apg),
+    fgm: s.fgm,
+    fga: s.fga,
     fg_pct: s.fg_pct,
     fg3m: s.fg3m,
     fg3_pct: s.fg3_pct,

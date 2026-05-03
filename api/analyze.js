@@ -212,6 +212,7 @@ export const PROP_TO_FIELD = {
   PA: "pa",
   RA: "ra",
   "3-Pointers Made": "fg3m",
+  "FG Attempted": "fga",
 };
 
 export function propTypeToField(propType) {
@@ -241,8 +242,8 @@ GROUND TRUTH (the only data you may cite):
 ${JSON.stringify(groundTruth, null, 2)}
 
 WHERE TO FIND VALUES (path → meaning):
-- groundTruth.season.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fg_pct,ft_pct,fg3_pct,fta,ftm,minutes}  → regular-season per-game averages (fta/ftm needed for Rule 5i FT-Floor Insurance Guard)
-- groundTruth.l5.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,minutes}                              → most-recent 5 games (playoff if l5.type==="Playoffs")
+- groundTruth.season.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fgm,fga,fg_pct,ft_pct,fg3_pct,fta,ftm,minutes}  → regular-season per-game averages (fta/ftm needed for Rule 5i FT-Floor Insurance Guard)
+- groundTruth.l5.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fga,minutes}                              → most-recent 5 games (playoff if l5.type==="Playoffs")
 - groundTruth.l5.games[i].{fgm,fga,fg_pct}                                                      → per-game shooting (used by Rule 5b.ii shooting-slump rebound suppressor)
 - groundTruth.splits.{home,road}.{...}                                                       → regular-season home/away splits
 - groundTruth.home_away                                                                       → "home" | "away" for tonight's game
