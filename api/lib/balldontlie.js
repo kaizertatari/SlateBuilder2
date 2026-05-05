@@ -87,10 +87,12 @@ function normName(s) {
 export async function findPlayer(name) {
   if (playerCache.has(name)) return playerCache.get(name);
   const stripped = name.replace(SUFFIX_RE, "").trim();
-  const hasSuffix = stripped !== name.trim();
   const parts = stripped.split(/\s+/).filter(Boolean);
-  const searchToken = hasSuffix ? parts[0] : parts[parts.length - 1];
-  const data = await bdlFetch("/players", { search: searchToken, per_page: 25 });
+  // Search by FIRST name — common surnames ("Williams", "Smith", "Johnson")
+  // overflow the per_page cap and miss the target. First names are far more
+  // discriminative ("Jalen" → ~7 hits vs. "Williams" → 100+).
+  const searchToken = parts[0] || parts[parts.length - 1];
+  const data = await bdlFetch("/players", { search: searchToken, per_page: 100 });
   if (!data?.data?.length) return null;
   const fullLower = normalize(name);
   // Tier 1: exact match with suffix preserved — disambiguates "Jabari Smith"
@@ -101,18 +103,20 @@ export async function findPlayer(name) {
   const target = normName(name);
   const lastNorm = normName(parts[parts.length - 1]);
   const exactFull = data.data.find((p) => normName(`${p.first_name} ${p.last_name}`) === target);
-  // Tier 3: fuzzy match on last name + first initial. Prevents wrong-player
-  // hits on common surnames ("Tyrese Smith" → first random "Smith") while
-  // still resolving "Steph Curry" → "Stephen Curry".
-  const firstInitial = normalize(parts[0] ?? "").charAt(0);
-  const firstInitialMatch = firstInitial && data.data.find((p) =>
-    normName(p.last_name) === lastNorm &&
-    normalize(p.first_name).charAt(0) === firstInitial
-  );
-  const match = exactWithSuffix ?? exactFull ?? firstInitialMatch;
+  // Tier 3: same last name + nickname (one first name is a prefix of the
+  // other). Resolves "Steph Curry" → "Stephen Curry" but blocks
+  // "Jalen Williams" → "Johnathan Williams" (which the old first-initial-only
+  // rule accepted).
+  const targetFirst = normalize(parts[0] ?? "");
+  const nicknameMatch = targetFirst && data.data.find((p) => {
+    const apiFirst = normalize(p.first_name);
+    return normName(p.last_name) === lastNorm &&
+      (apiFirst.startsWith(targetFirst) || targetFirst.startsWith(apiFirst));
+  });
+  const match = exactWithSuffix ?? exactFull ?? nicknameMatch;
   if (!match) return null;
-  if (!exactWithSuffix && !exactFull && firstInitialMatch) {
-    console.warn(`${logPrefix()}balldontlie fuzzy match for "${name}" → "${firstInitialMatch.first_name} ${firstInitialMatch.last_name}"`);
+  if (!exactWithSuffix && !exactFull && nicknameMatch) {
+    console.warn(`${logPrefix()}balldontlie nickname match for "${name}" → "${nicknameMatch.first_name} ${nicknameMatch.last_name}"`);
   }
   const result = {
     id: match.id,

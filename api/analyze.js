@@ -83,19 +83,26 @@ export async function gatherGroundTruth({ player, propType, line }) {
   // silently mislabel a playoff game as regular season.
   const isPlayoff = !!(game.series || game.round);
   const seasonType = isPlayoff ? "Playoffs" : "Regular Season";
-  let l5 = await getLastNGames(playerId, 5, { seasonType });
-  trace.l5 = l5?.games?.length ? "nba_stats" : null;
+  // ESPN primary, stats.nba.com fallback. Vercel egress IPs are throttled by
+  // stats.nba.com, so the NBA path is unreliable — try ESPN first when an
+  // espnId is configured.
+  let l5 = espnId
+    ? await espnStats.getLastNGames(espnId, 5, { season, postseason: isPlayoff })
+    : null;
+  trace.l5 = l5?.games?.length ? "espn_gamelog" : null;
   if (!trace.l5) {
-    l5 = await espnStats.getLastNGames(espnId, 5, { season, postseason: isPlayoff });
-    trace.l5 = l5?.games?.length ? "espn_gamelog" : "missing";
+    l5 = await getLastNGames(playerId, 5, { seasonType });
+    trace.l5 = l5?.games?.length ? "nba_stats" : "missing";
   }
 
   // Splits and opponent defense use regular season — playoff samples are too
   // small (5–28 games) to be a stable baseline. Same logic as Rule 5a road
   // deduction.
   const opponentSide = opponentFor(game, info.team_abbr);
-  const [nbaSeasonAvg, splits, winProb, opponentDefense, primaryDefender] = await Promise.all([
-    getSeasonAverages(playerId, { seasonType: "Regular Season" }),
+  // ESPN primary for season averages; NBA fallback below. Splits, defender,
+  // and matchup data have no ESPN equivalent and stay on stats.nba.com.
+  const [espnSeasonAvg, splits, winProb, opponentDefense, primaryDefender] = await Promise.all([
+    espnId ? espnStats.getSeasonAverages(espnId, { season }) : null,
     getHomeAwaySplits(playerId, { seasonType: "Regular Season" }),
     getWinProbability(game.game_id, game.competition_id),
     opponentSide ? getOpponentDefense(opponentSide.abbr, { seasonType: "Regular Season" }) : null,
@@ -106,8 +113,8 @@ export async function gatherGroundTruth({ player, propType, line }) {
   trace.opponent_defense = opponentDefense ? `team_defense_${opponentDefense.source}` : "missing";
   trace.primary_defender = primaryDefender ? primaryDefender.source : "missing";
 
-  const seasonAvg = nbaSeasonAvg ?? await espnStats.getSeasonAverages(espnId, { season });
-  trace.season_avg = nbaSeasonAvg ? "nba_stats" : (seasonAvg ? "espn_gamelog" : "missing");
+  const seasonAvg = espnSeasonAvg ?? await getSeasonAverages(playerId, { seasonType: "Regular Season" });
+  trace.season_avg = espnSeasonAvg ? "espn_gamelog" : (seasonAvg ? "nba_stats" : "missing");
 
   const { groundTruth, missing } = composeGroundTruth({
     player, propType, line,
