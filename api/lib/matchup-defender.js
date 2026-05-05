@@ -9,6 +9,7 @@
 import { nbaFetch, rowToObj, findResultSet } from "./nba-http.js";
 import { currentSeason } from "./nba-stats.js";
 import { TEAM_ID_BY_ABBR } from "./team-ids.js";
+import { swr } from "./cache.js";
 
 // Thresholds — tuned to pre-empt single-possession noise without demanding
 // share levels that real rotation defenses rarely produce.
@@ -16,15 +17,11 @@ const SURFACE_THRESHOLD = 0.30; // below this, return null (don't surface anythi
 const CONFIRMED_THRESHOLD = 0.40; // at/above this, prompt should treat as named-matchup confirmed
 const MIN_GAMES = 2;
 
-// In-memory TTL cache. Serverless cold starts re-fetch; warm instances
-// amortize. 6h is the upper end of "still relevant for tonight's pick" —
-// matchups don't change intra-day.
-const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
-const cache = new Map();
-
-function cacheKey(offPlayerId, defTeamId, season, seasonType) {
-  return `${offPlayerId}:${defTeamId}:${season}:${seasonType}`;
-}
+// 6h is the upper end of "still relevant for tonight's pick" — matchups
+// don't change intra-day. Stale window is 24h: an outage can serve a
+// 6-24h-old matchup rather than missing the field entirely.
+const FRESH_TTL_MS = 6 * 60 * 60 * 1000;
+const STALE_TTL_MS = 24 * 60 * 60 * 1000;
 
 function fetchMatchups({ offPlayerId, defTeamId, season, seasonType }) {
   return nbaFetch("leagueseasonmatchups", {
@@ -79,23 +76,23 @@ export async function getPrimaryDefender(playerId, oppAbbr, {
   const defTeamId = TEAM_ID_BY_ABBR[String(oppAbbr).toUpperCase()];
   if (!defTeamId) return null;
 
-  const key = cacheKey(playerId, defTeamId, season, seasonType);
-  const cached = cache.get(key);
-  if (cached && cached.expiresAt > Date.now()) return cached.value;
-
-  const primary = await fetchMatchups({ offPlayerId: playerId, defTeamId, season, seasonType });
-  let result = pickTopDefender(primary, { proxy: false });
-
-  if (!result && seasonType === "Playoffs") {
-    const proxy = await fetchMatchups({
-      offPlayerId: playerId,
-      defTeamId,
-      season,
-      seasonType: "Regular Season",
-    });
-    result = pickTopDefender(proxy, { proxy: true });
-  }
-
-  cache.set(key, { value: result, expiresAt: Date.now() + CACHE_TTL_MS });
-  return result;
+  const key = `matchup:${playerId}:${defTeamId}:${season}:${seasonType}`;
+  // Wrap in an envelope so a "no defender" result (null) still gets cached —
+  // swr drops null values, but we don't want to retry NBA Stats every call
+  // for a player with no recorded matchups vs this team.
+  const envelope = await swr(key, async () => {
+    const primary = await fetchMatchups({ offPlayerId: playerId, defTeamId, season, seasonType });
+    let defender = pickTopDefender(primary, { proxy: false });
+    if (!defender && seasonType === "Playoffs") {
+      const proxy = await fetchMatchups({
+        offPlayerId: playerId,
+        defTeamId,
+        season,
+        seasonType: "Regular Season",
+      });
+      defender = pickTopDefender(proxy, { proxy: true });
+    }
+    return { defender };
+  }, { freshTtlMs: FRESH_TTL_MS, staleTtlMs: STALE_TTL_MS });
+  return envelope?.defender ?? null;
 }

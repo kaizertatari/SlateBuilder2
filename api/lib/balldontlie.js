@@ -6,11 +6,17 @@
 
 import { logPrefix } from "./request-context.js";
 import { fmtDate, normalizeLite } from "./string-utils.js";
+import { swr } from "./cache.js";
 
 const BASE = "https://api.balldontlie.io/v1";
 
-let teamsCache = null;
-const playerCache = new Map();
+// Teams change once a decade; players' team_abbr can change at the trade
+// deadline. Both safe to cache for hours. Stale window doubles the freshness
+// so an outage can serve a slightly old team_abbr rather than missing a pick.
+const TEAMS_FRESH_MS = 24 * 60 * 60 * 1000;
+const TEAMS_STALE_MS = 7 * 24 * 60 * 60 * 1000;
+const PLAYER_FRESH_MS = 6 * 60 * 60 * 1000;
+const PLAYER_STALE_MS = 24 * 60 * 60 * 1000;
 
 function authHeader() {
   const key = process.env.BALLDONTLIE_API_KEY;
@@ -57,13 +63,15 @@ function parseMinutes(min) {
 
 
 async function getTeams() {
-  if (teamsCache) return teamsCache;
-  const data = await bdlFetch("/teams");
-  if (!data?.data) return null;
-  const map = new Map();
-  for (const t of data.data) map.set(t.id, t.abbreviation);
-  teamsCache = map;
-  return map;
+  // Cache as a plain object — swr won't reuse Map identity across instances
+  // anyway, and JSON-shaped values play nicer with future cross-process moves.
+  const obj = await swr("bdl:teams", async () => {
+    const data = await bdlFetch("/teams");
+    if (!data?.data) return null;
+    return Object.fromEntries(data.data.map((t) => [t.id, t.abbreviation]));
+  }, { freshTtlMs: TEAMS_FRESH_MS, staleTtlMs: TEAMS_STALE_MS });
+  if (!obj) return null;
+  return new Map(Object.entries(obj).map(([k, v]) => [Number(k), v]));
 }
 
 // Generational suffixes. We search by *first* name when one is present
@@ -76,7 +84,17 @@ function normName(s) {
 }
 
 export async function findPlayer(name) {
-  if (playerCache.has(name)) return playerCache.get(name);
+  // Wrap in an envelope so an unresolvable-name result still gets cached
+  // (swr drops null values; we don't want to retry every call for a name
+  // balldontlie can't resolve).
+  const envelope = await swr(`bdl:player:${name}`, () => findPlayerUncached(name), {
+    freshTtlMs: PLAYER_FRESH_MS,
+    staleTtlMs: PLAYER_STALE_MS,
+  });
+  return envelope?.player ?? null;
+}
+
+async function findPlayerUncached(name) {
   const stripped = name.replace(SUFFIX_RE, "").trim();
   const parts = stripped.split(/\s+/).filter(Boolean);
   // Search by FIRST name — common surnames ("Williams", "Smith", "Johnson")
@@ -84,7 +102,7 @@ export async function findPlayer(name) {
   // discriminative ("Jalen" → ~7 hits vs. "Williams" → 100+).
   const searchToken = parts[0] || parts[parts.length - 1];
   const data = await bdlFetch("/players", { search: searchToken, per_page: 100 });
-  if (!data?.data?.length) return null;
+  if (!data?.data?.length) return { player: null };
   const fullLower = normalizeLite(name);
   // Tier 1: exact match with suffix preserved — disambiguates "Jabari Smith"
   // (elder, drafted 2000) from "Jabari Smith Jr." (current Rockets).
@@ -105,19 +123,19 @@ export async function findPlayer(name) {
       (apiFirst.startsWith(targetFirst) || targetFirst.startsWith(apiFirst));
   });
   const match = exactWithSuffix ?? exactFull ?? nicknameMatch;
-  if (!match) return null;
+  if (!match) return { player: null };
   if (!exactWithSuffix && !exactFull && nicknameMatch) {
     console.warn(`${logPrefix()}balldontlie nickname match for "${name}" → "${nicknameMatch.first_name} ${nicknameMatch.last_name}"`);
   }
-  const result = {
-    id: match.id,
-    full_name: `${match.first_name} ${match.last_name}`,
-    team_id: match.team?.id ?? null,
-    team_abbr: match.team?.abbreviation ?? null,
-    team_name: match.team?.full_name ?? null,
+  return {
+    player: {
+      id: match.id,
+      full_name: `${match.first_name} ${match.last_name}`,
+      team_id: match.team?.id ?? null,
+      team_abbr: match.team?.abbreviation ?? null,
+      team_name: match.team?.full_name ?? null,
+    },
   };
-  playerCache.set(name, result);
-  return result;
 }
 
 export async function getSeasonAverages(playerName, { season } = {}) {
