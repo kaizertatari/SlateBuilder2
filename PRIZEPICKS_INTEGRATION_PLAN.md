@@ -66,7 +66,7 @@ Returns `{ fetched_at, filters, data: { by_player, games }, total_props, total_p
 - **Request Body:**
   ```json
   {
-    "player": "Cade Cunningham",  // optional; null/omitted = all players
+    "players": ["Cade Cunningham", "Jalen Duren"],  // optional; null/omitted/[] = all players
     "statTypes": ["Points", "Rebounds"],  // optional; default = STATS whitelist
     "direction": "OVER"  // optional; if omitted, BOTH OVER and UNDER are analyzed
   }
@@ -74,7 +74,7 @@ Returns `{ fetched_at, filters, data: { by_player, games }, total_props, total_p
 - Filters PrizePicks lines by player, stat types, and direction
 - Caps at `MAX_LINES` Gemini calls per request (currently 25). Vercel function timeout is 300 s by default, so the cap is governed by Gemini cost/rate-limit, not platform timeout.
 - Calls `gatherGroundTruth()`, `buildPrompt()`, and `callGemini()` from `api/analyze.js`
-- Runs the analyses in parallel batches (concurrency = 3) via `Promise.allSettled`
+- Runs analyses sequentially (`CONCURRENCY = 1`) to stay under Gemini's free-tier 20 req/min quota; the retry chain in `callGemini` can issue up to 4 requests per failed task, so higher concurrency trips the quota.
 - Filters results to S and A tiers only
 - Sorts by tier (S before A), then confidence (desc)
 - Returns top 10 results
@@ -188,10 +188,10 @@ If a prop you expect doesn't appear in results, check whether its `stat_type` is
 ## Data Flow
 
 ```
-User selects: Player="Cade Cunningham", Stats=[Points, Rebounds], Direction=OVER
+User selects: Players=[Cade Cunningham], Stats=[Points, Rebounds], Direction=OVER
               ↓
 Frontend calls: POST /api/analyze-all
-  Body: { player: "Cade Cunningham", statTypes: ["Points", "Rebounds"], direction: "OVER" }
+  Body: { players: ["Cade Cunningham"], statTypes: ["Points", "Rebounds"], direction: "OVER" }
               ↓
 Backend:
   1. Read prizepicks-lines.json

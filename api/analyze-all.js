@@ -3,7 +3,8 @@
 // and returns top 10 S/A tier results as a table.
 //
 // POST /api/analyze-all
-// Body: { player?: string, statTypes?: string[], direction?: "OVER"|"UNDER" }
+// Body: { players?: string[] | null, statTypes?: string[], direction?: "OVER"|"UNDER" }
+//   players null/omitted/[] = all players in the scraped data
 //
 // Returns: { total_analyzed, total_s_a, top_10: [...] }
 
@@ -17,9 +18,12 @@ import { randomUUID } from "node:crypto";
 export const runtime = "nodejs";
 
 // Bounded by Gemini cost / rate-limit, not by Vercel platform timeout
-// (default 300s on all plans).
+// (default 300s on all plans). CONCURRENCY=1 keeps us under Gemini's
+// free-tier 20 req/min quota — the primary-then-fallback retry chain in
+// callGemini can burn up to 4 requests per failed task, which trips the
+// quota fast at higher concurrency.
 const MAX_LINES = 25;
-const CONCURRENCY = 3;
+const CONCURRENCY = 1;
 
 export async function POST(req) {
   const reqId = randomUUID().slice(0, 8);
@@ -39,12 +43,19 @@ async function handlePost(req, reqId) {
     }
 
     const body = await req.json();
-    const { player, statTypes, direction } = body;
+    const { players, statTypes, direction } = body;
 
     // Validate direction if provided
     if (direction && !["OVER", "UNDER"].includes(direction)) {
       return Response.json(
         { error: "direction must be 'OVER' or 'UNDER'" },
+        { status: 400 }
+      );
+    }
+
+    if (players != null && !Array.isArray(players)) {
+      return Response.json(
+        { error: "players must be an array of names or null" },
         { status: 400 }
       );
     }
@@ -62,17 +73,15 @@ async function handlePost(req, reqId) {
 
     let allProps = [];
 
-    // Collect props from by_player
-    if (player) {
-      // Filter by specific player
-      const normalizedPlayer = player.toLowerCase();
+    // Collect props from by_player. An empty / null `players` means no filter.
+    if (Array.isArray(players) && players.length > 0) {
+      const wanted = new Set(players.map((p) => p.toLowerCase()));
       for (const [name, props] of Object.entries(linesData.by_player || {})) {
-        if (name.toLowerCase() === normalizedPlayer || name.toLowerCase().includes(normalizedPlayer)) {
+        if (wanted.has(name.toLowerCase())) {
           allProps.push(...props);
         }
       }
     } else {
-      // All players
       for (const props of Object.values(linesData.by_player || {})) {
         allProps.push(...props);
       }
