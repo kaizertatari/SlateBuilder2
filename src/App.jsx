@@ -25,33 +25,49 @@ const selectStyle = {
 const SORTED_PLAYERS = [...NBA_PLAYERS].sort();
 
 export default function App() {
-  const [selectedPlayers, setSelectedPlayers] = useState(SORTED_PLAYERS);
+  const [player, setPlayer] = useState("");
+  const [playerQuery, setPlayerQuery] = useState("");
+  const [playerOpen, setPlayerOpen] = useState(false);
+  const [playerHighlight, setPlayerHighlight] = useState(0);
   const [selectedStats, setSelectedStats] = useState([...STATS]);
   const [direction, setDirection] = useState("OVER");
   const [analyzing, setAnalyzing] = useState(false);
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
-  const [playersOpen, setPlayersOpen] = useState(false);
-  const [playerSearch, setPlayerSearch] = useState("");
   const [statsOpen, setStatsOpen] = useState(false);
 
   const allStatsSelected = selectedStats.length === STATS.length;
-  const allPlayersSelected = selectedPlayers.length === SORTED_PLAYERS.length;
 
-  const visiblePlayers = useMemo(() => {
-    const q = playerSearch.trim().toLowerCase();
+  const filteredPlayers = useMemo(() => {
+    const q = playerQuery.trim().toLowerCase();
     if (!q) return SORTED_PLAYERS;
     return SORTED_PLAYERS.filter((p) => p.toLowerCase().includes(q));
-  }, [playerSearch]);
+  }, [playerQuery]);
 
-  const togglePlayer = (name) => {
-    setSelectedPlayers((cur) =>
-      cur.includes(name) ? cur.filter((p) => p !== name) : [...cur, name]
-    );
+  const selectPlayer = (name) => {
+    setPlayer(name);
+    setPlayerQuery(name);
+    setPlayerOpen(false);
+    setPlayerHighlight(0);
   };
 
-  const toggleAllPlayers = () => {
-    setSelectedPlayers(allPlayersSelected ? [] : SORTED_PLAYERS);
+  const handlePlayerKeyDown = (e) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setPlayerOpen(true);
+      setPlayerHighlight((h) => Math.min(h + 1, filteredPlayers.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setPlayerHighlight((h) => Math.max(h - 1, 0));
+    } else if (e.key === "Enter") {
+      if (playerOpen && filteredPlayers[playerHighlight]) {
+        e.preventDefault();
+        selectPlayer(filteredPlayers[playerHighlight]);
+      }
+    } else if (e.key === "Escape") {
+      setPlayerOpen(false);
+      setPlayerQuery(player);
+    }
   };
 
   const toggleStat = (stat) => {
@@ -65,8 +81,8 @@ export default function App() {
   };
 
   const analyzeAll = useCallback(async () => {
-    if (selectedPlayers.length === 0) {
-      setError("Select at least one player.");
+    if (!player) {
+      setError("Select a player.");
       return;
     }
     if (selectedStats.length === 0) {
@@ -79,11 +95,7 @@ export default function App() {
     setAnalyzing(true);
 
     try {
-      const body = {
-        players: allPlayersSelected ? null : selectedPlayers,
-        statTypes: selectedStats,
-        direction,
-      };
+      const body = { player, statTypes: selectedStats, direction };
 
       const response = await fetch("/api/analyze-all", {
         method: "POST",
@@ -102,7 +114,7 @@ export default function App() {
     } finally {
       setAnalyzing(false);
     }
-  }, [selectedPlayers, allPlayersSelected, selectedStats, direction]);
+  }, [player, selectedStats, direction]);
 
   return (
     <div style={{
@@ -130,125 +142,79 @@ export default function App() {
         {/* Inputs */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
 
-          {/* Player Multi-Select + Direction */}
+          {/* Player Select + Direction */}
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <div style={{ position: "relative", flex: 1, minWidth: 180 }}>
-              <div
-                onClick={() => setPlayersOpen(!playersOpen)}
-                style={{
-                  ...selectStyle,
-                  flex: undefined,
-                  minWidth: undefined,
-                  width: "100%",
-                  boxSizing: "border-box",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  cursor: "pointer",
+              <input
+                type="text"
+                value={playerQuery}
+                onChange={(e) => {
+                  setPlayerQuery(e.target.value);
+                  setPlayerOpen(true);
+                  setPlayerHighlight(0);
                 }}
-              >
-                <span style={{ fontSize: 12 }}>
-                  {selectedPlayers.length === 0
-                    ? "— SELECT PLAYERS —"
-                    : allPlayersSelected
-                    ? "ALL PLAYERS"
-                    : `${selectedPlayers.length} PLAYERS SELECTED`}
-                </span>
-                <span style={{ fontSize: 10, color: "#446688" }}>
-                  {playersOpen ? "▲" : "▼"}
-                </span>
-              </div>
-
-              {playersOpen && (
-                <div
+                onFocus={(e) => {
+                  setPlayerOpen(true);
+                  e.target.select();
+                }}
+                onBlur={() => {
+                  setPlayerOpen(false);
+                  if (playerQuery !== player) setPlayerQuery(player);
+                }}
+                onKeyDown={handlePlayerKeyDown}
+                placeholder="— SEARCH PLAYER —"
+                role="combobox"
+                aria-expanded={playerOpen}
+                aria-controls="player-listbox"
+                aria-activedescendant={
+                  playerOpen && filteredPlayers[playerHighlight]
+                    ? `player-opt-${playerHighlight}`
+                    : undefined
+                }
+                style={{ ...selectStyle, flex: undefined, minWidth: undefined, width: "100%", boxSizing: "border-box" }}
+              />
+              {playerOpen && filteredPlayers.length > 0 && (
+                <ul
+                  id="player-listbox"
+                  role="listbox"
                   style={{
                     position: "absolute",
                     top: "calc(100% + 2px)",
                     left: 0,
                     right: 0,
+                    maxHeight: 280,
+                    overflowY: "auto",
                     background: "#0a1420",
                     border: "1px solid #1e3040",
-                    padding: "8px 0",
+                    margin: 0,
+                    padding: 0,
+                    listStyle: "none",
                     zIndex: 10,
-                    maxHeight: 360,
-                    overflowY: "auto",
                   }}
                 >
-                  <input
-                    type="text"
-                    value={playerSearch}
-                    onChange={(e) => setPlayerSearch(e.target.value)}
-                    placeholder="search players..."
-                    style={{
-                      ...selectStyle,
-                      flex: undefined,
-                      minWidth: undefined,
-                      width: "calc(100% - 16px)",
-                      boxSizing: "border-box",
-                      margin: "0 8px 6px 8px",
-                      padding: "6px 10px",
-                      fontSize: 11,
-                      cursor: "text",
-                    }}
-                  />
-
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      padding: "6px 12px",
-                      fontSize: 12,
-                      cursor: "pointer",
-                      background: allPlayersSelected ? "#0066cc22" : "transparent",
-                    }}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      toggleAllPlayers();
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={allPlayersSelected}
-                      readOnly
-                      style={{ cursor: "pointer" }}
-                    />
-                    <strong>SELECT ALL</strong>
-                  </label>
-
-                  {visiblePlayers.length === 0 ? (
-                    <div style={{ padding: "8px 12px", fontSize: 11, color: "#446688" }}>
-                      No players match "{playerSearch}".
-                    </div>
-                  ) : (
-                    visiblePlayers.map((p) => (
-                      <label
-                        key={p}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                          padding: "6px 12px",
-                          fontSize: 12,
-                          cursor: "pointer",
-                          background: selectedPlayers.includes(p) ? "#0066cc22" : "transparent",
-                        }}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          togglePlayer(p);
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedPlayers.includes(p)}
-                          readOnly
-                          style={{ cursor: "pointer" }}
-                        />
-                        {p}
-                      </label>
-                    ))
-                  )}
-                </div>
+                  {filteredPlayers.map((p, i) => (
+                    <li
+                      key={p}
+                      id={`player-opt-${i}`}
+                      role="option"
+                      aria-selected={i === playerHighlight}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        selectPlayer(p);
+                      }}
+                      onMouseEnter={() => setPlayerHighlight(i)}
+                      style={{
+                        padding: "8px 12px",
+                        fontSize: 12,
+                        cursor: "pointer",
+                        background: i === playerHighlight ? "#0066cc" : "transparent",
+                        color: i === playerHighlight ? "#ffffff" : "#c8d8e8",
+                      }}
+                    >
+                      {p}
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
 

@@ -1,10 +1,10 @@
-// Batch analyze PrizePicks lines using the existing framework.
-// Filters by player, stat types, and direction, runs the Gemini model,
-// and returns top 10 S/A tier results as a table.
+// Batch analyze PrizePicks lines for a single player using the existing
+// framework. For each (player, stat_type) bucket, picks the line closest to
+// the player's season average and analyzes only that line, sharing one
+// ground-truth fetch across both OVER and UNDER directions when applicable.
 //
 // POST /api/analyze-all
-// Body: { players?: string[] | null, statTypes?: string[], direction?: "OVER"|"UNDER" }
-//   players null/omitted/[] = all players in the scraped data
+// Body: { player: string, statTypes?: string[], direction?: "OVER"|"UNDER" }
 //
 // Returns: { total_analyzed, total_s_a, top_10: [...] }
 
@@ -43,19 +43,17 @@ async function handlePost(req, reqId) {
     }
 
     const body = await req.json();
-    const { players, statTypes, direction } = body;
+    const { player, statTypes, direction } = body;
 
-    // Validate direction if provided
-    if (direction && !["OVER", "UNDER"].includes(direction)) {
+    if (!player || typeof player !== "string") {
       return Response.json(
-        { error: "direction must be 'OVER' or 'UNDER'" },
+        { error: "player (string) is required" },
         { status: 400 }
       );
     }
-
-    if (players != null && !Array.isArray(players)) {
+    if (direction && !["OVER", "UNDER"].includes(direction)) {
       return Response.json(
-        { error: "players must be an array of names or null" },
+        { error: "direction must be 'OVER' or 'UNDER'" },
         { status: 400 }
       );
     }
@@ -71,72 +69,85 @@ async function handlePost(req, reqId) {
       );
     }
 
-    let allProps = [];
+    // Find the player's props (exact match on by_player keys).
+    const playerProps = (linesData.by_player || {})[player] || [];
 
-    // Collect props from by_player. An empty / null `players` means no filter.
-    if (Array.isArray(players) && players.length > 0) {
-      const wanted = new Set(players.map((p) => p.toLowerCase()));
-      for (const [name, props] of Object.entries(linesData.by_player || {})) {
-        if (wanted.has(name.toLowerCase())) {
-          allProps.push(...props);
-        }
-      }
-    } else {
-      for (const props of Object.values(linesData.by_player || {})) {
-        allProps.push(...props);
-      }
+    // Resolve allowed internal stat names (default: full STATS whitelist).
+    const allowedStats = (statTypes && Array.isArray(statTypes) && statTypes.length > 0)
+      ? new Set(statTypes)
+      : new Set(["Points", "Rebounds", "Assists", "PRA", "PR", "PA", "RA", "3-Pointers Made", "FG Attempted"]);
+
+    // Group props by stat (each bucket holds every line PrizePicks publishes
+    // for that (player, stat) — we'll pick the one closest to season avg).
+    const buckets = new Map();
+    for (const prop of playerProps) {
+      const stat = mapStatType(prop.stat_type);
+      if (!stat || !allowedStats.has(stat) || !PROP_TO_FIELD[stat]) continue;
+      if (!buckets.has(stat)) buckets.set(stat, []);
+      buckets.get(stat).push(prop);
     }
 
-    // Filter by stat types if provided
-    if (statTypes && Array.isArray(statTypes) && statTypes.length > 0) {
-      const validStats = new Set(statTypes.map(s => s.toLowerCase()));
-      allProps = allProps.filter(p => {
-        const mapped = mapStatType(p.stat_type);
-        return mapped && validStats.has(mapped.toLowerCase());
-      });
-    } else {
-      // Default: only include stats from STATS array (Points, Rebounds, Assists, PRA, PR, PA, RA, 3-Pointers Made, FG Attempted)
-      const defaultMapped = new Set(["points", "rebounds", "assists", "pra", "pr", "pa", "ra", "3-pointers made", "fg attempted"]);
-      allProps = allProps.filter(p => {
-        const mapped = mapStatType(p.stat_type);
-        return mapped && defaultMapped.has(mapped.toLowerCase());
+    if (buckets.size === 0) {
+      return Response.json({
+        request_id: reqId,
+        total_analyzed: 0,
+        total_s_a: 0,
+        top_10: [],
+        message: "No matching lines found for the given filters.",
       });
     }
 
-    // Filter by direction if provided
     const directions = direction ? [direction] : ["OVER", "UNDER"];
+    const apiKey = process.env.GOOGLE_API_KEY;
+    if (!apiKey) {
+      return Response.json(
+        { request_id: reqId, error: "Google API key not configured" },
+        { status: 500 }
+      );
+    }
 
-    // Build analysis tasks (limit to MAX_LINES)
+    // For each bucket: fetch ground truth once (placeholder direction), pick
+    // the line closest to the player's season average, then push a task per
+    // requested direction reusing the cached groundTruth.
     const tasks = [];
-    const seen = new Set();
+    const skipped = [];
 
-    for (const prop of allProps) {
+    for (const [stat, props] of buckets) {
       if (tasks.length >= MAX_LINES) break;
 
-      const playerKey = prop.player_key || prop.player;
-      const statType = prop.stat_type;
+      const placeholderProp = props[0];
+      const groundTruthResult = await gatherGroundTruth({
+        player,
+        propType: `${stat} ${directions[0]}`,
+        line: placeholderProp.line,
+      });
+      if (groundTruthResult.skipReason) {
+        skipped.push({ stat, reason: groundTruthResult.skipReason });
+        continue;
+      }
 
-      // Map PrizePicks stat type to our internal stat type
-      const mappedStatType = mapStatType(statType);
-      
-      // Skip if we can't map this stat type to a supported one
-      if (!mappedStatType || !PROP_TO_FIELD[mappedStatType]) continue;
+      const seasonAvg = groundTruthResult.groundTruth?.season?.averages?.[PROP_TO_FIELD[stat]];
+      let chosen;
+      if (seasonAvg != null && Number.isFinite(seasonAvg)) {
+        chosen = props.reduce((best, p) =>
+          Math.abs(p.line - seasonAvg) < Math.abs(best.line - seasonAvg) ? p : best
+        );
+      } else {
+        const sorted = [...props].sort((a, b) => a.line - b.line);
+        chosen = sorted[Math.floor(sorted.length / 2)];
+      }
 
+      const game = `${chosen.player_team || ""} @ ${chosen.opponent || ""}`;
       for (const dir of directions) {
         if (tasks.length >= MAX_LINES) break;
-
-        // Avoid duplicates (same player + stat + direction)
-        const key = `${playerKey}:${mappedStatType}:${dir}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-
         tasks.push({
-          player: playerKey,
-          statType: mappedStatType,
+          player,
+          statType: stat,
           direction: dir,
-          line: prop.line,
-          propType: `${mappedStatType} ${dir}`,
-          game: `${prop.player_team || ""} @ ${prop.opponent || ""}`,
+          line: chosen.line,
+          propType: `${stat} ${dir}`,
+          game,
+          groundTruth: groundTruthResult.groundTruth,
         });
       }
     }
@@ -147,7 +158,8 @@ async function handlePost(req, reqId) {
         total_analyzed: 0,
         total_s_a: 0,
         top_10: [],
-        message: "No matching lines found for the given filters.",
+        skipped: skipped.length > 0 ? skipped : undefined,
+        message: "All buckets skipped before analysis (see `skipped`).",
       });
     }
 
@@ -187,6 +199,7 @@ async function handlePost(req, reqId) {
       total_s_a: results.length,
       top_10: top10,
       errors: errors.length > 0 ? errors : undefined,
+      skipped: skipped.length > 0 ? skipped : undefined,
     });
 
   } catch (error) {
@@ -212,15 +225,21 @@ function mapStatType(statType) {
   return map[s] || null;
 }
 
-async function analyzeSingle({ player, statType, line, propType, game }) {
+async function analyzeSingle({ player, statType, line, propType, game, groundTruth: cachedGroundTruth }) {
   const apiKey = process.env.GOOGLE_API_KEY;
   if (!apiKey) throw new Error("Google API key not configured");
 
-  // Gather ground truth
-  const groundTruthResult = await gatherGroundTruth({ player, propType, line });
-  if (groundTruthResult.skipReason) return null;
-
-  const { groundTruth } = groundTruthResult;
+  // Reuse the cached ground truth when the dedup pipeline supplied one,
+  // otherwise fetch fresh. The cached object was gathered with a placeholder
+  // direction/line — overwrite both so the prompt evaluates this task.
+  let groundTruth;
+  if (cachedGroundTruth) {
+    groundTruth = { ...cachedGroundTruth, prop_type: propType, line };
+  } else {
+    const r = await gatherGroundTruth({ player, propType, line });
+    if (r.skipReason) return null;
+    groundTruth = r.groundTruth;
+  }
 
   // Build prompt and call Gemini
   const prompt = buildPrompt(MODEL_FRAMEWORK, groundTruth);

@@ -66,18 +66,19 @@ Returns `{ fetched_at, filters, data: { by_player, games }, total_props, total_p
 - **Request Body:**
   ```json
   {
-    "players": ["Cade Cunningham", "Jalen Duren"],  // optional; null/omitted/[] = all players
+    "player": "Cade Cunningham",          // required
     "statTypes": ["Points", "Rebounds"],  // optional; default = STATS whitelist
-    "direction": "OVER"  // optional; if omitted, BOTH OVER and UNDER are analyzed
+    "direction": "OVER"                   // optional; if omitted, BOTH OVER and UNDER are analyzed
   }
   ```
-- Filters PrizePicks lines by player, stat types, and direction
-- Caps at `MAX_LINES` Gemini calls per request (currently 25). Vercel function timeout is 300 s by default, so the cap is governed by Gemini cost/rate-limit, not platform timeout.
-- Calls `gatherGroundTruth()`, `buildPrompt()`, and `callGemini()` from `api/analyze.js`
+- Filters today's PrizePicks lines to one player, then groups by stat type. PrizePicks publishes 1–7 lines per (player, stat) — the endpoint picks the line **closest to the player's season average** (via `groundTruth.season.averages[PROP_TO_FIELD[stat]]`) and analyzes only that line.
+- One ground-truth fetch per (player, stat) bucket, reused across both directions when both are requested. The cached `groundTruth` is threaded through to `analyzeSingle`, which overrides `prop_type` and `line` per task before building the prompt.
+- Caps at `MAX_LINES` Gemini calls per request (currently 25) — for a single-player request, real task counts are typically 5–9 (one direction) or 10–18 (both), so the cap is a safety net.
+- Calls `gatherGroundTruth()`, `buildPrompt()`, and `callGemini()` from `api/analyze.js`.
 - Runs analyses sequentially (`CONCURRENCY = 1`) to stay under Gemini's free-tier 20 req/min quota; the retry chain in `callGemini` can issue up to 4 requests per failed task, so higher concurrency trips the quota.
-- Filters results to S and A tiers only
-- Sorts by tier (S before A), then confidence (desc)
-- Returns top 10 results
+- Filters results to S and A tiers only.
+- Sorts by tier (S before A), then confidence (desc).
+- Returns top 10 results, with `errors` (per-task Gemini failures) and `skipped` (per-bucket ground-truth failures) surfaced for debugging.
 
 ### Response Format:
 ```json
@@ -188,10 +189,10 @@ If a prop you expect doesn't appear in results, check whether its `stat_type` is
 ## Data Flow
 
 ```
-User selects: Players=[Cade Cunningham], Stats=[Points, Rebounds], Direction=OVER
+User selects: Player="Cade Cunningham", Stats=[Points, Rebounds], Direction=OVER
               ↓
 Frontend calls: POST /api/analyze-all
-  Body: { players: ["Cade Cunningham"], statTypes: ["Points", "Rebounds"], direction: "OVER" }
+  Body: { player: "Cade Cunningham", statTypes: ["Points", "Rebounds"], direction: "OVER" }
               ↓
 Backend:
   1. Read prizepicks-lines.json
@@ -282,15 +283,15 @@ Caveats:
 
 ---
 
-## Cons of "ALL PLAYERS" (No Filter)
+## Single-player scope
 
-1. **Longer Processing Time**: dozens of lines × ~2–3 s/Gemini call. Parallelism (concurrency 3) keeps wall time reasonable but cost scales linearly.
-2. **`MAX_LINES` cap**: only the first `MAX_LINES` (currently 25) tasks are analyzed, in iteration order — surprise picks beyond that cap are silently ignored.
-3. **Less Relevant Results**: mixes star players with bench players, diluting quality picks.
-4. **Gemini API costs**: more calls = higher cost.
-5. **UI Clutter**: table could show 10 results from obscure players instead of focused picks.
+The endpoint deliberately accepts only one player per request:
 
-**Recommendation**: select a specific player when you can. "ALL PLAYERS" is useful for discovery but is bounded by `MAX_LINES`.
+- **Quality**: a player's `season.averages` drives line selection — a single ground-truth fetch covers every (stat, direction) for that player.
+- **Cost**: ~5–9 Gemini calls per request (one direction) or 10–18 (both), comfortably under free-tier 20 req/min.
+- **Latency**: ~30–60 s wall time at `CONCURRENCY = 1`.
+
+For multi-player coverage, run separate requests sequentially.
 
 ---
 
