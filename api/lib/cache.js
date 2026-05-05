@@ -81,8 +81,3 @@ export async function swr(key, fetcher, { freshTtlMs, staleTtlMs }) {
 
   return refresh;
 }
-
-export function clear() {
-  store.clear();
-  inflight.clear();
-}

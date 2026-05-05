@@ -33,7 +33,3 @@ function gc(cutoff) {
     else if (fresh.length !== hits.length) buckets.set(k, fresh);
   }
 }
-
-export function clear() {
-  buckets.clear();
-}
