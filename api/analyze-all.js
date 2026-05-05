@@ -1,6 +1,6 @@
 // Batch analyze PrizePicks lines for a single player using the existing
-// framework. For each (player, stat_type) bucket, picks the line closest to
-// the player's season average and analyzes only that line, sharing one
+// framework. For each (player, stat_type) bucket, picks the lowest line
+// PrizePicks publishes and analyzes only that line, sharing one
 // ground-truth fetch across both OVER and UNDER directions when applicable.
 //
 // POST /api/analyze-all
@@ -78,7 +78,7 @@ async function handlePost(req, reqId) {
       : new Set(["Points", "Rebounds", "Assists", "PRA", "PR", "PA", "RA", "3-Pointers Made", "FG Attempted"]);
 
     // Group props by stat (each bucket holds every line PrizePicks publishes
-    // for that (player, stat) — we'll pick the one closest to season avg).
+    // for that (player, stat) — we'll pick the lowest one).
     const buckets = new Map();
     for (const prop of playerProps) {
       const stat = mapStatType(prop.stat_type);
@@ -106,35 +106,25 @@ async function handlePost(req, reqId) {
       );
     }
 
-    // For each bucket: fetch ground truth once (placeholder direction), pick
-    // the line closest to the player's season average, then push a task per
-    // requested direction reusing the cached groundTruth.
+    // For each bucket: pick the lowest PrizePicks line, fetch ground truth
+    // once for that line, then push a task per requested direction reusing
+    // the cached groundTruth.
     const tasks = [];
     const skipped = [];
 
     for (const [stat, props] of buckets) {
       if (tasks.length >= MAX_LINES) break;
 
-      const placeholderProp = props[0];
+      const chosen = props.reduce((best, p) => (p.line < best.line ? p : best));
+
       const groundTruthResult = await gatherGroundTruth({
         player,
         propType: `${stat} ${directions[0]}`,
-        line: placeholderProp.line,
+        line: chosen.line,
       });
       if (groundTruthResult.skipReason) {
         skipped.push({ stat, reason: groundTruthResult.skipReason });
         continue;
-      }
-
-      const seasonAvg = groundTruthResult.groundTruth?.season?.averages?.[PROP_TO_FIELD[stat]];
-      let chosen;
-      if (seasonAvg != null && Number.isFinite(seasonAvg)) {
-        chosen = props.reduce((best, p) =>
-          Math.abs(p.line - seasonAvg) < Math.abs(best.line - seasonAvg) ? p : best
-        );
-      } else {
-        const sorted = [...props].sort((a, b) => a.line - b.line);
-        chosen = sorted[Math.floor(sorted.length / 2)];
       }
 
       const game = `${chosen.player_team || ""} @ ${chosen.opponent || ""}`;
