@@ -10,7 +10,15 @@
     "preview": "vite preview",
     "refresh-players": "node scripts/refresh-playoff-players.mjs",
     "refresh-prizepicks": "node scripts/refresh-prizepicks.mjs",
-    "refresh-team-defense": "node scripts/refresh-team-defense.mjs"
+    "refresh-team-defense": "node scripts/refresh-team-defense.mjs",
+    "smoke:balldontlie": "node scripts/smoke-balldontlie.mjs",
+    "smoke:data": "node scripts/smoke-data.mjs",
+    "smoke:defender": "node scripts/smoke-defender.mjs",
+    "smoke:extras": "node scripts/smoke-extras.mjs",
+    "smoke:gemini": "node scripts/smoke-gemini.mjs",
+    "smoke:gt": "node scripts/smoke-orchestrator.mjs",
+    "smoke:picks": "node scripts/smoke-find-picks.mjs",
+    "smoke:prompt": "node scripts/smoke-prompt.mjs"
   },
   "dependencies": {
     "react": "^19.2.5",
