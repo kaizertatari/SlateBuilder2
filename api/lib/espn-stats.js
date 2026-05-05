@@ -7,6 +7,7 @@
 // where season is the END year of the season label, e.g. 2026 for "2025-26".
 
 import { logPrefix } from "./request-context.js";
+import { fmtDate } from "./string-utils.js";
 
 const GAMELOG = "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes";
 
@@ -71,13 +72,6 @@ function parseStatsRow(stats) {
     stl: num(stats[IDX.stl]),
     pts: num(stats[IDX.pts]),
   };
-}
-
-function fmtDate(iso) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  return `${months[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2, "0")}, ${d.getUTCFullYear()}`;
 }
 
 async function fetchGamelog(athleteId, endYear) {

@@ -3,6 +3,7 @@
 // No fetches here.
 
 import { toEspnAbbr } from "./espn.js";
+import { normalizeName } from "./string-utils.js";
 
 export function composeGroundTruth({
   player,
@@ -162,18 +163,8 @@ function needsWinProb(propType) {
   return /\bOVER\b/i.test(propType) || /assist/i.test(propType);
 }
 
-function normalize(s) {
-  return s
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .toLowerCase()
-    .replace(/[.'’-]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 function namesMatch(a, b) {
-  return normalize(a) === normalize(b);
+  return normalizeName(a) === normalizeName(b);
 }
 
 function leadingTeamAbbr({ playerWins, opponentWins, playerSide, opponentSide }) {

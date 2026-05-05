@@ -5,6 +5,7 @@
 // Season convention: balldontlie uses the START year. 2025-26 → season=2025.
 
 import { logPrefix } from "./request-context.js";
+import { fmtDate, normalizeLite } from "./string-utils.js";
 
 const BASE = "https://api.balldontlie.io/v1";
 
@@ -54,12 +55,6 @@ function parseMinutes(min) {
   return Number((m + (s || 0) / 60).toFixed(1));
 }
 
-function fmtDate(iso) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  return `${months[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2, "0")}, ${d.getUTCFullYear()}`;
-}
 
 async function getTeams() {
   if (teamsCache) return teamsCache;
@@ -76,12 +71,8 @@ async function getTeams() {
 // Jabari Smith Jr.), so first name is more discriminative.
 const SUFFIX_RE = /\s+(jr|sr|ii|iii|iv|v)\.?$/i;
 
-function normalize(s) {
-  return s.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").trim();
-}
-
 function normName(s) {
-  return normalize(s.replace(SUFFIX_RE, ""));
+  return normalizeLite(s.replace(SUFFIX_RE, ""));
 }
 
 export async function findPlayer(name) {
@@ -94,11 +85,11 @@ export async function findPlayer(name) {
   const searchToken = parts[0] || parts[parts.length - 1];
   const data = await bdlFetch("/players", { search: searchToken, per_page: 100 });
   if (!data?.data?.length) return null;
-  const fullLower = normalize(name);
+  const fullLower = normalizeLite(name);
   // Tier 1: exact match with suffix preserved — disambiguates "Jabari Smith"
   // (elder, drafted 2000) from "Jabari Smith Jr." (current Rockets).
   const exactWithSuffix = data.data.find(
-    (p) => normalize(`${p.first_name} ${p.last_name}`) === fullLower
+    (p) => normalizeLite(`${p.first_name} ${p.last_name}`) === fullLower
   );
   const target = normName(name);
   const lastNorm = normName(parts[parts.length - 1]);
@@ -107,9 +98,9 @@ export async function findPlayer(name) {
   // other). Resolves "Steph Curry" → "Stephen Curry" but blocks
   // "Jalen Williams" → "Johnathan Williams" (which the old first-initial-only
   // rule accepted).
-  const targetFirst = normalize(parts[0] ?? "");
+  const targetFirst = normalizeLite(parts[0] ?? "");
   const nicknameMatch = targetFirst && data.data.find((p) => {
-    const apiFirst = normalize(p.first_name);
+    const apiFirst = normalizeLite(p.first_name);
     return normName(p.last_name) === lastNorm &&
       (apiFirst.startsWith(targetFirst) || targetFirst.startsWith(apiFirst));
   });
