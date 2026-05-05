@@ -274,7 +274,7 @@ OUTPUT (single JSON object):
 }`;
 }
 
-async function callGemini(apiKey, prompt) {
+export async function callGemini(apiKey, prompt) {
   // Try primary model up to 3 times (1 initial + 2 retries) on transient
   // overload, then fall back to flash-lite once before surfacing the error.
   const PRIMARY = "gemini-2.5-flash";

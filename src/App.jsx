@@ -4,22 +4,9 @@ import playersData from "../data/players.json";
 const NBA_PLAYERS = Object.keys(playersData);
 
 const STATS = ["Points", "Rebounds", "Assists", "PRA", "PR", "PA", "RA", "3-Pointers Made", "FG Attempted"];
-const DIRECTIONS = ["Over", "Under"];
+const DIRECTIONS = ["OVER", "UNDER"];
 
-const TIER_CONFIG = {
-  S: { color: "#FFD700", bg: "#2a2200", label: "S-TIER", glow: "0 0 20px #FFD70066" },
-  A: { color: "#00FF88", bg: "#002218", label: "A-TIER", glow: "0 0 20px #00FF8866" },
-  B: { color: "#4488FF", bg: "#001133", label: "B-TIER", glow: "0 0 20px #4488FF66" },
-  SKIP: { color: "#FF4444", bg: "#220000", label: "SKIP", glow: "0 0 20px #FF444466" },
-};
-
-const VERDICT_CONFIG = {
-  OVER: { color: "#00FF88", symbol: "▲" },
-  UNDER: { color: "#FF6644", symbol: "▼" },
-  SKIP: { color: "#888888", symbol: "✕" },
-};
-
-const SORTED_PLAYERS = [...NBA_PLAYERS].sort();
+const TIER_ORDER = { S: 0, A: 1, B: 2, SKIP: 3 };
 
 const selectStyle = {
   background: "#0a1420",
@@ -37,25 +24,27 @@ const selectStyle = {
 
 export default function App() {
   const [player, setPlayer] = useState("");
-  const [stat, setStat] = useState("");
-  const [direction, setDirection] = useState("");
-  const [line, setLine] = useState("");
-  const propType = stat && direction ? `${stat} ${direction.toUpperCase()}` : "";
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
+  const [selectedStats, setSelectedStats] = useState([...STATS]); // Default: all
+  const [direction, setDirection] = useState("OVER"); // Single direction choice
+  const [analyzing, setAnalyzing] = useState(false);
+  const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
   const [playerQuery, setPlayerQuery] = useState("");
   const [playerOpen, setPlayerOpen] = useState(false);
   const [playerHighlight, setPlayerHighlight] = useState(0);
+  const [statsOpen, setStatsOpen] = useState(false);
+
+  const SORTED_PLAYERS = useMemo(() => [...NBA_PLAYERS].sort(), []);
+  const allStatsSelected = selectedStats.length === STATS.length;
 
   const filteredPlayers = useMemo(() => {
     const q = playerQuery.trim().toLowerCase();
-    if (!q) return SORTED_PLAYERS;
-    return SORTED_PLAYERS.filter((p) => p.toLowerCase().includes(q));
+    if (!q) return ["ALL PLAYERS", ...SORTED_PLAYERS];
+    return ["ALL PLAYERS", ...SORTED_PLAYERS.filter((p) => p.toLowerCase().includes(q))];
   }, [playerQuery]);
 
   const selectPlayer = (name) => {
-    setPlayer(name);
+    setPlayer(name === "ALL PLAYERS" ? "" : name);
     setPlayerQuery(name);
     setPlayerOpen(false);
     setPlayerHighlight(0);
@@ -76,24 +65,47 @@ export default function App() {
       }
     } else if (e.key === "Escape") {
       setPlayerOpen(false);
-      setPlayerQuery(player);
+      setPlayerQuery(player || "ALL PLAYERS");
     }
   };
 
-  const analyze = useCallback(async () => {
-    if (!player || !propType || !line) {
-      setError("Fill in all fields.");
+  const toggleStat = (stat) => {
+    if (selectedStats.includes(stat)) {
+      setSelectedStats(selectedStats.filter((s) => s !== stat));
+    } else {
+      setSelectedStats([...selectedStats, stat]);
+    }
+  };
+
+  const toggleAllStats = () => {
+    setSelectedStats(allStatsSelected ? [] : [...STATS]);
+  };
+
+  const analyzeAll = useCallback(async () => {
+    if (!player && player !== "") {
+      setError("Select a player or 'ALL PLAYERS'.");
       return;
     }
+    if (selectedStats.length === 0) {
+      setError("Select at least one stat type.");
+      return;
+    }
+
     setError(null);
-    setResult(null);
-    setLoading(true);
+    setResults(null);
+    setAnalyzing(true);
 
     try {
-      const response = await fetch("/api/analyze", {
+      const body = {
+        player: player || null,
+        statTypes: selectedStats,
+        direction: direction,
+      };
+
+      const response = await fetch("/api/analyze-all", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ player, propType, line }),
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
@@ -101,27 +113,13 @@ export default function App() {
       if (data.error) throw new Error(data.error);
       if (!response.ok) throw new Error(data.error || "Request failed");
 
-      setResult(data);
+      setResults(data);
     } catch (e) {
       setError(`Error: ${e.message}`);
     } finally {
-      setLoading(false);
+      setAnalyzing(false);
     }
-  }, [player, propType, line]);
-
-  const tierCfg = result ? TIER_CONFIG[result.tier] || TIER_CONFIG.SKIP : null;
-  const verdictCfg = result ? VERDICT_CONFIG[result.verdict] || VERDICT_CONFIG.SKIP : null;
-  // SKIPs that came from data unavailability (orchestrator-level early exit OR
-  // missing-required-fields) have data_used: null. Gemini-level "I analyzed
-  // this and reject it" SKIPs include data_used and render in the standard panel.
-  const isUnable = result?.tier === "SKIP" && !result?.data_used;
-  const missingFlags = (result?.flags ?? []).filter((f) => /missing:/i.test(f));
-  const otherFlags = (result?.flags ?? []).filter((f) => !/missing:/i.test(f));
-  const winProbDisplay = (() => {
-    const wp = result?.data_used?.win_prob;
-    if (wp == null) return "—";
-    return (wp <= 1 ? Math.round(wp * 100) : Math.round(wp)) + "%";
-  })();
+  }, [player, selectedStats, direction]);
 
   return (
     <div style={{
@@ -139,15 +137,17 @@ export default function App() {
             NBA PRIZEPICKS
           </div>
           <div style={{ fontSize: 22, fontWeight: "bold", color: "#ffffff", letterSpacing: 1 }}>
-            MODEL v3.4
+            BATCH ANALYZER
           </div>
           <div style={{ fontSize: 11, color: "#446688", marginTop: 4 }}>
-            PLAYOFF CALIBRATED · LIVE DATA · ALL RULES APPLIED
+            S-TIER & A-TIER PICKS · PRIZEPICKS LINES
           </div>
         </div>
 
         {/* Inputs */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+
+          {/* Player Select */}
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <div style={{ position: "relative", flex: 1, minWidth: 180 }}>
               <input
@@ -164,10 +164,11 @@ export default function App() {
                 }}
                 onBlur={() => {
                   setPlayerOpen(false);
-                  if (player && playerQuery !== player) setPlayerQuery(player);
+                  const display = player || "ALL PLAYERS";
+                  if (playerQuery !== display) setPlayerQuery(display);
                 }}
                 onKeyDown={handlePlayerKeyDown}
-                placeholder="— SEARCH PLAYER —"
+                placeholder="— SEARCH PLAYER (or ALL) —"
                 role="combobox"
                 aria-expanded={playerOpen}
                 aria-controls="player-listbox"
@@ -197,94 +198,172 @@ export default function App() {
                     zIndex: 10,
                   }}
                 >
-                  {filteredPlayers.length === 0 ? (
-                    <li style={{ padding: "10px 12px", fontSize: 12, color: "#446688" }}>
-                      no matches
+                  {filteredPlayers.map((p, i) => (
+                    <li
+                      key={p}
+                      id={`player-opt-${i}`}
+                      role="option"
+                      aria-selected={i === playerHighlight}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        selectPlayer(p);
+                      }}
+                      onMouseEnter={() => setPlayerHighlight(i)}
+                      style={{
+                        padding: "8px 12px",
+                        fontSize: 12,
+                        cursor: "pointer",
+                        background: i === playerHighlight ? "#0066cc" : "transparent",
+                        color: i === playerHighlight ? "#ffffff" : "#c8d8e8",
+                      }}
+                    >
+                      {p}
                     </li>
-                  ) : (
-                    filteredPlayers.map((p, i) => (
-                      <li
-                        key={p}
-                        id={`player-opt-${i}`}
-                        role="option"
-                        aria-selected={i === playerHighlight}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          selectPlayer(p);
-                        }}
-                        onMouseEnter={() => setPlayerHighlight(i)}
-                        style={{
-                          padding: "8px 12px",
-                          fontSize: 12,
-                          cursor: "pointer",
-                          background: i === playerHighlight ? "#0066cc" : "transparent",
-                          color: i === playerHighlight ? "#ffffff" : "#c8d8e8",
-                        }}
-                      >
-                        {p}
-                      </li>
-                    ))
-                  )}
+                  ))}
                 </ul>
               )}
             </div>
 
-            <select
-              value={stat}
-              onChange={(e) => setStat(e.target.value)}
-              style={selectStyle}
-            >
-              <option value="">— SELECT PROP —</option>
-              {STATS.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-
-            <select
-              value={direction}
-              onChange={(e) => setDirection(e.target.value)}
-              style={selectStyle}
-            >
-              <option value="">— OVER / UNDER —</option>
+            {/* Direction Radio */}
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               {DIRECTIONS.map((d) => (
-                <option key={d} value={d}>{d}</option>
+                <label
+                  key={d}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontSize: 12,
+                    cursor: "pointer",
+                    color: direction === d ? "#00FF88" : "#7799bb",
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="direction"
+                    checked={direction === d}
+                    onChange={() => setDirection(d)}
+                    style={{ cursor: "pointer" }}
+                  />
+                  {d}
+                </label>
               ))}
-            </select>
+            </div>
           </div>
 
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <input
-              type="number"
-              step="0.5"
-              placeholder="LINE (e.g. 26.5)"
-              value={line}
-              onChange={(e) => setLine(e.target.value)}
+          {/* Stat Multi-Select */}
+          <div style={{ position: "relative" }}>
+            <div
+              onClick={() => setStatsOpen(!statsOpen)}
               style={{
                 ...selectStyle,
-                width: 160,
-                flex: "none",
-              }}
-            />
-
-            <button
-              onClick={analyze}
-              disabled={loading}
-              style={{
-                background: loading ? "#1a2a3a" : "#0066cc",
-                color: loading ? "#446688" : "#ffffff",
-                border: "1px solid " + (loading ? "#1e3040" : "#0088ff"),
-                padding: "10px 28px",
-                fontFamily: "'Courier New', monospace",
-                fontSize: 12,
-                fontWeight: "bold",
-                letterSpacing: 2,
-                cursor: loading ? "not-allowed" : "pointer",
-                transition: "all 0.15s",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                cursor: "pointer",
               }}
             >
-              {loading ? "FETCHING DATA..." : "ANALYZE"}
-            </button>
+              <span style={{ fontSize: 12 }}>
+                {selectedStats.length === 0
+                  ? "— SELECT STATS —"
+                  : selectedStats.length === STATS.length
+                  ? "ALL STATS"
+                  : `${selectedStats.length} STATS SELECTED`}
+              </span>
+              <span style={{ fontSize: 10, color: "#446688" }}>
+                {statsOpen ? "▲" : "▼"}
+              </span>
+            </div>
+
+            {statsOpen && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 2px)",
+                  left: 0,
+                  right: 0,
+                  background: "#0a1420",
+                  border: "1px solid #1e3040",
+                  padding: "8px 0",
+                  zIndex: 10,
+                  maxHeight: 300,
+                  overflowY: "auto",
+                }}
+              >
+                {/* Select All */}
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "6px 12px",
+                    fontSize: 12,
+                    cursor: "pointer",
+                    background: allStatsSelected ? "#0066cc22" : "transparent",
+                  }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    toggleAllStats();
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={allStatsSelected}
+                    readOnly
+                    style={{ cursor: "pointer" }}
+                  />
+                  <strong>SELECT ALL</strong>
+                </label>
+
+                {STATS.map((s) => (
+                  <label
+                    key={s}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "6px 12px",
+                      fontSize: 12,
+                      cursor: "pointer",
+                      background: selectedStats.includes(s) ? "#0066cc22" : "transparent",
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      toggleStat(s);
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedStats.includes(s)}
+                      readOnly
+                      style={{ cursor: "pointer" }}
+                    />
+                    {s}
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
+
+          {/* Analyze Button */}
+          <button
+            onClick={analyzeAll}
+            disabled={analyzing}
+            style={{
+              background: analyzing ? "#1a2a3a" : "#0066cc",
+              color: analyzing ? "#446688" : "#ffffff",
+              border: `1px solid ${analyzing ? "#1e3040" : "#0088ff"}`,
+              padding: "10px 28px",
+              fontFamily: "'Courier New', monospace",
+              fontSize: 12,
+              fontWeight: "bold",
+              letterSpacing: 2,
+              cursor: analyzing ? "not-allowed" : "pointer",
+              transition: "all 0.15s",
+            }}
+          >
+            {analyzing ? "ANALYZING..." : "ANALYZE ALL LINES"}
+          </button>
         </div>
 
         {/* Error */}
@@ -301,199 +380,125 @@ export default function App() {
           </div>
         )}
 
-        {/* Loading state */}
-        {loading && (
+        {/* Loading State */}
+        {analyzing && (
           <div style={{
             border: "1px solid #1e3040",
             padding: 24,
             textAlign: "center",
           }}>
             <div style={{ color: "#4488aa", fontSize: 11, letterSpacing: 3, marginBottom: 8 }}>
-              RUNNING MODEL
+              RUNNING BATCH MODEL
             </div>
             <div style={{ color: "#446688", fontSize: 11 }}>
-              Fetching live stats · injury report · win probability · matchup data
-            </div>
-            <div style={{ color: "#446688", fontSize: 11, marginTop: 4 }}>
-              Applying all framework rules silently...
+              Analyzing PrizePicks lines... This may take up to 30 seconds.
             </div>
           </div>
         )}
 
-        {/* UNABLE panel — orchestrator early-skip or missing-required-fields */}
-        {result && isUnable && (
-          <div style={{
-            border: "1px solid #FFA50044",
-            background: "#2a1a00",
-            boxShadow: "0 0 20px #FFA50033",
-          }}>
+        {/* Results Table */}
+        {results && !analyzing && (
+          <div>
+            {/* Summary */}
             <div style={{
-              background: "#FFA50018",
-              borderBottom: "1px solid #FFA50044",
-              padding: "14px 20px",
+              background: "#0a1420",
+              border: "1px solid #1e3040",
+              padding: "12px 16px",
+              marginBottom: 16,
+              fontSize: 11,
+              color: "#446688",
               display: "flex",
               justifyContent: "space-between",
-              alignItems: "center",
             }}>
-              <div>
-                <div style={{ fontSize: 18, fontWeight: "bold", color: "#FFA500", letterSpacing: 2 }}>
-                  UNABLE TO ANALYZE
-                </div>
-                <div style={{ fontSize: 11, color: "#cc8833", letterSpacing: 2, marginTop: 2 }}>
-                  DATA UNAVAILABLE
-                </div>
-              </div>
+              <span>Analyzed: {results.total_analyzed} lines</span>
+              <span>S/A Tier: {results.total_s_a} picks</span>
+              <span>Showing: {Math.min(results.top_10?.length || 0, 10)} results</span>
             </div>
 
-            <div style={{
-              padding: "10px 20px",
-              borderBottom: "1px solid #1e3040",
-              fontSize: 12,
-              color: "#7799bb",
-              letterSpacing: 1,
-            }}>
-              {player} · {propType} {line}
-            </div>
-
-            <div style={{ padding: "16px 20px", borderBottom: missingFlags.length > 0 ? "1px solid #1e3040" : undefined }}>
-              <div style={{ fontSize: 10, color: "#446688", letterSpacing: 2, marginBottom: 8 }}>
-                REASON
-              </div>
-              <div style={{ fontSize: 13, color: "#c8d8e8", lineHeight: 1.6 }}>
-                {result.justification}
-              </div>
-            </div>
-
-            {missingFlags.length > 0 && (
-              <div style={{ padding: "12px 20px" }}>
-                <div style={{ fontSize: 10, color: "#446688", letterSpacing: 2, marginBottom: 8 }}>
-                  MISSING DATA
-                </div>
-                {missingFlags.map((f, i) => (
-                  <div key={i} style={{ fontSize: 12, color: "#FFA500", marginBottom: 4 }}>
-                    • {f.replace(/^⚠️\s*missing:\s*/i, "")}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Standard tier panel — verdict + tier card */}
-        {result && !isUnable && tierCfg && verdictCfg && (
-          <div style={{
-            border: `1px solid ${tierCfg.color}44`,
-            background: tierCfg.bg,
-            boxShadow: tierCfg.glow,
-          }}>
-            {/* Verdict bar */}
-            <div style={{
-              background: tierCfg.color + "18",
-              borderBottom: `1px solid ${tierCfg.color}44`,
-              padding: "14px 20px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <span style={{
-                  fontSize: 28,
-                  fontWeight: "bold",
-                  color: verdictCfg.color,
-                  lineHeight: 1,
+            {/* Table */}
+            {results.top_10 && results.top_10.length > 0 ? (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  fontSize: 12,
                 }}>
-                  {verdictCfg.symbol}
-                </span>
-                <div>
-                  <div style={{ fontSize: 18, fontWeight: "bold", color: verdictCfg.color, letterSpacing: 2 }}>
-                    {result.verdict}
-                  </div>
-                  <div style={{ fontSize: 11, color: tierCfg.color, letterSpacing: 2, marginTop: 2 }}>
-                    {tierCfg.label}
-                  </div>
-                </div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: 32, fontWeight: "bold", color: tierCfg.color, lineHeight: 1 }}>
-                  {result.confidence}%
-                </div>
-                <div style={{ fontSize: 10, color: "#446688", letterSpacing: 1 }}>CONFIDENCE</div>
-              </div>
-            </div>
+                  <thead>
+                    <tr style={{ background: "#0a1420", borderBottom: "2px solid #1e3040" }}>
+                      <th style={{ padding: "8px 10px", textAlign: "left", color: "#446688", fontSize: 10, letterSpacing: 1 }}>#</th>
+                      <th style={{ padding: "8px 10px", textAlign: "left", color: "#446688", fontSize: 10, letterSpacing: 1 }}>PLAYER</th>
+                      <th style={{ padding: "8px 10px", textAlign: "left", color: "#446688", fontSize: 10, letterSpacing: 1 }}>GAME</th>
+                      <th style={{ padding: "8px 10px", textAlign: "left", color: "#446688", fontSize: 10, letterSpacing: 1 }}>PROP</th>
+                      <th style={{ padding: "8px 10px", textAlign: "right", color: "#446688", fontSize: 10, letterSpacing: 1 }}>LINE</th>
+                      <th style={{ padding: "8px 10px", textAlign: "center", color: "#446688", fontSize: 10, letterSpacing: 1 }}>VERDICT</th>
+                      <th style={{ padding: "8px 10px", textAlign: "center", color: "#446688", fontSize: 10, letterSpacing: 1 }}>TIER</th>
+                      <th style={{ padding: "8px 10px", textAlign: "right", color: "#446688", fontSize: 10, letterSpacing: 1 }}>CONF%</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {results.top_10.map((r, i) => {
+                      const tierColor = r.tier === "S" ? "#FFD700" : r.tier === "A" ? "#00FF88" : "#4488FF";
+                      const verdictColor = r.verdict === "OVER" ? "#00FF88" : "#FF6644";
+                      const bgColor = r.tier === "S" ? "#2a2200" : r.tier === "A" ? "#002218" : "#001133";
+                      return (
+                        <tr key={i} style={{ background: i % 2 === 0 ? "#0a1420" : bgColor, borderBottom: "1px solid #1e3040" }}>
+                          <td style={{ padding: "8px 10px", color: "#446688" }}>{i + 1}</td>
+                          <td style={{ padding: "8px 10px", fontWeight: "bold" }}>{r.player}</td>
+                          <td style={{ padding: "8px 10px", fontSize: 11 }}>{r.game}</td>
+                          <td style={{ padding: "8px 10px" }}>{r.prop_type}</td>
+                          <td style={{ padding: "8px 10px", textAlign: "right" }}>{r.line}</td>
+                          <td style={{ padding: "8px 10px", textAlign: "center", color: verdictColor, fontWeight: "bold" }}>
+                            {r.verdict} {r.verdict === "OVER" ? "▲" : "▼"}
+                          </td>
+                          <td style={{ padding: "8px 10px", textAlign: "center", color: tierColor, fontWeight: "bold" }}>
+                            {r.tier === "S" ? "S-TIER" : "A-TIER"}
+                          </td>
+                          <td style={{ padding: "8px 10px", textAlign: "right", color: tierColor, fontWeight: "bold" }}>
+                            {r.confidence}%
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
 
-            {/* Prop label */}
-            <div style={{
-              padding: "10px 20px",
-              borderBottom: "1px solid #1e3040",
-              fontSize: 12,
-              color: "#7799bb",
-              letterSpacing: 1,
-            }}>
-              {player} · {propType} {line}
-            </div>
-
-            {/* Justification */}
-            <div style={{ padding: "16px 20px", borderBottom: "1px solid #1e3040" }}>
-              <div style={{ fontSize: 10, color: "#446688", letterSpacing: 2, marginBottom: 8 }}>
-                ANALYSIS
-              </div>
-              <div style={{ fontSize: 13, color: "#c8d8e8", lineHeight: 1.6 }}>
-                {result.justification}
-              </div>
-            </div>
-
-            {/* Flags (excluding missing-data flags, which only appear in the UNABLE panel) */}
-            {otherFlags.length > 0 && (
-              <div style={{ padding: "12px 20px", borderBottom: "1px solid #1e3040" }}>
-                <div style={{ fontSize: 10, color: "#446688", letterSpacing: 2, marginBottom: 8 }}>
-                  ACTIVE FLAGS
-                </div>
-                {otherFlags.map((f, i) => (
-                  <div key={i} style={{ fontSize: 12, color: "#ffaa44", marginBottom: 4 }}>
-                    {f}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Data used */}
-            {result.data_used && (
-              <div style={{ padding: "12px 20px" }}>
-                <div style={{ fontSize: 10, color: "#446688", letterSpacing: 2, marginBottom: 8 }}>
-                  DATA SNAPSHOT
-                </div>
-                <div style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, 1fr)",
-                  gap: 8,
-                }}>
-                  {[
-                    ["SEASON AVG", result.data_used.season_avg],
-                    ["L5 AVG", result.data_used.l5_avg],
-                    ["WIN PROB", winProbDisplay === "—" ? null : winProbDisplay],
-                    ["LOCATION", result.data_used.home_away?.toUpperCase() || null],
-                    ["OPP", result.data_used.opponent],
-                    ["CONTEXT", result.data_used.game_context],
-                  ].map(([label, val]) => val && (
-                    <div key={label} style={{
-                      background: "#0a1420",
-                      border: "1px solid #1e3040",
-                      padding: "8px 10px",
-                    }}>
-                      <div style={{ fontSize: 9, color: "#446688", letterSpacing: 1, marginBottom: 3 }}>
-                        {label}
+                {/* Justifications (expandable) */}
+                <div style={{ marginTop: 16 }}>
+                  {results.top_10.map((r, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        background: r.tier === "S" ? "#2a2200" : "#002218",
+                        border: `1px solid ${r.tier === "S" ? "#FFD70044" : "#00FF8844"}`,
+                        marginBottom: 8,
+                        padding: "10px 14px",
+                        fontSize: 11,
+                        lineHeight: 1.6,
+                        color: "#c8d8e8",
+                      }}
+                    >
+                      <div style={{ marginBottom: 4, fontWeight: "bold", color: r.tier === "S" ? "#FFD700" : "#00FF88" }}>
+                        #{i + 1} {r.player} - {r.prop_type} {r.verdict} ({r.line}) - {r.tier === "S" ? "S-TIER" : "A-TIER"} {r.confidence}%
                       </div>
-                      <div style={{ fontSize: 12, color: "#8ab0cc" }}>
-                        {String(val)}
-                      </div>
+                      <div style={{ color: "#8ab0cc" }}>{r.justification}</div>
                     </div>
                   ))}
                 </div>
               </div>
+            ) : (
+              <div style={{
+                background: "#0a1420",
+                border: "1px solid #1e3040",
+                padding: 24,
+                textAlign: "center",
+                fontSize: 12,
+                color: "#446688",
+              }}>
+                No S-Tier or A-Tier picks found for the selected filters.
+              </div>
             )}
           </div>
         )}
-
       </div>
     </div>
   );
