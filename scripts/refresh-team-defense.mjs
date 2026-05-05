@@ -9,6 +9,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { ABBR_BY_TEAM_ID as NBA_TEAM_ID_TO_ABBR } from "../api/lib/team-ids.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT_PATH = path.join(ROOT, "data/team-defense.json");
@@ -98,19 +99,6 @@ function parseLeagueDefense(payload) {
   rows.sort((a, b) => a.def_rating - b.def_rating);
   return rows.map((r, i) => ({ ...r, def_rank: i + 1 }));
 }
-
-// Map NBA team_id → official 3-letter abbreviation. Authoritative; ESPN's
-// abbreviations differ in a few cases (handled in api/lib/espn.js).
-const NBA_TEAM_ID_TO_ABBR = {
-  1610612737: "ATL", 1610612738: "BOS", 1610612739: "CLE", 1610612740: "NOP",
-  1610612741: "CHI", 1610612742: "DAL", 1610612743: "DEN", 1610612744: "GSW",
-  1610612745: "HOU", 1610612746: "LAC", 1610612747: "LAL", 1610612748: "MIA",
-  1610612749: "MIL", 1610612750: "MIN", 1610612751: "BKN", 1610612752: "NYK",
-  1610612753: "ORL", 1610612754: "IND", 1610612755: "PHI", 1610612756: "PHX",
-  1610612757: "POR", 1610612758: "SAC", 1610612759: "SAS", 1610612760: "OKC",
-  1610612761: "TOR", 1610612762: "UTA", 1610612763: "MEM", 1610612764: "WAS",
-  1610612765: "DET", 1610612766: "CHA",
-};
 
 async function buildSnapshot() {
   const season = currentSeason();
