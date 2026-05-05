@@ -8,11 +8,12 @@
 //
 // Returns: { total_analyzed, total_s_a, top_10: [...] }
 
-import { gatherGroundTruth, buildPrompt, callGemini, PROP_TO_FIELD } from "./analyze.js";
+import { gatherGroundTruth, buildPrompt, callGemini } from "./analyze.js";
 import { MODEL_FRAMEWORK } from "./lib/framework.js";
 import { rateLimit } from "./lib/rate-limit.js";
 import { runWithRequestContext } from "./lib/request-context.js";
 import { readLines } from "./lib/lines-store.js";
+import { STATS, PROP_TO_FIELD, mapPrizePicksStatType } from "./lib/prop-types.js";
 import { randomUUID } from "node:crypto";
 
 export const runtime = "nodejs";
@@ -75,13 +76,13 @@ async function handlePost(req, reqId) {
     // Resolve allowed internal stat names (default: full STATS whitelist).
     const allowedStats = (statTypes && Array.isArray(statTypes) && statTypes.length > 0)
       ? new Set(statTypes)
-      : new Set(["Points", "Rebounds", "Assists", "PRA", "PR", "PA", "RA", "3-Pointers Made", "FG Attempted"]);
+      : new Set(STATS);
 
     // Group props by stat (each bucket holds every line PrizePicks publishes
     // for that (player, stat) — we'll pick the lowest one).
     const buckets = new Map();
     for (const prop of playerProps) {
-      const stat = mapStatType(prop.stat_type);
+      const stat = mapPrizePicksStatType(prop.stat_type);
       if (!stat || !allowedStats.has(stat) || !PROP_TO_FIELD[stat]) continue;
       if (!buckets.has(stat)) buckets.set(stat, []);
       buckets.get(stat).push(prop);
@@ -195,24 +196,6 @@ async function handlePost(req, reqId) {
   } catch (error) {
     return Response.json({ request_id: reqId, error: error.message }, { status: 500 });
   }
-}
-
-function mapStatType(statType) {
-  if (!statType) return null;
-  const s = statType.toLowerCase();
-  // Map PrizePicks stat types to our internal STATS array values
-  const map = {
-    "pts+rebs+asts": "PRA",
-    "pts+rebs": "PR",
-    "pts+asts": "PA",
-    "rebs+asts": "RA",
-    "3-pt made": "3-Pointers Made",
-    "fg attempted": "FG Attempted",
-    "points": "Points",
-    "rebounds": "Rebounds",
-    "assists": "Assists",
-  };
-  return map[s] || null;
 }
 
 async function analyzeSingle({ player, statType, line, propType, game, groundTruth: cachedGroundTruth }) {

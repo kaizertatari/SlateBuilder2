@@ -1,9 +1,9 @@
 import { useState, useCallback, useMemo } from "react";
 import playersData from "../data/players.json";
+import { STATS } from "../api/lib/prop-types.js";
 
 const NBA_PLAYERS = Object.keys(playersData);
 
-const STATS = ["Points", "Rebounds", "Assists", "PRA", "PR", "PA", "RA", "3-Pointers Made", "FG Attempted"];
 const DIRECTIONS = ["OVER", "UNDER"];
 
 const TIER_ORDER = { S: 0, A: 1, B: 2, SKIP: 3 };

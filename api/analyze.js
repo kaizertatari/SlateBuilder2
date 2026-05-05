@@ -22,6 +22,7 @@ import { composeGroundTruth } from "./lib/ground-truth.js";
 import { MODEL_FRAMEWORK } from "./lib/framework.js";
 import { rateLimit } from "./lib/rate-limit.js";
 import { runWithRequestContext } from "./lib/request-context.js";
+import { PROP_TO_FIELD } from "./lib/prop-types.js";
 import { randomUUID } from "node:crypto";
 
 export const runtime = "nodejs";
@@ -207,20 +208,6 @@ function skipResult(code, message) {
     data_used: null,
   };
 }
-
-// Maps a prop_type string to the matching key inside an averages object.
-// Exported so the smoke script can inspect.
-export const PROP_TO_FIELD = {
-  Points: "ppg",
-  Rebounds: "rpg",
-  Assists: "apg",
-  PRA: "pra",
-  PR: "pr",
-  PA: "pa",
-  RA: "ra",
-  "3-Pointers Made": "fg3m",
-  "FG Attempted": "fga",
-};
 
 export function propTypeToField(propType) {
   // propType examples: "Points OVER", "Rebounds UNDER", "3-Pointers Made OVER"
