@@ -38,22 +38,21 @@ export async function gatherGroundTruth({ player, propType, line }) {
   const season = currentSeason();
   const espnId = resolveEspnId(player);
 
-  const [nbaInfo, games, allInjuries] = await Promise.all([
-    getCommonPlayerInfo(playerId),
+  // Identity: balldontlie primary (returns team_abbr instantly), stats.nba.com
+  // fallback only when balldontlie misses. NBA Stats from Vercel egress
+  // commonly times out at ~6s, and team_abbr is the only field we need
+  // downstream — paying that latency on the critical path is wasteful.
+  const [bdlPlayer, games, allInjuries] = await Promise.all([
+    bdl.findPlayer(player),
     getTodaysGames(),
     getAllInjuries(),
   ]);
 
   if (!games) return { skipReason: "schedule_unavailable", message: "Could not fetch ESPN scoreboard" };
 
-  // Identity: stats.nba.com primary, balldontlie fallback (free-tier OK).
-  // Only team_abbr is strictly required downstream.
-  let info = nbaInfo;
-  if (!info) {
-    const bdlPlayer = await bdl.findPlayer(player);
-    if (!bdlPlayer || !bdlPlayer.team_abbr) {
-      return { skipReason: "player_lookup_failed", message: `Could not resolve ${player} via stats.nba.com or balldontlie` };
-    }
+  let info = null;
+  let infoSource = null;
+  if (bdlPlayer?.team_abbr) {
     info = {
       player_id: playerId,
       full_name: bdlPlayer.full_name,
@@ -61,12 +60,20 @@ export async function gatherGroundTruth({ player, propType, line }) {
       team_name: bdlPlayer.team_name,
       team_abbr: bdlPlayer.team_abbr,
     };
+    infoSource = "balldontlie";
+  } else {
+    const nbaInfo = await getCommonPlayerInfo(playerId);
+    if (!nbaInfo) {
+      return { skipReason: "player_lookup_failed", message: `Could not resolve ${player} via balldontlie or stats.nba.com` };
+    }
+    info = nbaInfo;
+    infoSource = "nba_stats";
   }
 
   const trace = {
     scoreboard: "espn",
     injuries: allInjuries ? "espn" : "missing",
-    info: nbaInfo ? "nba_stats" : (info !== nbaInfo ? "balldontlie" : "missing"),
+    info: infoSource,
   };
 
   let game = findGameForTeamAbbr(games, info.team_abbr);
