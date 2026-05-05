@@ -1,15 +1,8 @@
 {
   "functions": {
     "api/**": {
-      "includeFiles": "data/**"
-    },
-    "api/analyze-all.js": {
       "includeFiles": "data/**",
       "maxDuration": 300
-    },
-    "api/refresh-lines.js": {
-      "includeFiles": "data/**",
-      "maxDuration": 60
     }
   },
   "rewrites": [
