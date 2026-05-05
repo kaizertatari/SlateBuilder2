@@ -4,8 +4,6 @@ import { STATS } from "../api/lib/prop-types.js";
 
 const NBA_PLAYERS = Object.keys(playersData);
 
-const DIRECTIONS = ["OVER", "UNDER"];
-
 const TIER_ORDER = { S: 0, A: 1, B: 2, SKIP: 3 };
 
 const selectStyle = {
@@ -30,7 +28,6 @@ export default function App() {
   const [playerOpen, setPlayerOpen] = useState(false);
   const [playerHighlight, setPlayerHighlight] = useState(0);
   const [selectedStats, setSelectedStats] = useState([...STATS]);
-  const [direction, setDirection] = useState("OVER");
   const [analyzing, setAnalyzing] = useState(false);
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
@@ -95,7 +92,7 @@ export default function App() {
     setAnalyzing(true);
 
     try {
-      const body = { player, statTypes: selectedStats, direction };
+      const body = { player, statTypes: selectedStats };
 
       const response = await fetch("/api/analyze-all", {
         method: "POST",
@@ -114,7 +111,7 @@ export default function App() {
     } finally {
       setAnalyzing(false);
     }
-  }, [player, selectedStats, direction]);
+  }, [player, selectedStats]);
 
   return (
     <div style={{
@@ -142,7 +139,7 @@ export default function App() {
         {/* Inputs */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
 
-          {/* Player Select + Direction */}
+          {/* Player Select */}
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <div style={{ position: "relative", flex: 1, minWidth: 180 }}>
               <input
@@ -216,32 +213,6 @@ export default function App() {
                   ))}
                 </ul>
               )}
-            </div>
-
-            {/* Direction Radio */}
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              {DIRECTIONS.map((d) => (
-                <label
-                  key={d}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    fontSize: 12,
-                    cursor: "pointer",
-                    color: direction === d ? "#00FF88" : "#7799bb",
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="direction"
-                    checked={direction === d}
-                    onChange={() => setDirection(d)}
-                    style={{ cursor: "pointer" }}
-                  />
-                  {d}
-                </label>
-              ))}
             </div>
           </div>
 
