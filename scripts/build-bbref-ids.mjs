@@ -49,23 +49,66 @@ function stripSuffix(s) {
   return s.replace(SUFFIX_RE, "").trim();
 }
 
+// BR appends one of:
+//   "(2019-2026)"  retired/active range
+//   "(2026)"       rookies / first-season players
+//   "Overview"     some result rows (e.g. Wembanyama, Poeltl)
+function cleanDisplay(s) {
+  return s
+    .replace(/\s*\(\d{4}(?:-\d{4})?\)\s*$/, "")
+    .replace(/\s+Overview\s*$/i, "")
+    .trim();
+}
+
 function findSlug(html, targetName) {
-  const target = normalizeName(stripSuffix(targetName));
+  const targetParts = stripSuffix(targetName).split(/\s+/).filter(Boolean);
+  const targetLast = normalizeName(targetParts[targetParts.length - 1] ?? "");
+  const targetFirst = normalizeName(targetParts[0] ?? "");
+  const targetFull = normalizeName(stripSuffix(targetName));
+
+  let nicknameHit = null;
   for (const block of html.matchAll(SEARCH_ITEM_RE)) {
     const m = block[1].match(NBA_PLAYER_LINK_RE);
     if (!m) continue;
-    const [, slug, displayWithYears] = m;
-    const display = displayWithYears.replace(/\s*\(\d{4}-\d{4}\)\s*$/, "").trim();
-    if (normalizeName(stripSuffix(display)) === target) return { slug, display };
+    const [, slug, raw] = m;
+    const display = cleanDisplay(raw);
+    if (normalizeName(stripSuffix(display)) === targetFull) return { slug, display };
+
+    // Nickname fallback (Ron Holland ↔ Ronald Holland). Same last name + one
+    // first name is a prefix of the other. Tracked separately so an exact
+    // match later in the page still wins.
+    if (!nicknameHit && targetFirst) {
+      const dispParts = stripSuffix(display).split(/\s+/).filter(Boolean);
+      const dispLast = normalizeName(dispParts[dispParts.length - 1] ?? "");
+      const dispFirst = normalizeName(dispParts[0] ?? "");
+      if (dispLast === targetLast && dispFirst &&
+          (dispFirst.startsWith(targetFirst) || targetFirst.startsWith(dispFirst))) {
+        nicknameHit = { slug, display: `${display} [nickname]` };
+      }
+    }
   }
-  return null;
+  return nicknameHit;
 }
 
 async function lookupSlug(name) {
-  const url = `${SEARCH}?search=${encodeURIComponent(name)}`;
+  // BR's search treats "III" / "Jr." as literal tokens and returns zero hits
+  // for "Robert Williams III" while "Robert Williams" finds slug williro04.
+  // Search by the suffix-stripped form; comparison still uses stripSuffix on
+  // both sides, so a real "Smith Jr." won't be confused for "Smith".
+  const query = stripSuffix(name);
+  const url = `${SEARCH}?search=${encodeURIComponent(query)}`;
   const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(15000) });
   if (!res.ok) return { error: `HTTP ${res.status}` };
   const html = await res.text();
+
+  // For unique-name searches BR serves the player page directly (no
+  // search-results template). Trust the <link rel="canonical"> tag in that
+  // case; otherwise scan the search-item blocks.
+  const canonical = html.match(
+    /<link\s+rel="canonical"\s+href="https?:\/\/www\.basketball-reference\.com\/players\/[a-z]\/([a-z0-9]+)\.html"/i
+  );
+  if (canonical) return { slug: canonical[1], display: name };
+
   const hit = findSlug(html, name);
   if (!hit) return { error: "no NBA match in search results" };
   return hit;

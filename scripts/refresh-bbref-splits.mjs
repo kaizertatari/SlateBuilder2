@@ -10,6 +10,11 @@
 // Usage: npm run refresh-bbref-splits
 //        node scripts/refresh-bbref-splits.mjs
 //        node scripts/refresh-bbref-splits.mjs --season 2026  (end year)
+//
+// Recommended cadence: 1×/day. Wire via a scheduled CI run (e.g. GitHub
+// Actions with `cron: "0 8 * * *"`) that commits the regenerated
+// data/bbref-splits.json back to the repo. Vercel Cron is a worse fit —
+// the output is committed JSON, not an HTTP endpoint.
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
