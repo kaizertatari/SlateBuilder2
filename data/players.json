@@ -1,722 +1,902 @@
 {
   "A.J. Lawson": {
     "nba": 1630639,
-    "espn": 4067017
+    "espn": 4067017,
+    "bbref": "lawsoaj01"
   },
   "Aaron Gordon": {
     "nba": 203932,
-    "espn": 3064290
+    "espn": 3064290,
+    "bbref": "gordoaa01"
   },
   "Aaron Holiday": {
     "nba": 1628988,
-    "espn": 3922230
+    "espn": 3922230,
+    "bbref": "holidaa01"
   },
   "Aaron Wiggins": {
     "nba": 1630598,
-    "espn": 4397183
+    "espn": 4397183,
+    "bbref": "wiggiaa01"
   },
   "Adem Bona": {
     "nba": 1641737,
-    "espn": 5105637
+    "espn": 5105637,
+    "bbref": "bonaad01"
   },
   "Ajay Mitchell": {
     "nba": 1642349,
-    "espn": 4900671
+    "espn": 4900671,
+    "bbref": "mitchaj01"
   },
   "Alex Caruso": {
     "nba": 1627936,
-    "espn": 2991350
+    "espn": 2991350,
+    "bbref": "carusal01"
   },
   "Alperen Sengun": {
     "nba": 1630578,
-    "espn": 4871144
+    "espn": 4871144,
+    "bbref": "sengual01"
   },
   "Amen Thompson": {
     "nba": 1641708,
-    "espn": 4684740
+    "espn": 4684740,
+    "bbref": "thompam01"
   },
   "Andre Drummond": {
     "nba": 203083,
-    "espn": 6585
+    "espn": 6585,
+    "bbref": "drumman01"
   },
   "Anthony Black": {
     "nba": 1641710,
-    "espn": 4712849
+    "espn": 4712849,
+    "bbref": "blackan01"
   },
   "Anthony Davis": {
     "nba": 203076,
-    "espn": 6583
+    "espn": 6583,
+    "bbref": "davisan02"
   },
   "Anthony Edwards": {
     "nba": 1630162,
-    "espn": 4594268
+    "espn": 4594268,
+    "bbref": "edwaran01"
   },
   "Ausar Thompson": {
     "nba": 1641709,
-    "espn": 4684742
+    "espn": 4684742,
+    "bbref": "thompau01"
   },
   "Ayo Dosunmu": {
     "nba": 1630245,
-    "espn": 4397002
+    "espn": 4397002,
+    "bbref": "dosunay01"
   },
   "Bam Adebayo": {
     "nba": 1628389,
-    "espn": 4066261
+    "espn": 4066261,
+    "bbref": "adebaba01"
   },
   "Baylor Scheierman": {
     "nba": 1631248,
-    "espn": 4593841
+    "espn": 4593841,
+    "bbref": "scheiba01"
   },
   "Bones Hyland": {
     "nba": 1630538,
-    "espn": 4592492
+    "espn": 4592492,
+    "bbref": "hylanbo01"
   },
   "Brandon Ingram": {
     "nba": 1627742,
-    "espn": 3913176
+    "espn": 3913176,
+    "bbref": "ingrabr01"
   },
   "Bronny James": {
     "nba": 1642355,
-    "espn": 4683774
+    "espn": 4683774,
+    "bbref": "jamesbr02"
   },
   "Bruce Brown": {
     "nba": 1628971,
-    "espn": 4065670
+    "espn": 4065670,
+    "bbref": "brownbr01"
   },
   "Cade Cunningham": {
     "nba": 1630595,
-    "espn": 4432166
+    "espn": 4432166,
+    "bbref": "cunnica01"
   },
   "Cameron Johnson": {
     "nba": 1629661,
-    "espn": 3138196
+    "espn": 3138196,
+    "bbref": "johnsca02"
   },
   "Caris LeVert": {
     "nba": 1627747,
-    "espn": 2991043
+    "espn": 2991043,
+    "bbref": "leverca01"
   },
   "Carter Bryant": {
     "nba": 1642868,
-    "espn": 5061568
+    "espn": 5061568,
+    "bbref": "bryanca01"
   },
   "Cason Wallace": {
     "nba": 1641717,
-    "espn": 4683692
+    "espn": 4683692,
+    "bbref": "wallaca01"
   },
   "Chet Holmgren": {
     "nba": 1631096,
-    "espn": 4433255
+    "espn": 4433255,
+    "bbref": "holmgch01"
   },
   "Christian Braun": {
     "nba": 1631128,
-    "espn": 4431767
+    "espn": 4431767,
+    "bbref": "braunch01"
   },
   "CJ McCollum": {
     "nba": 203468,
-    "espn": 2490149
+    "espn": 2490149,
+    "bbref": "mccolcj01"
   },
   "Clint Capela": {
     "nba": 203991,
-    "espn": 3102529
+    "espn": 3102529,
+    "bbref": "capelca01"
   },
   "Collin Gillespie": {
     "nba": 1631221,
-    "espn": 4278585
+    "espn": 4278585,
+    "bbref": "gilleco01"
   },
   "Collin Murray-Boyles": {
     "nba": 1642867,
-    "espn": 5093267
+    "espn": 5093267,
+    "bbref": "murraco01"
   },
   "Corey Kispert": {
     "nba": 1630557,
-    "espn": 4280151
+    "espn": 4280151,
+    "bbref": "kispeco01"
   },
   "Damian Lillard": {
     "nba": 203081,
-    "espn": 6606
+    "espn": 6606,
+    "bbref": "lillada01"
   },
   "Daniss Jenkins": {
     "nba": 1642450,
-    "espn": 5107199
+    "espn": 5107199,
+    "bbref": "jenkida01"
   },
   "Darius Garland": {
     "nba": 1629636,
-    "espn": 4396907
+    "espn": 4396907,
+    "bbref": "garlada01"
   },
   "De'Aaron Fox": {
     "nba": 1628368,
-    "espn": 4066259
+    "espn": 4066259,
+    "bbref": "foxde01"
   },
   "Dean Wade": {
     "nba": 1629731,
-    "espn": 3912848
+    "espn": 3912848,
+    "bbref": "wadede01"
   },
   "Deandre Ayton": {
     "nba": 1629028,
-    "espn": 4278129
+    "espn": 4278129,
+    "bbref": "aytonde01"
   },
   "DeMar DeRozan": {
     "nba": 201942,
-    "espn": 3978
+    "espn": 3978,
+    "bbref": "derozde01"
   },
   "Deni Avdija": {
     "nba": 1630166,
-    "espn": 4683021
+    "espn": 4683021,
+    "bbref": "avdijde01"
   },
   "Dennis Schroder": {
     "nba": 203471,
-    "espn": 3032979
+    "espn": 3032979,
+    "bbref": "schrode01"
   },
   "Derrick White": {
     "nba": 1628401,
-    "espn": 3078576
+    "espn": 3078576,
+    "bbref": "whitede01"
   },
   "Desmond Bane": {
     "nba": 1630217,
-    "espn": 4066320
+    "espn": 4066320,
+    "bbref": "banede01"
   },
   "Devin Booker": {
     "nba": 1626164,
-    "espn": 3136193
+    "espn": 3136193,
+    "bbref": "bookede01"
   },
   "Devin Vassell": {
     "nba": 1630170,
-    "espn": 4395630
+    "espn": 4395630,
+    "bbref": "vassede01"
   },
   "Dillon Brooks": {
     "nba": 1628415,
-    "espn": 3155526
+    "espn": 3155526,
+    "bbref": "brookdi01"
   },
   "Dominick Barlow": {
     "nba": 1631230,
-    "espn": 4870562
+    "espn": 4870562,
+    "bbref": "barlodo01"
   },
   "Donovan Clingan": {
     "nba": 1642270,
-    "espn": 5105565
+    "espn": 5105565,
+    "bbref": "clingdo01"
   },
   "Donovan Mitchell": {
     "nba": 1628378,
-    "espn": 3908809
+    "espn": 3908809,
+    "bbref": "mitchdo01"
   },
   "Donte DiVincenzo": {
     "nba": 1628978,
-    "espn": 3934673
+    "espn": 3934673,
+    "bbref": "divindo01"
   },
   "Dorian Finney-Smith": {
     "nba": 1627827,
-    "espn": 2578185
+    "espn": 2578185,
+    "bbref": "finnedo01"
   },
   "Duncan Robinson": {
     "nba": 1629130,
-    "espn": 3157465
+    "espn": 3157465,
+    "bbref": "robindu01"
   },
   "Dylan Harper": {
     "nba": 1642844,
-    "espn": 5037871
+    "espn": 5037871,
+    "bbref": "harpedy01"
   },
   "Dyson Daniels": {
     "nba": 1630700,
-    "espn": 4869342
+    "espn": 4869342,
+    "bbref": "daniedy01"
   },
   "Evan Mobley": {
     "nba": 1630596,
-    "espn": 4432158
+    "espn": 4432158,
+    "bbref": "mobleev01"
   },
   "Franz Wagner": {
     "nba": 1630532,
-    "espn": 4566434
+    "espn": 4566434,
+    "bbref": "wagnefr01"
   },
   "Fred VanVleet": {
     "nba": 1627832,
-    "espn": 2991230
+    "espn": 2991230,
+    "bbref": "vanvlfr01"
   },
   "Gabe Vincent": {
     "nba": 1629216,
-    "espn": 3137259
+    "espn": 3137259,
+    "bbref": "vincega01"
   },
   "Giannis Antetokounmpo": {
     "nba": 203507,
-    "espn": 3032977
+    "espn": 3032977,
+    "bbref": "antetgi01"
   },
   "Goga Bitadze": {
     "nba": 1629048,
-    "espn": 4348700
+    "espn": 4348700,
+    "bbref": "bitadgo01"
   },
   "Grayson Allen": {
     "nba": 1628960,
-    "espn": 3135045
+    "espn": 3135045,
+    "bbref": "allengr01"
   },
   "Harrison Barnes": {
     "nba": 203084,
-    "espn": 6578
+    "espn": 6578,
+    "bbref": "barneha02"
   },
   "Isaiah Hartenstein": {
     "nba": 1628392,
-    "espn": 4222252
+    "espn": 4222252,
+    "bbref": "harteis01"
   },
   "Isaiah Joe": {
     "nba": 1630198,
-    "espn": 4395702
+    "espn": 4395702,
+    "bbref": "joeis01"
   },
   "Isaiah Stewart": {
     "nba": 1630191,
-    "espn": 4432810
+    "espn": 4432810,
+    "bbref": "stewais01"
   },
   "Ja'Kobe Walter": {
     "nba": 1642266,
-    "espn": 4684272
+    "espn": 4684272,
+    "bbref": "walteja01"
   },
   "Jabari Smith Jr.": {
     "nba": 1631095,
-    "espn": 4432639
+    "espn": 4432639,
+    "bbref": "smithja05"
   },
   "Jaden McDaniels": {
     "nba": 1630183,
-    "espn": 4431671
+    "espn": 4431671,
+    "bbref": "mcdanja02"
   },
   "Jae'Sean Tate": {
     "nba": 1630256,
-    "espn": 3136777
+    "espn": 3136777,
+    "bbref": "tateja01"
   },
   "Jake LaRavia": {
     "nba": 1631222,
-    "espn": 4592691
+    "espn": 4592691,
+    "bbref": "laravja01"
   },
   "Jakob Poeltl": {
     "nba": 1627751,
-    "espn": 3134908
+    "espn": 3134908,
+    "bbref": "poeltja01"
   },
   "Jalen Brunson": {
     "nba": 1628973,
-    "espn": 3934672
+    "espn": 3934672,
+    "bbref": "brunsja01"
   },
   "Jalen Duren": {
     "nba": 1631105,
-    "espn": 4433621
+    "espn": 4433621,
+    "bbref": "durenja01"
   },
   "Jalen Green": {
     "nba": 1630224,
-    "espn": 4437244
+    "espn": 4437244,
+    "bbref": "greenja05"
   },
   "Jalen Johnson": {
     "nba": 1630552,
-    "espn": 4701230
+    "espn": 4701230,
+    "bbref": "johnsja05"
   },
   "Jalen Suggs": {
     "nba": 1630591,
-    "espn": 4432165
+    "espn": 4432165,
+    "bbref": "suggsja01"
   },
   "Jalen Williams": {
     "nba": 1631114,
-    "espn": 4593803
+    "espn": 4593803,
+    "bbref": "willija06"
   },
   "Jamal Cain": {
     "nba": 1631288,
-    "espn": 4278572
+    "espn": 4278572,
+    "bbref": "cainja01"
   },
   "Jamal Murray": {
     "nba": 1627750,
-    "espn": 3936299
+    "espn": 3936299,
+    "bbref": "murraja01"
   },
   "Jamal Shead": {
     "nba": 1642347,
-    "espn": 4432241
+    "espn": 4432241,
+    "bbref": "sheadja01"
   },
   "James Harden": {
     "nba": 201935,
-    "espn": 3992
+    "espn": 3992,
+    "bbref": "hardeja01"
   },
   "Jamison Battle": {
     "nba": 1642419,
-    "espn": 4431893
+    "espn": 4431893,
+    "bbref": "battlja01"
   },
   "Jared McCain": {
     "nba": 1642272,
-    "espn": 4683778
+    "espn": 4683778,
+    "bbref": "mccaija01"
   },
   "Jarred Vanderbilt": {
     "nba": 1629020,
-    "espn": 4278077
+    "espn": 4278077,
+    "bbref": "vandeja01"
   },
   "Jarrett Allen": {
     "nba": 1628386,
-    "espn": 4066328
+    "espn": 4066328,
+    "bbref": "allenja01"
   },
   "Javonte Green": {
     "nba": 1629750,
-    "espn": 2596112
+    "espn": 2596112,
+    "bbref": "greenja02"
   },
   "Jaxson Hayes": {
     "nba": 1629637,
-    "espn": 4397077
+    "espn": 4397077,
+    "bbref": "hayesja02"
   },
   "Jaylen Brown": {
     "nba": 1627759,
-    "espn": 3917376
+    "espn": 3917376,
+    "bbref": "brownja02"
   },
   "Jaylen Clark": {
     "nba": 1641740,
-    "espn": 4432247
+    "espn": 4432247,
+    "bbref": "clarkja02"
   },
   "Jaylin Williams": {
     "nba": 1631119,
-    "espn": 4432823
+    "espn": 4432823,
+    "bbref": "willija07"
   },
   "Jaylon Tyson": {
     "nba": 1642281,
-    "espn": 4683747
+    "espn": 4683747,
+    "bbref": "tysonja01"
   },
   "Jayson Tatum": {
     "nba": 1628369,
-    "espn": 4065648
+    "espn": 4065648,
+    "bbref": "tatumja01"
   },
   "Jerami Grant": {
     "nba": 203924,
-    "espn": 2991070
+    "espn": 2991070,
+    "bbref": "grantje01"
   },
   "Jimmy Butler": {
     "nba": 202710,
-    "espn": 6430
+    "espn": 6430,
+    "bbref": "butleji01"
   },
   "Joel Embiid": {
     "nba": 203954,
-    "espn": 3059318
+    "espn": 3059318,
+    "bbref": "embiijo01"
   },
   "Jonas Valanciunas": {
     "nba": 202685,
-    "espn": 6477
+    "espn": 6477,
+    "bbref": "valanjo01"
   },
   "Jonathan Kuminga": {
     "nba": 1630228,
-    "espn": 4433247
+    "espn": 4433247,
+    "bbref": "kuminjo01"
   },
   "Jordan Clarkson": {
     "nba": 203903,
-    "espn": 2528426
+    "espn": 2528426,
+    "bbref": "clarkjo01"
   },
   "Jordan Walsh": {
     "nba": 1641775,
-    "espn": 4683689
+    "espn": 4683689,
+    "bbref": "walshjo01"
   },
   "Jose Alvarado": {
     "nba": 1630631,
-    "espn": 4277869
+    "espn": 4277869,
+    "bbref": "alvarjo01"
   },
   "Josh Hart": {
     "nba": 1628404,
-    "espn": 3062679
+    "espn": 3062679,
+    "bbref": "hartjo01"
   },
   "Josh Okogie": {
     "nba": 1629006,
-    "espn": 4065663
+    "espn": 4065663,
+    "bbref": "okogijo01"
   },
   "Jrue Holiday": {
     "nba": 201950,
-    "espn": 3995
+    "espn": 3995,
+    "bbref": "holidjr01"
   },
   "Julian Champagnie": {
     "nba": 1630577,
-    "espn": 4592479
+    "espn": 4592479,
+    "bbref": "champju02"
   },
   "Julian Strawther": {
     "nba": 1631124,
-    "espn": 4432181
+    "espn": 4432181,
+    "bbref": "strawju01"
   },
   "Julius Randle": {
     "nba": 203944,
-    "espn": 3064514
+    "espn": 3064514,
+    "bbref": "randlju01"
   },
   "Justin Edwards": {
     "nba": 1642348,
-    "espn": 4711297
+    "espn": 4711297,
+    "bbref": "edwarju01"
   },
   "Karl-Anthony Towns": {
     "nba": 1626157,
-    "espn": 3136195
+    "espn": 3136195,
+    "bbref": "townska01"
   },
   "Keldon Johnson": {
     "nba": 1629640,
-    "espn": 4395723
+    "espn": 4395723,
+    "bbref": "johnske04"
   },
   "Kelly Oubre Jr.": {
     "nba": 1626162,
-    "espn": 3133603
+    "espn": 3133603,
+    "bbref": "oubreke01"
   },
   "Keon Ellis": {
     "nba": 1631165,
-    "espn": 4702177
+    "espn": 4702177,
+    "bbref": "elliske01"
   },
   "Kevin Durant": {
     "nba": 201142,
-    "espn": 3202
+    "espn": 3202,
+    "bbref": "duranke01"
   },
   "Kevin Huerter": {
     "nba": 1628989,
-    "espn": 4066372
+    "espn": 4066372,
+    "bbref": "huertke01"
   },
   "Khaman Maluach": {
     "nba": 1642863,
-    "espn": 5203685
+    "espn": 5203685,
+    "bbref": "maluakh01"
   },
   "Kris Murray": {
     "nba": 1631200,
-    "espn": 4594326
+    "espn": 4594326,
+    "bbref": "murrakr01"
   },
   "Kyle Anderson": {
     "nba": 203937,
-    "espn": 2993874
+    "espn": 2993874,
+    "bbref": "anderky01"
   },
   "LaMelo Ball": {
     "nba": 1630163,
-    "espn": 4432816
+    "espn": 4432816,
+    "bbref": "ballla01"
   },
   "Landry Shamet": {
     "nba": 1629013,
-    "espn": 3914044
+    "espn": 3914044,
+    "bbref": "shamela01"
   },
   "LeBron James": {
     "nba": 2544,
-    "espn": 1966
+    "espn": 1966,
+    "bbref": "jamesle01"
   },
   "Luguentz Dort": {
     "nba": 1629652,
-    "espn": 4397020
+    "espn": 4397020,
+    "bbref": "dortlu01"
   },
   "Luka Doncic": {
     "nba": 1629029,
-    "espn": 3945274
+    "espn": 3945274,
+    "bbref": "doncilu01"
   },
   "Luka Garza": {
     "nba": 1630568,
-    "espn": 4277951
+    "espn": 4277951,
+    "bbref": "garzalu01"
   },
   "Luke Kennard": {
     "nba": 1628379,
-    "espn": 3913174
+    "espn": 3913174,
+    "bbref": "kennalu01"
   },
   "Luke Kornet": {
     "nba": 1628436,
-    "espn": 3064560
+    "espn": 3064560,
+    "bbref": "kornelu01"
   },
   "Marcus Smart": {
     "nba": 203935,
-    "espn": 2990992
+    "espn": 2990992,
+    "bbref": "smartma01"
   },
   "Matisse Thybulle": {
     "nba": 1629680,
-    "espn": 3907498
+    "espn": 3907498,
+    "bbref": "thybuma01"
   },
   "Max Strus": {
     "nba": 1629622,
-    "espn": 4065778
+    "espn": 4065778,
+    "bbref": "strusma01"
   },
   "Mikal Bridges": {
     "nba": 1628969,
-    "espn": 3147657
+    "espn": 3147657,
+    "bbref": "bridgmi01"
   },
   "Mike Conley": {
     "nba": 201144,
-    "espn": 3195
+    "espn": 3195,
+    "bbref": "conlemi01"
   },
   "Miles McBride": {
     "nba": 1630540,
-    "espn": 4431823
+    "espn": 4431823,
+    "bbref": "mcbrimi01"
   },
   "Mitchell Robinson": {
     "nba": 1629011,
-    "espn": 4351852
+    "espn": 4351852,
+    "bbref": "robinmi01"
   },
   "Mouhamed Gueye": {
     "nba": 1631243,
-    "espn": 4712863
+    "espn": 4712863,
+    "bbref": "gueyemo02"
   },
   "Naz Reid": {
     "nba": 1629675,
-    "espn": 4396971
+    "espn": 4396971,
+    "bbref": "reidna01"
   },
   "Neemias Queta": {
     "nba": 1629674,
-    "espn": 4397424
+    "espn": 4397424,
+    "bbref": "quetane01"
   },
   "Nickeil Alexander-Walker": {
     "nba": 1629638,
-    "espn": 4278039
+    "espn": 4278039,
+    "bbref": "alexani01"
   },
   "Nikola Jokic": {
     "nba": 203999,
-    "espn": 3112335
+    "espn": 3112335,
+    "bbref": "jokicni01"
   },
   "Nikola Vucevic": {
     "nba": 202696,
-    "espn": 6478
+    "espn": 6478,
+    "bbref": "vucevni01"
   },
   "OG Anunoby": {
     "nba": 1628384,
-    "espn": 3934719
+    "espn": 3934719,
+    "bbref": "anunoog01"
   },
   "Onyeka Okongwu": {
     "nba": 1630168,
-    "espn": 4431680
+    "espn": 4431680,
+    "bbref": "okongon01"
   },
   "Oso Ighodaro": {
     "nba": 1642345,
-    "espn": 4601023
+    "espn": 4601023,
+    "bbref": "ighodos01"
   },
   "Paolo Banchero": {
     "nba": 1631094,
-    "espn": 4432573
+    "espn": 4432573,
+    "bbref": "banchpa01"
   },
   "Paul George": {
     "nba": 202331,
-    "espn": 4251
+    "espn": 4251,
+    "bbref": "georgpa01"
   },
   "Payton Pritchard": {
     "nba": 1630202,
-    "espn": 4066354
+    "espn": 4066354,
+    "bbref": "pritcpa01"
   },
   "Quentin Grimes": {
     "nba": 1629656,
-    "espn": 4397014
+    "espn": 4397014,
+    "bbref": "grimequ01"
   },
   "Reed Sheppard": {
     "nba": 1642263,
-    "espn": 4711272
+    "espn": 4711272,
+    "bbref": "sheppre01"
   },
   "RJ Barrett": {
     "nba": 1629628,
-    "espn": 4395625
+    "espn": 4395625,
+    "bbref": "barrerj01"
   },
   "Robert Williams III": {
     "nba": 1629057,
-    "espn": 4066211
+    "espn": 4066211,
+    "bbref": "williro04"
   },
   "Ronald Holland II": {
     "nba": 1641842,
-    "espn": 4683771
+    "espn": 4683771,
+    "bbref": "hollaro01"
   },
   "Royce O'Neale": {
     "nba": 1626220,
-    "espn": 2583632
+    "espn": 2583632,
+    "bbref": "onealro01"
   },
   "Rudy Gobert": {
     "nba": 203497,
-    "espn": 3032976
+    "espn": 3032976,
+    "bbref": "goberru01"
   },
   "Rui Hachimura": {
     "nba": 1629060,
-    "espn": 4066648
+    "espn": 4066648,
+    "bbref": "hachiru01"
   },
   "Ryan Dunn": {
     "nba": 1642346,
-    "espn": 4888725
+    "espn": 4888725,
+    "bbref": "dunnry01"
   },
   "Sam Hauser": {
     "nba": 1630573,
-    "espn": 4065804
+    "espn": 4065804,
+    "bbref": "hausesa01"
   },
   "Sam Merrill": {
     "nba": 1630241,
-    "espn": 4066757
+    "espn": 4066757,
+    "bbref": "merrisa01"
   },
   "Sandro Mamukelashvili": {
     "nba": 1630572,
-    "espn": 4278580
+    "espn": 4278580,
+    "bbref": "mamuksa01"
   },
   "Scoot Henderson": {
     "nba": 1630703,
-    "espn": 4683678
+    "espn": 4683678,
+    "bbref": "hendesc01"
   },
   "Scottie Barnes": {
     "nba": 1630567,
-    "espn": 4433134
+    "espn": 4433134,
+    "bbref": "barnesc01"
   },
   "Shaedon Sharpe": {
     "nba": 1631101,
-    "espn": 4914336
+    "espn": 4914336,
+    "bbref": "sharpsh01"
   },
   "Shai Gilgeous-Alexander": {
     "nba": 1628983,
-    "espn": 4278073
+    "espn": 4278073,
+    "bbref": "gilgesh01"
   },
   "Spencer Jones": {
     "nba": 1642461,
-    "espn": 4592427
+    "espn": 4592427,
+    "bbref": "jonessp01"
   },
   "Stephen Curry": {
     "nba": 201939,
-    "espn": 3975
+    "espn": 3975,
+    "bbref": "curryst01"
   },
   "Stephon Castle": {
     "nba": 1642264,
-    "espn": 4845367
+    "espn": 4845367,
+    "bbref": "castlst01"
   },
   "Tari Eason": {
     "nba": 1631106,
-    "espn": 4433192
+    "espn": 4433192,
+    "bbref": "easonta01"
   },
   "Terrence Shannon Jr.": {
     "nba": 1630545,
-    "espn": 4432847
+    "espn": 4432847,
+    "bbref": "shannte01"
   },
   "Tim Hardaway Jr.": {
     "nba": 203501,
-    "espn": 2528210
+    "espn": 2528210,
+    "bbref": "hardati01"
   },
   "Tobias Harris": {
     "nba": 202699,
-    "espn": 6440
+    "espn": 6440,
+    "bbref": "harrito02"
   },
   "Tony Bradley": {
     "nba": 1628396,
-    "espn": 4065673
+    "espn": 4065673,
+    "bbref": "bradlto01"
   },
   "Toumani Camara": {
     "nba": 1641739,
-    "espn": 4431736
+    "espn": 4431736,
+    "bbref": "camarto01"
   },
   "Trae Young": {
     "nba": 1629027,
-    "espn": 4277905
+    "espn": 4277905,
+    "bbref": "youngtr01"
   },
   "Tristan da Silva": {
     "nba": 1641783,
-    "espn": 4702382
+    "espn": 4702382,
+    "bbref": "dasiltr01"
   },
   "Tyler Herro": {
     "nba": 1629639,
-    "espn": 4395725
+    "espn": 4395725,
+    "bbref": "herroty01"
   },
   "Tyrese Haliburton": {
     "nba": 1630169,
-    "espn": 4396993
+    "espn": 4396993,
+    "bbref": "halibty01"
   },
   "Tyrese Maxey": {
     "nba": 1630178,
-    "espn": 4431678
+    "espn": 4431678,
+    "bbref": "maxeyty01"
   },
   "Tyus Jones": {
     "nba": 1626145,
-    "espn": 3135046
+    "espn": 3135046,
+    "bbref": "jonesty01"
   },
   "Victor Wembanyama": {
     "nba": 1641705,
-    "espn": 5104157
+    "espn": 5104157,
+    "bbref": "wembavi01"
   },
   "VJ Edgecombe": {
     "nba": 1642845,
-    "espn": 5124612
+    "espn": 5124612,
+    "bbref": "edgecvj01"
   },
   "Wendell Carter Jr.": {
     "nba": 1628976,
-    "espn": 4277847
+    "espn": 4277847,
+    "bbref": "cartewe01"
   },
   "Zach LaVine": {
     "nba": 203897,
-    "espn": 3064440
+    "espn": 3064440,
+    "bbref": "lavinza01"
   },
   "Zeke Nnaji": {
     "nba": 1630192,
-    "espn": 4431690
+    "espn": 4431690,
+    "bbref": "nnajize01"
   }
 }
