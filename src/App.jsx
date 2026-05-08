@@ -28,6 +28,7 @@ export default function App() {
   const [playerOpen, setPlayerOpen] = useState(false);
   const [playerHighlight, setPlayerHighlight] = useState(0);
   const [selectedStats, setSelectedStats] = useState([...STATS]);
+  const [direction, setDirection] = useState("OVER");
   const [analyzing, setAnalyzing] = useState(false);
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
@@ -93,6 +94,7 @@ export default function App() {
 
     try {
       const body = { player, statTypes: selectedStats };
+      if (direction === "OVER" || direction === "UNDER") body.direction = direction;
 
       const response = await fetch("/api/analyze-all", {
         method: "POST",
@@ -111,7 +113,7 @@ export default function App() {
     } finally {
       setAnalyzing(false);
     }
-  }, [player, selectedStats]);
+  }, [player, selectedStats, direction]);
 
   return (
     <div style={{
@@ -215,6 +217,17 @@ export default function App() {
               )}
             </div>
           </div>
+
+          {/* Direction */}
+          <select
+            value={direction}
+            onChange={(e) => setDirection(e.target.value)}
+            style={{ ...selectStyle, flex: undefined, width: "100%", boxSizing: "border-box" }}
+          >
+            <option value="OVER">OVER ONLY</option>
+            <option value="UNDER">UNDER ONLY</option>
+            <option value="BOTH">BOTH DIRECTIONS</option>
+          </select>
 
           {/* Stat Multi-Select */}
           <div style={{ position: "relative" }}>
