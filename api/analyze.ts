@@ -1,15 +1,15 @@
-import { resolvePlayerId, resolveEspnId } from "./lib/player-ids.js";
+import { resolvePlayerId, resolveEspnId } from "./lib/player-ids.ts";
 import {
   currentSeason,
   getCommonPlayerInfo,
   getSeasonAverages,
   getLastNGames,
   getHomeAwaySplits,
-} from "./lib/nba-stats.js";
-import * as bdl from "./lib/balldontlie.js";
-import * as espnStats from "./lib/espn-stats.js";
-import { getOpponentDefense } from "./lib/team-defense.js";
-import { getPrimaryDefender } from "./lib/matchup-defender.js";
+} from "./lib/nba-stats.ts";
+import * as bdl from "./lib/balldontlie.ts";
+import * as espnStats from "./lib/espn-stats.ts";
+import { getOpponentDefense } from "./lib/team-defense.ts";
+import { getPrimaryDefender } from "./lib/matchup-defender.ts";
 import {
   getTodaysGames,
   findGameForTeamAbbr,
@@ -17,16 +17,37 @@ import {
   getWinProbability,
   getAllInjuries,
   opponentFor,
-} from "./lib/espn.js";
-import { composeGroundTruth } from "./lib/ground-truth.js";
-import { MODEL_FRAMEWORK } from "./lib/framework.js";
-import { rateLimit } from "./lib/rate-limit.js";
-import { runWithRequestContext } from "./lib/request-context.js";
-import { PROP_TO_FIELD } from "./lib/prop-types.js";
+} from "./lib/espn.ts";
+import { composeGroundTruth } from "./lib/ground-truth.ts";
+import { MODEL_FRAMEWORK } from "./lib/framework.ts";
+import { rateLimit } from "./lib/rate-limit.ts";
+import { runWithRequestContext } from "./lib/request-context.ts";
+import { PROP_TO_FIELD } from "./lib/prop-types.ts";
 import { randomUUID } from "node:crypto";
+import {
+  ConfigurationError,
+  ValidationError,
+  RateLimitError,
+  ExternalAPIError,
+  LLMError,
+  DataNotFoundError,
+  createErrorResponse,
+  isRetryableError,
+  sleep,
+  calculateBackoffDelay
+} from "./lib/errors.ts";
 
 export const runtime = "nodejs";
 
+/**
+ * Gathers ground truth data for a player prop analysis.
+ * Fetches data from multiple sources with fallback mechanisms.
+ * @param {Object} params - The parameters for data gathering
+ * @param {string} params.player - Player name
+ * @param {string} params.propType - Prop type (e.g., "Points OVER")
+ * @param {number} params.line - Prop line value
+ * @returns {Promise<Object>} Ground truth data or skip reason
+ */
 // Exported for smoke testing — fetches real data and composes groundTruth
 // without calling Gemini.
 export async function gatherGroundTruth({ player, propType, line }) {
@@ -130,81 +151,238 @@ export async function gatherGroundTruth({ player, propType, line }) {
     seasonAvg, l5, splits, winProb, allInjuries, opponentDefense, primaryDefender,
   });
 
-  return { groundTruth, missing, trace };
+   return { groundTruth, missing, trace };
+ }
+
+/**
+ * Gathers ground truth data with retry logic for transient failures.
+ * Wraps gatherGroundTruth with retry mechanism for external API calls.
+ * @param {Object} params - The parameters for data gathering
+ * @param {string} params.player - Player name
+ * @param {string} params.propType - Prop type (e.g., "Points OVER")
+ * @param {number} params.line - Prop line value
+ * @returns {Promise<Object>} Ground truth data or skip reason
+ */
+async function gatherGroundTruthWithRetry({ player, propType, line }) {
+  // Define which errors should trigger retries
+  const maxRetries = 3;
+  const baseDelayMs = 1000;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await gatherGroundTruth({ player, propType, line });
+      
+      // If we got a skip reason, don't retry - it's a definitive result
+      if (result.skipReason) {
+        return result;
+      }
+      
+      // Otherwise, we got valid data, return it
+      return result;
+    } catch (error) {
+      // If this is the last attempt, don't retry
+      if (attempt === maxRetries) {
+        throw error;
+      }
+      
+      // Check if the error is retryable
+      if (!isRetryableError(error)) {
+        throw error;
+      }
+      
+      // Wait before retrying with exponential backoff
+      const delay = calculateBackoffDelay(attempt, baseDelayMs);
+      await sleep(delay);
+    }
+  }
 }
 
-export async function POST(req) {
+ export async function POST(req) {
   const reqId = randomUUID().slice(0, 8);
   return runWithRequestContext({ reqId }, () => handlePost(req));
 }
 
+/**
+ * Handles POST requests to the analyze endpoint.
+ * Validates input, applies rate limiting, gathers ground truth data,
+ * and invokes the Gemini AI model for prop analysis.
+ * @param {Request} req - The HTTP request object
+ * @returns {Promise<Response>} JSON response with analysis results or error
+ */
 async function handlePost(req) {
   try {
+    // Extract and sanitize client IP for rate limiting
     const ip = (req.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim();
-    const limit = rateLimit(`analyze:${ip}`, { windowMs: 60_000, max: 10 });
+    // Apply rate limiting: configurable requests per window per IP
+    const rateLimitWindowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10);
+    const rateLimitMaxRequests = parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '10', 10);
+    const limit = rateLimit(`analyze:${ip}`, { windowMs: rateLimitWindowMs, max: rateLimitMaxRequests });
     if (!limit.ok) {
-      return Response.json(
-        { error: "Rate limit exceeded. Try again shortly." },
-        { status: 429, headers: { "Retry-After": String(Math.ceil(limit.retryAfterMs / 1000)) } }
-      );
+      const retryAfterMs = limit.retryAfterMs || rateLimitWindowMs;
+      return createErrorResponse(new RateLimitError(
+        "Rate limit exceeded. Try again shortly.", 
+        retryAfterMs
+      ));
     }
 
-    const body = await req.json();
-    const { player, propType, line } = body;
-
-    if (!player || !propType || !line) {
-      return Response.json({ error: "Missing required fields" }, { status: 400 });
+    // Parse and validate request
+    const validationResult = await parseAndValidateRequest(req);
+    if (validationResult.isError) {
+      return validationResult.response;
     }
+    const { player, propType, line } = validationResult.data;
 
-    if (!/\s+(OVER|UNDER)\s*$/i.test(propType) || propTypeToField(propType) == null) {
-      return Response.json(
-        {
-          error: `Unknown prop type: "${propType}". Supported: ${Object.keys(PROP_TO_FIELD).map((k) => `${k} OVER/UNDER`).join(", ")}`,
-        },
-        { status: 400 }
-      );
-    }
+    // Gather ground truth data from various sources with retry logic
+    const gathered = await gatherGroundTruthWithRetry({ player, propType, line });
 
-    const gathered = await gatherGroundTruth({ player, propType, line });
-
+    // Handle SKIP conditions from data gathering
     if (gathered.skipReason) {
       return Response.json(skipResult(gathered.skipReason, gathered.message));
     }
 
     const { groundTruth, missing, trace } = gathered;
 
+    // Check for missing required data
     if (missing.length > 0) {
-      const traceFlags = Object.entries(trace || {})
-        .filter(([, v]) => v === "missing")
-        .map(([k]) => `📡 source: ${k} → all tiers null`);
-      return Response.json({
-        verdict: "SKIP",
-        tier: "SKIP",
-        confidence: 0,
-        justification: `Missing required data: ${missing.join(", ")}. Cannot apply framework.`,
-        flags: [...missing.map((f) => `⚠️ missing: ${f}`), ...traceFlags],
-        data_used: null,
-        ground_truth: groundTruth,
-      });
+      return createMissingDataResponse(missing, trace);
     }
 
+    // Verify Google API key is configured
     const googleKey = process.env.GOOGLE_API_KEY;
     if (!googleKey) {
-      return Response.json({ error: "Google API key not configured" }, { status: 500 });
+      return createErrorResponse(new ConfigurationError("Google API key not configured"));
     }
 
-    const prompt = buildPrompt(MODEL_FRAMEWORK, groundTruth);
-    const llm = await callGemini(googleKey, prompt);
-    if (llm.error) {
-      return Response.json({ error: llm.error, debug: llm.debug }, { status: 500 });
+    // Invoke Gemini model
+    const llmResponse = await invokeGeminiModel(googleKey, groundTruth);
+    if (llmResponse.isError) {
+      return llmResponse.response;
     }
 
-    return Response.json({ ...llm.json, ground_truth: groundTruth });
+    // Return successful response with LLM output and ground truth
+    return createSuccessResponse(llmResponse.data, groundTruth);
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    // Handle unexpected errors with proper error categorization
+    return createErrorResponse(error);
   }
 }
 
+/**
+ * Invokes the Gemini AI model with the given ground truth data.
+ * @param {string} googleKey - Google API key for Gemini
+ * @param {Object} groundTruth - The verified data to use for analysis
+ * @returns {{isError: boolean, response?: Response, data?: Object}} Result containing either the LLM response or error
+ */
+async function invokeGeminiModel(googleKey, groundTruth) {
+  try {
+    // Build prompt for Gemini and invoke the model
+    const prompt = buildPrompt(MODEL_FRAMEWORK, groundTruth);
+    const llm = await callGemini(googleKey, prompt);
+    if (llm.error) {
+      return {
+        isError: true,
+        response: Response.json({ error: llm.error, debug: llm.debug }, { status: 500 })
+      };
+    }
+    
+    return {
+      isError: false,
+      data: llm.json
+    };
+  } catch (error) {
+    return {
+      isError: true,
+      response: Response.json({ error: error.message }, { status: 500 })
+    };
+  }
+}
+
+/**
+ * Creates a successful response with LLM output and ground truth.
+ * @param {Object> llmData - The parsed JSON data from the LLM
+ * @param {Object} groundTruth - The ground truth data used for analysis
+ * @returns {Response} JSON response with analysis results
+ */
+function createSuccessResponse(llmData, groundTruth) {
+  return Response.json({ ...llmData, ground_truth: groundTruth });
+}
+
+/**
+ * Creates a rate limit exceeded response.
+ * @param {number} retryAfterMs - Milliseconds until the rate limit resets
+ * @returns {Response} JSON response with rate limit error
+ */
+function createRateLimitResponse(retryAfterMs) {
+  return Response.json(
+    { error: "Rate limit exceeded. Try again shortly." },
+    { status: 429, headers: { "Retry-After": String(Math.ceil(retryAfterMs / 1000)) } }
+  );
+}
+
+/**
+ * Parses and validates the request body.
+ * @param {Request} req - The HTTP request object
+ * @returns {{isError: boolean, response?: Response, data?: {player: string, propType: string, line: number}}}
+ */
+async function parseAndValidateRequest(req) {
+  // Parse request body
+  const body = await req.json();
+  const { player, propType, line } = body;
+
+  // Validate required fields
+  if (!player || !propType || !line) {
+    return {
+      isError: true,
+      response: Response.json({ error: "Missing required fields" }, { status: 400 })
+    };
+  }
+
+  // Validate prop type format (must end with OVER or UNDER)
+  if (!/\s+(OVER|UNDER)\s*$/i.test(propType) || propTypeToField(propType) == null) {
+    return {
+      isError: true,
+      response: Response.json(
+        {
+          error: `Unknown prop type: "${propType}". Supported: ${Object.keys(PROP_TO_FIELD).map((k) => `${k} OVER/UNDER`).join(", ")}`,
+        },
+        { status: 400 }
+      )
+    };
+  }
+
+  return {
+    isError: false,
+    data: { player, propType, line }
+  };
+}
+
+/**
+ * Creates a missing data response.
+ * @param {Array<string>} missing - Array of missing data fields
+ * @param {Object} trace - Trace object showing data sources
+ * @returns {Response} JSON response with missing data error
+ */
+function createMissingDataResponse(missing, trace) {
+  const traceFlags = Object.entries(trace || {})
+    .filter(([, v]) => v === "missing")
+    .map(([k]) => `📡 source: ${k} → all tiers null`);
+  return Response.json({
+    verdict: "SKIP",
+    tier: "SKIP",
+    confidence: 0,
+    justification: `Missing required data: ${missing.join(", ")}. Cannot apply framework.`,
+    flags: [...missing.map((f) => `⚠️ missing: ${f}`), ...traceFlags],
+    data_used: null,
+    ground_truth: null, // We don't have ground truth when data is missing
+  });
+}
+
+/**
+ * Creates a standardized SKIP response for when analysis cannot proceed.
+ * @param {string} code - The skip reason code
+ * @param {string} message - Human-readable explanation for the skip
+ * @returns {Object} Standardized skip response object
+ */
 function skipResult(code, message) {
   return {
     verdict: "SKIP",
@@ -216,33 +394,55 @@ function skipResult(code, message) {
   };
 }
 
+/**
+ * Converts a prop type string to its corresponding field name.
+ * Extracts the stat name from prop types like "Points OVER" or "Rebounds UNDER".
+ * @param {string} propType - Prop type string (e.g., "Points OVER")
+ * @returns {string|null} Field name or null if invalid prop type
+ */
 export function propTypeToField(propType) {
   // propType examples: "Points OVER", "Rebounds UNDER", "3-Pointers Made OVER"
   const stat = String(propType).replace(/\s+(OVER|UNDER)\s*$/i, "").trim();
   return PROP_TO_FIELD[stat] ?? null;
 }
 
+/**
+ * Builds the prompt for the Gemini AI model based on the framework and ground truth data.
+ * Constructs a detailed prompt that instructs the model on how to analyze the prop bet.
+ * @param {string} framework - The analytical framework to apply
+ * @param {Object} groundTruth - The verified data to use for analysis
+ * @returns {string} Formatted prompt for Gemini API
+ */
+/**
+ * Builds the prompt for the Gemini AI model based on the framework and ground truth data.
+ * Constructs a detailed prompt that instructs the model on how to analyze the prop bet.
+ * @param {string} framework - The analytical framework to apply
+ * @param {Object} groundTruth - The verified data to use for analysis
+ * @returns {string} Formatted prompt for Gemini API
+ */
 export function buildPrompt(framework, groundTruth) {
   const field = propTypeToField(groundTruth.prop_type);
   const daysOut = groundTruth.game?.days_out ?? 0;
   const forwardLookingNote = daysOut > 0
     ? `\n\nFORWARD-LOOKING GAME: groundTruth.game.days_out is ${daysOut} — this game is NOT today, it is ${daysOut} day(s) away. Injury reports, win probability, and lineup state may shift before tip-off. You MUST add a flag "📅 forward-looking pick (game ${daysOut}d out) — re-verify injuries closer to tip" and treat any UNDER mechanism that depends on a teammate's confirmed status (e.g., role compression) as A-tier max unless the absence is clearly long-term.`
     : "";
-  return `You are the NBA PrizePicks Model v3.4 verdict engine. Output exactly one JSON object — no prose, no markdown, no code fences.
-
-DATA RULES — non-negotiable:
+  
+  // Build the prompt components
+  const roleDefinition = "You are the NBA PrizePicks Model v3.4 verdict engine. Output exactly one JSON object — no prose, no markdown, no code fences.";
+  
+  const dataRules = `DATA RULES — non-negotiable:
 1. Use ONLY values from the GROUND TRUTH block below. Do NOT invent, estimate, recall from prior knowledge, or guess any number. Treat your training-data memory of player stats as forbidden.
 2. Arithmetic on values supplied in GROUND TRUTH is permitted (it is already pre-computed for you in averages.pra / pr / pa / ra). Producing any number that cannot be derived from GROUND TRUTH is a violation.
 3. The "data_used" field of your output must echo values directly from GROUND TRUTH. Do not put your own numbers there.
-4. If applying a hard gate from the framework requires a value that is null or absent in GROUND TRUTH, set verdict to "SKIP" with a flag like "⚠️ missing: <field>". Do not substitute a guessed value.${forwardLookingNote}
-
-FRAMEWORK:
-${framework}
-
-GROUND TRUTH (the only data you may cite):
-${JSON.stringify(groundTruth, null, 2)}
-
-WHERE TO FIND VALUES (path → meaning):
+4. If applying a hard gate from the framework requires a value that is null or absent in GROUND TRUTH, set verdict to "SKIP" with a flag like "⚠️ missing: <field>". Do not substitute a guessed value.${forwardLookingNote}`;
+  
+  const frameworkSection = `FRAMEWORK:
+${framework}`;
+  
+  const groundTruthSection = `GROUND TRUTH (the only data you may cite):
+${JSON.stringify(groundTruth, null, 2)}`;
+  
+  const whereToFindValues = `WHERE TO FIND VALUES (path → meaning):
 - groundTruth.season.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fgm,fga,fg_pct,ft_pct,fg3_pct,fta,ftm,minutes}  → regular-season per-game averages (fta/ftm needed for Rule 5i FT-Floor Insurance Guard)
 - groundTruth.l5.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fga,minutes}                              → most-recent 5 games (playoff if l5.type==="Playoffs")
 - groundTruth.l5.games[i].{fgm,fga,fg_pct}                                                      → per-game shooting (used by Rule 5b.ii shooting-slump rebound suppressor)
@@ -253,11 +453,11 @@ WHERE TO FIND VALUES (path → meaning):
 - groundTruth.injuries.player_team / opponent                                                 → {player,status,detail,date}[] (used for role compression / matchup ceiling)
 - groundTruth.player_recent.is_listed_injured                                                 → boolean — TRUE means post-injury return gate (Section 6) applies
 - groundTruth.opponent_defense                                                                → {def_rating, def_rank (1-30, 1=best), primary_defender: {player, share_pct, n_games, confirmed} | null, source}; null only when both live and snapshot fail. primary_defender is the season-aggregated top defender vs this player from stats.nba.com matchup data; confirmed=true when share_pct >= 0.40. Use def_rank for Rule 5h baseline + Mechanism 3 matchup ceiling (top-5 = def_rank<=5); use primary_defender to gate the v3.4 5h FT-leak modifier on a named matchup.
-- groundTruth.series                                                                          → playoff series state {games_played, player_team_wins, opponent_wins, next_game_number, series_record, series_summary, leading_team_abbr, round, source}; null in regular season. leading_team_abbr is null when series is tied, otherwise the abbr of the team ahead — use it for Rule 5f tied-series and lead-3-0/3-1 gating instead of parsing series_record or series_summary.
-
-For this prop ("${groundTruth.prop_type}" line ${groundTruth.line}), the relevant averages field is "${field ?? "(unknown — output SKIP)"}". Use season.averages.${field ?? "?"} and l5.averages.${field ?? "?"} as the baselines.
-
-OUTPUT (single JSON object):
+- groundTruth.series                                                                          → playoff series state {games_played, player_team_wins, opponent_wins, next_game_number, series_record, series_summary, leading_team_abbr, round, source}; null in regular season. leading_team_abbr is null when series is tied, otherwise the abbr of the team ahead — use it for Rule 5f tied-series and lead-3-0/3-1 gating instead of parsing series_record or series_summary.`;
+  
+  const propSpecificInfo = `For this prop ("${groundTruth.prop_type}" line ${groundTruth.line}), the relevant averages field is "${field ?? "(unknown — output SKIP)"}". Use season.averages.${field ?? "?"} and l5.averages.${field ?? "?"} as the baselines.`;
+  
+  const outputSpecification = `OUTPUT (single JSON object):
 {
   "verdict":      "OVER" | "UNDER" | "SKIP",
   "tier":         "S" | "A" | "B" | "SKIP",
@@ -271,16 +471,39 @@ OUTPUT (single JSON object):
     "win_prob":    <copy groundTruth.win_prob.player_team_pct, or null>,
     "opponent":    <copy groundTruth.opponent_team.name>,
     "game_context": <if groundTruth.series is non-null, format as "{season.label} {series.round} G{series.next_game_number} ({series.series_summary})" — copy series.next_game_number and series.series_summary verbatim from GROUND TRUTH; do NOT compute, infer, or recall the game number, series record, or series leader from any other source. Example with the values supplied: "2025-26 RD16 G5 (BOS leads series 3-1)". If series is null, format as "{season.label} Regular Season".>
-  }
-}`;
+  }`;
+  
+  // Combine all sections
+  return `${roleDefinition}
+
+${dataRules}
+
+${frameworkSection}
+
+${groundTruthSection}
+
+${whereToFindValues}
+
+${propSpecificInfo}
+
+${outputSpecification}`;
 }
 
+/**
+ * Invokes the Gemini AI model with retry logic and fallback.
+ * Attempts the primary model up to 3 times with exponential backoff for transient errors,
+ * then falls back to the flash-lite model once before giving up.
+ * @param {string} apiKey - Google API key for Gemini
+ * @param {string} prompt - The prompt to send to the model
+ * @returns {Promise<Object>} Result containing either the parsed JSON or error information
+ */
 export async function callGemini(apiKey, prompt) {
   // Try primary model up to 3 times (1 initial + 2 retries) on transient
   // overload, then fall back to flash-lite once before surfacing the error.
-  const PRIMARY = "gemini-2.5-flash";
-  const FALLBACK = "gemini-2.5-flash-lite";
-  const primaryDelays = [0, 500, 1500];
+  const PRIMARY = process.env.GEMINI_PRIMARY_MODEL || "gemini-2.5-flash";
+  const FALLBACK = process.env.GEMINI_FALLBACK_MODEL || "gemini-2.5-flash-lite";
+  const primaryDelaysStr = process.env.GEMINI_PRIMARY_DELAYS || "0,500,1500";
+  const primaryDelays = primaryDelaysStr.split(',').map(delay => parseInt(delay, 10));
 
   let last;
   for (const delay of primaryDelays) {
@@ -289,7 +512,9 @@ export async function callGemini(apiKey, prompt) {
     if (!last.error || !last.retryable) return stripRetryable(last);
   }
 
-  await sleep(500);
+  // Wait briefly before trying fallback model
+  const fallbackDelay = parseInt(process.env.GEMINI_FALLBACK_DELAY || '500', 10);
+  await sleep(fallbackDelay);
   last = await geminiAttempt(apiKey, prompt, FALLBACK);
   return stripRetryable(last);
 }

@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import playersData from "../data/players.json";
-import { STATS } from "../api/lib/prop-types.js";
+import { STATS } from "../api/lib/prop-types.ts";
 
 const NBA_PLAYERS = Object.keys(playersData);
 

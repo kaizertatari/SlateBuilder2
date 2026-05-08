@@ -2,8 +2,8 @@
 // NBA stats edge — every helper returns null on failure so the orchestrator
 // can surface a missing-data SKIP rather than crash.
 
-import { nbaFetch, rowToObj, findResultSet } from "./nba-http.js";
-import { ABBR_BY_TEAM_ID as NBA_TEAM_ID_TO_ABBR } from "./team-ids.js";
+import { nbaFetch, rowToObj, findResultSet } from "./nba-http.ts";
+import { ABBR_BY_TEAM_ID as NBA_TEAM_ID_TO_ABBR } from "./team-ids.ts";
 
 export function currentSeason(date = new Date()) {
   const y = date.getUTCFullYear();

@@ -5,7 +5,7 @@
 // across them; this file is the single place to fix when stats.nba.com
 // tightens its bot detection or rotates header expectations.
 
-import { logPrefix } from "./request-context.js";
+import { logPrefix } from "./request-context.ts";
 
 export const NBA_BASE = "https://stats.nba.com/stats";
 
