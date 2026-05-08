@@ -34,8 +34,7 @@ export async function POST(req) {
 async function handlePost(req, reqId) {
   try {
     // Rate limit (stricter for batch)
-    const xForwardedFor = req.headers["x-forwarded-for"] || "unknown";
-    const ip = (Array.isArray(xForwardedFor) ? xForwardedFor[0] : xForwardedFor).split(",")[0].trim();
+    const ip = (req.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim();
     const limit = rateLimit(`analyze-all:${ip}`, { windowMs: 60_000, max: 3 });
     if (!limit.ok) {
       const retryAfterMs = limit.retryAfterMs ?? 0;
@@ -45,7 +44,7 @@ async function handlePost(req, reqId) {
       );
     }
 
-    const body = req.body;
+    const body = await req.json();
     const { player, statTypes, direction } = body;
 
     if (!player || typeof player !== "string") {
