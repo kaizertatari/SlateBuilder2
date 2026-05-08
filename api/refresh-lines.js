@@ -1,8 +1,12 @@
 // Refresh the PrizePicks lines blob from the live API and persist to the
-// warm-instance cache (/tmp on Vercel). Token-guarded via REFRESH_TOKEN.
+// warm-instance cache (/tmp on Vercel).
 //
-// POST /api/refresh-lines
+// POST /api/refresh-lines  (manual)
 //   Authorization: Bearer $REFRESH_TOKEN
+//
+// GET /api/refresh-lines  (Vercel cron)
+//   Authorization: Bearer $CRON_SECRET
+//   x-vercel-cron: <set by Vercel scheduler>
 //
 // Returns { request_id, fetched_at, total_props, total_players, persisted_to }.
 
@@ -16,21 +20,39 @@ export const runtime = "nodejs";
 
 export async function POST(req) {
   const reqId = randomUUID().slice(0, 8);
-  return runWithRequestContext({ reqId }, () => handlePost(req, reqId));
+  return runWithRequestContext({ reqId }, () => handleRefresh(req, reqId, "POST"));
 }
 
-async function handlePost(req, reqId) {
-  const expected = process.env.REFRESH_TOKEN;
-  if (!expected) {
+export async function GET(req) {
+  const reqId = randomUUID().slice(0, 8);
+  return runWithRequestContext({ reqId }, () => handleRefresh(req, reqId, "GET"));
+}
+
+async function handleRefresh(req, reqId, method) {
+  const refreshToken = process.env.REFRESH_TOKEN;
+  const cronSecret = process.env.CRON_SECRET;
+  if (!refreshToken && !cronSecret) {
     return Response.json(
-      { request_id: reqId, error: "REFRESH_TOKEN not configured on the server." },
+      { request_id: reqId, error: "Neither REFRESH_TOKEN nor CRON_SECRET is configured on the server." },
       { status: 503 }
     );
   }
 
   const auth = req.headers.get("authorization") || "";
   const supplied = auth.replace(/^Bearer\s+/i, "").trim();
-  if (!supplied || supplied !== expected) {
+  const isVercelCron = !!req.headers.get("x-vercel-cron");
+
+  // GET is reserved for the Vercel scheduler: require the cron header AND a
+  // CRON_SECRET match. POST accepts either token (manual operators or curl).
+  let authorized = false;
+  if (method === "GET") {
+    authorized = isVercelCron && !!cronSecret && supplied === cronSecret;
+  } else {
+    authorized =
+      (refreshToken && supplied === refreshToken) ||
+      (cronSecret && supplied === cronSecret);
+  }
+  if (!authorized) {
     return Response.json({ request_id: reqId, error: "Unauthorized" }, { status: 401 });
   }
 
