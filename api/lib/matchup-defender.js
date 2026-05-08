@@ -68,10 +68,7 @@ function pickTopDefender(payload, { proxy = false }) {
 // For playoffs, falls through to regular-season data when the playoff query
 // returns no rows (typical in Game 1/2 of a series). The fallback is tagged
 // in the source so the framework can apply lighter weight if desired.
-export async function getPrimaryDefender(playerId, oppAbbr, {
-  season = currentSeason(),
-  seasonType = "Regular Season",
-} = {}) {
+export async function getPrimaryDefender(playerId, oppAbbr, { season = currentSeason(), seasonType = "Regular Season" } = {}) {
   if (!playerId || !oppAbbr) return null;
   const defTeamId = TEAM_ID_BY_ABBR[String(oppAbbr).toUpperCase()];
   if (!defTeamId) return null;

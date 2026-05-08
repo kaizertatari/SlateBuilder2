@@ -2,7 +2,7 @@
  * Custom error classes for different types of errors in the NBA PrizePicks analyzer
  */
 
-class AnalysisError extends Error {
+export class AnalysisError extends Error {
   constructor(message, code, status = 500, retryable = false) {
     super(message);
     this.name = 'AnalysisError';
@@ -12,21 +12,21 @@ class AnalysisError extends Error {
   }
 }
 
-class ConfigurationError extends AnalysisError {
+export class ConfigurationError extends AnalysisError {
   constructor(message) {
     super(message, 'CONFIGURATION_ERROR', 500, false);
     this.name = 'ConfigurationError';
   }
 }
 
-class ValidationError extends AnalysisError {
+export class ValidationError extends AnalysisError {
   constructor(message) {
     super(message, 'VALIDATION_ERROR', 400, false);
     this.name = 'ValidationError';
   }
 }
 
-class RateLimitError extends AnalysisError {
+export class RateLimitError extends AnalysisError {
   constructor(message, retryAfterMs) {
     super(message, 'RATE_LIMIT_ERROR', 429, true);
     this.name = 'RateLimitError';
@@ -34,7 +34,7 @@ class RateLimitError extends AnalysisError {
   }
 }
 
-class ExternalAPIError extends AnalysisError {
+export class ExternalAPIError extends AnalysisError {
   constructor(message, apiName, retryable = true) {
     super(message, `EXTERNAL_API_ERROR_${apiName.toUpperCase()}`, 502, retryable);
     this.name = 'ExternalAPIError';
@@ -42,14 +42,14 @@ class ExternalAPIError extends AnalysisError {
   }
 }
 
-class LLMError extends AnalysisError {
+export class LLMError extends AnalysisError {
   constructor(message, retryable = false) {
     super(message, 'LLM_ERROR', 500, retryable);
     this.name = 'LLMError';
   }
 }
 
-class DataNotFoundError extends AnalysisError {
+export class DataNotFoundError extends AnalysisError {
   constructor(message) {
     super(message, 'DATA_NOT_FOUND_ERROR', 404, false);
     this.name = 'DataNotFoundError';
@@ -57,7 +57,7 @@ class DataNotFoundError extends AnalysisError {
 }
 
 // Helper function to create standardized error responses
-function createErrorResponse(error) {
+export function createErrorResponse(error) {
   // Don't expose internal error details in production
   const message = process.env.NODE_ENV === 'development' 
     ? error.message 
@@ -80,7 +80,7 @@ function createErrorResponse(error) {
 }
 
 // Helper function to determine if an error is retryable based on HTTP status or error code
-function isRetryableError(error) {
+export function isRetryableError(error) {
   // Network errors are generally retryable
   if (error instanceof TypeError && 
       (error.message.includes('fetch') || error.message.includes('network'))) {
@@ -97,25 +97,11 @@ function isRetryableError(error) {
 }
 
 // Helper function to sleep for retry delays
-function sleep(ms) {
+export function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // Exponential backoff delay calculation
-function calculateBackoffDelay(attempt, baseDelay = 1000, maxDelay = 10000) {
+export function calculateBackoffDelay(attempt, baseDelay = 1000, maxDelay = 10000) {
   return Math.min(baseDelay * Math.pow(2, attempt), maxDelay);
 }
-
-module.exports = {
-  AnalysisError,
-  ConfigurationError,
-  ValidationError,
-  RateLimitError,
-  ExternalAPIError,
-  LLMError,
-  DataNotFoundError,
-  createErrorResponse,
-  isRetryableError,
-  sleep,
-  calculateBackoffDelay
-};

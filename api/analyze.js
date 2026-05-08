@@ -1,15 +1,15 @@
-import { resolvePlayerId, resolveEspnId } from "./lib/player-ids.ts";
+import { resolvePlayerId, resolveEspnId } from "./lib/player-ids.js";
 import {
   currentSeason,
   getCommonPlayerInfo,
   getSeasonAverages,
   getLastNGames,
   getHomeAwaySplits,
-} from "./lib/nba-stats.ts";
-import * as bdl from "./lib/balldontlie.ts";
-import * as espnStats from "./lib/espn-stats.ts";
-import { getOpponentDefense } from "./lib/team-defense.ts";
-import { getPrimaryDefender } from "./lib/matchup-defender.ts";
+} from "./lib/nba-stats.js";
+import * as bdl from "./lib/balldontlie.js";
+import * as espnStats from "./lib/espn-stats.js";
+import { getOpponentDefense } from "./lib/team-defense.js";
+import { getPrimaryDefender } from "./lib/matchup-defender.js";
 import {
   getTodaysGames,
   findGameForTeamAbbr,
@@ -17,25 +17,21 @@ import {
   getWinProbability,
   getAllInjuries,
   opponentFor,
-} from "./lib/espn.ts";
-import { composeGroundTruth } from "./lib/ground-truth.ts";
-import { MODEL_FRAMEWORK } from "./lib/framework.ts";
-import { rateLimit } from "./lib/rate-limit.ts";
-import { runWithRequestContext } from "./lib/request-context.ts";
-import { PROP_TO_FIELD } from "./lib/prop-types.ts";
+} from "./lib/espn.js";
+import { composeGroundTruth } from "./lib/ground-truth.js";
+import { MODEL_FRAMEWORK } from "./lib/framework.js";
+import { rateLimit } from "./lib/rate-limit.js";
+import { runWithRequestContext } from "./lib/request-context.js";
+import { PROP_TO_FIELD } from "./lib/prop-types.js";
 import { randomUUID } from "node:crypto";
+import * as bbref from "./lib/bbref.js";
 import {
   ConfigurationError,
-  ValidationError,
   RateLimitError,
-  ExternalAPIError,
-  LLMError,
-  DataNotFoundError,
   createErrorResponse,
   isRetryableError,
-  sleep,
-  calculateBackoffDelay
-} from "./lib/errors.ts";
+  calculateBackoffDelay,
+} from "./lib/errors.js";
 
 export const runtime = "nodejs";
 
@@ -128,16 +124,21 @@ export async function gatherGroundTruth({ player, propType, line }) {
   // small (5–28 games) to be a stable baseline. Same logic as Rule 5a road
   // deduction.
   const opponentSide = opponentFor(game, info.team_abbr);
-  // ESPN primary for season averages; NBA fallback below. Splits, defender,
-  // and matchup data have no ESPN equivalent and stay on stats.nba.com.
-  const [espnSeasonAvg, splits, winProb, opponentDefense, primaryDefender] = await Promise.all([
+  // BR snapshot primary for splits (Vercel egress is throttled by stats.nba.com,
+  // and the BR file is on disk so it never times out). NBA Stats stays on the
+  // critical path only when the player isn't in the snapshot.
+  const bbrefSplits = bbref.getHomeAwaySplits(player, { season });
+  // ESPN primary for season averages; NBA fallback below. Defender and
+  // matchup data have no ESPN equivalent and stay on stats.nba.com.
+  const [espnSeasonAvg, nbaSplits, winProb, opponentDefense, primaryDefender] = await Promise.all([
     espnId ? espnStats.getSeasonAverages(espnId, { season }) : null,
-    getHomeAwaySplits(playerId, { seasonType: "Regular Season" }),
+    bbrefSplits ? null : getHomeAwaySplits(playerId, { seasonType: "Regular Season" }),
     getWinProbability(game.game_id, game.competition_id),
     opponentSide ? getOpponentDefense(opponentSide.abbr, { seasonType: "Regular Season" }) : null,
     opponentSide ? getPrimaryDefender(playerId, opponentSide.abbr, { seasonType }) : null,
   ]);
-  trace.splits = splits ? "nba_stats" : "missing";
+  const splits = bbrefSplits ?? nbaSplits;
+  trace.splits = bbrefSplits ? "bbref_snapshot" : (nbaSplits ? "nba_stats" : "missing");
   trace.win_prob = winProb ? `espn_${winProb.source}` : "missing";
   trace.opponent_defense = opponentDefense ? `team_defense_${opponentDefense.source}` : "missing";
   trace.primary_defender = primaryDefender ? primaryDefender.source : "missing";
@@ -307,17 +308,7 @@ function createSuccessResponse(llmData, groundTruth) {
   return Response.json({ ...llmData, ground_truth: groundTruth });
 }
 
-/**
- * Creates a rate limit exceeded response.
- * @param {number} retryAfterMs - Milliseconds until the rate limit resets
- * @returns {Response} JSON response with rate limit error
- */
-function createRateLimitResponse(retryAfterMs) {
-  return Response.json(
-    { error: "Rate limit exceeded. Try again shortly." },
-    { status: 429, headers: { "Retry-After": String(Math.ceil(retryAfterMs / 1000)) } }
-  );
-}
+
 
 /**
  * Parses and validates the request body.

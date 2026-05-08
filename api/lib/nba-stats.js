@@ -2,8 +2,8 @@
 // NBA stats edge — every helper returns null on failure so the orchestrator
 // can surface a missing-data SKIP rather than crash.
 
-import { nbaFetch, rowToObj, findResultSet } from "./nba-http.ts";
-import { ABBR_BY_TEAM_ID as NBA_TEAM_ID_TO_ABBR } from "./team-ids.ts";
+import { nbaFetch, rowToObj, findResultSet } from "./nba-http.js";
+import { ABBR_BY_TEAM_ID as NBA_TEAM_ID_TO_ABBR } from "./team-ids.js";
 
 export function currentSeason(date = new Date()) {
   const y = date.getUTCFullYear();
@@ -168,10 +168,7 @@ export async function getLastNGames(playerId, n = 5, {
 
 // Returns { <NBA_ABBR>: { team_id, team_name, def_rating, def_rank } } for
 // all 30 teams, or null on failure. Rank 1 = best defense (lowest DEF_RATING).
-export async function getLeagueTeamDefense({
-  season = currentSeason(),
-  seasonType = "Regular Season",
-} = {}) {
+export async function getLeagueTeamDefense({ season = currentSeason(), seasonType = "Regular Season" } = {}) {
   const data = await nbaFetch("leaguedashteamstats", {
     ...DASH_DEFAULTS,
     MeasureType: "Advanced",

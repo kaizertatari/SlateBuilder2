@@ -4,9 +4,9 @@
 // Auth: header `Authorization: <key>` (no "Bearer" prefix).
 // Season convention: balldontlie uses the START year. 2025-26 → season=2025.
 
-import { logPrefix } from "./request-context.ts";
-import { fmtDate, normalizeLite } from "./string-utils.ts";
-import { swr } from "./cache.ts";
+import { logPrefix } from "./request-context.js";
+import { fmtDate, normalizeLite } from "./string-utils.js";
+import { swr } from "./cache.js";
 
 const BASE = "https://api.balldontlie.io/v1";
 

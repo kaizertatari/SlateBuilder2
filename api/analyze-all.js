@@ -34,16 +34,18 @@ export async function POST(req) {
 async function handlePost(req, reqId) {
   try {
     // Rate limit (stricter for batch)
-    const ip = (req.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim();
+    const xForwardedFor = req.headers["x-forwarded-for"] || "unknown";
+    const ip = (Array.isArray(xForwardedFor) ? xForwardedFor[0] : xForwardedFor).split(",")[0].trim();
     const limit = rateLimit(`analyze-all:${ip}`, { windowMs: 60_000, max: 3 });
     if (!limit.ok) {
+      const retryAfterMs = limit.retryAfterMs ?? 0;
       return Response.json(
         { error: "Rate limit exceeded. Try again shortly." },
-        { status: 429, headers: { "Retry-After": String(Math.ceil(limit.retryAfterMs / 1000)) } }
+        { status: 429, headers: { "Retry-After": String(Math.ceil(retryAfterMs / 1000)) } }
       );
     }
 
-    const body = await req.json();
+    const body = req.body;
     const { player, statTypes, direction } = body;
 
     if (!player || typeof player !== "string") {
@@ -78,15 +80,19 @@ async function handlePost(req, reqId) {
       ? new Set(statTypes)
       : new Set(STATS);
 
-    // Group props by stat (each bucket holds every line PrizePicks publishes
-    // for that (player, stat) — we'll pick the lowest one).
-    const buckets = new Map();
-    for (const prop of playerProps) {
-      const stat = mapPrizePicksStatType(prop.stat_type);
-      if (!stat || !allowedStats.has(stat) || !PROP_TO_FIELD[stat]) continue;
-      if (!buckets.has(stat)) buckets.set(stat, []);
-      buckets.get(stat).push(prop);
-    }
+      // Group props by stat (each bucket holds every line PrizePicks publishes
+      // for that (player, stat) — we'll pick the lowest one).
+      const buckets = new Map();
+     for (const prop of playerProps) {
+       const stat = mapPrizePicksStatType(prop.stat_type);
+       if (!stat || !allowedStats.has(stat)) continue;
+       let props = buckets.get(stat);
+       if (props === undefined) {
+         props = [];
+         buckets.set(stat, props);
+       }
+       props.push(prop);
+     }
 
     if (buckets.size === 0) {
       return Response.json({
@@ -98,7 +104,7 @@ async function handlePost(req, reqId) {
       });
     }
 
-    const directions = direction ? [direction] : ["OVER", "UNDER"];
+     const directions = direction ? [direction, "UNDER"] : ["OVER", "UNDER"];
     const apiKey = process.env.GOOGLE_API_KEY;
     if (!apiKey) {
       return Response.json(
@@ -107,41 +113,44 @@ async function handlePost(req, reqId) {
       );
     }
 
-    // For each bucket: pick the lowest PrizePicks line, fetch ground truth
-    // once for that line, then push a task per requested direction reusing
-    // the cached groundTruth.
-    const tasks = [];
-    const skipped = [];
+     // For each bucket: pick the lowest PrizePicks line, fetch ground truth
+     // once for that line, then push a task per requested direction reusing
+     // the cached groundTruth.
+       const tasks = [];
+       const skipped = [];
 
-    for (const [stat, props] of buckets) {
-      if (tasks.length >= MAX_LINES) break;
+     for (const [stat, props] of buckets) {
+       if (tasks.length >= MAX_LINES) break;
 
-      const chosen = props.reduce((best, p) => (p.line < best.line ? p : best));
+          const chosen = props.reduce((best, p) => {
+            return p.line < best.line ? p : best;
+          });
 
-      const groundTruthResult = await gatherGroundTruth({
-        player,
-        propType: `${stat} ${directions[0]}`,
-        line: chosen.line,
-      });
-      if (groundTruthResult.skipReason) {
-        skipped.push({ stat, reason: groundTruthResult.skipReason });
-        continue;
-      }
+       const groundTruthResult = await gatherGroundTruth({
+         player,
+         propType: `${stat} ${directions[0]}`,
+         line: chosen.line,
+       });
+       if (groundTruthResult.skipReason) {
+         skipped.push({ stat, reason: groundTruthResult.skipReason });
+         continue;
+       }
 
-      const game = `${chosen.player_team || ""} @ ${chosen.opponent || ""}`;
-      for (const dir of directions) {
-        if (tasks.length >= MAX_LINES) break;
-        tasks.push({
-          player,
-          statType: stat,
-          direction: dir,
-          line: chosen.line,
-          propType: `${stat} ${dir}`,
-          game,
-          groundTruth: groundTruthResult.groundTruth,
-        });
-      }
-    }
+       const groundTruth = groundTruthResult.groundTruth;
+       const game = `${chosen.player_team || ""} @ ${chosen.opponent || ""}`;
+       for (const dir of directions) {
+         if (tasks.length >= MAX_LINES) break;
+         tasks.push({
+           player,
+           statType: stat,
+           direction: dir,
+           line: chosen.line,
+           propType: `${stat} ${dir}`,
+           game,
+           groundTruth,
+         });
+       }
+     }
 
     if (tasks.length === 0) {
       return Response.json({

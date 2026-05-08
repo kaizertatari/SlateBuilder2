@@ -14,7 +14,7 @@
 // Only successful fetches should be cached — fetchers must return null on
 // failure so transient outages don't pin a stale value for the TTL window.
 
-import { logPrefix } from "./request-context.ts";
+import { logPrefix } from "./request-context.js";
 
 const store = new Map();
 const inflight = new Map();

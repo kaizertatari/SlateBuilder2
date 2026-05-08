@@ -5,22 +5,24 @@
 import { toEspnAbbr } from "./espn.js";
 import { normalizeName } from "./string-utils.js";
 
-export function composeGroundTruth({
-  player,
-  propType,
-  line,
-  info,           // commonPlayerInfo (NBA stats)
-  game,           // ESPN game (or null)
-  daysOut = 0,   // 0 = today, 1+ = upcoming game found via lookahead
-  seasonType,    // "Regular Season" | "Playoffs"
-  seasonAvg,     // Regular-season averages, used as stable baseline
-  l5,            // Last 5 in current seasonType
-  splits,        // Home/Away splits (regular season)
-  winProb,       // ESPN predictor result
-  allInjuries,   // ESPN league-wide injury list
-  opponentDefense, // { def_rating, def_rank, source } | null
-  primaryDefender, // { player, defender_id, share_pct, n_games, total_poss, confirmed, source } | null
-}) {
+export function composeGroundTruth(params) {
+  const {
+    player,
+    propType,
+    line,
+    info,
+    game,
+    daysOut = 0,
+    seasonType,
+    seasonAvg,
+    l5,
+    splits,
+    winProb,
+    allInjuries,
+    opponentDefense,
+    primaryDefender,
+  } = params || {};
+
   const playerAbbr = info?.team_abbr ?? null;
   const playerEspnAbbr = toEspnAbbr(playerAbbr);
 
