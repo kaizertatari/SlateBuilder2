@@ -101,7 +101,7 @@ async function main() {
 
 // Only run when invoked as the entry point — guards against `import()` from
 // other scripts (the smoke harness) accidentally kicking off a 10-minute job.
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((e) => {
     console.error(e);
     process.exit(1);

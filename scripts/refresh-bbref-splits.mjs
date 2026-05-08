@@ -150,7 +150,7 @@ async function main() {
   console.log(`\nResolved ${ok}, failed ${failed}. Wrote ${OUT_PATH}.`);
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((e) => {
     console.error(e);
     process.exit(1);
