@@ -40,7 +40,13 @@ async function handleRefresh(req, reqId, method) {
 
   const auth = req.headers.get("authorization") || "";
   const supplied = auth.replace(/^Bearer\s+/i, "").trim();
-  const isVercelCron = !!req.headers.get("x-vercel-cron");
+  // Vercel's cron scheduler historically attached `x-vercel-cron`; current
+  // deployments instead send `x-vercel-cron-schedule` (containing the cron
+  // expression). Accept either so we survive future header renames without
+  // falling back to bearer-only auth on the GET path.
+  const isVercelCron =
+    !!req.headers.get("x-vercel-cron") ||
+    !!req.headers.get("x-vercel-cron-schedule");
 
   // GET is reserved for the Vercel scheduler: require the cron header AND a
   // CRON_SECRET match. POST accepts either token (manual operators or curl).
@@ -53,21 +59,6 @@ async function handleRefresh(req, reqId, method) {
       (cronSecret && supplied === cronSecret);
   }
   if (!authorized) {
-    // TEMP DEBUG: surface which auth condition failed without leaking secrets.
-    // Remove once the cron is confirmed working end-to-end.
-    console.log("refresh-lines auth-fail", {
-      reqId,
-      method,
-      isVercelCron,
-      hasCronSecret: !!cronSecret,
-      cronSecretLen: cronSecret?.length ?? 0,
-      hasRefreshToken: !!refreshToken,
-      hasAuthHeader: !!auth,
-      suppliedLen: supplied.length,
-      matchesCronSecret: !!cronSecret && supplied === cronSecret,
-      matchesRefreshToken: !!refreshToken && supplied === refreshToken,
-      headerNames: [...req.headers.keys()].sort(),
-    });
     return Response.json({ request_id: reqId, error: "Unauthorized" }, { status: 401 });
   }
 
