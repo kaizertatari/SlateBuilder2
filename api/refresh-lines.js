@@ -11,7 +11,7 @@
 // Returns { request_id, fetched_at, total_props, total_players, persisted_to }.
 
 import { scrapePrizePicksForToday } from "../scripts/scrape-prizepicks.mjs";
-import { writeLines, getTmpPath } from "./lib/lines-store.js";
+import { writeLines, getStoreLocation } from "./lib/lines-store.js";
 import { rateLimit } from "./lib/rate-limit.js";
 import { runWithRequestContext } from "./lib/request-context.js";
 import { randomUUID } from "node:crypto";
@@ -78,7 +78,7 @@ async function handleRefresh(req, reqId, method) {
     });
   } catch (err) {
     return Response.json(
-      { request_id: reqId, error: err.message, persist_path: getTmpPath() },
+      { request_id: reqId, error: err.message, persist_path: getStoreLocation() },
       { status: 500 }
     );
   }
