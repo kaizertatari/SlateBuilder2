@@ -140,7 +140,7 @@ async function handlePost(req, reqId) {
        const groundTruthResult = await gatherGroundTruth({
          player,
          propType: `${stat} ${directions[0]}`,
-         line: chosenLines[0].line,
+         line: chosenLines[0].prop.line,
        });
        if (groundTruthResult.skipReason) {
          skipped.push({ stat, reason: groundTruthResult.skipReason });
