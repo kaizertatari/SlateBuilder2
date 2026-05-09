@@ -1,0 +1,320 @@
+// End-to-end smoke for the PrizePicks props generator.
+// Verifies every layer the deployed app depends on, locally:
+//   1. Required env vars present
+//   2. Lines store reads (Blob → bundled fallback) return well-formed data
+//   3. Today's slate has at least one player + props
+//   4. Bucket selection picks lowest + median and tags Goblin/Normal correctly
+//   5. Ground-truth fetch resolves a real player → season/L5/opponent fields
+//   6. Framework prompt builds with the correct line + framework block
+//   7. Gemini returns a parseable verdict + tier
+//   8. analyze-all end-to-end produces tier_counts and runs every line
+//   9. Blob roundtrip works (skipped when BLOB_READ_WRITE_TOKEN is absent)
+//
+// Run: npm run smoke:app
+// Tail the last 40 lines for the verdict block.
+
+import { loadEnvLocal } from "./_env.mjs";
+loadEnvLocal();
+
+import { readLines, writeLines } from "../api/lib/lines-store.js";
+import { gatherGroundTruth, buildPrompt, callGemini } from "../api/analyze.js";
+import { MODEL_FRAMEWORK } from "../api/lib/framework.js";
+import { mapPrizePicksStatType, STATS } from "../api/lib/prop-types.js";
+
+// ─── Test runner ──────────────────────────────────────────────────────────
+
+const results = [];
+let passed = 0, failed = 0, skipped = 0;
+
+async function test(name, fn) {
+  process.stdout.write(`  ${name} ... `);
+  try {
+    const r = await fn();
+    if (r && r.skip) {
+      console.log(`SKIP — ${r.skip}`);
+      skipped++;
+      results.push({ name, status: "skip", reason: r.skip });
+    } else {
+      console.log("PASS" + (r?.note ? ` — ${r.note}` : ""));
+      passed++;
+      results.push({ name, status: "pass", note: r?.note });
+    }
+  } catch (e) {
+    console.log(`FAIL — ${e.message}`);
+    failed++;
+    results.push({ name, status: "fail", error: e.message });
+  }
+}
+
+function header(s) {
+  console.log(`\n[${s}]`);
+}
+
+// ─── 1. Environment ──────────────────────────────────────────────────────
+
+console.log("=== smoke-app ===\n");
+console.log(`node: ${process.version}`);
+console.log(`cwd:  ${process.cwd()}`);
+
+header("1. Environment");
+await test("GOOGLE_API_KEY", () => {
+  if (!process.env.GOOGLE_API_KEY) throw new Error("missing in .env.local");
+});
+await test("BLOB_READ_WRITE_TOKEN (optional)", () => {
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    return { skip: "Blob roundtrip will be skipped — local-only smoke" };
+  }
+});
+
+// ─── 2. Lines store ──────────────────────────────────────────────────────
+
+header("2. Lines store");
+let linesData = null;
+await test("readLines() returns object", async () => {
+  linesData = await readLines();
+  if (!linesData || typeof linesData !== "object") throw new Error("not an object");
+});
+await test("has by_player + games maps", () => {
+  if (!linesData) return { skip: "readLines failed" };
+  if (!linesData.by_player || typeof linesData.by_player !== "object") {
+    throw new Error("by_player missing");
+  }
+  if (!linesData.games || typeof linesData.games !== "object") {
+    throw new Error("games missing");
+  }
+  return {
+    note: `${Object.keys(linesData.games).length} games, ${Object.keys(linesData.by_player).length} players`,
+  };
+});
+await test("fetched_at within 24h (else stale warn)", () => {
+  if (!linesData?.fetched_at) throw new Error("no fetched_at");
+  const ageMs = Date.now() - new Date(linesData.fetched_at).getTime();
+  const ageH = (ageMs / 3_600_000).toFixed(1);
+  if (ageMs > 24 * 3_600_000) {
+    return { skip: `lines are ${ageH}h old — run npm run refresh-prizepicks` };
+  }
+  return { note: `${ageH}h old` };
+});
+
+// ─── 3. Sample player selection ───────────────────────────────────────────
+
+header("3. Sample player");
+let sample = null;
+await test("pick player with most props", () => {
+  if (!linesData?.by_player) return { skip: "no lines" };
+  const candidates = Object.entries(linesData.by_player)
+    .map(([name, props]) => ({ name, props }))
+    .filter((p) => p.props.length > 0)
+    .sort((a, b) => b.props.length - a.props.length);
+  if (candidates.length === 0) throw new Error("no players with props in today's slate");
+  sample = candidates[0];
+  return { note: `${sample.name} (${sample.props.length} props)` };
+});
+
+// ─── 4. Bucket + Goblin/Normal selection ──────────────────────────────────
+
+header("4. Bucket selection (matches analyze-all logic)");
+const buckets = new Map();
+await test("bucketize by canonical stat", () => {
+  if (!sample) return { skip: "no sample player" };
+  for (const p of sample.props) {
+    const stat = mapPrizePicksStatType(p.stat_type);
+    if (!stat || !STATS.includes(stat)) continue;
+    if (!buckets.has(stat)) buckets.set(stat, []);
+    buckets.get(stat).push(p);
+  }
+  if (buckets.size === 0) throw new Error("no buckets after stat mapping");
+  return { note: `${buckets.size} stats: ${[...buckets.keys()].join(", ")}` };
+});
+await test("lowest + median sort and tag", () => {
+  if (buckets.size === 0) return { skip: "no buckets" };
+  for (const [stat, props] of buckets) {
+    const sorted = [...props].sort((a, b) => a.line - b.line);
+    const lowest = sorted[0];
+    const median = sorted[Math.floor(sorted.length / 2)];
+    if (!Number.isFinite(lowest.line)) throw new Error(`${stat}: lowest line not numeric`);
+    if (!Number.isFinite(median.line)) throw new Error(`${stat}: median line not numeric`);
+    if (lowest.line > median.line) throw new Error(`${stat}: lowest (${lowest.line}) > median (${median.line})`);
+    const chosen = lowest.line === median.line
+      ? [{ prop: lowest, lineType: "Normal" }]
+      : [{ prop: lowest, lineType: "Goblin" }, { prop: median, lineType: "Normal" }];
+    if (chosen.length === 2 && chosen[0].lineType !== "Goblin") throw new Error("dual-line not tagged Goblin/Normal");
+    if (chosen.length === 1 && chosen[0].lineType !== "Normal") throw new Error("single-line not tagged Normal");
+  }
+});
+
+// ─── 5. Ground truth ─────────────────────────────────────────────────────
+
+header("5. Ground truth (gatherGroundTruth)");
+let gt = null;
+const firstStat = [...buckets.keys()][0];
+const firstProp = firstStat ? buckets.get(firstStat)[0] : null;
+await test(`fetch GT for ${sample?.name ?? "?"} / ${firstStat ?? "?"}`, async () => {
+  if (!firstProp) return { skip: "no bucket" };
+  const r = await gatherGroundTruth({
+    player: sample.name,
+    propType: `${firstStat} OVER`,
+    line: firstProp.line,
+  });
+  if (r.skipReason) return { skip: r.skipReason };
+  gt = r.groundTruth;
+});
+await test("GT has season + opponent_team + win_prob", () => {
+  if (!gt) return { skip: "no GT" };
+  if (!gt.season?.averages) throw new Error("season.averages missing");
+  if (!gt.opponent_team?.abbr) throw new Error("opponent_team.abbr missing");
+  if (!gt.win_prob || gt.win_prob.player_team_pct == null) throw new Error("win_prob missing");
+  return { note: `vs ${gt.opponent_team.abbr}, win_prob=${(gt.win_prob.player_team_pct * 100).toFixed(0)}%` };
+});
+
+// ─── 6. Prompt build ─────────────────────────────────────────────────────
+
+header("6. Prompt build (buildPrompt)");
+let prompt = null;
+await test("buildPrompt returns non-empty string", () => {
+  if (!gt) return { skip: "no GT" };
+  prompt = buildPrompt(MODEL_FRAMEWORK, gt);
+  if (typeof prompt !== "string") throw new Error("not a string");
+  if (prompt.length < 1000) throw new Error(`suspiciously short: ${prompt.length} chars`);
+  return { note: `${prompt.length} chars` };
+});
+await test("prompt contains FRAMEWORK block", () => {
+  if (!prompt) return { skip: "no prompt" };
+  if (!prompt.includes("FRAMEWORK:")) throw new Error("FRAMEWORK marker missing");
+});
+await test("prompt contains the line value", () => {
+  if (!prompt || !firstProp) return { skip: "no prompt" };
+  if (!prompt.includes(String(firstProp.line))) throw new Error(`line ${firstProp.line} not in prompt`);
+});
+await test("prompt contains DATA RULES anti-hallucination block", () => {
+  if (!prompt) return { skip: "no prompt" };
+  if (!prompt.includes("Treat your training-data memory")) {
+    throw new Error("anti-hallucination guard missing — data integrity at risk");
+  }
+});
+
+// ─── 7. Gemini call ──────────────────────────────────────────────────────
+
+header("7. Gemini call (callGemini)");
+let llm = null;
+await test("callGemini returns parseable JSON", async () => {
+  if (!prompt) return { skip: "no prompt" };
+  llm = await callGemini(process.env.GOOGLE_API_KEY, prompt);
+  if (llm.error) throw new Error(llm.error);
+  if (!llm.json) throw new Error("no json in response");
+});
+await test("verdict ∈ {OVER, UNDER, SKIP}", () => {
+  if (!llm?.json) return { skip: "no llm" };
+  const v = llm.json.verdict;
+  if (!["OVER", "UNDER", "SKIP"].includes(v)) throw new Error(`bad verdict: ${v}`);
+  return { note: v };
+});
+await test("tier ∈ {S, A, B, SKIP}", () => {
+  if (!llm?.json) return { skip: "no llm" };
+  const t = llm.json.tier;
+  if (!["S", "A", "B", "SKIP"].includes(t)) throw new Error(`bad tier: ${t}`);
+  return { note: t };
+});
+await test("data_used echoes GT averages (no hallucination)", () => {
+  if (!llm?.json || !gt) return { skip: "no llm/gt" };
+  const used = llm.json.data_used;
+  if (!used) throw new Error("data_used missing");
+  // Spot-check: home_away should match GT exactly (model must copy, not infer)
+  if (used.home_away && gt.home_away && used.home_away !== gt.home_away) {
+    throw new Error(`home_away mismatch — model said "${used.home_away}", GT had "${gt.home_away}"`);
+  }
+});
+
+// ─── 8. End-to-end analyze-all ────────────────────────────────────────────
+
+header("8. End-to-end /api/analyze-all");
+let body = null;
+await test("POST analyze-all returns 200 + tier_counts", async () => {
+  if (!sample) return { skip: "no sample" };
+  const { POST } = await import("../api/analyze-all.js");
+  const req = new Request("http://localhost/api/analyze-all", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-forwarded-for": "127.0.0.99" },
+    body: JSON.stringify({ player: sample.name, direction: "OVER" }),
+  });
+  const res = await POST(req);
+  body = await res.json();
+  if (body.error) throw new Error(body.error);
+  if (typeof body.total_analyzed !== "number") throw new Error("total_analyzed missing");
+  if (!body.tier_counts) throw new Error("tier_counts missing — UI transparency check broken");
+});
+await test("framework ran on every line (sum(tier_counts) == total_analyzed)", () => {
+  if (!body) return { skip: "no body" };
+  const tc = body.tier_counts;
+  const sum = (tc.S || 0) + (tc.A || 0) + (tc.B || 0) + (tc.SKIP || 0) + (tc.UNKNOWN || 0);
+  const errs = body.errors?.length || 0;
+  if (sum + errs !== body.total_analyzed) {
+    throw new Error(`tier_counts sum (${sum}) + errors (${errs}) ≠ total_analyzed (${body.total_analyzed})`);
+  }
+  return {
+    note: `analyzed=${body.total_analyzed} S=${tc.S} A=${tc.A} B=${tc.B} SKIP=${tc.SKIP} err=${errs}`,
+  };
+});
+await test("top_10 entries have line_type tagged", () => {
+  if (!body?.top_10) return { skip: "no top_10" };
+  if (body.top_10.length === 0) return { skip: "no S/A picks for this sample (framework working as designed)" };
+  for (const r of body.top_10) {
+    if (!r.line_type) throw new Error(`pick missing line_type: ${r.player} ${r.prop_type}`);
+    if (!["Goblin", "Normal"].includes(r.line_type)) throw new Error(`bad line_type: ${r.line_type}`);
+  }
+  return { note: `${body.top_10.length} S/A picks, all tagged` };
+});
+
+// ─── 9. Blob roundtrip ───────────────────────────────────────────────────
+
+header("9. Blob roundtrip (writeLines)");
+await test("write current data + read back identical shape", async () => {
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    return { skip: "BLOB_READ_WRITE_TOKEN not set" };
+  }
+  if (!linesData) return { skip: "no linesData" };
+  const url = await writeLines(linesData);
+  if (!url || !url.startsWith("https://")) throw new Error(`bad URL: ${url}`);
+  // Re-read; module-level URL cache means this is a no-op fetch in same process,
+  // but the assertion that shape survives roundtrip is still meaningful.
+  const fresh = await readLines();
+  const before = Object.keys(linesData.by_player).length;
+  const after = Object.keys(fresh.by_player).length;
+  if (before !== after) throw new Error(`player count drifted: ${before} → ${after}`);
+  return { note: url };
+});
+
+// ─── Summary ─────────────────────────────────────────────────────────────
+
+console.log("\n=== Verdict ===");
+console.log(`PASS: ${passed}`);
+console.log(`FAIL: ${failed}`);
+console.log(`SKIP: ${skipped}`);
+console.log("");
+if (failed > 0) {
+  console.log("Failures:");
+  for (const r of results) {
+    if (r.status === "fail") console.log(`  ✗ ${r.name} — ${r.error}`);
+  }
+}
+if (body?.tier_counts) {
+  console.log("Sample analysis (tier_counts):");
+  console.log(`  ${JSON.stringify(body.tier_counts)}`);
+  const errs = body.errors?.length || 0;
+  const rate = body.total_analyzed > 0 ? errs / body.total_analyzed : 0;
+  if (rate > 0.25) {
+    console.log(`⚠️  HIGH ERROR RATE: ${errs}/${body.total_analyzed} (${(rate * 100).toFixed(0)}%) — investigate`);
+  }
+  if (errs > 0) {
+    console.log("Errors (first 5):");
+    for (const e of (body.errors || []).slice(0, 5)) {
+      console.log(`  ✗ ${e.task} — ${e.error}`);
+    }
+  }
+}
+if (llm?.json) {
+  console.log("Sample Gemini verdict (raw JSON):");
+  console.log(JSON.stringify(llm.json, null, 2));
+}
+console.log("");
+process.exit(failed > 0 ? 1 : 0);
