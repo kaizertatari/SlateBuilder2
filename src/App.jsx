@@ -408,6 +408,7 @@ export default function App() {
                       <th style={{ padding: "8px 10px", textAlign: "left", color: "#446688", fontSize: 10, letterSpacing: 1 }}>GAME</th>
                       <th style={{ padding: "8px 10px", textAlign: "left", color: "#446688", fontSize: 10, letterSpacing: 1 }}>PROP</th>
                       <th style={{ padding: "8px 10px", textAlign: "right", color: "#446688", fontSize: 10, letterSpacing: 1 }}>LINE</th>
+                      <th style={{ padding: "8px 10px", textAlign: "center", color: "#446688", fontSize: 10, letterSpacing: 1 }}>TYPE</th>
                       <th style={{ padding: "8px 10px", textAlign: "center", color: "#446688", fontSize: 10, letterSpacing: 1 }}>VERDICT</th>
                       <th style={{ padding: "8px 10px", textAlign: "center", color: "#446688", fontSize: 10, letterSpacing: 1 }}>TIER</th>
                       <th style={{ padding: "8px 10px", textAlign: "right", color: "#446688", fontSize: 10, letterSpacing: 1 }}>CONF%</th>
@@ -425,6 +426,15 @@ export default function App() {
                           <td style={{ padding: "8px 10px", fontSize: 11 }}>{r.game}</td>
                           <td style={{ padding: "8px 10px" }}>{r.prop_type}</td>
                           <td style={{ padding: "8px 10px", textAlign: "right" }}>{r.line}</td>
+                          <td style={{
+                            padding: "8px 10px",
+                            textAlign: "center",
+                            color: r.line_type === "Goblin" ? "#88FF44" : "#88AACC",
+                            fontWeight: "bold",
+                            fontSize: 11,
+                          }}>
+                            {r.line_type || "—"}
+                          </td>
                           <td style={{ padding: "8px 10px", textAlign: "center", color: verdictColor, fontWeight: "bold" }}>
                             {r.verdict} {r.verdict === "OVER" ? "▲" : "▼"}
                           </td>
