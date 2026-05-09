@@ -179,9 +179,13 @@ async function handlePost(req, reqId) {
     }
 
     // Process tasks in parallel batches (CONCURRENCY at a time) to use the
-    // 300s function budget without hammering Gemini.
+    // 300s function budget without hammering Gemini. tier_counts captures
+    // the verdict distribution from every completed analysis so the caller
+    // can verify the framework ran on each line — even when most return
+    // B-tier or SKIP and the displayed table looks short.
     const results = [];
     const errors = [];
+    const tierCounts = { S: 0, A: 0, B: 0, SKIP: 0, UNKNOWN: 0 };
 
     for (let i = 0; i < tasks.length; i += CONCURRENCY) {
       const batch = tasks.slice(i, i + CONCURRENCY);
@@ -190,7 +194,13 @@ async function handlePost(req, reqId) {
         const task = batch[idx];
         if (s.status === "fulfilled") {
           const r = s.value;
-          if (r && (r.tier === "S" || r.tier === "A")) results.push(r);
+          if (!r) {
+            tierCounts.UNKNOWN += 1;
+            return;
+          }
+          const tierKey = tierCounts[r.tier] !== undefined ? r.tier : "UNKNOWN";
+          tierCounts[tierKey] += 1;
+          if (r.tier === "S" || r.tier === "A") results.push(r);
         } else {
           errors.push({ task: `${task.player} ${task.propType}`, error: s.reason?.message || String(s.reason) });
         }
@@ -212,6 +222,7 @@ async function handlePost(req, reqId) {
       request_id: reqId,
       total_analyzed: tasks.length,
       total_s_a: results.length,
+      tier_counts: tierCounts,
       top_10: top10,
       errors: errors.length > 0 ? errors : undefined,
       skipped: skipped.length > 0 ? skipped : undefined,
