@@ -103,7 +103,7 @@ async function handlePost(req, reqId) {
       });
     }
 
-     const directions = direction ? [direction, "UNDER"] : ["OVER", "UNDER"];
+     const directions = direction ? [direction] : ["OVER", "UNDER"];
     const apiKey = process.env.GOOGLE_API_KEY;
     if (!apiKey) {
       return Response.json(
@@ -222,9 +222,15 @@ async function analyzeSingle({ player, statType, line, propType, game, groundTru
     groundTruth = r.groundTruth;
   }
 
-  // Build prompt and call Gemini
+  // Build prompt and call Gemini, with one outer retry on transient failures
+  // not already handled inside callGemini's primary→fallback chain (e.g.,
+  // schema-validation rejections, post-fallback overload).
   const prompt = buildPrompt(MODEL_FRAMEWORK, groundTruth);
-  const llm = await callGemini(apiKey, prompt);
+  let llm = await callGemini(apiKey, prompt);
+  if (llm.error) {
+    await new Promise((r) => setTimeout(r, 1500));
+    llm = await callGemini(apiKey, prompt);
+  }
 
   if (llm.error) throw new Error(llm.error);
 

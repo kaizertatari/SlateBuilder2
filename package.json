@@ -24,6 +24,7 @@
     "smoke:prompt": "node scripts/smoke-prompt.mjs"
   },
   "dependencies": {
+    "@vercel/blob": "^2.3.3",
     "react": "^19.2.5",
     "react-dom": "^19.2.5"
   },

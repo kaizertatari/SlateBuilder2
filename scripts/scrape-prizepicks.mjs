@@ -6,7 +6,7 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { loadEnvLocal } from "./_env.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -205,7 +205,7 @@ export async function scrapePrizePicksForToday(opts = {}) {
 
 // ─── CLI Entrypoint ────────────────────────────────────────────────────────
 
-if (import.meta.url === `file://${process.argv[1].replace(/\\/g, "/")}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   loadEnvLocal();
   scrapePrizePicksForToday()
     .then((result) => {
