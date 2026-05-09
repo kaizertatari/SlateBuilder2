@@ -126,10 +126,16 @@ async function handlePost(req, reqId) {
      for (const [stat, props] of buckets) {
        if (tasks.length >= MAX_LINES) break;
 
+          // Tag each chosen prop with its PrizePicks line type so the UI can
+          // surface it in a column. When only one line is published the
+          // dedupe collapses to a single entry — label it "Normal" since a
+          // standalone line is the standard offer, not a Goblin discount.
           const sorted = [...props].sort((a, b) => a.line - b.line);
           const lowest = sorted[0];
           const median = sorted[Math.floor(sorted.length / 2)];
-          const chosenLines = lowest.line === median.line ? [lowest] : [lowest, median];
+          const chosenLines = lowest.line === median.line
+            ? [{ prop: lowest, lineType: "Normal" }]
+            : [{ prop: lowest, lineType: "Goblin" }, { prop: median, lineType: "Normal" }];
 
        const groundTruthResult = await gatherGroundTruth({
          player,
@@ -142,7 +148,7 @@ async function handlePost(req, reqId) {
        }
 
        const groundTruth = groundTruthResult.groundTruth;
-       for (const chosen of chosenLines) {
+       for (const { prop: chosen, lineType } of chosenLines) {
          if (tasks.length >= MAX_LINES) break;
          const game = `${chosen.player_team || ""} @ ${chosen.opponent || ""}`;
          for (const dir of directions) {
@@ -152,6 +158,7 @@ async function handlePost(req, reqId) {
              statType: stat,
              direction: dir,
              line: chosen.line,
+             lineType,
              propType: `${stat} ${dir}`,
              game,
              groundTruth,
@@ -215,7 +222,7 @@ async function handlePost(req, reqId) {
   }
 }
 
-async function analyzeSingle({ player, statType, line, propType, game, groundTruth: cachedGroundTruth }) {
+async function analyzeSingle({ player, statType, line, lineType, propType, game, groundTruth: cachedGroundTruth }) {
   const apiKey = process.env.GOOGLE_API_KEY;
   if (!apiKey) throw new Error("Google API key not configured");
 
@@ -254,6 +261,7 @@ async function analyzeSingle({ player, statType, line, propType, game, groundTru
     prop_type: statType,
     direction: result.verdict,
     line,
+    line_type: lineType,
     verdict: result.verdict,
     tier: result.tier,
     confidence: result.confidence || 0,
