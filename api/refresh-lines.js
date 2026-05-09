@@ -53,6 +53,21 @@ async function handleRefresh(req, reqId, method) {
       (cronSecret && supplied === cronSecret);
   }
   if (!authorized) {
+    // TEMP DEBUG: surface which auth condition failed without leaking secrets.
+    // Remove once the cron is confirmed working end-to-end.
+    console.log("refresh-lines auth-fail", {
+      reqId,
+      method,
+      isVercelCron,
+      hasCronSecret: !!cronSecret,
+      cronSecretLen: cronSecret?.length ?? 0,
+      hasRefreshToken: !!refreshToken,
+      hasAuthHeader: !!auth,
+      suppliedLen: supplied.length,
+      matchesCronSecret: !!cronSecret && supplied === cronSecret,
+      matchesRefreshToken: !!refreshToken && supplied === refreshToken,
+      headerNames: [...req.headers.keys()].sort(),
+    });
     return Response.json({ request_id: reqId, error: "Unauthorized" }, { status: 401 });
   }
 
