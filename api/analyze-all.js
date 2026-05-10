@@ -19,14 +19,12 @@ import { randomUUID } from "node:crypto";
 export const runtime = "nodejs";
 
 // Bounded by Gemini cost / rate-limit, not by Vercel platform timeout
-// (default 300s on all plans). CONCURRENCY=2 doubles throughput so 2-line
-// × BOTH-direction × 9-stat coverage (36 tasks) finishes inside 300s; in
-// the worst case where every task hits the primary→fallback retry chain
-// (up to 4 calls/task), CONCURRENCY=2 can briefly burst 8 Gemini requests
-// in ~2s — at the edge of the free-tier 10–20 RPM quota. Drop back to 1
-// if you start seeing 429s in `errors`.
-const MAX_LINES = 36;
-const CONCURRENCY = 2;
+// (default 300s on all plans). CONCURRENCY=1 keeps us under Gemini's
+// free-tier 20 req/min quota — the primary-then-fallback retry chain in
+// callGemini can burn up to 4 requests per failed task, which trips the
+// quota fast at higher concurrency.
+const MAX_LINES = 25;
+const CONCURRENCY = 1;
 
 export async function POST(req) {
   const reqId = randomUUID().slice(0, 8);
@@ -114,33 +112,23 @@ async function handlePost(req, reqId) {
       );
     }
 
-     // For each bucket: pick the lowest and median PrizePicks lines, fetch
-     // ground truth once for the stat (line-independent for this codepath),
-     // then push a task per chosen line × direction reusing the cached
-     // groundTruth. If only one line is published, or lowest and median
-     // resolve to the same line value, the duplicate is dropped so we don't
-     // analyze the same prop twice.
+     // For each bucket: pick the lowest PrizePicks line, fetch ground truth
+     // once for that line, then push a task per requested direction reusing
+     // the cached groundTruth.
        const tasks = [];
        const skipped = [];
 
      for (const [stat, props] of buckets) {
        if (tasks.length >= MAX_LINES) break;
 
-          // Tag each chosen prop with its PrizePicks line type so the UI can
-          // surface it in a column. When only one line is published the
-          // dedupe collapses to a single entry — label it "Normal" since a
-          // standalone line is the standard offer, not a Goblin discount.
-          const sorted = [...props].sort((a, b) => a.line - b.line);
-          const lowest = sorted[0];
-          const median = sorted[Math.floor(sorted.length / 2)];
-          const chosenLines = lowest.line === median.line
-            ? [{ prop: lowest, lineType: "Normal" }]
-            : [{ prop: lowest, lineType: "Goblin" }, { prop: median, lineType: "Normal" }];
+          const chosen = props.reduce((best, p) => {
+            return p.line < best.line ? p : best;
+          });
 
        const groundTruthResult = await gatherGroundTruth({
          player,
          propType: `${stat} ${directions[0]}`,
-         line: chosenLines[0].prop.line,
+         line: chosen.line,
        });
        if (groundTruthResult.skipReason) {
          skipped.push({ stat, reason: groundTruthResult.skipReason });
@@ -148,22 +136,18 @@ async function handlePost(req, reqId) {
        }
 
        const groundTruth = groundTruthResult.groundTruth;
-       for (const { prop: chosen, lineType } of chosenLines) {
+       const game = `${chosen.player_team || ""} @ ${chosen.opponent || ""}`;
+       for (const dir of directions) {
          if (tasks.length >= MAX_LINES) break;
-         const game = `${chosen.player_team || ""} @ ${chosen.opponent || ""}`;
-         for (const dir of directions) {
-           if (tasks.length >= MAX_LINES) break;
-           tasks.push({
-             player,
-             statType: stat,
-             direction: dir,
-             line: chosen.line,
-             lineType,
-             propType: `${stat} ${dir}`,
-             game,
-             groundTruth,
-           });
-         }
+         tasks.push({
+           player,
+           statType: stat,
+           direction: dir,
+           line: chosen.line,
+           propType: `${stat} ${dir}`,
+           game,
+           groundTruth,
+         });
        }
      }
 
@@ -233,7 +217,7 @@ async function handlePost(req, reqId) {
   }
 }
 
-async function analyzeSingle({ player, statType, line, lineType, propType, game, groundTruth: cachedGroundTruth }) {
+async function analyzeSingle({ player, statType, line, propType, game, groundTruth: cachedGroundTruth }) {
   const apiKey = process.env.GOOGLE_API_KEY;
   if (!apiKey) throw new Error("Google API key not configured");
 
@@ -272,7 +256,6 @@ async function analyzeSingle({ player, statType, line, lineType, propType, game,
     prop_type: statType,
     direction: result.verdict,
     line,
-    line_type: lineType,
     verdict: result.verdict,
     tier: result.tier,
     confidence: result.confidence || 0,
