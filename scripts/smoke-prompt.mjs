@@ -1,4 +1,4 @@
-// Print the final Gemini prompt for visual inspection — no Gemini call.
+// Print the final LLM prompt for visual inspection — no LLM call.
 // Usage: node scripts/smoke-prompt.mjs ["Player"] ["Prop Type"] [line]
 
 import { gatherGroundTruth, buildPrompt, propTypeToField } from "../api/analyze.js";

@@ -6,7 +6,7 @@
 //   4. Bucket selection picks lowest + median and tags Goblin/Normal correctly
 //   5. Ground-truth fetch resolves a real player → season/L5/opponent fields
 //   6. Framework prompt builds with the correct line + framework block
-//   7. Gemini returns a parseable verdict + tier
+//   7. Routed LLM (Groq/Gemini) returns a parseable verdict + tier
 //   8. analyze-all end-to-end produces tier_counts and runs every line
 //   9. Blob roundtrip works (skipped when BLOB_READ_WRITE_TOKEN is absent)
 //
@@ -17,7 +17,7 @@ import { loadEnvLocal } from "./_env.mjs";
 loadEnvLocal();
 
 import { readLines, writeLines } from "../api/lib/lines-store.js";
-import { gatherGroundTruth, buildPrompt, callGemini } from "../api/analyze.js";
+import { gatherGroundTruth, buildPrompt, callLLM } from "../api/analyze.js";
 import { MODEL_FRAMEWORK } from "../api/lib/framework.js";
 import { mapPrizePicksStatType, STATS } from "../api/lib/prop-types.js";
 
@@ -57,8 +57,15 @@ console.log(`node: ${process.version}`);
 console.log(`cwd:  ${process.cwd()}`);
 
 header("1. Environment");
-await test("GOOGLE_API_KEY", () => {
-  if (!process.env.GOOGLE_API_KEY) throw new Error("missing in .env.local");
+await test("LLM provider key (GROQ_API_KEY or GOOGLE_API_KEY)", () => {
+  if (!process.env.GROQ_API_KEY && !process.env.GOOGLE_API_KEY) {
+    throw new Error("neither GROQ_API_KEY nor GOOGLE_API_KEY set in .env.local");
+  }
+  const have = [
+    process.env.GROQ_API_KEY && "groq",
+    process.env.GOOGLE_API_KEY && "gemini",
+  ].filter(Boolean).join(",");
+  return { note: have };
 });
 await test("BLOB_READ_WRITE_TOKEN (optional)", () => {
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
@@ -193,13 +200,13 @@ await test("prompt contains DATA RULES anti-hallucination block", () => {
   }
 });
 
-// ─── 7. Gemini call ──────────────────────────────────────────────────────
+// ─── 7. Routed LLM call ──────────────────────────────────────────────────
 
-header("7. Gemini call (callGemini)");
+header("7. Routed LLM call (callLLM → Groq/Gemini per LLM_PROVIDERS)");
 let llm = null;
-await test("callGemini returns parseable JSON", async () => {
+await test("callLLM returns parseable JSON", async () => {
   if (!prompt) return { skip: "no prompt" };
-  llm = await callGemini(process.env.GOOGLE_API_KEY, prompt);
+  llm = await callLLM(prompt);
   if (llm.error) throw new Error(llm.error);
   if (!llm.json) throw new Error("no json in response");
 });
@@ -313,7 +320,7 @@ if (body?.tier_counts) {
   }
 }
 if (llm?.json) {
-  console.log("Sample Gemini verdict (raw JSON):");
+  console.log("Sample LLM verdict (raw JSON):");
   console.log(JSON.stringify(llm.json, null, 2));
 }
 console.log("");
