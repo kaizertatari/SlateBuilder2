@@ -408,7 +408,7 @@ export default function App() {
                       <th style={{ padding: "8px 10px", textAlign: "left", color: "#446688", fontSize: 10, letterSpacing: 1 }}>GAME</th>
                       <th style={{ padding: "8px 10px", textAlign: "left", color: "#446688", fontSize: 10, letterSpacing: 1 }}>PROP</th>
                       <th style={{ padding: "8px 10px", textAlign: "right", color: "#446688", fontSize: 10, letterSpacing: 1 }}>LINE</th>
-                      <th style={{ padding: "8px 10px", textAlign: "center", color: "#446688", fontSize: 10, letterSpacing: 1 }}>VERDICT</th>
+                      <th style={{ padding: "8px 10px", textAlign: "center", color: "#446688", fontSize: 10, letterSpacing: 1 }}>ODDS</th>
                       <th style={{ padding: "8px 10px", textAlign: "center", color: "#446688", fontSize: 10, letterSpacing: 1 }}>TIER</th>
                       <th style={{ padding: "8px 10px", textAlign: "right", color: "#446688", fontSize: 10, letterSpacing: 1 }}>CONF%</th>
                     </tr>
@@ -416,7 +416,11 @@ export default function App() {
                   <tbody>
                     {results.top_10.map((r, i) => {
                       const tierColor = r.tier === "S" ? "#FFD700" : r.tier === "A" ? "#00FF88" : "#4488FF";
-                      const verdictColor = r.verdict === "OVER" ? "#00FF88" : "#FF6644";
+                      const oddsColor =
+                        r.odds_type === "demon" ? "#FF6644" :
+                        r.odds_type === "goblin" ? "#00FF88" :
+                        r.odds_type === "standard" ? "#c8d8e8" : "#446688";
+                      const oddsLabel = r.odds_type ? r.odds_type.toUpperCase() : "—";
                       const bgColor = r.tier === "S" ? "#2a2200" : r.tier === "A" ? "#002218" : "#001133";
                       return (
                         <tr key={i} style={{ background: i % 2 === 0 ? "#0a1420" : bgColor, borderBottom: "1px solid #1e3040" }}>
@@ -425,8 +429,8 @@ export default function App() {
                           <td style={{ padding: "8px 10px", fontSize: 11 }}>{r.game}</td>
                           <td style={{ padding: "8px 10px" }}>{r.prop_type}</td>
                           <td style={{ padding: "8px 10px", textAlign: "right" }}>{r.line}</td>
-                          <td style={{ padding: "8px 10px", textAlign: "center", color: verdictColor, fontWeight: "bold" }}>
-                            {r.verdict} {r.verdict === "OVER" ? "▲" : "▼"}
+                          <td style={{ padding: "8px 10px", textAlign: "center", color: oddsColor, fontWeight: "bold" }}>
+                            {oddsLabel}
                           </td>
                           <td style={{ padding: "8px 10px", textAlign: "center", color: tierColor, fontWeight: "bold" }}>
                             {r.tier === "S" ? "S-TIER" : "A-TIER"}

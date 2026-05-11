@@ -253,13 +253,18 @@ await test("POST analyze-all returns 200 + tier_counts", async () => {
 await test("framework ran on every line (sum(tier_counts) == total_analyzed)", () => {
   if (!body) return { skip: "no body" };
   const tc = body.tier_counts;
+  // analyze-all.js already buckets errored tasks into tier_counts.UNKNOWN
+  // (see the if (llm.error) branch in the batch loop), so errors[] is a
+  // sidecar with per-task detail, not an additional category. The invariant
+  // is just sum(tier_counts) == total_analyzed; errs is reported in the
+  // note for visibility but not added to the sum (that double-counts).
   const sum = (tc.S || 0) + (tc.A || 0) + (tc.B || 0) + (tc.SKIP || 0) + (tc.UNKNOWN || 0);
   const errs = body.errors?.length || 0;
-  if (sum + errs !== body.total_analyzed) {
-    throw new Error(`tier_counts sum (${sum}) + errors (${errs}) ≠ total_analyzed (${body.total_analyzed})`);
+  if (sum !== body.total_analyzed) {
+    throw new Error(`tier_counts sum (${sum}) ≠ total_analyzed (${body.total_analyzed})`);
   }
   return {
-    note: `analyzed=${body.total_analyzed} S=${tc.S} A=${tc.A} B=${tc.B} SKIP=${tc.SKIP} err=${errs}`,
+    note: `analyzed=${body.total_analyzed} S=${tc.S} A=${tc.A} B=${tc.B} SKIP=${tc.SKIP} UNK=${tc.UNKNOWN} err=${errs}`,
   };
 });
 await test("top_10 entries have line_type tagged", () => {

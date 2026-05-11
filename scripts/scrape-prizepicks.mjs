@@ -87,6 +87,7 @@ async function scrapePrizePicks() {
         line_score: attrs.line_score ?? null,
         start_time: attrs.start_time || null,
         status: attrs.status || null,
+        odds_type: attrs.odds_type || null,
       };
     })
     .filter((p) => p.player_name && p.stat_type && p.line_score != null && p.opponent);
@@ -166,6 +167,7 @@ export async function scrapePrizePicksForToday(opts = {}) {
       player: proj.player_name,
       stat_type: proj.stat_type,
       line: proj.line_score,
+      odds_type: proj.odds_type,
       player_team: playerTeam,
       opponent,
       description: `${playerTeam} vs ${opponent}`,
