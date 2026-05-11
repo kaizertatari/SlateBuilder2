@@ -173,6 +173,7 @@ async function handlePost(req, reqId) {
              statType: stat,
              direction: dir,
              line: chosen.line,
+             oddsType: chosen.odds_type || null,
              propType: `${stat} ${dir}`,
              game,
            });
@@ -235,6 +236,7 @@ async function handlePost(req, reqId) {
             prop_type: task.statType,
             direction: r.verdict,
             line: task.line,
+            odds_type: task.oddsType,
             verdict: r.verdict,
             tier: r.tier,
             confidence: r.confidence || 0,
