@@ -45,7 +45,7 @@ export const runtime = "nodejs";
  * @returns {Promise<Object>} Ground truth data or skip reason
  */
 // Exported for smoke testing — fetches real data and composes groundTruth
-// without calling Gemini.
+// without calling the LLM.
 export async function gatherGroundTruth({ player, propType, line }) {
   const playerId = resolvePlayerId(player);
   if (!playerId) {
@@ -206,7 +206,7 @@ async function gatherGroundTruthWithRetry({ player, propType, line }) {
 /**
  * Handles POST requests to the analyze endpoint.
  * Validates input, applies rate limiting, gathers ground truth data,
- * and invokes the Gemini AI model for prop analysis.
+ * and invokes the Groq AI model for prop analysis.
  * @param {Request} req - The HTTP request object
  * @returns {Promise<Response>} JSON response with analysis results or error
  */
@@ -248,14 +248,15 @@ async function handlePost(req) {
       return createMissingDataResponse(missing, trace);
     }
 
-    // Verify Google API key is configured
-    const googleKey = process.env.GOOGLE_API_KEY;
-    if (!googleKey) {
-      return createErrorResponse(new ConfigurationError("Google API key not configured"));
+    // Verify at least one LLM provider key is configured (router picks)
+    if (!process.env.GROQ_API_KEY && !process.env.GOOGLE_API_KEY) {
+      return createErrorResponse(
+        new ConfigurationError("No LLM provider configured (set GROQ_API_KEY and/or GOOGLE_API_KEY)")
+      );
     }
 
-    // Invoke Gemini model
-    const llmResponse = await invokeGeminiModel(googleKey, groundTruth);
+    // Invoke routed LLM (Groq/Gemini per LLM_PROVIDERS)
+    const llmResponse = await invokeLLM(groundTruth);
     if (llmResponse.isError) {
       return llmResponse.response;
     }
@@ -269,16 +270,16 @@ async function handlePost(req) {
 }
 
 /**
- * Invokes the Gemini AI model with the given ground truth data.
- * @param {string} googleKey - Google API key for Gemini
+ * Invokes the routed LLM (Groq/Gemini) with the given ground truth data.
+ * Provider selection happens inside callLLM per LLM_PROVIDERS.
  * @param {Object} groundTruth - The verified data to use for analysis
  * @returns {{isError: boolean, response?: Response, data?: Object}} Result containing either the LLM response or error
  */
-async function invokeGeminiModel(googleKey, groundTruth) {
+async function invokeLLM(groundTruth) {
   try {
-    // Build prompt for Gemini and invoke the model
+    // Build prompt and invoke the routed LLM
     const prompt = buildPrompt(MODEL_FRAMEWORK, groundTruth);
-    const llm = await callGemini(googleKey, prompt);
+    const llm = await callLLM(prompt);
     if (llm.error) {
       return {
         isError: true,
@@ -398,18 +399,11 @@ export function propTypeToField(propType) {
 }
 
 /**
- * Builds the prompt for the Gemini AI model based on the framework and ground truth data.
- * Constructs a detailed prompt that instructs the model on how to analyze the prop bet.
+ * Builds the single-task prompt for the LLM based on the framework and
+ * ground truth data. For multi-task batching use buildBatchPrompt.
  * @param {string} framework - The analytical framework to apply
  * @param {Object} groundTruth - The verified data to use for analysis
- * @returns {string} Formatted prompt for Gemini API
- */
-/**
- * Builds the prompt for the Gemini AI model based on the framework and ground truth data.
- * Constructs a detailed prompt that instructs the model on how to analyze the prop bet.
- * @param {string} framework - The analytical framework to apply
- * @param {Object} groundTruth - The verified data to use for analysis
- * @returns {string} Formatted prompt for Gemini API
+ * @returns {string} Formatted prompt for the LLM API
  */
 export function buildPrompt(framework, groundTruth) {
   const field = propTypeToField(groundTruth.prop_type);
@@ -481,32 +475,258 @@ ${outputSpecification}`;
 }
 
 /**
- * Invokes the Gemini AI model with retry logic and fallback.
- * Attempts the primary model up to 3 times with exponential backoff for transient errors,
- * then falls back to the flash-lite model once before giving up.
- * @param {string} apiKey - Google API key for Gemini
- * @param {string} prompt - The prompt to send to the model
- * @returns {Promise<Object>} Result containing either the parsed JSON or error information
+ * Builds a batched prompt that evaluates N (prop_type, line) tasks in one
+ * LLM call for the same player. The framework, ground truth, and "where
+ * to find values" sections appear once; tasks are listed at the end with
+ * IDs so the model can return an array keyed by ID.
+ *
+ * Decisions are explicitly required to be independent — no carry-over
+ * between tasks. Caller is responsible for verifying each result against
+ * its own task fields.
+ *
+ * @param {string} framework
+ * @param {Object} groundTruth - shared ground truth for one player. The
+ *   prop_type/line fields are stripped before embedding because those
+ *   are per-task here.
+ * @param {Array<{id: string, prop_type: string, line: number}>} tasks
+ * @returns {string} batched prompt
  */
-export async function callGemini(apiKey, prompt) {
-  // Try primary model up to 3 times (1 initial + 2 retries) on transient
-  // overload, then fall back to flash-lite once before surfacing the error.
-  const PRIMARY = process.env.GEMINI_PRIMARY_MODEL || "gemini-2.5-flash";
-  const FALLBACK = process.env.GEMINI_FALLBACK_MODEL || "gemini-2.5-flash-lite";
-  const primaryDelaysStr = process.env.GEMINI_PRIMARY_DELAYS || "0,500,1500";
-  const primaryDelays = primaryDelaysStr.split(',').map(delay => parseInt(delay, 10));
+export function buildBatchPrompt(framework, groundTruth, tasks) {
+  const daysOut = groundTruth.game?.days_out ?? 0;
+  const forwardLookingNote = daysOut > 0
+    ? `\n\nFORWARD-LOOKING GAME: groundTruth.game.days_out is ${daysOut} — this game is NOT today, it is ${daysOut} day(s) away. Injury reports, win probability, and lineup state may shift before tip-off. For EACH task add a flag "📅 forward-looking pick (game ${daysOut}d out) — re-verify injuries closer to tip" and treat any UNDER mechanism that depends on a teammate's confirmed status (e.g., role compression) as A-tier max unless the absence is clearly long-term.`
+    : "";
+
+  // Strip per-task fields — they belong on each task, not on the shared GT.
+  const { prop_type: _pt, line: _l, ...gtCommon } = groundTruth;
+
+  const roleDefinition = "You are the NBA PrizePicks Model v3.4 verdict engine. Output exactly one JSON object — no prose, no markdown, no code fences.";
+
+  const dataRules = `DATA RULES — non-negotiable:
+1. Use ONLY values from the GROUND TRUTH block below. Do NOT invent, estimate, recall from prior knowledge, or guess any number. Treat your training-data memory of player stats as forbidden.
+2. Arithmetic on values supplied in GROUND TRUTH is permitted (it is already pre-computed for you in averages.pra / pr / pa / ra). Producing any number that cannot be derived from GROUND TRUTH is a violation.
+3. The "data_used" field of each task's output must echo values directly from GROUND TRUTH. Do not put your own numbers there.
+4. If applying a hard gate from the framework requires a value that is null or absent in GROUND TRUTH, set that task's verdict to "SKIP" with a flag like "⚠️ missing: <field>". Do not substitute a guessed value.${forwardLookingNote}`;
+
+  const frameworkSection = `FRAMEWORK:
+${framework}`;
+
+  const groundTruthSection = `GROUND TRUTH (the only data you may cite — shared across all tasks below):
+${JSON.stringify(gtCommon, null, 2)}`;
+
+  const whereToFindValues = `WHERE TO FIND VALUES (path → meaning):
+- groundTruth.season.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fgm,fga,fg_pct,ft_pct,fg3_pct,fta,ftm,minutes}  → regular-season per-game averages
+- groundTruth.l5.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fga,minutes}                              → most-recent 5 games (playoff if l5.type==="Playoffs")
+- groundTruth.l5.games[i].{fgm,fga,fg_pct}                                                      → per-game shooting
+- groundTruth.splits.{home,road}.{...}                                                       → regular-season home/away splits
+- groundTruth.home_away                                                                       → "home" | "away" for tonight's game
+- groundTruth.opponent_team.name / abbr                                                       → tonight's opponent
+- groundTruth.win_prob.player_team_pct                                                        → 0-1 float
+- groundTruth.injuries.player_team / opponent                                                 → {player,status,detail,date}[]
+- groundTruth.player_recent.is_listed_injured                                                 → boolean — TRUE means post-injury return gate (Section 6) applies
+- groundTruth.opponent_defense                                                                → {def_rating, def_rank, primary_defender, source}
+- groundTruth.series                                                                          → playoff series state (null in regular season)`;
+
+  const taskListLines = tasks.map((t) => {
+    const f = propTypeToField(t.prop_type);
+    return `  - id="${t.id}": "${t.prop_type}" line=${t.line}  (averages field: "${f ?? "unknown — output SKIP"}")`;
+  }).join("\n");
+
+  const batchInstructions = `TASKS TO EVALUATE (${tasks.length} total — apply ALL framework rules INDEPENDENTLY to EACH task):
+${taskListLines}
+
+PER-TASK PROCEDURE (silent — do not narrate):
+1. Identify the averages field for this task's prop_type.
+2. Run the full OVER pre-pick checklist OR the full UNDER pre-pick checklist (Section 7) for this task.
+3. Apply the S-tier gate (Section 2), road deduction (Rule 5a), and all suppressors (4i, 4k, 5c, 5f, 6) for this task.
+4. For UNDER picks: name the mechanism (minutes compression / role compression / matchup ceiling) — no mechanism = output SKIP for that task.
+5. Decisions are independent per task. Do not let one task's verdict bias another's.`;
+
+  const outputSpecification = `OUTPUT (single JSON object — "results" array, one entry per task, SAME ORDER as TASKS TO EVALUATE):
+{
+  "results": [
+    {
+      "id":          "<echo the task id verbatim>",
+      "verdict":     "OVER" | "UNDER" | "SKIP",
+      "tier":        "S" | "A" | "B" | "SKIP",
+      "confidence":  integer 0-100,
+      "justification": "2-3 sentences citing baseline governed, road deduction if applied, suppressors triggered, and (UNDER) named mechanism. Numbers must come from GROUND TRUTH.",
+      "flags":       array of strings,
+      "data_used": {
+        "season_avg":  <number copied from season.averages.<this task's field>, or null>,
+        "l5_avg":      <number copied from l5.averages.<this task's field>, or null>,
+        "home_away":   <copy groundTruth.home_away>,
+        "win_prob":    <copy groundTruth.win_prob.player_team_pct, or null>,
+        "opponent":    <copy groundTruth.opponent_team.name>,
+        "game_context": <if groundTruth.series is non-null, format as "{season.label} {series.round} G{series.next_game_number} ({series.series_summary})" — copy series.next_game_number and series.series_summary verbatim. If series is null, format as "{season.label} Regular Season".>
+      }
+    }
+  ]
+}`;
+
+  return `${roleDefinition}
+
+${dataRules}
+
+${frameworkSection}
+
+${groundTruthSection}
+
+${whereToFindValues}
+
+${batchInstructions}
+
+${outputSpecification}`;
+}
+
+/**
+ * Routes an LLM call across configured providers (Groq, Gemini) with
+ * per-request rotation. The first call uses the first provider in
+ * LLM_PROVIDERS; the second call uses the next; and so on. Within a
+ * provider, the call burns the primary→fallback retry chain; if the whole
+ * chain fails, the router falls over to the next provider's chain.
+ *
+ * @param {string} prompt - The prompt to send to the model
+ * @returns {Promise<Object>} { json } on success, { error, debug? } otherwise
+ */
+export async function callLLM(prompt) {
+  return routeLLM(prompt, {});
+}
+
+/**
+ * Batched variant of callLLM. Routes through the same provider rotation
+ * but with a batch-aware validator and an output budget scaled to batch
+ * size. Returns { json: { results: [...] } } on success.
+ *
+ * @param {string} prompt - Built via buildBatchPrompt
+ * @param {string[]} expectedIds - Task ids the model must return
+ * @param {Object} [opts]
+ * @param {number} [opts.maxTokens] - Override output budget (default scales by batch size)
+ * @returns {Promise<Object>}
+ */
+export async function callLLMBatched(prompt, expectedIds, opts = {}) {
+  const idSet = new Set(expectedIds);
+  // Per-task result averages ~260 tokens on Groq, ~300 on Gemini Flash
+  // (chattier). Budget 320 + a 300-token wrapper headroom so an 8-task
+  // batch gets ~2860 tokens — comfortably above the worst case observed.
+  // Cap at 5000 so we stay under cheap-model output limits.
+  const defaultMax = Math.min(5000, 320 * expectedIds.length + 300);
+  const maxTokens = opts.maxTokens ?? defaultMax;
+  return routeLLM(prompt, {
+    maxTokens,
+    validator: makeBatchValidator(idSet),
+  });
+}
+
+/**
+ * @deprecated Use callLLM. Kept as a thin alias so older import sites and
+ * external smoke scripts keep working. The first argument is ignored —
+ * provider keys are resolved from env inside the router.
+ */
+export async function callGemini(_apiKey, prompt) {
+  return callLLM(prompt);
+}
+
+/** @deprecated Use callLLMBatched. */
+export async function callGeminiBatched(prompt, expectedIds, opts = {}) {
+  return callLLMBatched(prompt, expectedIds, opts);
+}
+
+/**
+ * Shared routing core for single-call and batched paths. Spreads requests
+ * across configured providers via a module-level counter, threads `opts`
+ * (maxTokens, validator) down to each provider's attempt function.
+ */
+async function routeLLM(prompt, opts) {
+  const providers = getProviderRotation();
+  if (providers.length === 0) {
+    return { error: "No LLM provider configured (set GROQ_API_KEY and/or GOOGLE_API_KEY)" };
+  }
+
+  // Per-request rotation: shift the provider list so each request starts
+  // on a different provider. Spreads load across independent rate-limit
+  // pools (Groq TPM vs Gemini RPM). Single-provider configs are no-ops.
+  const offset = _llmRequestCounter++ % providers.length;
+  const ordered = providers.slice(offset).concat(providers.slice(0, offset));
+
+  let last;
+  for (const p of ordered) {
+    last = await p.run(prompt, opts);
+    if (!last.error) return last;
+  }
+  return last;
+}
+
+// Module-level rotation counter. Per-process state — fine for serverless
+// functions because rotation only needs to differ within a warm instance.
+let _llmRequestCounter = 0;
+
+/**
+ * Resolves the LLM_PROVIDERS env var into an ordered list of provider
+ * adapters, filtered to those with credentials configured.
+ * @returns {Array<{name: string, run: (prompt: string, opts: Object) => Promise<Object>}>}
+ */
+function getProviderRotation() {
+  const order = (process.env.LLM_PROVIDERS || "groq,gemini")
+    .split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+
+  const adapters = [];
+  for (const name of order) {
+    if (name === "groq" && process.env.GROQ_API_KEY) {
+      adapters.push({ name, run: (p, o) => callGroqChain(process.env.GROQ_API_KEY, p, o) });
+    } else if (name === "gemini" && process.env.GOOGLE_API_KEY) {
+      adapters.push({ name, run: (p, o) => callGeminiChain(process.env.GOOGLE_API_KEY, p, o) });
+    }
+  }
+  return adapters;
+}
+
+/**
+ * Runs the Groq primary→fallback retry chain. Returns success on first
+ * good response; on hard non-retryable error from primary, skips straight
+ * to the fallback model.
+ */
+async function callGroqChain(apiKey, prompt, opts = {}) {
+  const PRIMARY = process.env.GROQ_PRIMARY_MODEL || "llama-3.3-70b-versatile";
+  const FALLBACK = process.env.GROQ_FALLBACK_MODEL || "openai/gpt-oss-120b";
+  const primaryDelays = (process.env.GROQ_PRIMARY_DELAYS || "0,500,1500")
+    .split(",").map((d) => parseInt(d, 10));
 
   let last;
   for (const delay of primaryDelays) {
     if (delay) await sleep(delay);
-    last = await geminiAttempt(apiKey, prompt, PRIMARY);
-    if (!last.error || !last.retryable) return stripRetryable(last);
+    last = await groqAttempt(apiKey, prompt, PRIMARY, opts);
+    if (!last.error || !last.retryable) break;
   }
+  if (!last.error) return stripRetryable(last);
 
-  // Wait briefly before trying fallback model
-  const fallbackDelay = parseInt(process.env.GEMINI_FALLBACK_DELAY || '500', 10);
+  const fallbackDelay = parseInt(process.env.GROQ_FALLBACK_DELAY || "500", 10);
   await sleep(fallbackDelay);
-  last = await geminiAttempt(apiKey, prompt, FALLBACK);
+  last = await groqAttempt(apiKey, prompt, FALLBACK, opts);
+  return stripRetryable(last);
+}
+
+/**
+ * Runs the Gemini primary→fallback retry chain. Mirrors callGroqChain
+ * structure but talks to the v1beta generateContent endpoint.
+ */
+async function callGeminiChain(apiKey, prompt, opts = {}) {
+  const PRIMARY = process.env.GEMINI_PRIMARY_MODEL || "gemini-2.5-flash";
+  const FALLBACK = process.env.GEMINI_FALLBACK_MODEL || "gemini-2.5-flash-lite";
+  const primaryDelays = (process.env.GEMINI_PRIMARY_DELAYS || "0,500,1500")
+    .split(",").map((d) => parseInt(d, 10));
+
+  let last;
+  for (const delay of primaryDelays) {
+    if (delay) await sleep(delay);
+    last = await geminiAttempt(apiKey, prompt, PRIMARY, opts);
+    if (!last.error || !last.retryable) break;
+  }
+  if (!last.error) return stripRetryable(last);
+
+  const fallbackDelay = parseInt(process.env.GEMINI_FALLBACK_DELAY || "500", 10);
+  await sleep(fallbackDelay);
+  last = await geminiAttempt(apiKey, prompt, FALLBACK, opts);
   return stripRetryable(last);
 }
 
@@ -518,7 +738,84 @@ function stripRetryable({ retryable: _r, ...rest }) {
   return rest;
 }
 
-async function geminiAttempt(apiKey, prompt, model) {
+async function groqAttempt(apiKey, prompt, model, { maxTokens = 1500, validator = validateLLMOutput } = {}) {
+  let res;
+  try {
+    res = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0,
+          max_tokens: maxTokens,
+          response_format: { type: "json_object" }
+        }),
+      }
+    );
+  } catch (err) {
+    return { error: `Groq fetch failed: ${err.message}`, retryable: true };
+  }
+
+  const data = await res.json();
+  if (data.error) {
+    // Classify by HTTP status: 408/429/5xx are transient → retry primary,
+    // then fall back; 4xx auth/decommissioned/bad-request are permanent →
+    // skip the retry chain and let the router try the next provider.
+    const status = res.status;
+    const retryable = status === 408 || status === 429 || status >= 500;
+    return { error: data.error?.message || `Groq error (${status})`, retryable };
+  }
+
+  const text = data.choices?.[0]?.message?.content?.trim() || "";
+  if (!text) {
+    return { error: "Empty Groq response", debug: data };
+  }
+
+  let jsonStr = null;
+  if (text.startsWith("{") && text.endsWith("}")) {
+    jsonStr = text;
+  } else {
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    if (start !== -1 && end > start) jsonStr = text.substring(start, end + 1);
+  }
+  if (!jsonStr) {
+    return {
+      error: `No JSON in Groq response`,
+      debug: text.slice(0, 800),
+    };
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(jsonStr);
+  } catch (e) {
+    return { error: `JSON parse failed: ${e.message}`, debug: jsonStr.slice(0, 800) };
+  }
+
+  const invalid = validator(parsed);
+  if (invalid) {
+    return {
+      error: `Groq output failed schema validation: ${invalid}`,
+      retryable: false,
+      debug: jsonStr.slice(0, 800),
+    };
+  }
+  return { json: parsed };
+}
+
+/**
+ * Single attempt against Gemini's generateContent endpoint. Same return
+ * shape as groqAttempt: { json } on success, { error, retryable, debug? }
+ * on failure. Used by callGeminiChain inside the multi-provider router.
+ */
+async function geminiAttempt(apiKey, prompt, model, { maxTokens = 1500, validator = validateLLMOutput } = {}) {
   let res;
   try {
     res = await fetch(
@@ -530,7 +827,7 @@ async function geminiAttempt(apiKey, prompt, model) {
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: 0,
-            maxOutputTokens: 8192,
+            maxOutputTokens: maxTokens,
             responseMimeType: "application/json",
           },
         }),
@@ -579,7 +876,7 @@ async function geminiAttempt(apiKey, prompt, model) {
     return { error: `JSON parse failed: ${e.message} (finishReason: ${finishReason})`, debug: jsonStr.slice(0, 800) };
   }
 
-  const invalid = validateGeminiOutput(parsed);
+  const invalid = validator(parsed);
   if (invalid) {
     return {
       error: `Gemini output failed schema validation: ${invalid}`,
@@ -593,7 +890,7 @@ async function geminiAttempt(apiKey, prompt, model) {
 const VALID_VERDICTS = new Set(["OVER", "UNDER", "SKIP"]);
 const VALID_TIERS = new Set(["S", "A", "B", "SKIP"]);
 
-function validateGeminiOutput(o) {
+function validateLLMOutput(o) {
   if (!o || typeof o !== "object" || Array.isArray(o)) return "not an object";
   if (!VALID_VERDICTS.has(o.verdict)) return `verdict "${o.verdict}" not in {OVER,UNDER,SKIP}`;
   if (!VALID_TIERS.has(o.tier)) return `tier "${o.tier}" not in {S,A,B,SKIP}`;
@@ -616,4 +913,35 @@ function validateGeminiOutput(o) {
     }
   }
   return null;
+}
+
+/**
+ * Builds a validator for a batched response. Checks the wrapper shape
+ * ({"results": [...]}), the length, that every entry has an "id"
+ * matching one of the expected ids, and validates each entry against the
+ * single-result schema. Order is not required since callers match by id.
+ *
+ * @param {Set<string>} expectedIds
+ * @returns {(o: any) => string|null}
+ */
+function makeBatchValidator(expectedIds) {
+  return function validateBatchOutput(o) {
+    if (!o || typeof o !== "object" || Array.isArray(o)) return "not an object";
+    if (!Array.isArray(o.results)) return "results field not an array";
+    if (o.results.length !== expectedIds.size) {
+      return `results length ${o.results.length} != expected ${expectedIds.size}`;
+    }
+    const seen = new Set();
+    for (let i = 0; i < o.results.length; i++) {
+      const r = o.results[i];
+      if (!r || typeof r !== "object") return `results[${i}] not an object`;
+      if (typeof r.id !== "string") return `results[${i}].id not a string`;
+      if (!expectedIds.has(r.id)) return `results[${i}].id "${r.id}" not in expected ids`;
+      if (seen.has(r.id)) return `results[${i}].id "${r.id}" duplicated`;
+      seen.add(r.id);
+      const inner = validateLLMOutput(r);
+      if (inner) return `results[${i}] (id="${r.id}"): ${inner}`;
+    }
+    return null;
+  };
 }

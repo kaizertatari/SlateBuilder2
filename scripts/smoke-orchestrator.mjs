@@ -1,4 +1,4 @@
-// Exercises gatherGroundTruth without calling Gemini.
+// Exercises gatherGroundTruth without calling the LLM.
 // Run: node scripts/smoke-orchestrator.mjs ["Player Name"] ["Prop Type"] [line]
 // Default: Nikola Jokic / PRA OVER / 40.5
 

@@ -1,5 +1,5 @@
-// End-to-end smoke test that calls live Gemini.
-// Loads GOOGLE_API_KEY from .env.local automatically.
+// End-to-end smoke test that calls live Groq.
+// Loads GROQ_API_KEY from .env.local automatically.
 // Usage: node scripts/smoke-gemini.mjs ["Player"] ["Prop"] [line]
 
 import {
@@ -11,9 +11,9 @@ import { MODEL_FRAMEWORK } from "../api/lib/framework.js";
 import { loadEnvLocal } from "./_env.mjs";
 
 loadEnvLocal();
-const apiKey = process.env.GOOGLE_API_KEY;
+const apiKey = process.env.GROQ_API_KEY;
 if (!apiKey) {
-  console.error("GOOGLE_API_KEY not found in .env.local");
+  console.error("GROQ_API_KEY not found in .env.local");
   process.exit(1);
 }
 
@@ -37,21 +37,25 @@ if (missing.length) {
 
 const prompt = buildPrompt(MODEL_FRAMEWORK, groundTruth);
 console.log(`prompt length: ${prompt.length} chars\n`);
-console.log("Calling Gemini...");
+// Rough estimate: 4 chars per token for English text
+console.log(`estimated tokens: ${Math.ceil(prompt.length / 4)}\n`);
+console.log("Calling Groq...");
 
 const t0 = Date.now();
 const res = await fetch(
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+  "https://api.groq.com/openai/v1/chat/completions",
   {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0,
-        maxOutputTokens: 8192,
-        responseMimeType: "application/json",
-      },
+      model: process.env.GROQ_PRIMARY_MODEL || "llama-3.3-70b-versatile",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0,
+      max_tokens: 1500,
+      response_format: { type: "json_object" },
     }),
   }
 );
@@ -60,17 +64,27 @@ const data = await res.json();
 console.log(`elapsed: ${dt}ms`);
 
 if (data.error) {
-  console.error("Gemini error:", data.error);
+  console.error("Groq error:", data.error);
+  if (data.failed_generation) {
+    console.error("Failed generation:", data.failed_generation);
+  }
   process.exit(1);
 }
 
-const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-console.log("\n=== Raw Gemini Output ===");
+const text = data.choices?.[0]?.message?.content?.trim() || "";
+console.log("\n=== Raw Groq Output ===");
 console.log(text);
+console.log(`Text length: ${text.length}`);
 
 let result;
-try { result = JSON.parse(text); }
-catch (e) { console.error("\nJSON parse failed:", e.message); process.exit(1); }
+try { 
+  result = JSON.parse(text); 
+}
+catch (e) {
+  console.error("\nJSON parse failed:", e.message);
+  console.error("Text that failed to parse:", JSON.stringify(text.substring(0, 200)));
+  process.exit(1); 
+}
 
 console.log("\n=== Parsed Result ===");
 console.log("verdict:    ", result.verdict);
