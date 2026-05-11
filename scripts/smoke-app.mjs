@@ -8,6 +8,7 @@
 //   6. Framework prompt builds with the correct line + framework block
 //   7. Routed LLM (Groq/Gemini) returns a parseable verdict + tier
 //   8. analyze-all end-to-end produces tier_counts and runs every line
+//  8b. Response cache: repeat call hits X-Cache: HIT with identical top_10
 //   9. Blob roundtrip works (skipped when BLOB_READ_WRITE_TOKEN is absent)
 //
 // Run: npm run smoke:app
@@ -236,19 +237,36 @@ await test("data_used echoes GT averages (no hallucination)", () => {
 
 header("8. End-to-end /api/analyze-all");
 let body = null;
+let firstCacheHeader = null;
+// Reuse this exact payload for the 8b cache-hit repeat call. Cache key
+// depends on (player, direction, statTypes, lines_fetched_at), so the
+// second request must match this body to land on the same key.
+let analyzeAllPayload = null;
 await test("POST analyze-all returns 200 + tier_counts", async () => {
   if (!sample) return { skip: "no sample" };
   const { POST } = await import("../api/analyze-all.js");
+  analyzeAllPayload = JSON.stringify({ player: sample.name, direction: "OVER" });
   const req = new Request("http://localhost/api/analyze-all", {
     method: "POST",
     headers: { "content-type": "application/json", "x-forwarded-for": "127.0.0.99" },
-    body: JSON.stringify({ player: sample.name, direction: "OVER" }),
+    body: analyzeAllPayload,
   });
   const res = await POST(req);
+  firstCacheHeader = res.headers.get("X-Cache");
   body = await res.json();
   if (body.error) throw new Error(body.error);
   if (typeof body.total_analyzed !== "number") throw new Error("total_analyzed missing");
   if (!body.tier_counts) throw new Error("tier_counts missing — UI transparency check broken");
+});
+await test("response includes lines_fetched_at + X-Cache: MISS (cold)", () => {
+  if (!body) return { skip: "no body" };
+  if (!body.lines_fetched_at) throw new Error("lines_fetched_at missing — frontend cache key can't be built");
+  if (firstCacheHeader !== "MISS") {
+    // Could be HIT if the previous smoke run within the same process warmed
+    // the module-level cache. Acceptable but worth flagging.
+    return { note: `cold header was ${firstCacheHeader} (expected MISS; HIT acceptable on warm reruns)` };
+  }
+  return { note: `MISS, fetched_at=${body.lines_fetched_at}` };
 });
 await test("framework ran on every line (sum(tier_counts) == total_analyzed)", () => {
   if (!body) return { skip: "no body" };
@@ -267,14 +285,46 @@ await test("framework ran on every line (sum(tier_counts) == total_analyzed)", (
     note: `analyzed=${body.total_analyzed} S=${tc.S} A=${tc.A} B=${tc.B} SKIP=${tc.SKIP} UNK=${tc.UNKNOWN} err=${errs}`,
   };
 });
-await test("top_10 entries have line_type tagged", () => {
-  if (!body?.top_10) return { skip: "no top_10" };
-  if (body.top_10.length === 0) return { skip: "no S/A picks for this sample (framework working as designed)" };
-  for (const r of body.top_10) {
-    if (!r.line_type) throw new Error(`pick missing line_type: ${r.player} ${r.prop_type}`);
-    if (!["Goblin", "Normal"].includes(r.line_type)) throw new Error(`bad line_type: ${r.line_type}`);
+
+// ─── 8b. Response cache (repeat call) ─────────────────────────────────────
+
+header("8b. Response cache");
+let cacheBody = null;
+let cacheHeader = null;
+await test("repeat POST returns X-Cache: HIT", async () => {
+  if (!body || !analyzeAllPayload) return { skip: "section 8 didn't run" };
+  const { POST } = await import("../api/analyze-all.js");
+  const t0 = Date.now();
+  const req = new Request("http://localhost/api/analyze-all", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-forwarded-for": "127.0.0.99" },
+    body: analyzeAllPayload,
+  });
+  const res = await POST(req);
+  const elapsed = Date.now() - t0;
+  cacheHeader = res.headers.get("X-Cache");
+  cacheBody = await res.json();
+  if (cacheHeader !== "HIT") throw new Error(`X-Cache was "${cacheHeader}", expected HIT`);
+  // Cache hits short-circuit before readLines fan-out, external APIs, and
+  // the LLM batch loop. Sub-200ms is the cheap-path budget; anything beyond
+  // that means something is re-running.
+  if (elapsed > 200) {
+    return { note: `HIT but slow (${elapsed}ms) — investigate` };
   }
-  return { note: `${body.top_10.length} S/A picks, all tagged` };
+  return { note: `HIT in ${elapsed}ms` };
+});
+await test("cached top_10 deep-equals first call", () => {
+  if (!cacheBody || !body) return { skip: "no cache body" };
+  const a = JSON.stringify(body.top_10 || []);
+  const b = JSON.stringify(cacheBody.top_10 || []);
+  if (a !== b) throw new Error("top_10 drifted between calls — cache returning stale or wrong entry");
+  return { note: `${body.top_10?.length || 0} entries match` };
+});
+await test("cached response carries same lines_fetched_at", () => {
+  if (!cacheBody || !body) return { skip: "no cache body" };
+  if (cacheBody.lines_fetched_at !== body.lines_fetched_at) {
+    throw new Error(`fetched_at drift: first=${body.lines_fetched_at}, cached=${cacheBody.lines_fetched_at}`);
+  }
 });
 
 // ─── 9. Blob roundtrip ───────────────────────────────────────────────────

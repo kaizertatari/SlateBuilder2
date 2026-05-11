@@ -14,9 +14,25 @@ import { rateLimit } from "./lib/rate-limit.js";
 import { runWithRequestContext } from "./lib/request-context.js";
 import { readLines } from "./lib/lines-store.js";
 import { STATS, mapPrizePicksStatType } from "./lib/prop-types.js";
+import { get as cacheGet, set as cacheSet } from "./lib/cache.js";
 import { randomUUID } from "node:crypto";
 
 export const runtime = "nodejs";
+
+// Response cache TTL. Primary invalidation is via the key itself
+// (incorporates linesData.fetched_at), so when the cron at 5/17 UTC rewrites
+// lines, prior keys become unreachable. The TTL is a defensive bound past
+// the 12h cron cadence to keep the Map from growing unbounded on a
+// long-lived warm instance.
+const CACHE_TTL_MS = 13 * 60 * 60 * 1000;
+
+function normalizePlayer(name) {
+  return name.trim().toLowerCase();
+}
+
+function buildCacheKey(player, fetchedAt, sortedStats, direction) {
+  return `analyze-all:${normalizePlayer(player)}::${fetchedAt || "unknown"}::${sortedStats}::${direction}`;
+}
 
 // Per-player line budget. With batched LLM calls this no longer maps 1:1
 // to request count — N lines now cost ceil(N / LLM_BATCH_SIZE) calls.
@@ -75,6 +91,22 @@ async function handlePost(req, reqId) {
       );
     }
 
+    // Cache lookup. Inputs are deterministic in (player, fetched_at,
+    // statTypes, direction) — between cron ticks (12h), the same inputs
+    // yield the same response. A hit skips every external API call and
+    // every LLM call. fetched_at is embedded in the key, so the next
+    // cron-driven refresh makes prior keys unreachable.
+    const linesFetchedAt = linesData.fetched_at || null;
+    const sortedStats = (Array.isArray(statTypes) && statTypes.length > 0)
+      ? [...statTypes].sort().join(",")
+      : "ALL";
+    const normDirection = direction || "BOTH";
+    const cacheKey = buildCacheKey(player, linesFetchedAt, sortedStats, normDirection);
+    const cached = cacheGet(cacheKey);
+    if (cached) {
+      return Response.json(cached, { headers: { "X-Cache": "HIT" } });
+    }
+
     // Find the player's props (exact match on by_player keys).
     const playerProps = (linesData.by_player || {})[player] || [];
 
@@ -98,13 +130,16 @@ async function handlePost(req, reqId) {
      }
 
     if (buckets.size === 0) {
-      return Response.json({
+      const responseBody = {
         request_id: reqId,
         total_analyzed: 0,
         total_s_a: 0,
         top_10: [],
+        lines_fetched_at: linesFetchedAt,
         message: "No matching lines found for the given filters.",
-      });
+      };
+      cacheSet(cacheKey, responseBody, CACHE_TTL_MS);
+      return Response.json(responseBody, { headers: { "X-Cache": "MISS" } });
     }
 
      const directions = direction ? [direction] : ["OVER", "UNDER"];
@@ -182,14 +217,17 @@ async function handlePost(req, reqId) {
      }
 
     if (tasks.length === 0) {
-      return Response.json({
+      const responseBody = {
         request_id: reqId,
         total_analyzed: 0,
         total_s_a: 0,
         top_10: [],
+        lines_fetched_at: linesFetchedAt,
         skipped: skipped.length > 0 ? skipped : undefined,
         message: "All buckets skipped before analysis (see `skipped`).",
-      });
+      };
+      cacheSet(cacheKey, responseBody, CACHE_TTL_MS);
+      return Response.json(responseBody, { headers: { "X-Cache": "MISS" } });
     }
 
     // Batched LLM path: each call evaluates up to LLM_BATCH_SIZE tasks.
@@ -257,15 +295,22 @@ async function handlePost(req, reqId) {
     // Return top 10
     const top10 = results.slice(0, 10);
 
-    return Response.json({
+    // Cache the full response. Partial-failure responses (errors[] non-empty)
+    // are cached on purpose: user picked fetched_at-only invalidation, so a
+    // retry within the same window would re-spend tokens for the same
+    // chance of success. Errors clear at the next cron tick.
+    const responseBody = {
       request_id: reqId,
       total_analyzed: tasks.length,
       total_s_a: results.length,
       tier_counts: tierCounts,
       top_10: top10,
+      lines_fetched_at: linesFetchedAt,
       errors: errors.length > 0 ? errors : undefined,
       skipped: skipped.length > 0 ? skipped : undefined,
-    });
+    };
+    cacheSet(cacheKey, responseBody, CACHE_TTL_MS);
+    return Response.json(responseBody, { headers: { "X-Cache": "MISS" } });
 
   } catch (error) {
     return Response.json({ request_id: reqId, error: error.message }, { status: 500 });

@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import playersData from "../data/players.json";
 import { STATS } from "../api/lib/prop-types.js";
+import { readNewestCached, writeCached, clearStaleForPlayer, buildKey } from "./lib/result-cache.js";
 
 const NBA_PLAYERS = Object.keys(playersData);
 
@@ -33,6 +34,9 @@ export default function App() {
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
   const [statsOpen, setStatsOpen] = useState(false);
+  // "HIT" when served from sessionStorage or when server returned X-Cache:HIT.
+  // "MISS" on a fresh network analysis. null on first render / between calls.
+  const [cacheStatus, setCacheStatus] = useState(null);
 
   const allStatsSelected = selectedStats.length === STATS.length;
 
@@ -90,6 +94,19 @@ export default function App() {
 
     setError(null);
     setResults(null);
+    setCacheStatus(null);
+
+    // Browser-side cache check. Same (player, statTypes, direction) within
+    // the current lines snapshot → return instantly, no server round-trip,
+    // no LLM tokens, no external API hits. Key is keyed on fetched_at so
+    // a cron-driven refresh invalidates everything automatically.
+    const cached = readNewestCached(player, selectedStats, direction);
+    if (cached) {
+      setResults(cached.data);
+      setCacheStatus("HIT");
+      return;
+    }
+
     setAnalyzing(true);
 
     try {
@@ -108,6 +125,19 @@ export default function App() {
       if (!response.ok) throw new Error(data.error || "Request failed");
 
       setResults(data);
+      // Reflect server-side cache status. A fresh tab can still hit the
+      // server's in-memory cache if another user already analyzed this
+      // (player, fetched_at, …) combo on the same warm instance.
+      setCacheStatus(response.headers.get("X-Cache") || "MISS");
+
+      // Persist for repeat clicks in this tab. Skip if the response is
+      // missing lines_fetched_at (defensive — shouldn't happen after
+      // server-side rollout).
+      if (data.lines_fetched_at) {
+        const key = buildKey(player, data.lines_fetched_at, selectedStats, direction);
+        writeCached(key, data);
+        clearStaleForPlayer(key, player);
+      }
     } catch (e) {
       setError(`Error: ${e.message}`);
     } finally {
@@ -391,6 +421,11 @@ export default function App() {
               <span>Analyzed: {results.total_analyzed} lines</span>
               <span>S/A Tier: {results.total_s_a} picks</span>
               <span>Showing: {Math.min(results.top_10?.length || 0, 10)} results</span>
+              {cacheStatus && (
+                <span style={{ color: cacheStatus === "HIT" ? "#00FF88" : "#446688" }}>
+                  Cache: {cacheStatus}
+                </span>
+              )}
             </div>
 
             {/* Table */}
