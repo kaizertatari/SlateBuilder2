@@ -136,13 +136,17 @@ async function handlePost(req, reqId) {
      for (const [stat, props] of buckets) {
        if (tasks.length >= MAX_LINES) break;
 
-          // Lowest + median. If only one distinct line is published (or
-          // lowest === median), dedupe so we don't analyze the same prop
-          // twice.
+          // Lowest + median, tagged with their PrizePicks line type so the
+          // UI can surface a TYPE column. When only one line is published
+          // the dedupe collapses to a single entry — label it "Normal"
+          // since a standalone line is the standard offer, not a Goblin
+          // discount.
           const sorted = [...props].sort((a, b) => a.line - b.line);
           const lowest = sorted[0];
           const median = sorted[Math.floor(sorted.length / 2)];
-          const chosenLines = lowest.line === median.line ? [lowest] : [lowest, median];
+          const chosenLines = lowest.line === median.line
+            ? [{ prop: lowest, lineType: "Normal" }]
+            : [{ prop: lowest, lineType: "Goblin" }, { prop: median, lineType: "Normal" }];
 
        // Fetch the player-wide groundTruth on first stat we see. Reuse for
        // every subsequent bucket — caches inside gatherGroundTruth would
@@ -162,7 +166,7 @@ async function handlePost(req, reqId) {
          sharedGroundTruth = r.groundTruth;
        }
 
-       for (const chosen of chosenLines) {
+       for (const { prop: chosen, lineType } of chosenLines) {
          if (tasks.length >= MAX_LINES) break;
          const game = `${chosen.player_team || ""} @ ${chosen.opponent || ""}`;
          for (const dir of directions) {
@@ -173,6 +177,7 @@ async function handlePost(req, reqId) {
              statType: stat,
              direction: dir,
              line: chosen.line,
+             lineType,
              propType: `${stat} ${dir}`,
              game,
            });
@@ -235,6 +240,7 @@ async function handlePost(req, reqId) {
             prop_type: task.statType,
             direction: r.verdict,
             line: task.line,
+            line_type: task.lineType,
             verdict: r.verdict,
             tier: r.tier,
             confidence: r.confidence || 0,
