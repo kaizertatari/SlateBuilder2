@@ -15,7 +15,7 @@ import { runWithRequestContext } from "./lib/request-context.js";
 import { readLines } from "./lib/lines-store.js";
 import { STATS, mapPrizePicksStatType } from "./lib/prop-types.js";
 import { get as cacheGet, set as cacheSet } from "./lib/cache.js";
-import { verifyVerdict } from "./lib/verdict-verifier.js";
+import { verifyVerdict, preFilterMechanical } from "./lib/verdict-verifier.js";
 import { randomUUID } from "node:crypto";
 
 export const runtime = "nodejs";
@@ -252,6 +252,23 @@ async function handlePost(req, reqId) {
         prop_type: task.propType,
         line: task.line,
       };
+
+      // PRE-FILTER: run the mechanical framework checks before paying for
+      // an LLM call. If the arithmetic says SKIP (e.g., OVER buffer fails,
+      // Rule 5i FT-floor on UNDER Points/PRA), short-circuit here. This
+      // is the same check the post-LLM verifier runs, so the verdict can
+      // never differ from the LLM path.
+      const preSkip = preFilterMechanical({
+        groundTruth: taskGroundTruth,
+        statType: task.statType,
+        direction: task.direction,
+        line: task.line,
+      });
+      if (preSkip) {
+        tierCounts.SKIP += 1;
+        continue;
+      }
+
       const prompt = buildPrompt(MODEL_FRAMEWORK, taskGroundTruth);
 
       let llm = await callLLM(prompt);

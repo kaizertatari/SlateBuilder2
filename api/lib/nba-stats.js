@@ -143,6 +143,11 @@ export async function getLastNGames(playerId, n = 5, {
       fgm: o.FGM,
       fga: o.FGA,
       fg_pct: o.FG_PCT,
+      // Mirrored from espn-stats.getLastNGames — Rule 5i playoff override
+      // needs FT volume + percentage on the l5 averages.
+      ftm: o.FTM,
+      fta: o.FTA,
+      ft_pct: o.FT_PCT,
       pra: (o.PTS ?? 0) + (o.REB ?? 0) + (o.AST ?? 0),
     };
   });
@@ -160,6 +165,9 @@ export async function getLastNGames(playerId, n = 5, {
       apg: avg("ast"),
       fg3m: avg("fg3m"),
       fga: avg("fga"),
+      ftm: avg("ftm"),
+      fta: avg("fta"),
+      ft_pct: avg("ft_pct"),
       pra: avg("pra"),
       minutes: avg("minutes"),
     },

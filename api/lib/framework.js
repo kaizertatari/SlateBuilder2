@@ -31,8 +31,9 @@ HARD GATES (cannot be bypassed):
 ROAD DEDUCTION (Rule 5a): Subtract 1.5 pts from season avg and L5 avg before line comparison on road scoring props.
 
 OVER BUFFER RULES:
-- Line must be 1.5+ pts BELOW road-adjusted baseline to qualify
-- Poor FT shooters (<70%): extra 2pt buffer
+- Line must be 1.5+ pts BELOW road-adjusted baseline to qualify (regular season)
+- [v3.4] Playoff games (groundTruth.series is non-null): buffer rises to 2.0+ pts BELOW the road-adjusted baseline. Playoff variance is higher (lineup adjustments game-to-game, gameplan counter-moves), so the wider buffer protects against sample-driven false OVERs.
+- Poor FT shooters (<70%): extra 2pt buffer (stacks on top of the playoff buffer when applicable)
 
 WIN PROBABILITY BLOWOUT SUPPRESSOR (Rule 5f):
 - 85-90% win prob: A-tier max OVER
@@ -49,8 +50,11 @@ When ALL THREE hold pre-tip — (a) leading team's win_prob ≥ 0.80, (b) opposi
 - 5b.ii Shooting-Slump: when player has shot fg_pct < 0.35 in 2+ of l5.games[], apply -15% suppressor on rebound OVER. Reads from groundTruth.l5.games[i].fg_pct.
 
 [v3.4] RULE 5i — FT-FLOOR INSURANCE GUARD (UNDER picks):
-For Points/PRA UNDER on a player with season.averages.fta ≥ 5:
-  ft_floor_pts = season.averages.fta × season.averages.ft_pct
+For Points/PRA UNDER, FT volume governance is sample-aware:
+- Default (regular season, OR playoff with l5.n < 3, OR l5.type === "Regular Season"): use season.averages.fta and season.averages.ft_pct. Gate fires when season.averages.fta ≥ 5.
+- [v3.4] Playoff override: when l5.type === "Playoffs" AND l5.n ≥ 3 AND l5.averages.fta is present, use l5.averages.fta and l5.averages.ft_pct instead. Playoff officiating, late-game intentional fouling, and tightened rotations move FT volume off the regular-season number — the playoff sample is the relevant one. Gate fires when l5.averages.fta ≥ 5.
+Once the governing FTA/FT% are picked:
+  ft_floor_pts = governing_fta × governing_ft_pct
   total_floor  = ft_floor_pts + 8         (8 = worst-case FG floor vs elite D)
 - If total_floor ≥ line: UNDER INVALID (regardless of named-defender suppression). Set verdict=SKIP.
 - If total_floor < line - 2: UNDER valid (other 5g mechanism still required).
@@ -90,12 +94,14 @@ If detail is empty/generic, apply post-injury gate at default A-tier max with no
 [v3.4] HOME/ROAD SPLIT SAMPLE MINIMUM (Rule 3a):
 Treat splits.{home,road} as a structural baseline ONLY when based on 3+ games at that location (splits.{home,road}.games ≥ 3). With fewer than 3 samples, blend the split toward the season average (50/50 weight). Avoids small-sample inflation.
 
-L5 vs Season Average: When L5 and season avg conflict by 3+ pts, L5 governs as baseline.
+L5 vs Season Average — sample-aware baseline governance:
+- Default rule: When L5 and season avg conflict by 3+ pts, L5 governs as baseline.
+- [v3.4] Playoff override: When l5.type === "Playoffs" AND l5.n ≥ 3, L5 governs as baseline regardless of conflict size. Rationale: in playoff games season.averages is regular-season data (a different population — 67-game sample vs the playoff defensive intensity, tightened rotations, gameplan-specific matchup the player is actually in tonight). The 3-pt conflict threshold was calibrated for drift within one sample type; playoff vs regular-season is sample-type mismatch, not drift. Override does NOT apply when l5.type === "Regular Season" (early playoff Game 1 with no playoff games yet) or l5.n < 3 (insufficient playoff sample).
 
 SUPPRESSOR STACKING: Two+ suppressors active = drop one additional tier beyond highest-priority cap (S→A→B→SKIP). When a stack lands at B, the SKIP advisory flag is mandatory.
 
 S-TIER GATE (ALL must pass):
-1. Line clears 1.5pt buffer after road deduction
+1. Line clears the OVER BUFFER RULES (1.5pt regular season / 2.0pt playoff) after road deduction and any FT-shooter extra
 2. 3+ independent signals align
 3. No active suppressor flag
 4. Confidence scores above BOTH season avg AND L5 avg

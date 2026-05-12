@@ -212,6 +212,12 @@ export async function getLastNGames(athleteId, n = 5, { season, postseason = fal
     fgm: g.fgm,
     fga: g.fga,
     fg_pct: g.fg_pct,
+    // Rule 5i (playoff override) needs l5 FT volume + percentage when the
+    // l5 sample is playoff games, so propagate these from the parsed row
+    // rather than dropping them at the slice boundary.
+    ftm: g.ftm,
+    fta: g.fta,
+    ft_pct: g.ft_pct,
     pra: g.pts + g.reb + g.ast,
   }));
   if (!games.length) return null;
@@ -227,6 +233,9 @@ export async function getLastNGames(athleteId, n = 5, { season, postseason = fal
       apg: avg("ast"),
       fg3m: avg("fg3m"),
       fga: avg("fga"),
+      ftm: avg("ftm"),
+      fta: avg("fta"),
+      ft_pct: avg("ft_pct"),
       pra: avg("pra"),
       minutes: avg("minutes"),
     },

@@ -23,7 +23,7 @@ import { MODEL_FRAMEWORK } from "./lib/framework.js";
 import { rateLimit } from "./lib/rate-limit.js";
 import { runWithRequestContext } from "./lib/request-context.js";
 import { PROP_TO_FIELD } from "./lib/prop-types.js";
-import { verifyVerdict } from "./lib/verdict-verifier.js";
+import { verifyVerdict, preFilterMechanical } from "./lib/verdict-verifier.js";
 import { randomUUID } from "node:crypto";
 import * as bbref from "./lib/bbref.js";
 import {
@@ -249,6 +249,21 @@ async function handlePost(req) {
       return createMissingDataResponse(missing, trace);
     }
 
+    // Pre-LLM mechanical filter. Skips the LLM call when the framework's
+    // arithmetic gates would already force SKIP. Same checks as the
+    // post-LLM verifier — pre and post can never disagree.
+    const direction = /OVER/i.test(propType) ? "OVER" : "UNDER";
+    const statType = String(propType).replace(/\s+(OVER|UNDER)\s*$/i, "").trim();
+    const preSkip = preFilterMechanical({
+      groundTruth,
+      statType,
+      direction,
+      line,
+    });
+    if (preSkip) {
+      return createSuccessResponse(preSkip, groundTruth);
+    }
+
     // Verify at least one LLM provider key is configured (router picks)
     if (!process.env.GROQ_API_KEY && !process.env.GOOGLE_API_KEY) {
       return createErrorResponse(
@@ -262,11 +277,9 @@ async function handlePost(req) {
       return llmResponse.response;
     }
 
-    // Re-derive the mechanical framework checks (OVER 1.5pt buffer,
-    // Rule 5i FT-floor) deterministically. Same call as /api/analyze-all
-    // so both endpoints agree on these regardless of model rotation.
-    const direction = /OVER/i.test(propType) ? "OVER" : "UNDER";
-    const statType = String(propType).replace(/\s+(OVER|UNDER)\s*$/i, "").trim();
+    // Re-derive the mechanical framework checks on the LLM's output as a
+    // second layer of defense (catches qualitative-mode drift). Same
+    // logic as the pre-filter above.
     const verified = verifyVerdict({
       groundTruth,
       statType,
@@ -413,6 +426,53 @@ export function propTypeToField(propType) {
 }
 
 /**
+ * Returns a slimmed copy of groundTruth suitable for embedding in an
+ * LLM prompt. The full groundTruth is preserved on the API response
+ * (callers still get every field); only the prompt embed is trimmed.
+ *
+ * Trims:
+ *   • l5.games[] — dropped entirely on props where Rule 5b.ii (shooting
+ *     slump rebound suppressor) cannot fire. 5b.ii is rebound-OVER-only
+ *     per framework, so every other prop pays ~600-1000 tokens per call
+ *     for unused per-game shooting data.
+ *   • l5.games[i] fields not referenced by any framework rule — keep
+ *     just {fgm, fga, fg_pct} on rebound props, drop matchup/result/etc.
+ *
+ * Other fields (season, splits, injuries, win_prob, opponent_defense,
+ * series, player_recent) are kept verbatim — many rules cross-reference
+ * them in non-obvious ways and trimming risks silently dropping signal.
+ *
+ * @param {Object} gt - full ground truth from composeGroundTruth
+ * @returns {Object} slimmed copy safe to embed in the prompt
+ */
+export function slimGroundTruthForPrompt(gt) {
+  if (!gt) return gt;
+  const propType = String(gt.prop_type || "");
+  const stat = propType.replace(/\s+(OVER|UNDER)\s*$/i, "").trim();
+  const dir = /UNDER/i.test(propType) ? "UNDER" : "OVER";
+  // 5b.ii fires only on Rebounds OVER. Other props (including PRA OVER)
+  // cannot trigger it, so l5.games[] is unused for them.
+  const needsL5Games = stat === "Rebounds" && dir === "OVER";
+
+  let l5 = gt.l5;
+  if (l5 && !needsL5Games) {
+    const { games: _games, ...rest } = l5;
+    l5 = rest;
+  } else if (l5 && needsL5Games && Array.isArray(l5.games)) {
+    l5 = {
+      ...l5,
+      games: l5.games.map((g) => ({
+        fgm: g.fgm,
+        fga: g.fga,
+        fg_pct: g.fg_pct,
+      })),
+    };
+  }
+
+  return { ...gt, l5 };
+}
+
+/**
  * Builds the single-task prompt for the LLM based on the framework and
  * ground truth data. For multi-task batching use buildBatchPrompt.
  * @param {string} framework - The analytical framework to apply
@@ -425,26 +485,33 @@ export function buildPrompt(framework, groundTruth) {
   const forwardLookingNote = daysOut > 0
     ? `\n\nFORWARD-LOOKING GAME: groundTruth.game.days_out is ${daysOut} — this game is NOT today, it is ${daysOut} day(s) away. Injury reports, win probability, and lineup state may shift before tip-off. You MUST add a flag "📅 forward-looking pick (game ${daysOut}d out) — re-verify injuries closer to tip" and treat any UNDER mechanism that depends on a teammate's confirmed status (e.g., role compression) as A-tier max unless the absence is clearly long-term.`
     : "";
-  
+
   // Build the prompt components
   const roleDefinition = "You are the NBA PrizePicks Model v3.4 verdict engine. Output exactly one JSON object — no prose, no markdown, no code fences.";
-  
+
   const dataRules = `DATA RULES — non-negotiable:
 1. Use ONLY values from the GROUND TRUTH block below. Do NOT invent, estimate, recall from prior knowledge, or guess any number. Treat your training-data memory of player stats as forbidden.
 2. Arithmetic on values supplied in GROUND TRUTH is permitted (it is already pre-computed for you in averages.pra / pr / pa / ra). Producing any number that cannot be derived from GROUND TRUTH is a violation.
 3. The "data_used" field of your output must echo values directly from GROUND TRUTH. Do not put your own numbers there.
 4. If applying a hard gate from the framework requires a value that is null or absent in GROUND TRUTH, set verdict to "SKIP" with a flag like "⚠️ missing: <field>". Do not substitute a guessed value.${forwardLookingNote}`;
-  
+
   const frameworkSection = `FRAMEWORK:
 ${framework}`;
-  
+
+  // Trim the ground truth to the fields this prop actually uses. The
+  // biggest savings come from dropping l5.games[] (~600-1000 tokens) for
+  // props where Rule 5b.ii shooting-slump suppressor cannot fire — the
+  // suppressor is rebound-OVER-only per framework. Compact JSON also
+  // drops indentation whitespace.
+  const slimGt = slimGroundTruthForPrompt(groundTruth);
   const groundTruthSection = `GROUND TRUTH (the only data you may cite):
-${JSON.stringify(groundTruth, null, 2)}`;
+${JSON.stringify(slimGt)}`;
   
   const whereToFindValues = `WHERE TO FIND VALUES (path → meaning):
-- groundTruth.season.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fgm,fga,fg_pct,ft_pct,fg3_pct,fta,ftm,minutes}  → regular-season per-game averages (fta/ftm needed for Rule 5i FT-Floor Insurance Guard)
-- groundTruth.l5.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fga,minutes}                              → most-recent 5 games (playoff if l5.type==="Playoffs")
-- groundTruth.l5.games[i].{fgm,fga,fg_pct}                                                      → per-game shooting (used by Rule 5b.ii shooting-slump rebound suppressor)
+- groundTruth.season.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fgm,fga,fg_pct,ft_pct,fg3_pct,fta,ftm,minutes}  → regular-season per-game averages (fta/ftm needed for Rule 5i FT-Floor Insurance Guard default)
+- groundTruth.l5.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fga,fta,ftm,ft_pct,minutes}            → most-recent 5 games (playoff if l5.type==="Playoffs"). l5.averages.{fta,ftm,ft_pct} are the [v3.4] Rule 5i playoff override inputs — use them in place of season.averages.{fta,ft_pct} when l5.type==="Playoffs" AND l5.n>=3.
+- groundTruth.l5.type / l5.n                                                                   → sample type ("Playoffs" | "Regular Season") and size. When type==="Playoffs" AND n>=3, applies the [v3.4] playoff overrides to (a) L5-vs-Season governance (L5 governs regardless of conflict size) and (b) Rule 5i (l5 FTA/FT% govern the floor).
+- groundTruth.l5.games[i].{fgm,fga,fg_pct}                                                      → per-game shooting (used by Rule 5b.ii shooting-slump rebound suppressor; only embedded for Rebounds OVER props)
 - groundTruth.splits.{home,road}.{...}                                                       → regular-season home/away splits
 - groundTruth.home_away                                                                       → "home" | "away" for tonight's game
 - groundTruth.opponent_team.name / abbr                                                       → tonight's opponent
@@ -452,7 +519,7 @@ ${JSON.stringify(groundTruth, null, 2)}`;
 - groundTruth.injuries.player_team / opponent                                                 → {player,status,detail,date}[] (used for role compression / matchup ceiling)
 - groundTruth.player_recent.is_listed_injured                                                 → boolean — TRUE means post-injury return gate (Section 6) applies
 - groundTruth.opponent_defense                                                                → {def_rating, def_rank (1-30, 1=best), primary_defender: {player, share_pct, n_games, confirmed} | null, source}; null only when both live and snapshot fail. primary_defender is the season-aggregated top defender vs this player from stats.nba.com matchup data; confirmed=true when share_pct >= 0.40. Use def_rank for Rule 5h baseline + Mechanism 3 matchup ceiling (top-5 = def_rank<=5); use primary_defender to gate the v3.4 5h FT-leak modifier on a named matchup.
-- groundTruth.series                                                                          → playoff series state {games_played, player_team_wins, opponent_wins, next_game_number, series_record, series_summary, leading_team_abbr, round, source}; null in regular season. leading_team_abbr is null when series is tied, otherwise the abbr of the team ahead — use it for Rule 5f tied-series and lead-3-0/3-1 gating instead of parsing series_record or series_summary.`;
+- groundTruth.series                                                                          → playoff series state {games_played, player_team_wins, opponent_wins, next_game_number, series_record, series_summary, leading_team_abbr, round, source}; null in regular season. Non-null = playoff game, which activates the [v3.4] OVER 2.0pt buffer (vs 1.5pt regular season). leading_team_abbr is null when series is tied, otherwise the abbr of the team ahead — use it for Rule 5f tied-series and lead-3-0/3-1 gating instead of parsing series_record or series_summary.`;
   
   const propSpecificInfo = `For this prop ("${groundTruth.prop_type}" line ${groundTruth.line}), the relevant averages field is "${field ?? "(unknown — output SKIP)"}". Use season.averages.${field ?? "?"} and l5.averages.${field ?? "?"} as the baselines.`;
   
@@ -529,9 +596,10 @@ ${framework}`;
 ${JSON.stringify(gtCommon, null, 2)}`;
 
   const whereToFindValues = `WHERE TO FIND VALUES (path → meaning):
-- groundTruth.season.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fgm,fga,fg_pct,ft_pct,fg3_pct,fta,ftm,minutes}  → regular-season per-game averages (fta/ftm needed for Rule 5i FT-Floor Insurance Guard)
-- groundTruth.l5.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fga,minutes}                              → most-recent 5 games (playoff if l5.type==="Playoffs")
-- groundTruth.l5.games[i].{fgm,fga,fg_pct}                                                      → per-game shooting (used by Rule 5b.ii shooting-slump rebound suppressor)
+- groundTruth.season.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fgm,fga,fg_pct,ft_pct,fg3_pct,fta,ftm,minutes}  → regular-season per-game averages (fta/ftm needed for Rule 5i FT-Floor Insurance Guard default)
+- groundTruth.l5.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fga,fta,ftm,ft_pct,minutes}            → most-recent 5 games (playoff if l5.type==="Playoffs"). l5.averages.{fta,ftm,ft_pct} are the [v3.4] Rule 5i playoff override inputs — use them in place of season.averages.{fta,ft_pct} when l5.type==="Playoffs" AND l5.n>=3.
+- groundTruth.l5.type / l5.n                                                                   → sample type ("Playoffs" | "Regular Season") and size. When type==="Playoffs" AND n>=3, applies the [v3.4] playoff overrides to (a) L5-vs-Season governance (L5 governs regardless of conflict size) and (b) Rule 5i (l5 FTA/FT% govern the floor).
+- groundTruth.l5.games[i].{fgm,fga,fg_pct}                                                      → per-game shooting (used by Rule 5b.ii shooting-slump rebound suppressor; only embedded for Rebounds OVER props)
 - groundTruth.splits.{home,road}.{...}                                                       → regular-season home/away splits
 - groundTruth.home_away                                                                       → "home" | "away" for tonight's game
 - groundTruth.opponent_team.name / abbr                                                       → tonight's opponent
@@ -539,7 +607,7 @@ ${JSON.stringify(gtCommon, null, 2)}`;
 - groundTruth.injuries.player_team / opponent                                                 → {player,status,detail,date}[] (used for role compression / matchup ceiling)
 - groundTruth.player_recent.is_listed_injured                                                 → boolean — TRUE means post-injury return gate (Section 6) applies
 - groundTruth.opponent_defense                                                                → {def_rating, def_rank (1-30, 1=best), primary_defender: {player, share_pct, n_games, confirmed} | null, source}; null only when both live and snapshot fail. primary_defender is the season-aggregated top defender vs this player from stats.nba.com matchup data; confirmed=true when share_pct >= 0.40. Use def_rank for Rule 5h baseline + Mechanism 3 matchup ceiling (top-5 = def_rank<=5); use primary_defender to gate the v3.4 5h FT-leak modifier on a named matchup.
-- groundTruth.series                                                                          → playoff series state {games_played, player_team_wins, opponent_wins, next_game_number, series_record, series_summary, leading_team_abbr, round, source}; null in regular season. leading_team_abbr is null when series is tied, otherwise the abbr of the team ahead — use it for Rule 5f tied-series and lead-3-0/3-1 gating instead of parsing series_record or series_summary.`;
+- groundTruth.series                                                                          → playoff series state {games_played, player_team_wins, opponent_wins, next_game_number, series_record, series_summary, leading_team_abbr, round, source}; null in regular season. Non-null = playoff game, which activates the [v3.4] OVER 2.0pt buffer (vs 1.5pt regular season). leading_team_abbr is null when series is tied, otherwise the abbr of the team ahead — use it for Rule 5f tied-series and lead-3-0/3-1 gating instead of parsing series_record or series_summary.`;
 
   const taskListLines = tasks.map((t) => {
     const f = propTypeToField(t.prop_type);
