@@ -515,17 +515,17 @@ ${framework}`;
 ${JSON.stringify(gtCommon, null, 2)}`;
 
   const whereToFindValues = `WHERE TO FIND VALUES (path → meaning):
-- groundTruth.season.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fgm,fga,fg_pct,ft_pct,fg3_pct,fta,ftm,minutes}  → regular-season per-game averages
+- groundTruth.season.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fgm,fga,fg_pct,ft_pct,fg3_pct,fta,ftm,minutes}  → regular-season per-game averages (fta/ftm needed for Rule 5i FT-Floor Insurance Guard)
 - groundTruth.l5.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fga,minutes}                              → most-recent 5 games (playoff if l5.type==="Playoffs")
-- groundTruth.l5.games[i].{fgm,fga,fg_pct}                                                      → per-game shooting
+- groundTruth.l5.games[i].{fgm,fga,fg_pct}                                                      → per-game shooting (used by Rule 5b.ii shooting-slump rebound suppressor)
 - groundTruth.splits.{home,road}.{...}                                                       → regular-season home/away splits
 - groundTruth.home_away                                                                       → "home" | "away" for tonight's game
 - groundTruth.opponent_team.name / abbr                                                       → tonight's opponent
-- groundTruth.win_prob.player_team_pct                                                        → 0-1 float
-- groundTruth.injuries.player_team / opponent                                                 → {player,status,detail,date}[]
+- groundTruth.win_prob.player_team_pct                                                        → 0-1 float (multiply by 100 for the % the framework uses)
+- groundTruth.injuries.player_team / opponent                                                 → {player,status,detail,date}[] (used for role compression / matchup ceiling)
 - groundTruth.player_recent.is_listed_injured                                                 → boolean — TRUE means post-injury return gate (Section 6) applies
-- groundTruth.opponent_defense                                                                → {def_rating, def_rank, primary_defender, source}
-- groundTruth.series                                                                          → playoff series state (null in regular season)`;
+- groundTruth.opponent_defense                                                                → {def_rating, def_rank (1-30, 1=best), primary_defender: {player, share_pct, n_games, confirmed} | null, source}; null only when both live and snapshot fail. primary_defender is the season-aggregated top defender vs this player from stats.nba.com matchup data; confirmed=true when share_pct >= 0.40. Use def_rank for Rule 5h baseline + Mechanism 3 matchup ceiling (top-5 = def_rank<=5); use primary_defender to gate the v3.4 5h FT-leak modifier on a named matchup.
+- groundTruth.series                                                                          → playoff series state {games_played, player_team_wins, opponent_wins, next_game_number, series_record, series_summary, leading_team_abbr, round, source}; null in regular season. leading_team_abbr is null when series is tied, otherwise the abbr of the team ahead — use it for Rule 5f tied-series and lead-3-0/3-1 gating instead of parsing series_record or series_summary.`;
 
   const taskListLines = tasks.map((t) => {
     const f = propTypeToField(t.prop_type);
@@ -535,12 +535,15 @@ ${JSON.stringify(gtCommon, null, 2)}`;
   const batchInstructions = `TASKS TO EVALUATE (${tasks.length} total — apply ALL framework rules INDEPENDENTLY to EACH task):
 ${taskListLines}
 
-PER-TASK PROCEDURE (silent — do not narrate):
+PER-TASK PROCEDURE (silent — do not narrate; rule numbers below match FRAMEWORK section headings exactly):
 1. Identify the averages field for this task's prop_type.
-2. Run the full OVER pre-pick checklist OR the full UNDER pre-pick checklist (Section 7) for this task.
-3. Apply the S-tier gate (Section 2), road deduction (Rule 5a), and all suppressors (4i, 4k, 5c, 5f, 6) for this task.
-4. For UNDER picks: name the mechanism (minutes compression / role compression / matchup ceiling) — no mechanism = output SKIP for that task.
-5. Decisions are independent per task. Do not let one task's verdict bias another's.`;
+2. Apply HARD GATES first: post-injury return (Rule 6 — Section 6 / player_recent.is_listed_injured), assist win-probability gate (40-75% on assist props), Rule 4c multi-star compression, UNDER mechanism gate, Rule 4b sole-alpha UNDER lock, Game 1 B-tier max + advisory, Game 2 A-tier hard cap, Rule 5i FT-Floor Insurance Guard.
+3. If road game (home_away === "away"): apply Rule 5a road deduction (-1.5 to scoring baselines, extra 2pt buffer for <70% FT shooters) BEFORE line comparison.
+4. Apply suppressors as the framework instructs: Rule 5f win-probability blowout suppressor (plus the v3.4 pre-tip blowout-projection override on series-tied games), Rule 5b.i foul-prone-matchup rebound suppressor (2+ frontcourt injuries with mobility designations), Rule 5b.ii shooting-slump rebound suppressor (fg_pct < 0.35 in 2+ of l5.games), Rule 5h FT-leak modifier (Tier 1 named primary_defender confirmed share_pct>=0.40 / n_games>=2 → 20-25% FG cut; Tier 2 team-rank proxy when def_rank<=3 → 10-15% FG cut with proxy flag), Rule 6 injury-type modulation by body region.
+5. Apply Rule 3a home/road sample minimum — splits.{home,road} count as baseline only with games >= 3; otherwise 50/50 blend with season average.
+6. For UNDER on Points/PRA: clear Rule 5i FT-Floor Insurance FIRST (compute ft_floor_pts = fta * ft_pct, total_floor = ft_floor_pts + 8; INVALID if total_floor >= line). Then name the mechanism (1=minutes compression, 2=role compression, 3=matchup ceiling) and tier it per the UNDER CONFIDENCE TABLE: 3 mechs = S possible; 2 mechs = A max; Mech 1 alone = A max; Mech 2 alone or Mech 3 alone = B-tier max with SKIP advisory; no mechanism = SKIP.
+7. Apply SUPPRESSOR STACKING (2+ active suppressors = drop one additional tier; landing at B requires the mandatory SKIP advisory flag) and the S-TIER GATE (all 6 conditions must pass before promoting to S).
+8. Decisions are independent per task. Do not let one task's verdict bias another's.`;
 
   const outputSpecification = `OUTPUT (single JSON object — "results" array, one entry per task, SAME ORDER as TASKS TO EVALUATE):
 {
@@ -551,7 +554,7 @@ PER-TASK PROCEDURE (silent — do not narrate):
       "tier":        "S" | "A" | "B" | "SKIP",
       "confidence":  integer 0-100,
       "justification": "2-3 sentences citing baseline governed, road deduction if applied, suppressors triggered, and (UNDER) named mechanism. Numbers must come from GROUND TRUTH.",
-      "flags":       array of strings,
+      "flags":       array of strings (one per suppressor / hard cap / missing-data warning),
       "data_used": {
         "season_avg":  <number copied from season.averages.<this task's field>, or null>,
         "l5_avg":      <number copied from l5.averages.<this task's field>, or null>,
