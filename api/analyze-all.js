@@ -8,7 +8,7 @@
 //
 // Returns: { total_analyzed, total_s_a, top_10: [...] }
 
-import { gatherGroundTruth, buildBatchPrompt, callLLMBatched } from "./analyze.js";
+import { gatherGroundTruth, buildPrompt, callLLM } from "./analyze.js";
 import { MODEL_FRAMEWORK } from "./lib/framework.js";
 import { rateLimit } from "./lib/rate-limit.js";
 import { runWithRequestContext } from "./lib/request-context.js";
@@ -35,17 +35,19 @@ function buildCacheKey(player, fetchedAt, sortedStats, direction) {
   return `analyze-all:${normalizePlayer(player)}::${fetchedAt || "unknown"}::${sortedStats}::${direction}`;
 }
 
-// Per-player line budget. With batched LLM calls this no longer maps 1:1
-// to request count — N lines now cost ceil(N / LLM_BATCH_SIZE) calls.
-// 40 gives headroom for "32+ lines per player" once line-picking expands
-// beyond lowest-only (currently 9 stats × 2 directions = 18 max).
+// Per-player line budget. Each task is now one LLM call (looped, not
+// batched), so this directly caps LLM calls per analyze-all request.
+// Default 40 covers the realistic max (9 stats × 2 lines × 2 dirs = 36).
+// Lower this if free-tier daily quotas tighten.
 const MAX_LINES = parseInt(process.env.MAX_LINES_PER_PLAYER || "40", 10);
 
-// How many (line, direction) tuples to batch per LLM call. Each task in
-// the batch adds ~220 tokens to the output budget; 8 keeps us under the
-// 4000-token output cap with margin. Smaller batches reduce blast radius
-// if a single task fails schema validation (entire batch retried).
-const LLM_BATCH_SIZE = parseInt(process.env.LLM_BATCH_SIZE || "8", 10);
+// We deliberately do NOT batch the LLM calls anymore — buildBatchPrompt /
+// callLLMBatched still exist in analyze.js for one-off use but the
+// batched LLM was diverging from the single-prop endpoint (different
+// reasoning, attention dilution, smaller per-task token budget). Looping
+// single-prop calls is slower on cold cache but guarantees both endpoints
+// produce the same verdict for the same ground truth. The verifier in
+// api/lib/verdict-verifier.js is the second layer of defense.
 
 export async function POST(req) {
   const reqId = randomUUID().slice(0, 8);
@@ -231,69 +233,72 @@ async function handlePost(req, reqId) {
       return Response.json(responseBody, { headers: { "X-Cache": "MISS" } });
     }
 
-    // Batched LLM path: each call evaluates up to LLM_BATCH_SIZE tasks.
-    // The router (callLLMBatched) rotates Groq/Gemini per call so two
-    // batches go to two providers. tier_counts captures the verdict
-    // distribution across all completed analyses.
+    // Serial single-prop LLM path: one call per task using the exact
+    // same prompt builder as /api/analyze. The router (callLLM) rotates
+    // Groq/Gemini per call, so consecutive tasks naturally alternate
+    // providers. tier_counts captures the verdict distribution across
+    // all completed analyses.
     const results = [];
     const errors = [];
     const tierCounts = { S: 0, A: 0, B: 0, SKIP: 0, UNKNOWN: 0 };
-    const tasksById = new Map(tasks.map((t) => [t.id, t]));
 
-    for (let i = 0; i < tasks.length; i += LLM_BATCH_SIZE) {
-      const chunk = tasks.slice(i, i + LLM_BATCH_SIZE);
-      const promptTasks = chunk.map((t) => ({ id: t.id, prop_type: t.propType, line: t.line }));
-      const expectedIds = promptTasks.map((t) => t.id);
-      const prompt = buildBatchPrompt(MODEL_FRAMEWORK, sharedGroundTruth, promptTasks);
+    for (const task of tasks) {
+      // sharedGroundTruth has the FIRST task's prop_type/line baked in
+      // (from the initial gatherGroundTruth call). Overwrite with this
+      // task's values so buildPrompt embeds the correct prop in the
+      // role-definition and output-spec sections.
+      const taskGroundTruth = {
+        ...sharedGroundTruth,
+        prop_type: task.propType,
+        line: task.line,
+      };
+      const prompt = buildPrompt(MODEL_FRAMEWORK, taskGroundTruth);
 
-      let llm = await callLLMBatched(prompt, expectedIds);
+      let llm = await callLLM(prompt);
       if (llm.error) {
-        // One outer retry: the router has already exhausted both providers'
-        // primary→fallback chains, so this is a last-ditch attempt against
-        // transient provider-wide weather.
+        // One outer retry — the router already exhausted both providers'
+        // primary→fallback chains, so this is a last-ditch attempt
+        // against transient provider-wide weather.
         await new Promise((r) => setTimeout(r, 1500));
-        llm = await callLLMBatched(prompt, expectedIds);
+        llm = await callLLM(prompt);
       }
 
       if (llm.error) {
-        for (const t of chunk) {
-          errors.push({ task: `${t.player} ${t.propType}`, error: llm.error });
-          tierCounts.UNKNOWN += 1;
-        }
+        errors.push({ task: `${task.player} ${task.propType}`, error: llm.error });
+        tierCounts.UNKNOWN += 1;
         continue;
       }
 
-      for (const r of llm.json.results) {
-        const task = tasksById.get(r.id);
-        if (!task) continue;  // validator shouldn't allow this, defensive
+      // Single-prop LLM returns the verdict object directly (no
+      // `results` array wrapper that the batched validator required).
+      const r = llm.json;
 
-        // Re-derive the mechanical framework checks the LLM might have
-        // dropped (OVER 1.5pt buffer, Rule 5i FT-floor). The verifier
-        // only downgrades to SKIP; clean LLM verdicts pass through.
-        const verified = verifyVerdict({
-          groundTruth: sharedGroundTruth,
-          statType: task.statType,
-          direction: task.direction,
+      // Re-derive the mechanical framework checks the LLM might have
+      // dropped (OVER 1.5pt buffer, Rule 5i FT-floor). The verifier
+      // only downgrades to SKIP; clean LLM verdicts pass through.
+      const verified = verifyVerdict({
+        groundTruth: taskGroundTruth,
+        statType: task.statType,
+        direction: task.direction,
+        line: task.line,
+        llmResult: r,
+      });
+
+      const tierKey = tierCounts[verified.tier] !== undefined ? verified.tier : "UNKNOWN";
+      tierCounts[tierKey] += 1;
+      if (verified.tier === "S" || verified.tier === "A") {
+        results.push({
+          player: task.player,
+          game: task.game || "—",
+          prop_type: task.statType,
+          direction: verified.verdict,
           line: task.line,
-          llmResult: r,
+          odds_type: task.oddsType,
+          verdict: verified.verdict,
+          tier: verified.tier,
+          confidence: verified.confidence || 0,
+          justification: verified.justification || "",
         });
-
-        const tierKey = tierCounts[verified.tier] !== undefined ? verified.tier : "UNKNOWN";
-        tierCounts[tierKey] += 1;
-        if (verified.tier === "S" || verified.tier === "A") {
-          results.push({
-            player: task.player,
-            game: task.game || "—",
-            prop_type: task.statType,
-            direction: verified.verdict,
-            line: task.line,
-            odds_type: task.oddsType,
-            verdict: verified.verdict,
-            tier: verified.tier,
-            confidence: verified.confidence || 0,
-            justification: verified.justification || "",
-          });
-        }
       }
     }
 
