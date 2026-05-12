@@ -15,6 +15,7 @@ import { runWithRequestContext } from "./lib/request-context.js";
 import { readLines } from "./lib/lines-store.js";
 import { STATS, mapPrizePicksStatType } from "./lib/prop-types.js";
 import { get as cacheGet, set as cacheSet } from "./lib/cache.js";
+import { verifyVerdict } from "./lib/verdict-verifier.js";
 import { randomUUID } from "node:crypto";
 
 export const runtime = "nodejs";
@@ -265,20 +266,32 @@ async function handlePost(req, reqId) {
       for (const r of llm.json.results) {
         const task = tasksById.get(r.id);
         if (!task) continue;  // validator shouldn't allow this, defensive
-        const tierKey = tierCounts[r.tier] !== undefined ? r.tier : "UNKNOWN";
+
+        // Re-derive the mechanical framework checks the LLM might have
+        // dropped (OVER 1.5pt buffer, Rule 5i FT-floor). The verifier
+        // only downgrades to SKIP; clean LLM verdicts pass through.
+        const verified = verifyVerdict({
+          groundTruth: sharedGroundTruth,
+          statType: task.statType,
+          direction: task.direction,
+          line: task.line,
+          llmResult: r,
+        });
+
+        const tierKey = tierCounts[verified.tier] !== undefined ? verified.tier : "UNKNOWN";
         tierCounts[tierKey] += 1;
-        if (r.tier === "S" || r.tier === "A") {
+        if (verified.tier === "S" || verified.tier === "A") {
           results.push({
             player: task.player,
             game: task.game || "—",
             prop_type: task.statType,
-            direction: r.verdict,
+            direction: verified.verdict,
             line: task.line,
             odds_type: task.oddsType,
-            verdict: r.verdict,
-            tier: r.tier,
-            confidence: r.confidence || 0,
-            justification: r.justification || "",
+            verdict: verified.verdict,
+            tier: verified.tier,
+            confidence: verified.confidence || 0,
+            justification: verified.justification || "",
           });
         }
       }

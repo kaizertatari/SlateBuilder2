@@ -23,6 +23,7 @@ import { MODEL_FRAMEWORK } from "./lib/framework.js";
 import { rateLimit } from "./lib/rate-limit.js";
 import { runWithRequestContext } from "./lib/request-context.js";
 import { PROP_TO_FIELD } from "./lib/prop-types.js";
+import { verifyVerdict } from "./lib/verdict-verifier.js";
 import { randomUUID } from "node:crypto";
 import * as bbref from "./lib/bbref.js";
 import {
@@ -261,8 +262,21 @@ async function handlePost(req) {
       return llmResponse.response;
     }
 
-    // Return successful response with LLM output and ground truth
-    return createSuccessResponse(llmResponse.data, groundTruth);
+    // Re-derive the mechanical framework checks (OVER 1.5pt buffer,
+    // Rule 5i FT-floor) deterministically. Same call as /api/analyze-all
+    // so both endpoints agree on these regardless of model rotation.
+    const direction = /OVER/i.test(propType) ? "OVER" : "UNDER";
+    const statType = String(propType).replace(/\s+(OVER|UNDER)\s*$/i, "").trim();
+    const verified = verifyVerdict({
+      groundTruth,
+      statType,
+      direction,
+      line,
+      llmResult: llmResponse.data,
+    });
+
+    // Return successful response with (possibly overridden) verdict
+    return createSuccessResponse(verified, groundTruth);
   } catch (error) {
     // Handle unexpected errors with proper error categorization
     return createErrorResponse(error);
@@ -532,18 +546,17 @@ ${JSON.stringify(gtCommon, null, 2)}`;
     return `  - id="${t.id}": "${t.prop_type}" line=${t.line}  (averages field: "${f ?? "unknown — output SKIP"}")`;
   }).join("\n");
 
-  const batchInstructions = `TASKS TO EVALUATE (${tasks.length} total — apply ALL framework rules INDEPENDENTLY to EACH task):
+  // The FRAMEWORK above is the complete rule list — do not restate rules
+  // here. Earlier versions of this prompt duplicated specific rules in a
+  // numbered procedure, which silently drifted from the framework body
+  // (e.g., L5-vs-Season governance and the OVER 1.5pt buffer were omitted
+  // and the batched LLM stopped applying them). The only batch-specific
+  // concern is task independence; everything else is governed by the
+  // FRAMEWORK section verbatim.
+  const batchInstructions = `TASKS TO EVALUATE (${tasks.length} total):
 ${taskListLines}
 
-PER-TASK PROCEDURE (silent — do not narrate; rule numbers below match FRAMEWORK section headings exactly):
-1. Identify the averages field for this task's prop_type.
-2. Apply HARD GATES first: post-injury return (Rule 6 — Section 6 / player_recent.is_listed_injured), assist win-probability gate (40-75% on assist props), Rule 4c multi-star compression, UNDER mechanism gate, Rule 4b sole-alpha UNDER lock, Game 1 B-tier max + advisory, Game 2 A-tier hard cap, Rule 5i FT-Floor Insurance Guard.
-3. If road game (home_away === "away"): apply Rule 5a road deduction (-1.5 to scoring baselines, extra 2pt buffer for <70% FT shooters) BEFORE line comparison.
-4. Apply suppressors as the framework instructs: Rule 5f win-probability blowout suppressor (plus the v3.4 pre-tip blowout-projection override on series-tied games), Rule 5b.i foul-prone-matchup rebound suppressor (2+ frontcourt injuries with mobility designations), Rule 5b.ii shooting-slump rebound suppressor (fg_pct < 0.35 in 2+ of l5.games), Rule 5h FT-leak modifier (Tier 1 named primary_defender confirmed share_pct>=0.40 / n_games>=2 → 20-25% FG cut; Tier 2 team-rank proxy when def_rank<=3 → 10-15% FG cut with proxy flag), Rule 6 injury-type modulation by body region.
-5. Apply Rule 3a home/road sample minimum — splits.{home,road} count as baseline only with games >= 3; otherwise 50/50 blend with season average.
-6. For UNDER on Points/PRA: clear Rule 5i FT-Floor Insurance FIRST (compute ft_floor_pts = fta * ft_pct, total_floor = ft_floor_pts + 8; INVALID if total_floor >= line). Then name the mechanism (1=minutes compression, 2=role compression, 3=matchup ceiling) and tier it per the UNDER CONFIDENCE TABLE: 3 mechs = S possible; 2 mechs = A max; Mech 1 alone = A max; Mech 2 alone or Mech 3 alone = B-tier max with SKIP advisory; no mechanism = SKIP.
-7. Apply SUPPRESSOR STACKING (2+ active suppressors = drop one additional tier; landing at B requires the mandatory SKIP advisory flag) and the S-TIER GATE (all 6 conditions must pass before promoting to S).
-8. Decisions are independent per task. Do not let one task's verdict bias another's.`;
+Apply the FRAMEWORK above in full and independently to each task. Every task is a separate evaluation against the same shared ground truth — do not let one task's hard gate, suppressor, governing-baseline choice, or verdict bias another's. If a rule's input is null/absent in GROUND TRUTH, follow the FRAMEWORK's instruction for that rule (SKIP or cap as specified) rather than substituting a guess.`;
 
   const outputSpecification = `OUTPUT (single JSON object — "results" array, one entry per task, SAME ORDER as TASKS TO EVALUATE):
 {
