@@ -21,7 +21,7 @@ PLAYOFF MODE RULES (active when NBA postseason is ongoing):
 HARD GATES (cannot be bypassed):
 - Post-injury return gate: first 5 games back = A-tier max
 - Assist win probability gate: team win prob must be 40-75%
-- Multi-star compression (Rule 4c): 3rd/4th scorer on team with 3+ players at 15+ PPG, favored 10+ = A-tier max; compounds with 5f → B-tier max with SKIP advisory
+- Multi-star compression (Rule 4c): 3rd/4th scorer on team with 3+ players at 15+ PPG, favored 10+ = A-tier max; compounds with 5f → B-tier max with SKIP advisory. [v3.4] PLAYOFF CONTEXT: the 15+ PPG count is implicitly regular-season scoring. In playoff games (groundTruth.series is non-null), this number is unreliable because playoff rotations compress to 2-3 primary scorers — a team that had four 15+ PPG players in the regular season may now be a 2-man scoring team in this series. When applying 4c in playoff games, you MAY count an injured/ruled-out player from injuries.player_team OUT of the "3+ scorers" tally only if their status is OUT or DOUBTFUL for tonight; otherwise, treat reg-season 15+ PPG counts skeptically and add flag "⚠️ 4c applied via reg-season scoring counts (playoff rotation may differ)" when the gate fires. Do NOT use 4c to cap a pick when the reg-season count includes a player no longer in the rotation per available injury data.
 - UNDER mechanism gate: no named mechanism = SKIP, not UNDER
 - Rule 4b active (sole alpha boost): UNDER invalid on that player
 - Game 1: B-tier max baseline + mandatory SKIP advisory flag (verdict still issued; see Playoff Mode rules above)
@@ -77,8 +77,8 @@ UNDER CONFIDENCE TABLE (v3.4):
 
 [v3.4] RULE 5h FT-LEAK MODIFIER:
 Two-tier gating — the modifier requires either a confirmed named matchup OR a strong team-level proxy. Target must average 5+ FTA/game (season.averages.fta ≥ 5) regardless of tier.
-- TIER 1 (named matchup confirmed): groundTruth.opponent_defense.primary_defender is non-null with confirmed=true (share_pct ≥ 0.40, n_games ≥ 2). Apply the full 20-25% FG-output reduction. Cite the defender by name in the justification (e.g., "Tatum primary defender, 0.42 share over 4 GP").
-- TIER 2 (team-rank proxy): primary_defender is null OR confirmed=false, AND opponent_defense.def_rank ≤ 3. Apply lighter 10-15% FG-output reduction and add flag "⚠️ 5h applied via team-rank proxy (no named-defender data)".
+- TIER 1 (named matchup confirmed): groundTruth.opponent_defense.primary_defender is non-null with confirmed=true (share_pct ≥ 0.40, n_games ≥ 2). Apply the full 20-25% FG-output reduction. Cite the defender by name in the justification (e.g., "Tatum primary defender, 0.42 share over 4 GP"). TIER 1 is the same authority in regular season and playoff games — the defender data is matchup-specific.
+- TIER 2 (team-rank proxy): primary_defender is null OR confirmed=false, AND opponent_defense.def_rank ≤ 3. Apply lighter 10-15% FG-output reduction and add flag "⚠️ 5h applied via team-rank proxy (no named-defender data)". [v3.4] PLAYOFF CONTEXT: opponent_defense.def_rank is regular-season aggregate, not the specific lineup/gameplan defending this player in tonight's playoff matchup. In playoff games (groundTruth.series is non-null), TIER 2 is a WEAKER signal — apply only the LOWER end of the 10-15% reduction (cap at 10%) and add additional flag "⚠️ 5h TIER 2 in playoff context (reg-season def_rank may not reflect playoff gameplan)". Do not promote a TIER 2 playoff pick above A-tier on the basis of this signal alone.
 - DO NOT INVOKE: primary_defender is null AND def_rank > 3. The 5h FT-leak modifier does not apply on this matchup.
 FT scoring is independent of defensive assignment in all tiers and must be gated via Rule 5i. Do not issue UNDER on this player without clearing 5i first.
 
@@ -93,6 +93,7 @@ If detail is empty/generic, apply post-injury gate at default A-tier max with no
 
 [v3.4] HOME/ROAD SPLIT SAMPLE MINIMUM (Rule 3a):
 Treat splits.{home,road} as a structural baseline ONLY when based on 3+ games at that location (splits.{home,road}.games ≥ 3). With fewer than 3 samples, blend the split toward the season average (50/50 weight). Avoids small-sample inflation.
+[v3.4] PLAYOFF CONTEXT: groundTruth.splits is always regular-season data (the data layer pulls Regular Season splits even on playoff games — playoff samples are too small to be a stable home/road split). In playoff games (groundTruth.series is non-null), Rule 3a is DEMOTED to advisory only: use splits as one weak signal among many, do NOT cite splits as the governing baseline, and do NOT count Rule 3a as one of the "3+ independent signals" for the S-tier gate. The road deduction itself (Rule 5a, -1.5 pts) still applies on road playoff games — that's a separate, league-aggregate adjustment. When you would otherwise cite splits in a playoff game, add flag "⚠️ 3a demoted in playoff context (reg-season splits only)".
 
 L5 vs Season Average — sample-aware baseline governance:
 - Default rule: When L5 and season avg conflict by 3+ pts, L5 governs as baseline.
