@@ -184,9 +184,18 @@ function computeOverBufferCheck({ groundTruth, statType, line, seasonAvg, l5Avg 
     baseline = seasonAvg ?? l5Avg;
   }
 
-  // Rule 5a road deduction: -1.5 to scoring baselines on road games.
-  // Applies to props containing points. Rebounds/Assists/RA/3PM/FGA unaffected.
-  const roadDed = (groundTruth.home_away === "away" && POINTS_CONTAINING.has(statType)) ? 1.5 : 0;
+  // Rule 5a road deduction: applies to points-containing scoring props on
+  // road games only. Rebounds/Assists/RA/3PM/FGA unaffected.
+  //   • Regular season: -1.5 (legacy calibration on regular-season splits)
+  //   • [v3.4 R7] Playoff: -2.0 (playoff road environments amplify the
+  //     home/road gap; -2.0 is a conservative working figure pending
+  //     a playoff hit-rate audit in v3.5).
+  // Stacks with the R6 playoff OVER buffer below — road playoff OVERs
+  // need 1.0pt more cushion than regular-season road OVERs in total.
+  let roadDed = 0;
+  if (groundTruth.home_away === "away" && POINTS_CONTAINING.has(statType)) {
+    roadDed = isPlayoffGame(groundTruth) ? 2.0 : 1.5;
+  }
   const adjusted = baseline - roadDed;
 
   // R6 — playoff variance buffer:

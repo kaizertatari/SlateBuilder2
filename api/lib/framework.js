@@ -28,7 +28,10 @@ HARD GATES (cannot be bypassed):
 - Game 2 hard cap: A-tier max ALL props both directions (playoff only)
 - [v3.4] Rule 5i FT-Floor Insurance Guard: see below — UNDER on Points/PRA invalid when player's FT-protected floor exceeds line.
 
-ROAD DEDUCTION (Rule 5a): Subtract 1.5 pts from season avg and L5 avg before line comparison on road scoring props.
+ROAD DEDUCTION (Rule 5a) — sample-aware:
+- Regular season (groundTruth.series is null): subtract 1.5 pts from the governing baseline (season or L5 per the L5-vs-Season governance rule) before line comparison on road scoring props.
+- [v3.4] Playoff override: in playoff games (groundTruth.series is non-null), subtract 2.0 pts instead. Playoff road environments amplify the home/road gap (closeout-game crowd intensity, gameplan adjustments against tighter rotations), and the reg-season -1.5 figure was calibrated on Regular Season splits — a different population. The -2.0 value is a conservative working calibration; v3.5 may revise it once a playoff hit-rate audit is run.
+- Stacks with R6 OVER buffer: a road playoff OVER must clear baseline - 2.0 (road) - 2.0 (buffer) = baseline - 4.0 before qualifying, vs baseline - 3.0 for a regular-season road OVER.
 
 OVER BUFFER RULES:
 - Line must be 1.5+ pts BELOW road-adjusted baseline to qualify (regular season)
