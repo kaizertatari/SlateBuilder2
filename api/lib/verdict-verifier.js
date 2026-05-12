@@ -23,6 +23,12 @@ import { PROP_TO_FIELD } from "./prop-types.js";
 const POINTS_CONTAINING = new Set(["Points", "PR", "PA", "PRA"]);
 // Framework limits Rule 5i to Points/PRA UNDER.
 const FT_FLOOR_PROPS = new Set(["Points", "PRA"]);
+// Rule R9 (assist win-prob gate) applies to props with an assists
+// component. Both directions are gated.
+const ASSIST_CONTAINING = new Set(["Assists", "PA", "RA", "PRA"]);
+// Win-prob bands, regular season vs playoff (R9).
+const ASSIST_WP_BAND_REG = { lo: 0.40, hi: 0.75 };
+const ASSIST_WP_BAND_PLAYOFF = { lo: 0.45, hi: 0.70 };
 
 /**
  * Pre-LLM mechanical filter. Returns a SKIP verdict object if the
@@ -122,12 +128,16 @@ function collectMechanicalFailures({ groundTruth, statType, direction, line }) {
 
   const seasonAvg = groundTruth.season?.averages?.[field] ?? null;
   const l5Avg = groundTruth.l5?.averages?.[field] ?? null;
-  // Without a baseline, upstream should have SKIPped on missing data.
-  if (seasonAvg == null && l5Avg == null) return [];
+  const hasBaseline = seasonAvg != null || l5Avg != null;
 
   const out = [];
 
-  if (direction === "OVER") {
+  // OVER buffer (R6) and FT-floor (R2) need a baseline. R9 does not —
+  // it gates on win_prob alone, so we run it regardless of baseline
+  // presence. Without a baseline, upstream should have SKIPped on
+  // missing data, but we still want R9 to fire if win_prob is out of band.
+
+  if (hasBaseline && direction === "OVER") {
     const buf = computeOverBufferCheck({ groundTruth, statType, line, seasonAvg, l5Avg });
     if (buf && !buf.passes) {
       out.push({
@@ -137,7 +147,7 @@ function collectMechanicalFailures({ groundTruth, statType, direction, line }) {
     }
   }
 
-  if (direction === "UNDER" && FT_FLOOR_PROPS.has(statType)) {
+  if (hasBaseline && direction === "UNDER" && FT_FLOOR_PROPS.has(statType)) {
     const ft = computeFtFloorCheck({ groundTruth, line });
     if (ft && ft.invalid) {
       out.push({
@@ -147,7 +157,34 @@ function collectMechanicalFailures({ groundTruth, statType, direction, line }) {
     }
   }
 
+  // R9 — assist win-prob gate. Hard SKIP on either direction when win_prob
+  // is outside the (playoff-aware) band. Skipped silently when win_prob is
+  // missing — upstream should have set a "missing: win_prob" flag already.
+  if (ASSIST_CONTAINING.has(statType)) {
+    const wp = computeAssistWinProbCheck({ groundTruth });
+    if (wp && wp.outside) {
+      out.push({
+        reason: "rule_r9_assist_winprob_outside_band",
+        detail: `context=${wp.context} band=[${wp.lo.toFixed(2)}, ${wp.hi.toFixed(2)}], got win_prob=${wp.value.toFixed(3)}`,
+      });
+    }
+  }
+
   return out;
+}
+
+function computeAssistWinProbCheck({ groundTruth }) {
+  const wp = groundTruth?.win_prob?.player_team_pct;
+  if (wp == null || typeof wp !== "number") return null;
+  const playoff = isPlayoffGame(groundTruth);
+  const band = playoff ? ASSIST_WP_BAND_PLAYOFF : ASSIST_WP_BAND_REG;
+  return {
+    context: playoff ? "playoff" : "regular_season",
+    value: wp,
+    lo: band.lo,
+    hi: band.hi,
+    outside: wp < band.lo || wp > band.hi,
+  };
 }
 
 // Playoff context = "today's game is a playoff game". Set by the data
