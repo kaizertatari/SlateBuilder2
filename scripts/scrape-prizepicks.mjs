@@ -1,5 +1,6 @@
 // Scrape PrizePicks NBA projections and output structured JSON.
-// Filters to today's games only and matches player names to players.json.
+// Filters to upcoming games (start_time >= now) and matches player names
+// to players.json.
 //
 // Usage: node scripts/scrape-prizepicks.mjs
 //         npm run refresh-prizepicks
@@ -131,25 +132,29 @@ export async function scrapePrizePicksForToday(opts = {}) {
     nameLookup[normalizeName(name)] = { name, nba: ids.nba, espn: ids.espn };
   }
 
-  // Get today's date in YYYY-MM-DD format for filtering
-  const today = new Date();
-  const todayStr = today.toISOString().split("T")[0];
-  console.log(`  Filtering for games on ${todayStr}...`);
+  // Keep any projection whose game hasn't tipped yet. Calendar-date
+  // filtering broke around midnight UTC: NBA tip-offs span the UTC day
+  // boundary, so a "today UTC" filter would drop either the early or the
+  // late slate depending on when the cron fired. `start_time >= nowMs`
+  // naturally picks up tomorrow's slate as soon as PrizePicks posts it.
+  const nowMs = Date.now();
+  console.log(`  Filtering for games with start_time >= ${new Date(nowMs).toISOString()}...`);
 
   // Scrape PrizePicks
   console.log("  Fetching PrizePicks projections...");
   const projections = await scrapePrizePicks();
   console.log(`  Got ${projections.length} total projections`);
 
-  // Filter to today's games by start_time and match players
+  // Filter to upcoming games by start_time and match players
   const gamesOutput = {};
   const byPlayer = {};
   let totalProps = 0;
 
   for (const proj of projections) {
-    // Filter by start_time - only include if game is today
+    // Filter by start_time - only include if the game hasn't tipped yet.
     if (!proj.start_time) continue;
-    if (proj.start_time.split("T")[0] !== todayStr) continue;
+    const startMs = Date.parse(proj.start_time);
+    if (!Number.isFinite(startMs) || startMs < nowMs) continue;
 
     const playerTeamRaw = proj.player_team || "";
     const opponentRaw = proj.opponent || "";

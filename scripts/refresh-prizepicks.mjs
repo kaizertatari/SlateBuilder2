@@ -1,6 +1,7 @@
-// Refresh PrizePicks NBA lines for today's games.
-// Fetches current projections, filters to today's matchups, and writes
-// data/prizepicks-lines.json with player name matching to players.json.
+// Refresh PrizePicks NBA lines for upcoming games.
+// Fetches current projections, filters to games that haven't tipped yet,
+// and writes data/prizepicks-lines.json with player name matching to
+// players.json.
 //
 // Usage: node scripts/refresh-prizepicks.mjs
 //        npm run refresh-prizepicks
