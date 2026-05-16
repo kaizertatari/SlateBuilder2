@@ -52,10 +52,10 @@ function seasonLabel(endYear, league) {
 
 function splitsUrl(slug, endYear, league = "NBA") {
   const firstLetter = slug[0];
-  if (league === "WNBA") {
-    return `https://www.basketball-reference.com/wnba/players/${firstLetter}/${slug}/splits/${endYear}.html`;
-  }
-  return `https://www.basketball-reference.com/players/${firstLetter}/${slug}/splits/${endYear}/`;
+  const base = league === "WNBA"
+    ? "https://www.basketball-reference.com/wnba/players"
+    : "https://www.basketball-reference.com/players";
+  return `${base}/${firstLetter}/${slug}/splits/${endYear}/`;
 }
 
 // Match the entire <tr>…</tr> block whose split_value cell equals the given
