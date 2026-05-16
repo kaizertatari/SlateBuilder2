@@ -18,9 +18,12 @@ const PRIZEPICKS_API = "https://api.prizepicks.com/projections";
 
 // PrizePicks league IDs. Add more entries here if PrizePicks publishes more
 // basketball leagues we want to cover; everything downstream is league-aware.
+//
+// NOTE: PrizePicks' league IDs are unrelated to stats.wnba.com's LeagueID
+// ("10" there). Verified against api.prizepicks.com/leagues: WNBA=3, NBA=7.
 const LEAGUES = [
   { league: "NBA", league_id: 7 },
-  { league: "WNBA", league_id: 10 },
+  { league: "WNBA", league_id: 3 },
 ];
 
 const HEADERS = {
