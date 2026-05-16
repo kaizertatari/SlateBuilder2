@@ -3,8 +3,6 @@ import playersData from "../data/players.json";
 import { STATS } from "../api/lib/prop-types.js";
 import { readNewestCached, writeCached, clearStaleForPlayer, buildKey } from "./lib/result-cache.js";
 
-const NBA_PLAYERS = Object.keys(playersData);
-
 const TIER_ORDER = { S: 0, A: 1, B: 2, SKIP: 3 };
 
 const selectStyle = {
@@ -21,9 +19,25 @@ const selectStyle = {
   outline: "none",
 };
 
-const SORTED_PLAYERS = [...NBA_PLAYERS].sort();
+// Split the player roster by league once at module load. The toggle filters
+// to the active league's list; the autocomplete never crosses leagues, which
+// avoids name-collision edge cases between an NBA and WNBA player who
+// happen to share a name.
+const PLAYERS_BY_LEAGUE = (() => {
+  const grouped = { NBA: [], WNBA: [] };
+  for (const [name, info] of Object.entries(playersData)) {
+    const league = info?.league ?? "NBA";
+    if (!grouped[league]) grouped[league] = [];
+    grouped[league].push(name);
+  }
+  for (const list of Object.values(grouped)) list.sort();
+  return grouped;
+})();
+
+const LEAGUES = ["NBA", "WNBA"];
 
 export default function App() {
+  const [league, setLeague] = useState("NBA");
   const [player, setPlayer] = useState("");
   const [playerQuery, setPlayerQuery] = useState("");
   const [playerOpen, setPlayerOpen] = useState(false);
@@ -40,11 +54,25 @@ export default function App() {
 
   const allStatsSelected = selectedStats.length === STATS.length;
 
+  const leaguePlayers = PLAYERS_BY_LEAGUE[league] ?? [];
+
   const filteredPlayers = useMemo(() => {
     const q = playerQuery.trim().toLowerCase();
-    if (!q) return SORTED_PLAYERS;
-    return SORTED_PLAYERS.filter((p) => p.toLowerCase().includes(q));
-  }, [playerQuery]);
+    if (!q) return leaguePlayers;
+    return leaguePlayers.filter((p) => p.toLowerCase().includes(q));
+  }, [playerQuery, leaguePlayers]);
+
+  const handleLeagueChange = (next) => {
+    if (next === league) return;
+    setLeague(next);
+    setPlayer("");
+    setPlayerQuery("");
+    setPlayerOpen(false);
+    setPlayerHighlight(0);
+    setResults(null);
+    setError(null);
+    setCacheStatus(null);
+  };
 
   const selectPlayer = (name) => {
     setPlayer(name);
@@ -110,7 +138,7 @@ export default function App() {
     setAnalyzing(true);
 
     try {
-      const body = { player, statTypes: selectedStats };
+      const body = { player, statTypes: selectedStats, league };
       if (direction === "OVER" || direction === "UNDER") body.direction = direction;
 
       const response = await fetch("/api/analyze-all", {
@@ -143,7 +171,7 @@ export default function App() {
     } finally {
       setAnalyzing(false);
     }
-  }, [player, selectedStats, direction]);
+  }, [player, selectedStats, direction, league]);
 
   return (
     <div style={{
@@ -158,7 +186,7 @@ export default function App() {
         {/* Header */}
         <div style={{ marginBottom: 32, borderBottom: "1px solid #1e3040", paddingBottom: 16 }}>
           <div style={{ fontSize: 11, letterSpacing: 4, color: "#4488aa", marginBottom: 4 }}>
-            NBA PRIZEPICKS
+            {league} PRIZEPICKS
           </div>
           <div style={{ fontSize: 22, fontWeight: "bold", color: "#ffffff", letterSpacing: 1 }}>
             BATCH ANALYZER
@@ -170,6 +198,36 @@ export default function App() {
 
         {/* Inputs */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+
+          {/* League Toggle */}
+          <div role="tablist" aria-label="League" style={{ display: "flex", gap: 0, border: "1px solid #1e3040" }}>
+            {LEAGUES.map((l) => {
+              const active = l === league;
+              const count = PLAYERS_BY_LEAGUE[l]?.length ?? 0;
+              return (
+                <button
+                  key={l}
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => handleLeagueChange(l)}
+                  style={{
+                    flex: 1,
+                    background: active ? "#0066cc" : "#0a1420",
+                    color: active ? "#ffffff" : "#446688",
+                    border: "none",
+                    padding: "10px 12px",
+                    fontFamily: "'Courier New', monospace",
+                    fontSize: 12,
+                    letterSpacing: 2,
+                    fontWeight: active ? "bold" : "normal",
+                    cursor: "pointer",
+                  }}
+                >
+                  {l} ({count})
+                </button>
+              );
+            })}
+          </div>
 
           {/* Player Select */}
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>

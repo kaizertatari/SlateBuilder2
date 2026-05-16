@@ -15,34 +15,39 @@ import snapshot from "../../data/team-defense.json" with { type: "json" };
 const FRESH_TTL_MS = 6 * 60 * 60 * 1000;
 const STALE_TTL_MS = 24 * 60 * 60 * 1000;
 
-function cacheKey(season, seasonType) {
-  return `team-defense:${season}:${seasonType}`;
+function cacheKey(league, season, seasonType) {
+  return `team-defense:${league}:${season}:${seasonType}`;
 }
 
-async function fetchLeague(season, seasonType) {
+async function fetchLeague(season, seasonType, league) {
   return cache.swr(
-    cacheKey(season, seasonType),
-    () => getLeagueTeamDefense({ season, seasonType }),
+    cacheKey(league, season, seasonType),
+    () => getLeagueTeamDefense({ season, seasonType, league }),
     { freshTtlMs: FRESH_TTL_MS, staleTtlMs: STALE_TTL_MS }
   );
 }
 
-function snapshotLookup(seasonType) {
+// Snapshot is NBA-only at present. Returns null for WNBA so the orchestrator
+// can drop opponent_defense rather than mis-applying NBA data to a WNBA game.
+function snapshotLookup(seasonType, league) {
+  if (league !== "NBA") return null;
   return snapshot?.seasons?.[seasonType] ?? null;
 }
 
 // Returns { def_rating, def_rank, source } for the opponent, or null if
 // the abbreviation is unknown to both live and snapshot data.
 export async function getOpponentDefense(opponentEspnAbbr, {
-  season = currentSeason(),
+  season,
   seasonType = "Regular Season",
+  league = "NBA",
 } = {}) {
-  const nbaAbbr = toNbaAbbr(opponentEspnAbbr);
-  if (!nbaAbbr) return null;
+  const statsAbbr = toNbaAbbr(opponentEspnAbbr, league);
+  if (!statsAbbr) return null;
+  const seasonLabel = season ?? currentSeason(new Date(), league);
 
-  const live = await fetchLeague(season, seasonType);
-  if (live && live[nbaAbbr]) {
-    const row = live[nbaAbbr];
+  const live = await fetchLeague(seasonLabel, seasonType, league);
+  if (live && live[statsAbbr]) {
+    const row = live[statsAbbr];
     return {
       def_rating: row.def_rating,
       def_rank: row.def_rank,
@@ -50,9 +55,9 @@ export async function getOpponentDefense(opponentEspnAbbr, {
     };
   }
 
-  const snap = snapshotLookup(seasonType);
-  if (snap && snap[nbaAbbr]) {
-    const row = snap[nbaAbbr];
+  const snap = snapshotLookup(seasonType, league);
+  if (snap && snap[statsAbbr]) {
+    const row = snap[statsAbbr];
     return {
       def_rating: row.def_rating,
       def_rank: row.def_rank,
@@ -60,6 +65,6 @@ export async function getOpponentDefense(opponentEspnAbbr, {
     };
   }
 
-  console.warn(`${logPrefix()}team-defense miss for ${nbaAbbr} (espn=${opponentEspnAbbr}); live and snapshot both empty`);
+  console.warn(`${logPrefix()}team-defense miss for ${statsAbbr} (espn=${opponentEspnAbbr}, league=${league}); live and snapshot both empty`);
   return null;
 }

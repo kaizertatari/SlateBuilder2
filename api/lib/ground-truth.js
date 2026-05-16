@@ -21,10 +21,11 @@ export function composeGroundTruth(params) {
     allInjuries,
     opponentDefense,
     primaryDefender,
+    league = "NBA",
   } = params || {};
 
   const playerAbbr = info?.team_abbr ?? null;
-  const playerEspnAbbr = toEspnAbbr(playerAbbr);
+  const playerEspnAbbr = toEspnAbbr(playerAbbr, league);
 
   const homeAway = (playerEspnAbbr && game)
     ? (game.home.abbr === playerEspnAbbr ? "home"
@@ -56,6 +57,7 @@ export function composeGroundTruth(params) {
 
   const groundTruth = {
     player: info?.full_name ?? player,
+    league,
     prop_type: propType,
     line: Number(line),
     game: game ? {

@@ -1,4 +1,4 @@
-import { resolvePlayerId, resolveEspnId } from "./lib/player-ids.js";
+import { resolvePlayer } from "./lib/player-ids.js";
 import {
   currentSeason,
   getCommonPlayerInfo,
@@ -19,7 +19,7 @@ import {
   opponentFor,
 } from "./lib/espn.js";
 import { composeGroundTruth } from "./lib/ground-truth.js";
-import { MODEL_FRAMEWORK } from "./lib/framework.js";
+import { getFramework } from "./lib/framework.js";
 import { rateLimit } from "./lib/rate-limit.js";
 import { runWithRequestContext } from "./lib/request-context.js";
 import { PROP_TO_FIELD } from "./lib/prop-types.js";
@@ -48,22 +48,32 @@ export const runtime = "nodejs";
 // Exported for smoke testing — fetches real data and composes groundTruth
 // without calling the LLM.
 export async function gatherGroundTruth({ player, propType, line }) {
-  const playerId = resolvePlayerId(player);
-  if (!playerId) {
+  const playerInfo = resolvePlayer(player);
+  if (!playerInfo) {
+    return { skipReason: "player_not_configured", message: `No player entry for ${player}` };
+  }
+  // NBA requires a stats.nba.com PERSON_ID (the BR/ESPN paths alone don't
+  // cover defender matchups). WNBA can run on ESPN alone — stats.wnba.com is
+  // best-effort enrichment, not a hard dependency.
+  const league = playerInfo.league;
+  if (league === "NBA" && !playerInfo.nba) {
     return { skipReason: "player_not_configured", message: `No PlayerID configured for ${player}` };
   }
+  if (league === "WNBA" && !playerInfo.espn) {
+    return { skipReason: "player_not_configured", message: `No ESPN ID configured for WNBA player ${player}` };
+  }
+  const playerId = playerInfo.nba;
+  const espnId = playerInfo.espn;
 
-  const season = currentSeason();
-  const espnId = resolveEspnId(player);
+  const season = currentSeason(new Date(), league);
 
-  // Identity: balldontlie primary (returns team_abbr instantly), stats.nba.com
-  // fallback only when balldontlie misses. NBA Stats from Vercel egress
-  // commonly times out at ~6s, and team_abbr is the only field we need
-  // downstream — paying that latency on the critical path is wasteful.
+  // Identity: balldontlie is NBA-only, so the bdl branch is gated on league.
+  // For WNBA we go straight to stats.wnba.com commonplayerinfo — WNBA traffic
+  // is lower and the Vercel-IP throttling pattern is less severe.
   const [bdlPlayer, games, allInjuries] = await Promise.all([
-    bdl.findPlayer(player),
-    getTodaysGames(),
-    getAllInjuries(),
+    league === "NBA" ? bdl.findPlayer(player) : Promise.resolve(null),
+    getTodaysGames(undefined, { league }),
+    getAllInjuries({ league }),
   ]);
 
   if (!games) return { skipReason: "schedule_unavailable", message: "Could not fetch ESPN scoreboard" };
@@ -80,12 +90,25 @@ export async function gatherGroundTruth({ player, propType, line }) {
     };
     infoSource = "balldontlie";
   } else {
-    const nbaInfo = await getCommonPlayerInfo(playerId);
-    if (!nbaInfo) {
-      return { skipReason: "player_lookup_failed", message: `Could not resolve ${player} via balldontlie or stats.nba.com` };
+    const nbaInfo = playerId ? await getCommonPlayerInfo(playerId, { league }) : null;
+    if (nbaInfo) {
+      info = nbaInfo;
+      infoSource = league === "NBA" ? "nba_stats" : "wnba_stats";
+    } else if (league === "WNBA" && playerInfo.team_abbr) {
+      // WNBA fallback: refresh-wnba-players embeds team_abbr from the most
+      // recent box score. stats.wnba.com is best-effort, so without this
+      // every WNBA pick would SKIP when that edge throttles.
+      info = {
+        player_id: null,
+        full_name: player,
+        team_id: null,
+        team_name: null,
+        team_abbr: playerInfo.team_abbr,
+      };
+      infoSource = "players_json";
+    } else {
+      return { skipReason: "player_lookup_failed", message: `Could not resolve ${player} via balldontlie, stats edge, or players.json` };
     }
-    info = nbaInfo;
-    infoSource = "nba_stats";
   }
 
   const trace = {
@@ -94,10 +117,10 @@ export async function gatherGroundTruth({ player, propType, line }) {
     info: infoSource,
   };
 
-  let game = findGameForTeamAbbr(games, info.team_abbr);
+  let game = findGameForTeamAbbr(games, info.team_abbr, { league });
   let daysOut = 0;
   if (!game) {
-    const next = await findNextGameForTeamAbbr(info.team_abbr, 7);
+    const next = await findNextGameForTeamAbbr(info.team_abbr, 7, { league });
     if (!next) return { skipReason: "no_upcoming_game", message: `${info.team_name ?? info.team_abbr} has no game in the next 7 days` };
     game = next.game;
     daysOut = next.days_out;
@@ -113,42 +136,41 @@ export async function gatherGroundTruth({ player, propType, line }) {
   // stats.nba.com, so the NBA path is unreliable — try ESPN first when an
   // espnId is configured.
   let l5 = espnId
-    ? await espnStats.getLastNGames(espnId, 5, { season, postseason: isPlayoff })
+    ? await espnStats.getLastNGames(espnId, 5, { season, postseason: isPlayoff, league })
     : null;
   trace.l5 = l5?.games?.length ? "espn_gamelog" : null;
   if (!trace.l5) {
-    l5 = await getLastNGames(playerId, 5, { seasonType });
-    trace.l5 = l5?.games?.length ? "nba_stats" : "missing";
+    l5 = await getLastNGames(playerId, 5, { seasonType, league });
+    trace.l5 = l5?.games?.length ? "stats_edge" : "missing";
   }
 
   // Splits and opponent defense use regular season — playoff samples are too
-  // small (5–28 games) to be a stable baseline. Same logic as Rule 5a road
-  // deduction.
-  const opponentSide = opponentFor(game, info.team_abbr);
-  // BR snapshot primary for splits (Vercel egress is throttled by stats.nba.com,
-  // and the BR file is on disk so it never times out). NBA Stats stays on the
-  // critical path only when the player isn't in the snapshot.
-  const bbrefSplits = bbref.getHomeAwaySplits(player, { season });
-  // ESPN primary for season averages; NBA fallback below. Defender and
-  // matchup data have no ESPN equivalent and stay on stats.nba.com.
-  const [espnSeasonAvg, nbaSplits, winProb, opponentDefense, primaryDefender] = await Promise.all([
-    espnId ? espnStats.getSeasonAverages(espnId, { season }) : null,
-    bbrefSplits ? null : getHomeAwaySplits(playerId, { seasonType: "Regular Season" }),
-    getWinProbability(game.game_id, game.competition_id),
-    opponentSide ? getOpponentDefense(opponentSide.abbr, { seasonType: "Regular Season" }) : null,
-    opponentSide ? getPrimaryDefender(playerId, opponentSide.abbr, { seasonType }) : null,
+  // small to be a stable baseline. Same logic as Rule 5a road deduction.
+  const opponentSide = opponentFor(game, info.team_abbr, { league });
+  // BR snapshot primary for splits (Vercel egress is throttled by stats edge,
+  // and the BR file is on disk so it never times out). Stats edge stays on
+  // the critical path only when the player isn't in the snapshot.
+  const bbrefSplits = bbref.getHomeAwaySplits(player, { season, league });
+  // ESPN primary for season averages; stats-edge fallback below. Defender
+  // and matchup data have no ESPN equivalent and stay on stats edge.
+  const [espnSeasonAvg, statsSplits, winProb, opponentDefense, primaryDefender] = await Promise.all([
+    espnId ? espnStats.getSeasonAverages(espnId, { season, league }) : null,
+    bbrefSplits ? null : getHomeAwaySplits(playerId, { seasonType: "Regular Season", league }),
+    getWinProbability(game.game_id, game.competition_id, { league }),
+    opponentSide ? getOpponentDefense(opponentSide.abbr, { seasonType: "Regular Season", league }) : null,
+    opponentSide ? getPrimaryDefender(playerId, opponentSide.abbr, { seasonType, league }) : null,
   ]);
-  const splits = bbrefSplits ?? nbaSplits;
-  trace.splits = bbrefSplits ? "bbref_snapshot" : (nbaSplits ? "nba_stats" : "missing");
+  const splits = bbrefSplits ?? statsSplits;
+  trace.splits = bbrefSplits ? "bbref_snapshot" : (statsSplits ? "stats_edge" : "missing");
   trace.win_prob = winProb ? `espn_${winProb.source}` : "missing";
   trace.opponent_defense = opponentDefense ? `team_defense_${opponentDefense.source}` : "missing";
   trace.primary_defender = primaryDefender ? primaryDefender.source : "missing";
 
-  const seasonAvg = espnSeasonAvg ?? await getSeasonAverages(playerId, { seasonType: "Regular Season" });
-  trace.season_avg = espnSeasonAvg ? "espn_gamelog" : (seasonAvg ? "nba_stats" : "missing");
+  const seasonAvg = espnSeasonAvg ?? await getSeasonAverages(playerId, { seasonType: "Regular Season", league });
+  trace.season_avg = espnSeasonAvg ? "espn_gamelog" : (seasonAvg ? "stats_edge" : "missing");
 
   const { groundTruth, missing } = composeGroundTruth({
-    player, propType, line,
+    player, propType, line, league,
     info, game, daysOut, seasonType,
     seasonAvg, l5, splits, winProb, allInjuries, opponentDefense, primaryDefender,
   });
@@ -304,8 +326,10 @@ async function handlePost(req) {
  */
 async function invokeLLM(groundTruth) {
   try {
-    // Build prompt and invoke the routed LLM
-    const prompt = buildPrompt(MODEL_FRAMEWORK, groundTruth);
+    // Build prompt and invoke the routed LLM. Framework variant is picked
+    // from the league field on groundTruth — NBA-default for legacy callers.
+    const framework = getFramework(groundTruth?.league ?? "NBA");
+    const prompt = buildPrompt(framework, groundTruth);
     const llm = await callLLM(prompt);
     if (llm.error) {
       return {
@@ -486,8 +510,10 @@ export function buildPrompt(framework, groundTruth) {
     ? `\n\nFORWARD-LOOKING GAME: groundTruth.game.days_out is ${daysOut} — this game is NOT today, it is ${daysOut} day(s) away. Injury reports, win probability, and lineup state may shift before tip-off. You MUST add a flag "📅 forward-looking pick (game ${daysOut}d out) — re-verify injuries closer to tip" and treat any UNDER mechanism that depends on a teammate's confirmed status (e.g., role compression) as A-tier max unless the absence is clearly long-term.`
     : "";
 
-  // Build the prompt components
-  const roleDefinition = "You are the NBA PrizePicks Model v3.4 verdict engine. Output exactly one JSON object — no prose, no markdown, no code fences.";
+  // Build the prompt components. League label is read from groundTruth so the
+  // role line matches the framework variant.
+  const leagueLabel = String(groundTruth?.league ?? "NBA").toUpperCase();
+  const roleDefinition = `You are the ${leagueLabel} PrizePicks Model v3.4 verdict engine. Output exactly one JSON object — no prose, no markdown, no code fences.`;
 
   const dataRules = `DATA RULES — non-negotiable:
 1. Use ONLY values from the GROUND TRUTH block below. Do NOT invent, estimate, recall from prior knowledge, or guess any number. Treat your training-data memory of player stats as forbidden.
@@ -581,7 +607,8 @@ export function buildBatchPrompt(framework, groundTruth, tasks) {
   // Strip per-task fields — they belong on each task, not on the shared GT.
   const { prop_type: _pt, line: _l, ...gtCommon } = groundTruth;
 
-  const roleDefinition = "You are the NBA PrizePicks Model v3.4 verdict engine. Output exactly one JSON object — no prose, no markdown, no code fences.";
+  const leagueLabel = String(groundTruth?.league ?? "NBA").toUpperCase();
+  const roleDefinition = `You are the ${leagueLabel} PrizePicks Model v3.4 verdict engine. Output exactly one JSON object — no prose, no markdown, no code fences.`;
 
   const dataRules = `DATA RULES — non-negotiable:
 1. Use ONLY values from the GROUND TRUTH block below. Do NOT invent, estimate, recall from prior knowledge, or guess any number. Treat your training-data memory of player stats as forbidden.

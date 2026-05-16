@@ -5,9 +5,23 @@
 import * as cache from "./cache.js";
 import { logPrefix } from "./request-context.js";
 
-const SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard";
-const CORE = "https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba";
-const SITE = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba";
+const LEAGUE_SLUG = { NBA: "nba", WNBA: "wnba" };
+
+function leagueSlug(league) {
+  return LEAGUE_SLUG[league] ?? "nba";
+}
+
+function scoreboardUrl(league) {
+  return `https://site.api.espn.com/apis/site/v2/sports/basketball/${leagueSlug(league)}/scoreboard`;
+}
+
+function coreUrl(league) {
+  return `https://sports.core.api.espn.com/v2/sports/basketball/leagues/${leagueSlug(league)}`;
+}
+
+function siteUrl(league) {
+  return `https://site.api.espn.com/apis/site/v2/sports/basketball/${leagueSlug(league)}`;
+}
 
 const TTL_SCOREBOARD_MS = 60_000;
 const TTL_INJURIES_FRESH_MS = 120_000;
@@ -59,12 +73,13 @@ function parseEvent(event) {
   };
 }
 
-export async function getTodaysGames(date) {
+export async function getTodaysGames(date, { league = "NBA" } = {}) {
   // date: optional "YYYYMMDD"
-  const cacheKey = `scoreboard:${date ?? "today"}`;
+  const cacheKey = `scoreboard:${league}:${date ?? "today"}`;
   const cached = cache.get(cacheKey);
   if (cached) return cached;
-  const url = date ? `${SCOREBOARD}?dates=${date}` : SCOREBOARD;
+  const base = scoreboardUrl(league);
+  const url = date ? `${base}?dates=${date}` : base;
   const data = await jsonFetch(url);
   if (!data) return null;
   const events = (data.events || []).map(parseEvent).filter(Boolean);
@@ -73,7 +88,7 @@ export async function getTodaysGames(date) {
 }
 
 // stats.nba.com and ESPN disagree on a handful of team abbreviations. Normalise
-// NBA stats abbrs onto ESPN's spelling before comparing scoreboard events.
+// stats-side abbrs onto ESPN's spelling before comparing scoreboard events.
 const NBA_TO_ESPN_ABBR = {
   NYK: "NY",
   SAS: "SA",
@@ -83,25 +98,41 @@ const NBA_TO_ESPN_ABBR = {
   WAS: "WSH",
 };
 
+// WNBA: stats.wnba.com uses 3-letter codes (LVA, LAS, NYL, GSV); ESPN uses
+// shorter forms (LV, LA, NY, GS) in most endpoints. PrizePicks publishes the
+// shorter forms too. Keep both directions of the alias in sync.
+const WNBA_TO_ESPN_ABBR = {
+  LVA: "LV",
+  LAS: "LA",
+  NYL: "NY",
+  GSV: "GS",
+};
+
 const ESPN_TO_NBA_ABBR = Object.fromEntries(
   Object.entries(NBA_TO_ESPN_ABBR).map(([nba, espn]) => [espn, nba])
 );
 
-export function toEspnAbbr(abbr) {
+const ESPN_TO_WNBA_ABBR = Object.fromEntries(
+  Object.entries(WNBA_TO_ESPN_ABBR).map(([wnba, espn]) => [espn, wnba])
+);
+
+export function toEspnAbbr(abbr, league = "NBA") {
   if (!abbr) return null;
   const upper = abbr.toUpperCase();
-  return NBA_TO_ESPN_ABBR[upper] || upper;
+  const map = league === "WNBA" ? WNBA_TO_ESPN_ABBR : NBA_TO_ESPN_ABBR;
+  return map[upper] || upper;
 }
 
-export function toNbaAbbr(abbr) {
+export function toNbaAbbr(abbr, league = "NBA") {
   if (!abbr) return null;
   const upper = abbr.toUpperCase();
-  return ESPN_TO_NBA_ABBR[upper] || upper;
+  const map = league === "WNBA" ? ESPN_TO_WNBA_ABBR : ESPN_TO_NBA_ABBR;
+  return map[upper] || upper;
 }
 
-export function findGameForTeamAbbr(games, abbr) {
+export function findGameForTeamAbbr(games, abbr, { league = "NBA" } = {}) {
   if (!games || !abbr) return null;
-  const upper = toEspnAbbr(abbr);
+  const upper = toEspnAbbr(abbr, league);
   return (
     games.find(
       (g) => g.home.abbr === upper || g.away.abbr === upper
@@ -120,16 +151,16 @@ function formatYYYYMMDD(d) {
 // smallest days_out match. Returns { game, days_out } or null. The serial
 // version's worst case was ~8s on cold days; parallel is bounded by ESPN's
 // slowest single-day response (~1-2s). Cached scoreboard hits become free.
-export async function findNextGameForTeamAbbr(abbr, daysAhead = 7) {
+export async function findNextGameForTeamAbbr(abbr, daysAhead = 7, { league = "NBA" } = {}) {
   if (!abbr) return null;
-  const upper = toEspnAbbr(abbr);
+  const upper = toEspnAbbr(abbr, league);
   const today = new Date();
 
   const dayResults = await Promise.all(
     Array.from({ length: daysAhead + 1 }, (_, i) => {
       const d = new Date(today);
       d.setUTCDate(today.getUTCDate() + i);
-      return getTodaysGames(formatYYYYMMDD(d));
+      return getTodaysGames(formatYYYYMMDD(d), { league });
     })
   );
 
@@ -144,17 +175,17 @@ export async function findNextGameForTeamAbbr(abbr, daysAhead = 7) {
   return null;
 }
 
-export function homeAwayForTeam(game, abbr) {
+export function homeAwayForTeam(game, abbr, { league = "NBA" } = {}) {
   if (!game) return null;
-  const upper = toEspnAbbr(abbr);
+  const upper = toEspnAbbr(abbr, league);
   if (game.home.abbr === upper) return "home";
   if (game.away.abbr === upper) return "away";
   return null;
 }
 
-export function opponentFor(game, abbr) {
+export function opponentFor(game, abbr, { league = "NBA" } = {}) {
   if (!game) return null;
-  const upper = toEspnAbbr(abbr);
+  const upper = toEspnAbbr(abbr, league);
   if (game.home.abbr === upper) return game.away;
   if (game.away.abbr === upper) return game.home;
   return null;
@@ -166,8 +197,9 @@ function pickGameProjection(side) {
   return stat.value > 1 ? stat.value / 100 : stat.value; // ESPN reports 0–100; normalise to 0–1
 }
 
-export async function getWinProbability(eventId, competitionId) {
+export async function getWinProbability(eventId, competitionId, { league = "NBA" } = {}) {
   if (!eventId || !competitionId) return null;
+  const CORE = coreUrl(league);
   // Pre-game: ESPN's BPI predictor.
   const predictor = await jsonFetch(
     `${CORE}/events/${eventId}/competitions/${competitionId}/predictor`
@@ -210,10 +242,11 @@ function normalizeInjury(entry) {
   };
 }
 
-export async function getAllInjuries() {
+export async function getAllInjuries({ league = "NBA" } = {}) {
   return cache.swr(
-    "injuries:all",
+    `injuries:all:${league}`,
     async () => {
+      const SITE = siteUrl(league);
       const data = await jsonFetch(`${SITE}/injuries`);
       if (!data) return null;
       const groups = data.injuries || [];
@@ -227,9 +260,9 @@ export async function getAllInjuries() {
   );
 }
 
-export async function getTeamInjuries(teamId) {
+export async function getTeamInjuries(teamId, { league = "NBA" } = {}) {
   if (!teamId) return null;
-  const all = await getAllInjuries();
+  const all = await getAllInjuries({ league });
   if (!all) return null;
   const id = String(teamId);
   const group = all.find((g) => g.team_id === id);

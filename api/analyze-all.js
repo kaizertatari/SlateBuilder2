@@ -9,7 +9,7 @@
 // Returns: { total_analyzed, total_s_a, top_10: [...] }
 
 import { gatherGroundTruth, buildPrompt, callLLM } from "./analyze.js";
-import { MODEL_FRAMEWORK } from "./lib/framework.js";
+import { getFramework } from "./lib/framework.js";
 import { rateLimit } from "./lib/rate-limit.js";
 import { runWithRequestContext } from "./lib/request-context.js";
 import { readLines } from "./lib/lines-store.js";
@@ -68,7 +68,7 @@ async function handlePost(req, reqId) {
     }
 
     const body = await req.json();
-    const { player, statTypes, direction } = body;
+    const { player, statTypes, direction, league: rawLeague } = body;
 
     if (!player || typeof player !== "string") {
       return Response.json(
@@ -82,6 +82,9 @@ async function handlePost(req, reqId) {
         { status: 400 }
       );
     }
+    const league = rawLeague && ["NBA", "WNBA"].includes(String(rawLeague).toUpperCase())
+      ? String(rawLeague).toUpperCase()
+      : null;
 
     // Read PrizePicks lines (from /tmp cache when warm, else bundled file).
     let linesData;
@@ -110,8 +113,14 @@ async function handlePost(req, reqId) {
       return Response.json(cached, { headers: { "X-Cache": "HIT" } });
     }
 
-    // Find the player's props (exact match on by_player keys).
-    const playerProps = (linesData.by_player || {})[player] || [];
+    // Find the player's props (exact match on by_player keys). If the client
+    // sent a league, filter cross-league props out — defends against the rare
+    // case where the scraper grouped an NBA + WNBA player with the same name
+    // under one by_player entry.
+    const rawPlayerProps = (linesData.by_player || {})[player] || [];
+    const playerProps = league
+      ? rawPlayerProps.filter((p) => (p.league ?? "NBA") === league)
+      : rawPlayerProps;
 
     // Resolve allowed internal stat names (default: full STATS whitelist).
     const allowedStats = (statTypes && Array.isArray(statTypes) && statTypes.length > 0)
@@ -269,7 +278,8 @@ async function handlePost(req, reqId) {
         continue;
       }
 
-      const prompt = buildPrompt(MODEL_FRAMEWORK, taskGroundTruth);
+      const framework = getFramework(taskGroundTruth?.league ?? "NBA");
+      const prompt = buildPrompt(framework, taskGroundTruth);
 
       let llm = await callLLM(prompt);
       if (llm.error) {

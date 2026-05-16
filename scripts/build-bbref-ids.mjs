@@ -37,10 +37,13 @@ function sleep(ms) {
 //     </strong>
 //   </div>
 //
-// We skip /gleague/ and /wnba/ links. The trailing "(YYYY-YYYY)" is BR's
-// active-years range; we strip it before name comparison.
+// NBA mode matches /players/<letter>/<slug>.html (skips /gleague/ and
+// /wnba/). WNBA mode matches /wnba/players/<letter>/<slug>.html instead.
+// The trailing "(YYYY-YYYY)" is BR's active-years range; we strip it before
+// name comparison.
 const SEARCH_ITEM_RE = /<div class="search-item"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/g;
 const NBA_PLAYER_LINK_RE = /<a href="\/players\/[a-z]\/([a-z0-9]+)\.html">([^<]+)<\/a>/i;
+const WNBA_PLAYER_LINK_RE = /<a href="\/wnba\/players\/[a-z]\/([a-z0-9]+)\.html">([^<]+)<\/a>/i;
 // BR sometimes drops generational suffixes from the display name
 // ("Robert Williams III" → "Robert Williams"). Strip on both sides.
 const SUFFIX_RE = /\s+(jr|sr|ii|iii|iv|v)\.?$/i;
@@ -60,15 +63,16 @@ function cleanDisplay(s) {
     .trim();
 }
 
-function findSlug(html, targetName) {
+function findSlug(html, targetName, league = "NBA") {
   const targetParts = stripSuffix(targetName).split(/\s+/).filter(Boolean);
   const targetLast = normalizeName(targetParts[targetParts.length - 1] ?? "");
   const targetFirst = normalizeName(targetParts[0] ?? "");
   const targetFull = normalizeName(stripSuffix(targetName));
+  const linkRe = league === "WNBA" ? WNBA_PLAYER_LINK_RE : NBA_PLAYER_LINK_RE;
 
   let nicknameHit = null;
   for (const block of html.matchAll(SEARCH_ITEM_RE)) {
-    const m = block[1].match(NBA_PLAYER_LINK_RE);
+    const m = block[1].match(linkRe);
     if (!m) continue;
     const [, slug, raw] = m;
     const display = cleanDisplay(raw);
@@ -90,7 +94,7 @@ function findSlug(html, targetName) {
   return nicknameHit;
 }
 
-async function lookupSlug(name) {
+async function lookupSlug(name, league = "NBA") {
   // BR's search treats "III" / "Jr." as literal tokens and returns zero hits
   // for "Robert Williams III" while "Robert Williams" finds slug williro04.
   // Search by the suffix-stripped form; comparison still uses stripSuffix on
@@ -104,35 +108,44 @@ async function lookupSlug(name) {
   // For unique-name searches BR serves the player page directly (no
   // search-results template). Trust the <link rel="canonical"> tag in that
   // case; otherwise scan the search-item blocks.
-  const canonical = html.match(
-    /<link\s+rel="canonical"\s+href="https?:\/\/www\.basketball-reference\.com\/players\/[a-z]\/([a-z0-9]+)\.html"/i
-  );
+  const canonicalRe = league === "WNBA"
+    ? /<link\s+rel="canonical"\s+href="https?:\/\/www\.basketball-reference\.com\/wnba\/players\/[a-z]\/([a-z0-9]+)\.html"/i
+    : /<link\s+rel="canonical"\s+href="https?:\/\/www\.basketball-reference\.com\/players\/[a-z]\/([a-z0-9]+)\.html"/i;
+  const canonical = html.match(canonicalRe);
   if (canonical) return { slug: canonical[1], display: name };
 
-  const hit = findSlug(html, name);
-  if (!hit) return { error: "no NBA match in search results" };
+  const hit = findSlug(html, name, league);
+  if (!hit) return { error: `no ${league} match in search results` };
   return hit;
 }
 
 async function main() {
   const players = JSON.parse(await fs.readFile(PLAYERS_PATH, "utf8"));
   const onlyMissing = process.argv.includes("--missing");
+  const leagueIdx = process.argv.indexOf("--league");
+  // --league filters to one league (NBA or WNBA). Default is whatever the
+  // player entry says (league field, default NBA), so a full run resolves
+  // both leagues' slugs using the correct BR URL family per entry.
+  const explicitLeague = leagueIdx >= 0 ? process.argv[leagueIdx + 1]?.toUpperCase() : null;
+
   const names = Object.keys(players)
     .filter((n) => !onlyMissing || !players[n].bbref)
+    .filter((n) => !explicitLeague || (players[n].league ?? "NBA") === explicitLeague)
     .sort();
 
-  console.log(`Resolving BR slugs for ${names.length} player(s)${onlyMissing ? " (missing only)" : ""}...`);
+  console.log(`Resolving BR slugs for ${names.length} player(s)${onlyMissing ? " (missing only)" : ""}${explicitLeague ? ` (${explicitLeague} only)` : ""}...`);
 
   let resolved = 0;
   let failed = 0;
   for (const name of names) {
-    const r = await lookupSlug(name);
+    const league = players[name].league ?? "NBA";
+    const r = await lookupSlug(name, league);
     if (r.error) {
-      console.error(`  FAIL  ${name}: ${r.error}`);
+      console.error(`  FAIL  ${name} (${league}): ${r.error}`);
       failed++;
     } else {
       players[name].bbref = r.slug;
-      console.log(`  ok    ${name.padEnd(28)} -> ${r.slug}`);
+      console.log(`  ok    ${name.padEnd(28)} [${league}] -> ${r.slug}`);
       resolved++;
     }
     await sleep(THROTTLE_MS);

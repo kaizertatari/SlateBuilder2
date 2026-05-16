@@ -9,7 +9,12 @@
 import { logPrefix } from "./request-context.js";
 import { fmtDate } from "./string-utils.js";
 
-const GAMELOG = "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes";
+const LEAGUE_SLUG = { NBA: "nba", WNBA: "wnba" };
+
+function gamelogBase(league) {
+  const slug = LEAGUE_SLUG[league] ?? "nba";
+  return `https://site.web.api.espn.com/apis/common/v3/sports/basketball/${slug}/athletes`;
+}
 
 // Statistic positions in event.stats[] are defined by the response's `names`
 // array. Hard-coded indices to avoid an extra lookup per event.
@@ -30,15 +35,22 @@ const IDX = {
   pts: 13,
 };
 
-function endYearFromSeasonLabel(label) {
+function endYearFromSeasonLabel(label, league = "NBA") {
   if (typeof label === "number") return label;
+  if (league === "WNBA") {
+    // WNBA seasons are single calendar years (e.g. "2025"). ESPN's gamelog
+    // endpoint expects the same single-year value.
+    const m = String(label).match(/^(\d{4})$/);
+    return m ? Number(m[1]) : null;
+  }
   const m = String(label).match(/^(\d{4})-(\d{2})$/);
   if (!m) return null;
   const start = Number(m[1]);
   return start + 1;
 }
 
-function seasonLabelFromEndYear(endYear) {
+function seasonLabelFromEndYear(endYear, league = "NBA") {
+  if (league === "WNBA") return String(endYear);
   return `${endYear - 1}-${String(endYear % 100).padStart(2, "0")}`;
 }
 
@@ -74,8 +86,8 @@ function parseStatsRow(stats) {
   };
 }
 
-async function fetchGamelog(athleteId, endYear) {
-  const url = `${GAMELOG}/${athleteId}/gamelog?season=${endYear}`;
+async function fetchGamelog(athleteId, endYear, league = "NBA") {
+  const url = `${gamelogBase(league)}/${athleteId}/gamelog?season=${endYear}`;
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (!res.ok) {
@@ -137,11 +149,11 @@ function bucketLayoutOk(bucket) {
   return true;
 }
 
-export async function getSeasonAverages(athleteId, { season } = {}) {
+export async function getSeasonAverages(athleteId, { season, league = "NBA" } = {}) {
   if (!athleteId) return null;
-  const endYear = endYearFromSeasonLabel(season);
+  const endYear = endYearFromSeasonLabel(season, league);
   if (!endYear) return null;
-  const data = await fetchGamelog(athleteId, endYear);
+  const data = await fetchGamelog(athleteId, endYear, league);
   if (!data) return null;
   const bucket = findBucket(data.seasonTypes, false);
   if (!bucketLayoutOk(bucket)) return null;
@@ -150,7 +162,7 @@ export async function getSeasonAverages(athleteId, { season } = {}) {
   const rows = events.map((e) => parseStatsRow(e.stats));
   const avg = (k) => Number((rows.reduce((s, r) => s + (r[k] || 0), 0) / rows.length).toFixed(2));
   return {
-    season: seasonLabelFromEndYear(endYear),
+    season: seasonLabelFromEndYear(endYear, league),
     season_type: "Regular Season",
     games: rows.length,
     minutes: avg("minutes"),
@@ -169,11 +181,11 @@ export async function getSeasonAverages(athleteId, { season } = {}) {
   };
 }
 
-export async function getLastNGames(athleteId, n = 5, { season, postseason = false } = {}) {
+export async function getLastNGames(athleteId, n = 5, { season, postseason = false, league = "NBA" } = {}) {
   if (!athleteId) return null;
-  const endYear = endYearFromSeasonLabel(season);
+  const endYear = endYearFromSeasonLabel(season, league);
   if (!endYear) return null;
-  const data = await fetchGamelog(athleteId, endYear);
+  const data = await fetchGamelog(athleteId, endYear, league);
   if (!data) return null;
   const bucket = findBucket(data.seasonTypes, postseason);
   if (!bucketLayoutOk(bucket)) return null;
@@ -223,7 +235,7 @@ export async function getLastNGames(athleteId, n = 5, { season, postseason = fal
   if (!games.length) return null;
   const avg = (k) => Number((games.reduce((s, g) => s + (g[k] || 0), 0) / games.length).toFixed(2));
   return {
-    season: seasonLabelFromEndYear(endYear),
+    season: seasonLabelFromEndYear(endYear, league),
     season_type: postseason ? "Playoffs" : "Regular Season",
     n: games.length,
     games,

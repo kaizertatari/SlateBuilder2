@@ -1,4 +1,4 @@
-// Scrape PrizePicks NBA projections and output structured JSON.
+// Scrape PrizePicks NBA + WNBA projections and output structured JSON.
 // Filters to upcoming games (start_time >= now) and matches player names
 // to players.json.
 //
@@ -15,7 +15,13 @@ const OUTPUT = path.join(ROOT, "data/prizepicks-lines.json");
 const PLAYERS_JSON = path.join(ROOT, "data/players.json");
 
 const PRIZEPICKS_API = "https://api.prizepicks.com/projections";
-const NBA_LEAGUE_ID = 7;
+
+// PrizePicks league IDs. Add more entries here if PrizePicks publishes more
+// basketball leagues we want to cover; everything downstream is league-aware.
+const LEAGUES = [
+  { league: "NBA", league_id: 7 },
+  { league: "WNBA", league_id: 10 },
+];
 
 const HEADERS = {
   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
@@ -54,10 +60,10 @@ async function jsonFetch(url, opts = {}) {
 
 // ─── Scrape PrizePicks ─────────────────────────────────────────────────────
 
-async function scrapePrizePicks() {
-  const url = `${PRIZEPICKS_API}?league_id=${NBA_LEAGUE_ID}&per_page=250&single_stat=true`;
+async function scrapePrizePicksForLeague(leagueId) {
+  const url = `${PRIZEPICKS_API}?league_id=${leagueId}&per_page=250&single_stat=true`;
   const data = await jsonFetch(url, { headers: HEADERS });
-  if (!data) throw new Error("Failed to fetch PrizePicks API");
+  if (!data) throw new Error(`Failed to fetch PrizePicks API (league_id=${leagueId})`);
 
   // Build player lookup from "included" array (includes name AND team)
   const playersById = {};
@@ -96,16 +102,18 @@ async function scrapePrizePicks() {
   return projections;
 }
 
-// Resolve a PrizePicks player name against the players.json lookup.
-// Combo entries like "Cade Cunningham + James Harden" try each component
-// individually and return the first match.
-function resolvePlayer(rawName, nameLookup) {
+// Resolve a PrizePicks player name against the players.json lookup. The
+// lookup is league-scoped: a "Caitlin Clark" entry tagged league:"WNBA"
+// only resolves for WNBA scrape projections, even if a future NBA player
+// shared the name. Combo entries like "Cade Cunningham + James Harden" try
+// each component individually and return the first league-matching match.
+function resolvePlayer(rawName, nameLookup, league) {
   const direct = nameLookup[normalizeName(rawName)];
-  if (direct) return direct;
+  if (direct && direct.league === league) return direct;
   if (!rawName.includes("+")) return null;
   for (const part of rawName.split("+")) {
     const hit = nameLookup[normalizeName(part)];
-    if (hit) return hit;
+    if (hit && hit.league === league) return hit;
   }
   return null;
 }
@@ -115,10 +123,13 @@ function resolvePlayer(rawName, nameLookup) {
 // opts.write (default true) — write the result to OUTPUT. Set false when
 // calling from a server context where the bundle FS is read-only.
 // opts.outputPath — override OUTPUT (e.g. "/tmp/prizepicks-lines.json").
+// opts.leagues — override LEAGUES (e.g. scrape just one league).
 export async function scrapePrizePicksForToday(opts = {}) {
-  const { write = true, outputPath = OUTPUT } = opts;
+  const { write = true, outputPath = OUTPUT, leagues = LEAGUES } = opts;
 
-  // Load players.json and build normalized lookup
+  // Load players.json and build normalized lookup. Lookup carries the league
+  // so we don't accidentally match an NBA player to a WNBA prop (or vice
+  // versa) when the two leagues coincide on a name.
   let playerInfo = {};
   try {
     const raw = await fs.readFile(PLAYERS_JSON, "utf8");
@@ -129,69 +140,92 @@ export async function scrapePrizePicksForToday(opts = {}) {
 
   const nameLookup = {};
   for (const [name, ids] of Object.entries(playerInfo)) {
-    nameLookup[normalizeName(name)] = { name, nba: ids.nba, espn: ids.espn };
+    nameLookup[normalizeName(name)] = {
+      name,
+      nba: ids.nba,
+      espn: ids.espn,
+      league: ids.league ?? "NBA",
+    };
   }
 
-  // Keep any projection whose game hasn't tipped yet. Calendar-date
-  // filtering broke around midnight UTC: NBA tip-offs span the UTC day
-  // boundary, so a "today UTC" filter would drop either the early or the
-  // late slate depending on when the cron fired. `start_time >= nowMs`
-  // naturally picks up tomorrow's slate as soon as PrizePicks posts it.
+  // Keep any projection whose game hasn't tipped yet. Calendar-date filtering
+  // breaks around midnight UTC: tip-offs span the UTC day boundary, so a
+  // "today UTC" filter drops either the early or late slate depending on
+  // when the cron fired. `start_time >= nowMs` naturally picks up tomorrow's
+  // slate as soon as PrizePicks posts it.
   const nowMs = Date.now();
   console.log(`  Filtering for games with start_time >= ${new Date(nowMs).toISOString()}...`);
 
-  // Scrape PrizePicks
-  console.log("  Fetching PrizePicks projections...");
-  const projections = await scrapePrizePicks();
-  console.log(`  Got ${projections.length} total projections`);
-
-  // Filter to upcoming games by start_time and match players
+  // Scrape each league sequentially. Tag every projection with `league` for
+  // downstream consumers. Combined output keeps NBA + WNBA props under the
+  // same `by_player` / `games` maps so the analyze-all path stays simple.
   const gamesOutput = {};
   const byPlayer = {};
   let totalProps = 0;
+  const perLeague = {};
 
-  for (const proj of projections) {
-    // Filter by start_time - only include if the game hasn't tipped yet.
-    if (!proj.start_time) continue;
-    const startMs = Date.parse(proj.start_time);
-    if (!Number.isFinite(startMs) || startMs < nowMs) continue;
-
-    const playerTeamRaw = proj.player_team || "";
-    const opponentRaw = proj.opponent || "";
-
-    // Handle combo players like "CLE/DET" - take first team
-    const playerTeam = playerTeamRaw.split("/")[0].trim();
-    const opponent = opponentRaw.split("/")[0].trim();
-
-    if (!playerTeam || !opponent) continue;
-
-    const gameKey = `${opponent}@${playerTeam}`;
-    const matched = resolvePlayer(proj.player_name, nameLookup);
-
-    const prop = {
-      player: proj.player_name,
-      stat_type: proj.stat_type,
-      line: proj.line_score,
-      odds_type: proj.odds_type,
-      player_team: playerTeam,
-      opponent,
-      description: `${playerTeam} vs ${opponent}`,
-      start_time: proj.start_time,
-      player_key: matched?.name ?? null,
-      nba_id: matched?.nba ?? null,
-      espn_id: matched?.espn ?? null,
-    };
-
-    if (!gamesOutput[gameKey]) {
-      gamesOutput[gameKey] = { home: playerTeam, away: opponent, props: [] };
+  for (const { league, league_id } of leagues) {
+    console.log(`  Fetching PrizePicks ${league} (league_id=${league_id}) projections...`);
+    let projections;
+    try {
+      projections = await scrapePrizePicksForLeague(league_id);
+    } catch (err) {
+      console.error(`  ! ${league} scrape failed: ${err.message}`);
+      perLeague[league] = { total_props: 0, error: err.message };
+      continue;
     }
-    gamesOutput[gameKey].props.push(prop);
+    console.log(`  Got ${projections.length} total ${league} projections`);
 
-    const key = matched ? matched.name : proj.player_name;
-    if (!byPlayer[key]) byPlayer[key] = [];
-    byPlayer[key].push(prop);
+    let leagueProps = 0;
+    for (const proj of projections) {
+      // Filter by start_time — only include if the game hasn't tipped yet.
+      if (!proj.start_time) continue;
+      const startMs = Date.parse(proj.start_time);
+      if (!Number.isFinite(startMs) || startMs < nowMs) continue;
 
-    totalProps++;
+      const playerTeamRaw = proj.player_team || "";
+      const opponentRaw = proj.opponent || "";
+
+      // Handle combo players like "CLE/DET" — take first team.
+      const playerTeam = playerTeamRaw.split("/")[0].trim();
+      const opponent = opponentRaw.split("/")[0].trim();
+
+      if (!playerTeam || !opponent) continue;
+
+      // Prefix WNBA games to disambiguate hypothetical NBA/WNBA abbr clashes.
+      const gameKey = league === "WNBA"
+        ? `WNBA:${opponent}@${playerTeam}`
+        : `${opponent}@${playerTeam}`;
+      const matched = resolvePlayer(proj.player_name, nameLookup, league);
+
+      const prop = {
+        player: proj.player_name,
+        league,
+        stat_type: proj.stat_type,
+        line: proj.line_score,
+        odds_type: proj.odds_type,
+        player_team: playerTeam,
+        opponent,
+        description: `${playerTeam} vs ${opponent}`,
+        start_time: proj.start_time,
+        player_key: matched?.name ?? null,
+        nba_id: matched?.nba ?? null,
+        espn_id: matched?.espn ?? null,
+      };
+
+      if (!gamesOutput[gameKey]) {
+        gamesOutput[gameKey] = { league, home: playerTeam, away: opponent, props: [] };
+      }
+      gamesOutput[gameKey].props.push(prop);
+
+      const key = matched ? matched.name : proj.player_name;
+      if (!byPlayer[key]) byPlayer[key] = [];
+      byPlayer[key].push(prop);
+
+      totalProps++;
+      leagueProps++;
+    }
+    perLeague[league] = { total_props: leagueProps };
   }
 
   const result = {
@@ -200,6 +234,7 @@ export async function scrapePrizePicksForToday(opts = {}) {
     by_player: byPlayer,
     total_props: totalProps,
     total_players: Object.keys(byPlayer).length,
+    leagues: perLeague,
   };
 
   if (write) {
@@ -217,6 +252,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   scrapePrizePicksForToday()
     .then((result) => {
       console.log(`\nDone: ${result.total_props} props for ${result.total_players} players`);
+      for (const [league, stats] of Object.entries(result.leagues ?? {})) {
+        console.log(`  ${league}: ${stats.total_props ?? 0} props${stats.error ? ` (error: ${stats.error})` : ""}`);
+      }
     })
     .catch((e) => {
       console.error("Fatal:", e.message);

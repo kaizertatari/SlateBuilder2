@@ -1,4 +1,4 @@
-// Refresh PrizePicks NBA lines for upcoming games.
+// Refresh PrizePicks NBA + WNBA lines for upcoming games.
 // Fetches current projections, filters to games that haven't tipped yet,
 // and writes data/prizepicks-lines.json with player name matching to
 // players.json.
@@ -15,12 +15,17 @@ loadEnvLocal();
 async function main() {
   console.log("=== refresh-prizepicks ===");
 
-  console.log("\n[1/2] Scraping PrizePicks NBA lines for today...");
+  console.log("\n[1/2] Scraping PrizePicks NBA + WNBA lines for today...");
   const result = await scrapePrizePicksForToday();
 
   console.log(`\n  ${result.total_props} props scraped for ${result.total_players} players`);
   console.log(`  Games: ${Object.keys(result.games).join(", ")}`);
   console.log(`  Fetched at: ${result.fetched_at}`);
+  if (result.leagues) {
+    for (const [league, stats] of Object.entries(result.leagues)) {
+      console.log(`  ${league}: ${stats.total_props ?? 0} props${stats.error ? ` (error: ${stats.error})` : ""}`);
+    }
+  }
 
   if (result.note) {
     console.log(`\n  Note: ${result.note}`);

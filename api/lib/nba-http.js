@@ -8,9 +8,15 @@
 import { logPrefix } from "./request-context.js";
 
 export const NBA_BASE = "https://stats.nba.com/stats";
+export const WNBA_BASE = "https://stats.wnba.com/stats";
+
+function baseFor(leagueId) {
+  return leagueId === "10" ? WNBA_BASE : NBA_BASE;
+}
 
 // stats.nba.com checks these specific x-nba-stats-* headers and a browser-y
-// User-Agent; missing any of them yields a silent 4xx.
+// User-Agent; missing any of them yields a silent 4xx. stats.wnba.com expects
+// the same shape but with wnba.com Origin/Referer.
 export const NBA_HEADERS = {
   "User-Agent":
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
@@ -24,27 +30,40 @@ export const NBA_HEADERS = {
   "Connection": "keep-alive",
 };
 
+export const WNBA_HEADERS = {
+  ...NBA_HEADERS,
+  "Origin": "https://www.wnba.com",
+  "Referer": "https://www.wnba.com/",
+};
+
+function headersFor(leagueId) {
+  return leagueId === "10" ? WNBA_HEADERS : NBA_HEADERS;
+}
+
 // Vercel egress IPs are often silently dropped by stats.nba.com (no response,
 // not a 4xx). Without a timeout, each call hangs until Node's socket timeout
 // fires (~60-120s). 6s is enough for a healthy response from a working IP
 // and short enough to not dominate orchestrator latency.
 export const NBA_FETCH_TIMEOUT_MS = 6000;
 
-export async function nbaFetch(endpoint, params) {
+export async function nbaFetch(endpoint, params, opts = {}) {
+  const leagueId = opts.leagueId ?? params?.LeagueID ?? "00";
+  const base = baseFor(leagueId);
+  const headers = headersFor(leagueId);
   const qs = new URLSearchParams(params).toString();
-  const url = `${NBA_BASE}/${endpoint}?${qs}`;
+  const url = `${base}/${endpoint}?${qs}`;
   try {
     const res = await fetch(url, {
-      headers: NBA_HEADERS,
+      headers,
       signal: AbortSignal.timeout(NBA_FETCH_TIMEOUT_MS),
     });
     if (!res.ok) {
-      console.error(`${logPrefix()}stats.nba.com ${endpoint} ${res.status}`);
+      console.error(`${logPrefix()}${base} ${endpoint} ${res.status}`);
       return null;
     }
     return await res.json();
   } catch (err) {
-    console.error(`${logPrefix()}stats.nba.com ${endpoint} threw:`, err.message);
+    console.error(`${logPrefix()}${base} ${endpoint} threw:`, err.message);
     return null;
   }
 }

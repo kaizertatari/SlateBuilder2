@@ -22,7 +22,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PLAYERS_PATH = path.join(ROOT, "data/players.json");
-const OUT_PATH = path.join(ROOT, "data/bbref-splits.json");
+const OUT_PATH_NBA = path.join(ROOT, "data/bbref-splits.json");
+const OUT_PATH_WNBA = path.join(ROOT, "data/bbref-splits-wnba.json");
 
 const HEADERS = { "User-Agent": "Mozilla/5.0 (compatible; PropsGenerator/1.0)" };
 const THROTTLE_MS = 3500;
@@ -31,10 +32,13 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-// BR uses the END year of the NBA season (2025-26 → 2026).
-function defaultSeasonEndYear(date = new Date()) {
+// BR season end year: NBA seasons end the calendar year after they start
+// (2025-26 → 2026). WNBA seasons run within one calendar year — pass that
+// year directly.
+function defaultSeasonEndYear(date = new Date(), league = "NBA") {
   const y = date.getUTCFullYear();
   const m = date.getUTCMonth() + 1;
+  if (league === "WNBA") return m >= 5 ? y : y - 1;
   return m >= 9 ? y + 1 : y;
 }
 
@@ -42,8 +46,15 @@ function nbaSeasonLabel(endYear) {
   return `${endYear - 1}-${String(endYear % 100).padStart(2, "0")}`;
 }
 
-function splitsUrl(slug, endYear) {
+function seasonLabel(endYear, league) {
+  return league === "WNBA" ? String(endYear) : nbaSeasonLabel(endYear);
+}
+
+function splitsUrl(slug, endYear, league = "NBA") {
   const firstLetter = slug[0];
+  if (league === "WNBA") {
+    return `https://www.basketball-reference.com/wnba/players/${firstLetter}/${slug}/splits/${endYear}.html`;
+  }
   return `https://www.basketball-reference.com/players/${firstLetter}/${slug}/splits/${endYear}/`;
 }
 
@@ -102,8 +113,8 @@ function rowToAverages(c) {
   };
 }
 
-export async function fetchPlayerSplits(slug, endYear) {
-  const res = await fetch(splitsUrl(slug, endYear), {
+export async function fetchPlayerSplits(slug, endYear, league = "NBA") {
+  const res = await fetch(splitsUrl(slug, endYear, league), {
     headers: HEADERS,
     signal: AbortSignal.timeout(15000),
   });
@@ -118,26 +129,25 @@ export async function fetchPlayerSplits(slug, endYear) {
   };
 }
 
-async function main() {
-  const flagIndex = process.argv.indexOf("--season");
-  const endYear = flagIndex >= 0 ? Number(process.argv[flagIndex + 1]) : defaultSeasonEndYear();
-  if (!Number.isFinite(endYear)) {
-    console.error("--season expects a 4-digit end year (e.g. 2026)");
-    process.exit(1);
+async function refreshLeague({ players, league, endYear }) {
+  const slugged = Object.entries(players).filter(
+    ([, v]) => v?.bbref && (v.league ?? "NBA") === league
+  );
+  if (slugged.length === 0) {
+    console.log(`  no ${league} players with bbref slug — skipping`);
+    return null;
   }
-
-  const players = JSON.parse(await fs.readFile(PLAYERS_PATH, "utf8"));
-  const slugged = Object.entries(players).filter(([, v]) => v?.bbref);
-  console.log(`Fetching splits for ${slugged.length}/${Object.keys(players).length} players (season ${endYear})...`);
+  console.log(`\n=== ${league} (season ${endYear}, ${slugged.length} players) ===`);
 
   const out = {
-    season: nbaSeasonLabel(endYear),
+    league,
+    season: seasonLabel(endYear, league),
     fetched_at: new Date().toISOString(),
     players: {},
   };
   let ok = 0, failed = 0;
   for (const [name, info] of slugged) {
-    const r = await fetchPlayerSplits(info.bbref, endYear);
+    const r = await fetchPlayerSplits(info.bbref, endYear, league);
     if (r.error) {
       console.error(`  FAIL  ${name}: ${r.error}`);
       failed++;
@@ -150,9 +160,31 @@ async function main() {
     }
     await sleep(THROTTLE_MS);
   }
+  const outPath = league === "WNBA" ? OUT_PATH_WNBA : OUT_PATH_NBA;
+  await fs.writeFile(outPath, JSON.stringify(out, null, 2) + "\n");
+  console.log(`Resolved ${ok}, failed ${failed}. Wrote ${path.relative(ROOT, outPath)}.`);
+  return { ok, failed };
+}
 
-  await fs.writeFile(OUT_PATH, JSON.stringify(out, null, 2) + "\n");
-  console.log(`\nResolved ${ok}, failed ${failed}. Wrote ${OUT_PATH}.`);
+async function main() {
+  const args = process.argv.slice(2);
+  const seasonIdx = args.indexOf("--season");
+  const leagueIdx = args.indexOf("--league");
+  const explicitSeason = seasonIdx >= 0 ? Number(args[seasonIdx + 1]) : null;
+  const explicitLeague = leagueIdx >= 0 ? args[leagueIdx + 1]?.toUpperCase() : null;
+
+  if (explicitSeason != null && !Number.isFinite(explicitSeason)) {
+    console.error("--season expects a 4-digit end year (e.g. 2026)");
+    process.exit(1);
+  }
+
+  const players = JSON.parse(await fs.readFile(PLAYERS_PATH, "utf8"));
+  const leagues = explicitLeague ? [explicitLeague] : ["NBA", "WNBA"];
+
+  for (const league of leagues) {
+    const endYear = explicitSeason ?? defaultSeasonEndYear(new Date(), league);
+    await refreshLeague({ players, league, endYear });
+  }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

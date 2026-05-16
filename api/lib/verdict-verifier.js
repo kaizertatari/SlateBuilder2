@@ -17,6 +17,14 @@
 // promotion, or any qualitative call — those stay with the LLM.
 
 import { PROP_TO_FIELD } from "./prop-types.js";
+import { FRAMEWORK_SCALING } from "./framework.js";
+
+// Pulls the per-league scaled constants the verifier shares with the
+// framework prompt. Defaults to NBA so any pre-league callsite still works.
+function scaleFor(groundTruth) {
+  const league = String(groundTruth?.league ?? "NBA").toUpperCase();
+  return FRAMEWORK_SCALING[league] ?? FRAMEWORK_SCALING.NBA;
+}
 
 // Props that include points — road deduction (Rule 5a) and the FT-shooter
 // extra buffer apply to these.
@@ -222,25 +230,20 @@ function computeOverBufferCheck({ groundTruth, statType, line, seasonAvg, l5Avg 
   }
 
   // Rule 5a road deduction: applies to points-containing scoring props on
-  // road games only. Rebounds/Assists/RA/3PM/FGA unaffected.
-  //   • Regular season: -1.5 (legacy calibration on regular-season splits)
-  //   • [v3.4 R7] Playoff: -2.0 (playoff road environments amplify the
-  //     home/road gap; -2.0 is a conservative working figure pending
-  //     a playoff hit-rate audit in v3.5).
-  // Stacks with the R6 playoff OVER buffer below — road playoff OVERs
-  // need 1.0pt more cushion than regular-season road OVERs in total.
+  // road games only. Rebounds/Assists/RA/3PM/FGA unaffected. Deduction
+  // values come from FRAMEWORK_SCALING[league] — NBA uses -1.5/-2.0,
+  // WNBA scales to -1.25/-1.75 for the shorter 40-minute game. Stacks
+  // with the R6 OVER buffer below.
+  const scale = scaleFor(groundTruth);
   let roadDed = 0;
   if (groundTruth.home_away === "away" && POINTS_CONTAINING.has(statType)) {
-    roadDed = isPlayoffGame(groundTruth) ? 2.0 : 1.5;
+    roadDed = isPlayoffGame(groundTruth) ? scale.road_deduction_playoff : scale.road_deduction_regular;
   }
   const adjusted = baseline - roadDed;
 
-  // R6 — playoff variance buffer:
-  // Regular season: 1.5pt OVER buffer.
-  // Playoff games (groundTruth.series non-null): 2.0pt buffer — reflects
-  // higher playoff game-to-game variance.
+  // R6 — playoff variance buffer. NBA uses 1.5/2.0; WNBA scales to 1.25/1.75.
   // Poor FT shooters (<70%) stack an extra 2pt on top, regardless of season.
-  const baseBuffer = isPlayoffGame(groundTruth) ? 2.0 : 1.5;
+  const baseBuffer = isPlayoffGame(groundTruth) ? scale.over_buffer_playoff : scale.over_buffer_regular;
   const ftPct = groundTruth.season?.averages?.ft_pct ?? null;
   const poorFt = (ftPct != null && ftPct < 0.70 && POINTS_CONTAINING.has(statType));
   const buffer = baseBuffer + (poorFt ? 2 : 0);
@@ -275,9 +278,10 @@ function computeFtFloorCheck({ groundTruth, line }) {
     source = "season";
   }
   if (fta == null || ftPct == null) return null;
-  if (fta < 5) return null;
+  const scale = scaleFor(groundTruth);
+  if (fta < scale.ft_floor_gate_fta) return null;
   const ftFloorPts = fta * ftPct;
-  const totalFloor = ftFloorPts + 8;
+  const totalFloor = ftFloorPts + scale.ft_floor_fg_constant;
   return {
     fta,
     ftPct,

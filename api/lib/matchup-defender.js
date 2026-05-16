@@ -8,8 +8,10 @@
 
 import { nbaFetch, rowToObj, findResultSet } from "./nba-http.js";
 import { currentSeason } from "./nba-stats.js";
-import { TEAM_ID_BY_ABBR } from "./team-ids.js";
+import { teamIdByAbbr } from "./team-ids.js";
 import { swr } from "./cache.js";
+
+const LEAGUE_ID_BY_NAME = { NBA: "00", WNBA: "10" };
 
 // Thresholds — tuned to pre-empt single-possession noise without demanding
 // share levels that real rotation defenses rarely produce.
@@ -23,15 +25,15 @@ const MIN_GAMES = 2;
 const FRESH_TTL_MS = 6 * 60 * 60 * 1000;
 const STALE_TTL_MS = 24 * 60 * 60 * 1000;
 
-function fetchMatchups({ offPlayerId, defTeamId, season, seasonType }) {
+function fetchMatchups({ offPlayerId, defTeamId, season, seasonType, leagueId }) {
   return nbaFetch("leagueseasonmatchups", {
-    LeagueID: "00",
+    LeagueID: leagueId,
     PerMode: "Totals",
     Season: season,
     SeasonType: seasonType,
     OffPlayerID: String(offPlayerId),
     DefTeamID: String(defTeamId),
-  });
+  }, { leagueId });
 }
 
 // Parse a leagueseasonmatchups payload → top-defender object, or null.
@@ -68,24 +70,31 @@ function pickTopDefender(payload, { proxy = false }) {
 // For playoffs, falls through to regular-season data when the playoff query
 // returns no rows (typical in Game 1/2 of a series). The fallback is tagged
 // in the source so the framework can apply lighter weight if desired.
-export async function getPrimaryDefender(playerId, oppAbbr, { season = currentSeason(), seasonType = "Regular Season" } = {}) {
+export async function getPrimaryDefender(playerId, oppAbbr, {
+  season,
+  seasonType = "Regular Season",
+  league = "NBA",
+} = {}) {
   if (!playerId || !oppAbbr) return null;
-  const defTeamId = TEAM_ID_BY_ABBR[String(oppAbbr).toUpperCase()];
+  const defTeamId = teamIdByAbbr(oppAbbr, league);
   if (!defTeamId) return null;
+  const leagueId = LEAGUE_ID_BY_NAME[league] ?? "00";
+  const seasonLabel = season ?? currentSeason(new Date(), league);
 
-  const key = `matchup:${playerId}:${defTeamId}:${season}:${seasonType}`;
+  const key = `matchup:${league}:${playerId}:${defTeamId}:${seasonLabel}:${seasonType}`;
   // Wrap in an envelope so a "no defender" result (null) still gets cached —
-  // swr drops null values, but we don't want to retry NBA Stats every call
+  // swr drops null values, but we don't want to retry stats edge every call
   // for a player with no recorded matchups vs this team.
   const envelope = await swr(key, async () => {
-    const primary = await fetchMatchups({ offPlayerId: playerId, defTeamId, season, seasonType });
+    const primary = await fetchMatchups({ offPlayerId: playerId, defTeamId, season: seasonLabel, seasonType, leagueId });
     let defender = pickTopDefender(primary, { proxy: false });
     if (!defender && seasonType === "Playoffs") {
       const proxy = await fetchMatchups({
         offPlayerId: playerId,
         defTeamId,
-        season,
+        season: seasonLabel,
         seasonType: "Regular Season",
+        leagueId,
       });
       defender = pickTopDefender(proxy, { proxy: true });
     }

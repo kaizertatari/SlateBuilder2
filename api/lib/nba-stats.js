@@ -1,14 +1,39 @@
-// stats.nba.com client. Vercel serverless IPs are sometimes 403'd by the
-// NBA stats edge — every helper returns null on failure so the orchestrator
-// can surface a missing-data SKIP rather than crash.
+// stats.nba.com / stats.wnba.com client. Vercel serverless IPs are sometimes
+// 403'd by the NBA stats edge — every helper returns null on failure so the
+// orchestrator can surface a missing-data SKIP rather than crash.
+//
+// League is passed via opts.league ("NBA" | "WNBA"). LeagueID is "00" for NBA
+// and "10" for WNBA. The stats.wnba.com host mirrors the stats.nba.com API
+// shape; nba-http handles the host swap when leagueId === "10".
 
 import { nbaFetch, rowToObj, findResultSet } from "./nba-http.js";
-import { ABBR_BY_TEAM_ID as NBA_TEAM_ID_TO_ABBR } from "./team-ids.js";
+import {
+  ABBR_BY_TEAM_ID as NBA_TEAM_ID_TO_ABBR,
+  WNBA_ABBR_BY_TEAM_ID,
+} from "./team-ids.js";
 
-export function currentSeason(date = new Date()) {
+const LEAGUE_ID_BY_NAME = { NBA: "00", WNBA: "10" };
+
+function leagueIdFor(league) {
+  return LEAGUE_ID_BY_NAME[league] ?? "00";
+}
+
+function abbrMapFor(league) {
+  return league === "WNBA" ? WNBA_ABBR_BY_TEAM_ID : NBA_TEAM_ID_TO_ABBR;
+}
+
+// NBA season: Oct → June (rolls over in October). WNBA season: May →
+// September (within a single calendar year). currentSeason() returns the
+// season label for the requested league.
+export function currentSeason(date = new Date(), league = "NBA") {
   const y = date.getUTCFullYear();
   const m = date.getUTCMonth() + 1;
-  // NBA season rolls over in October; treat Sep+ as the new season for safety.
+  if (league === "WNBA") {
+    // WNBA seasons are labeled by the single calendar year. Before May the
+    // current season hasn't started — return the prior year's label so
+    // off-season lookups don't 404.
+    return String(m >= 5 ? y : y - 1);
+  }
   const startYear = m >= 9 ? y : y - 1;
   return `${startYear}-${String((startYear + 1) % 100).padStart(2, "0")}`;
 }
@@ -20,20 +45,21 @@ export function currentSeason(date = new Date()) {
 // entry clears, so a later, separate request still re-fetches.
 const dashInflight = new Map();
 
-function dashboardKey(playerId, season, seasonType) {
-  return `${playerId}:${season}:${seasonType}`;
+function dashboardKey(playerId, season, seasonType, leagueId) {
+  return `${leagueId}:${playerId}:${season}:${seasonType}`;
 }
 
-async function fetchPlayerDashboard(playerId, season, seasonType) {
-  const key = dashboardKey(playerId, season, seasonType);
+async function fetchPlayerDashboard(playerId, season, seasonType, leagueId) {
+  const key = dashboardKey(playerId, season, seasonType, leagueId);
   let p = dashInflight.get(key);
   if (!p) {
     p = nbaFetch("playerdashboardbygeneralsplits", {
       ...DASH_DEFAULTS,
+      LeagueID: leagueId,
       PlayerID: playerId,
       Season: season,
       SeasonType: seasonType,
-    });
+    }, { leagueId });
     dashInflight.set(key, p);
     p.finally(() => dashInflight.delete(key));
   }
@@ -82,26 +108,32 @@ function pickAverages(row) {
 }
 
 export async function getSeasonAverages(playerId, {
-  season = currentSeason(),
+  season,
   seasonType = "Regular Season",
+  league = "NBA",
 } = {}) {
   if (!playerId) return null;
-  const data = await fetchPlayerDashboard(playerId, season, seasonType);
+  const leagueId = leagueIdFor(league);
+  const seasonLabel = season ?? currentSeason(new Date(), league);
+  const data = await fetchPlayerDashboard(playerId, seasonLabel, seasonType, leagueId);
   const rs = findResultSet(data, "OverallPlayerDashboard");
   if (!rs?.rowSet?.length) return null;
   return {
-    season,
+    season: seasonLabel,
     season_type: seasonType,
     ...pickAverages(rowToObj(rs.headers, rs.rowSet[0])),
   };
 }
 
 export async function getHomeAwaySplits(playerId, {
-  season = currentSeason(),
+  season,
   seasonType = "Regular Season",
+  league = "NBA",
 } = {}) {
   if (!playerId) return null;
-  const data = await fetchPlayerDashboard(playerId, season, seasonType);
+  const leagueId = leagueIdFor(league);
+  const seasonLabel = season ?? currentSeason(new Date(), league);
+  const data = await fetchPlayerDashboard(playerId, seasonLabel, seasonType, leagueId);
   const rs = findResultSet(data, "LocationPlayerDashboard");
   if (!rs?.rowSet?.length) return null;
   const out = { home: null, road: null };
@@ -114,20 +146,24 @@ export async function getHomeAwaySplits(playerId, {
 }
 
 export async function getLastNGames(playerId, n = 5, {
-  season = currentSeason(),
+  season,
   seasonType = "Regular Season",
+  league = "NBA",
 } = {}) {
   if (!playerId) return null;
+  const leagueId = leagueIdFor(league);
+  const seasonLabel = season ?? currentSeason(new Date(), league);
   const data = await nbaFetch("playergamelog", {
     PlayerID: playerId,
-    Season: season,
+    Season: seasonLabel,
     SeasonType: seasonType,
-    LeagueID: "00",
+    LeagueID: leagueId,
     DateFrom: "",
     DateTo: "",
-  });
+  }, { leagueId });
   const rs = findResultSet(data, "PlayerGameLog");
   if (!rs?.rowSet?.length) return null;
+  const seasonLabelOut = seasonLabel;
   const games = rs.rowSet.slice(0, n).map((r) => {
     const o = rowToObj(rs.headers, r);
     return {
@@ -155,7 +191,7 @@ export async function getLastNGames(playerId, n = 5, {
   const avg = (key) =>
     games.reduce((s, g) => s + (g[key] ?? 0), 0) / games.length;
   return {
-    season,
+    season: seasonLabelOut,
     season_type: seasonType,
     n: games.length,
     games,
@@ -174,15 +210,24 @@ export async function getLastNGames(playerId, n = 5, {
   };
 }
 
-// Returns { <NBA_ABBR>: { team_id, team_name, def_rating, def_rank } } for
-// all 30 teams, or null on failure. Rank 1 = best defense (lowest DEF_RATING).
-export async function getLeagueTeamDefense({ season = currentSeason(), seasonType = "Regular Season" } = {}) {
+// Returns { <ABBR>: { team_id, team_name, def_rating, def_rank } } for every
+// team in the requested league, or null on failure. Rank 1 = best defense
+// (lowest DEF_RATING).
+export async function getLeagueTeamDefense({
+  season,
+  seasonType = "Regular Season",
+  league = "NBA",
+} = {}) {
+  const leagueId = leagueIdFor(league);
+  const seasonLabel = season ?? currentSeason(new Date(), league);
+  const teamIdToAbbr = abbrMapFor(league);
   const data = await nbaFetch("leaguedashteamstats", {
     ...DASH_DEFAULTS,
+    LeagueID: leagueId,
     MeasureType: "Advanced",
-    Season: season,
+    Season: seasonLabel,
     SeasonType: seasonType,
-  });
+  }, { leagueId });
   const rs = findResultSet(data, "LeagueDashTeamStats");
   if (!rs?.rowSet?.length) return null;
   const headers = rs.headers;
@@ -199,7 +244,7 @@ export async function getLeagueTeamDefense({ season = currentSeason(), seasonTyp
   rows.sort((a, b) => a.def_rating - b.def_rating);
   const out = {};
   rows.forEach((r, i) => {
-    const abbr = NBA_TEAM_ID_TO_ABBR[r.team_id];
+    const abbr = teamIdToAbbr[r.team_id];
     if (!abbr) return;
     out[abbr] = {
       team_id: r.team_id,
@@ -211,12 +256,13 @@ export async function getLeagueTeamDefense({ season = currentSeason(), seasonTyp
   return out;
 }
 
-export async function getCommonPlayerInfo(playerId) {
+export async function getCommonPlayerInfo(playerId, { league = "NBA" } = {}) {
   if (!playerId) return null;
+  const leagueId = leagueIdFor(league);
   const data = await nbaFetch("commonplayerinfo", {
     PlayerID: playerId,
-    LeagueID: "00",
-  });
+    LeagueID: leagueId,
+  }, { leagueId });
   const rs = findResultSet(data, "CommonPlayerInfo");
   if (!rs?.rowSet?.length) return null;
   const o = rowToObj(rs.headers, rs.rowSet[0]);
