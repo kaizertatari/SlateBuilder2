@@ -81,15 +81,19 @@ export function composeGroundTruth(params) {
     season: seasonAvg ? {
       label: seasonAvg.season,
       type: seasonAvg.season_type,
+      is_prior_season: !!seasonAvg.is_prior_season,
       averages: pickAverages(seasonAvg),
     } : null,
     l5: l5 ? {
       type: l5.season_type,
       n: l5.n,
+      is_prior_season: !!l5.is_prior_season,
       games: l5.games,
       averages: enrichL5Averages(l5.averages),
     } : null,
     splits: splits ? {
+      is_prior_season: !!splits.is_prior_season,
+      source_season: splits.source_season ?? null,
       home: splits.home ? pickAverages(splits.home) : null,
       road: splits.road ? pickAverages(splits.road) : null,
     } : null,
@@ -110,6 +114,15 @@ export function composeGroundTruth(params) {
       : (primaryDefender ? { primary_defender: primaryDefender } : null),
     series,
   };
+
+  // Aggregate per-section prior-season fallback markers into one top-level
+  // list so the framework prompt has one obvious place to read. Caps the
+  // verdict at A-tier max (see framework body — DATA-PROVENANCE GUARD).
+  const dataWarnings = [];
+  if (seasonAvg?.is_prior_season) dataWarnings.push("prior_season_season_avg");
+  if (l5?.is_prior_season) dataWarnings.push("prior_season_l5");
+  if (splits?.is_prior_season) dataWarnings.push("prior_season_splits");
+  groundTruth.data_warnings = dataWarnings.length > 0 ? dataWarnings : null;
 
   const missing = [];
   if (!groundTruth.season)         missing.push("season_avg");

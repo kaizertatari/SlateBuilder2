@@ -138,14 +138,21 @@ function collectMechanicalFailures({ groundTruth, statType, direction, line }) {
   const l5Avg = groundTruth.l5?.averages?.[field] ?? null;
   const hasBaseline = seasonAvg != null || l5Avg != null;
 
+  // No baseline = no math is defensible. Without season or L5 averages the
+  // OVER buffer and FT-floor checks can't run, which would let the LLM's
+  // hallucinated numbers slip through verification (opening-day WNBA, etc.).
+  // Hard-SKIP here so both the pre-filter and the post-LLM verifier paths
+  // short-circuit before any qualitative call is trusted.
+  if (!hasBaseline) {
+    return [{
+      reason: "missing_baseline",
+      detail: `no season.averages.${field} and no l5.averages.${field}`,
+    }];
+  }
+
   const out = [];
 
-  // OVER buffer (R6) and FT-floor (R2) need a baseline. R9 does not —
-  // it gates on win_prob alone, so we run it regardless of baseline
-  // presence. Without a baseline, upstream should have SKIPped on
-  // missing data, but we still want R9 to fire if win_prob is out of band.
-
-  if (hasBaseline && direction === "OVER") {
+  if (direction === "OVER") {
     const buf = computeOverBufferCheck({ groundTruth, statType, line, seasonAvg, l5Avg });
     if (buf && !buf.passes) {
       out.push({
@@ -155,7 +162,7 @@ function collectMechanicalFailures({ groundTruth, statType, direction, line }) {
     }
   }
 
-  if (hasBaseline && direction === "UNDER" && FT_FLOOR_PROPS.has(statType)) {
+  if (direction === "UNDER" && FT_FLOOR_PROPS.has(statType)) {
     const ft = computeFtFloorCheck({ groundTruth, line });
     if (ft && ft.invalid) {
       out.push({

@@ -76,6 +76,7 @@ HARD GATES (cannot be bypassed):
 - Game 1: B-tier max baseline + mandatory SKIP advisory flag (verdict still issued; see Playoff Mode rules above)
 - Game 2 hard cap: A-tier max ALL props both directions (playoff only)
 - [v3.4] Rule 5i FT-Floor Insurance Guard: see below — UNDER on Points/PRA invalid when player's FT-protected floor exceeds line.
+- [v3.4] DATA-PROVENANCE GUARD: when groundTruth.data_warnings is non-null and contains any "prior_season_*" entry, cap the verdict at A-tier max and add the flag "⚠️ prior-season baseline (<entries>)". The baseline is from a different season — rotational role, pace, and personnel context may have shifted — so an S-tier promotion is unsafe regardless of how clean the arithmetic looks. Treat each prior-season entry as one independent signal MISSING, not present, for the S-tier gate "3+ independent signals" requirement.
 
 ROAD DEDUCTION (Rule 5a) — sample-aware:
 - Regular season (groundTruth.series is null): subtract ${c.road_deduction_regular} pts from the governing baseline (season or L5 per the L5-vs-Season governance rule) before line comparison on road scoring props.

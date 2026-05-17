@@ -32,12 +32,13 @@ export function getHomeAwaySplits(playerName, {
   const snapshot = snapshotFor(league);
   if (!snapshot?.players) return null;
   // BR splits are keyed by season label (e.g. "2025-26" NBA, "2025" WNBA).
-  // The snapshot only covers one season at a time; if the caller asked for a
-  // different one, signal a miss so the live stats path can serve the right
-  // year.
-  if (season && snapshot.season && season !== snapshot.season) {
-    console.warn(`${logPrefix()}bbref snapshot (${league}) is ${snapshot.season}, caller asked for ${season} — returning null`);
-    return null;
+  // The snapshot only covers one season at a time. On a season mismatch we
+  // still return the snapshot data (better than nothing on opening day) but
+  // tag it with is_prior_season=true so composeGroundTruth surfaces a
+  // data_warnings entry and the framework caps the verdict accordingly.
+  const isPriorSeason = !!(season && snapshot.season && season !== snapshot.season);
+  if (isPriorSeason) {
+    console.warn(`${logPrefix()}bbref snapshot (${league}) is ${snapshot.season}, caller asked for ${season} — returning prior-season fallback`);
   }
 
   const row = snapshot.players[playerName];
@@ -46,6 +47,8 @@ export function getHomeAwaySplits(playerName, {
   return {
     home: row.home ?? null,
     road: row.road ?? null,
+    is_prior_season: isPriorSeason,
+    source_season: snapshot.season,
   };
 }
 

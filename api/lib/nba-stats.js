@@ -38,6 +38,22 @@ export function currentSeason(date = new Date(), league = "NBA") {
   return `${startYear}-${String((startYear + 1) % 100).padStart(2, "0")}`;
 }
 
+// Used by analyze.js opening-day fallback: when the current-season gamelog
+// is empty (WNBA in mid-May, NBA in early October), the orchestrator retries
+// against the prior season so the LLM has a baseline. Returns null on
+// unrecognized format so callers can skip the retry.
+export function priorSeasonLabel(season, league = "NBA") {
+  if (!season) return null;
+  if (league === "WNBA") {
+    const y = parseInt(season, 10);
+    return Number.isFinite(y) ? String(y - 1) : null;
+  }
+  const m = /^(\d{4})-(\d{2})$/.exec(season);
+  if (!m) return null;
+  const start = parseInt(m[1], 10) - 1;
+  return `${start}-${String((start + 1) % 100).padStart(2, "0")}`;
+}
+
 // Concurrent in-flight de-dupe for playerdashboardbygeneralsplits — the
 // season-averages and home/road-splits helpers both extract from the same
 // payload, and the orchestrator fires them in parallel. Without this they'd

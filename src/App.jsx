@@ -486,6 +486,84 @@ export default function App() {
               )}
             </div>
 
+            {/* Tier breakdown — surfaces what the LLM/verifier actually
+                returned across all analyzed lines. The S/A summary above
+                only counts what reaches the table; this row shows where the
+                rest landed (B-tier advisory, mechanical SKIPs, errors). */}
+            {results.tier_counts && (
+              <div style={{
+                background: "#0a1420",
+                border: "1px solid #1e3040",
+                borderTop: "none",
+                padding: "8px 16px",
+                marginTop: -16,
+                marginBottom: 16,
+                fontSize: 10,
+                color: "#446688",
+                display: "flex",
+                gap: 16,
+                flexWrap: "wrap",
+              }}>
+                <span style={{ letterSpacing: 1 }}>TIER COUNTS:</span>
+                {Object.entries(results.tier_counts)
+                  .filter(([, n]) => n > 0)
+                  .map(([tier, n]) => {
+                    const c = tier === "S" ? "#FFD700"
+                            : tier === "A" ? "#00FF88"
+                            : tier === "B" ? "#4488FF"
+                            : tier === "SKIP" ? "#886644"
+                            : "#aa4444";
+                    return (
+                      <span key={tier} style={{ color: c }}>
+                        {tier} {n}
+                      </span>
+                    );
+                  })}
+              </div>
+            )}
+
+            {/* Player-wide skip reasons (e.g. no_upcoming_game,
+                player_not_configured) — surface so the operator knows the
+                analysis stopped at the data layer, not the framework. */}
+            {results.skipped && results.skipped.length > 0 && (
+              <div style={{
+                background: "#1a0f00",
+                border: "1px solid #663300",
+                padding: "8px 14px",
+                marginBottom: 16,
+                fontSize: 11,
+                color: "#cc8844",
+              }}>
+                <div style={{ fontSize: 10, letterSpacing: 1, marginBottom: 4, color: "#886644" }}>
+                  SKIPPED AT DATA LAYER
+                </div>
+                {results.skipped.map((s, i) => (
+                  <div key={i}>· {s.stat ? `${s.stat}: ` : ""}{s.reason}{s.message ? ` — ${s.message}` : ""}</div>
+                ))}
+              </div>
+            )}
+
+            {/* Errors from the LLM router (provider exhaustion, parse
+                failures). Already counted under tier_counts.UNKNOWN above,
+                but the per-task reason is only visible here. */}
+            {results.errors && results.errors.length > 0 && (
+              <div style={{
+                background: "#1a0000",
+                border: "1px solid #660000",
+                padding: "8px 14px",
+                marginBottom: 16,
+                fontSize: 11,
+                color: "#cc6666",
+              }}>
+                <div style={{ fontSize: 10, letterSpacing: 1, marginBottom: 4, color: "#884444" }}>
+                  LLM ERRORS ({results.errors.length})
+                </div>
+                {results.errors.slice(0, 5).map((e, i) => (
+                  <div key={i}>· {e.task}: {e.error}</div>
+                ))}
+              </div>
+            )}
+
             {/* Table */}
             {results.top_10 && results.top_10.length > 0 ? (
               <div style={{ overflowX: "auto" }}>
@@ -569,7 +647,27 @@ export default function App() {
                 fontSize: 12,
                 color: "#446688",
               }}>
-                No S-Tier or A-Tier picks found for the selected filters.
+                <div>No S-Tier or A-Tier picks found for the selected filters.</div>
+                {results.tier_counts && (() => {
+                  const tc = results.tier_counts;
+                  const nonZero = Object.entries(tc).filter(([, n]) => n > 0);
+                  if (nonZero.length === 0) return null;
+                  const total = nonZero.reduce((s, [, n]) => s + n, 0);
+                  // When everything bucketed into SKIP, the most likely
+                  // cause is the new missing_baseline gate (opening-day
+                  // WNBA, retired player, no recent games). Surface it.
+                  const allSkip = tc.SKIP === total && total > 0;
+                  return (
+                    <div style={{ marginTop: 10, fontSize: 11, color: "#668899" }}>
+                      Breakdown: {nonZero.map(([t, n]) => `${t} ${n}`).join(" · ")}
+                      {allSkip && (
+                        <div style={{ marginTop: 6, color: "#886644" }}>
+                          All lines SKIPped at the mechanical layer — most often missing baseline (e.g. opening-day sample, no recent games).
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </div>

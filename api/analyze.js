@@ -1,6 +1,7 @@
 import { resolvePlayer } from "./lib/player-ids.js";
 import {
   currentSeason,
+  priorSeasonLabel,
   getCommonPlayerInfo,
   getSeasonAverages,
   getLastNGames,
@@ -141,8 +142,24 @@ export async function gatherGroundTruth({ player, propType, line }) {
   trace.l5 = l5?.games?.length ? "espn_gamelog" : null;
   if (!trace.l5) {
     l5 = await getLastNGames(playerId, 5, { seasonType, league });
-    trace.l5 = l5?.games?.length ? "stats_edge" : "missing";
+    trace.l5 = l5?.games?.length ? "stats_edge" : null;
   }
+  // Opening-day cliff: when the current-season gamelog is empty (WNBA mid-May,
+  // NBA early October) the LLM has no baseline and either hallucinates or
+  // SKIPs every prop via the verifier's missing_baseline gate. Pull the prior
+  // season's most-recent regular-season games as a fallback and tag the
+  // result so composeGroundTruth surfaces a data_warnings entry.
+  if (!l5?.games?.length) {
+    const priorSeason = priorSeasonLabel(season, league);
+    if (priorSeason && espnId) {
+      const fb = await espnStats.getLastNGames(espnId, 5, { season: priorSeason, postseason: false, league });
+      if (fb?.games?.length) {
+        l5 = { ...fb, is_prior_season: true };
+        trace.l5 = "espn_gamelog_prior";
+      }
+    }
+  }
+  if (!l5?.games?.length) trace.l5 = "missing";
 
   // Splits and opponent defense use regular season — playoff samples are too
   // small to be a stable baseline. Same logic as Rule 5a road deduction.
@@ -166,8 +183,23 @@ export async function gatherGroundTruth({ player, propType, line }) {
   trace.opponent_defense = opponentDefense ? `team_defense_${opponentDefense.source}` : "missing";
   trace.primary_defender = primaryDefender ? primaryDefender.source : "missing";
 
-  const seasonAvg = espnSeasonAvg ?? await getSeasonAverages(playerId, { seasonType: "Regular Season", league });
-  trace.season_avg = espnSeasonAvg ? "espn_gamelog" : (seasonAvg ? "stats_edge" : "missing");
+  let seasonAvg = espnSeasonAvg ?? await getSeasonAverages(playerId, { seasonType: "Regular Season", league });
+  trace.season_avg = espnSeasonAvg ? "espn_gamelog" : (seasonAvg ? "stats_edge" : null);
+  // Same opening-day fallback as L5: when the current season has no games
+  // yet, pull the prior-season aggregate so the framework has something to
+  // anchor against. The is_prior_season tag propagates through to the
+  // groundTruth data_warnings.
+  if (!seasonAvg) {
+    const priorSeason = priorSeasonLabel(season, league);
+    if (priorSeason && espnId) {
+      const fb = await espnStats.getSeasonAverages(espnId, { season: priorSeason, league });
+      if (fb) {
+        seasonAvg = { ...fb, is_prior_season: true };
+        trace.season_avg = "espn_gamelog_prior";
+      }
+    }
+  }
+  if (!seasonAvg) trace.season_avg = "missing";
 
   const { groundTruth, missing } = composeGroundTruth({
     player, propType, line, league,
