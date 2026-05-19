@@ -74,6 +74,21 @@ async function handleRefresh(req, reqId, method) {
 
   try {
     const data = await scrapePrizePicksForToday({ write: false });
+    // PrizePicks blocks cloud-provider IPs, so a scrape from Vercel silently
+    // yields total_props=0. Writing that would clobber the good blob pushed
+    // from a residential IP. Refuse the write and surface the per-league
+    // errors so the caller can see why.
+    if (!data.total_props) {
+      return Response.json(
+        {
+          request_id: reqId,
+          error: "Scrape returned 0 props; refusing to overwrite blob.",
+          fetched_at: data.fetched_at,
+          leagues: data.leagues,
+        },
+        { status: 502 }
+      );
+    }
     const persistedTo = await writeLines(data);
     return Response.json({
       request_id: reqId,

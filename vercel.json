@@ -7,9 +7,5 @@
   },
   "rewrites": [
     { "source": "/(.*)", "destination": "/" }
-  ],
-  "crons": [
-    { "path": "/api/refresh-lines", "schedule": "0 5 * * *" },
-    { "path": "/api/refresh-lines", "schedule": "0 17 * * *" }
   ]
 }
