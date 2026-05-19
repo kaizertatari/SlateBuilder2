@@ -24,7 +24,8 @@
     "smoke:gemini": "node scripts/smoke-gemini.mjs",
     "smoke:gt": "node scripts/smoke-orchestrator.mjs",
     "smoke:picks": "node scripts/smoke-find-picks.mjs",
-    "smoke:prompt": "node scripts/smoke-prompt.mjs"
+    "smoke:prompt": "node scripts/smoke-prompt.mjs",
+    "smoke:prop": "node scripts/smoke-prop.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^2.3.3",
