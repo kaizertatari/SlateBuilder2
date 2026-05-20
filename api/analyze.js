@@ -25,6 +25,7 @@ import { rateLimit } from "./lib/rate-limit.js";
 import { runWithRequestContext } from "./lib/request-context.js";
 import { PROP_TO_FIELD } from "./lib/prop-types.js";
 import { verifyVerdict, preFilterMechanical } from "./lib/verdict-verifier.js";
+import { logVerdict } from "./lib/verdict-logger.js";
 import { randomUUID } from "node:crypto";
 import * as bbref from "./lib/bbref.js";
 import {
@@ -293,13 +294,21 @@ async function handlePost(req) {
 
     // Handle SKIP conditions from data gathering
     if (gathered.skipReason) {
-      return Response.json(skipResult(gathered.skipReason, gathered.message));
+      const skip = skipResult(gathered.skipReason, gathered.message);
+      logVerdict({ source: "analyze", input: { player, propType, line }, result: skip });
+      return Response.json(skip);
     }
 
     const { groundTruth, missing, trace } = gathered;
 
     // Check for missing required data
     if (missing.length > 0) {
+      logVerdict({
+        source: "analyze",
+        input: { player, propType, line },
+        result: { verdict: "SKIP", tier: "SKIP", flags: missing.map((f) => `missing: ${f}`) },
+        groundTruth,
+      });
       return createMissingDataResponse(missing, trace);
     }
 
@@ -315,6 +324,7 @@ async function handlePost(req) {
       line,
     });
     if (preSkip) {
+      logVerdict({ source: "analyze", input: { player, propType, line }, result: preSkip, groundTruth });
       return createSuccessResponse(preSkip, groundTruth);
     }
 
@@ -328,6 +338,12 @@ async function handlePost(req) {
     // Invoke routed LLM (Groq/Gemini per LLM_PROVIDERS)
     const llmResponse = await invokeLLM(groundTruth);
     if (llmResponse.isError) {
+      logVerdict({
+        source: "analyze",
+        input: { player, propType, line },
+        groundTruth,
+        errorInfo: { message: "LLM call failed", name: "LLMError", status: 500 },
+      });
       return llmResponse.response;
     }
 
@@ -343,9 +359,14 @@ async function handlePost(req) {
     });
 
     // Return successful response with (possibly overridden) verdict
+    logVerdict({ source: "analyze", input: { player, propType, line }, result: verified, groundTruth });
     return createSuccessResponse(verified, groundTruth);
   } catch (error) {
     // Handle unexpected errors with proper error categorization
+    logVerdict({
+      source: "analyze",
+      errorInfo: { message: error.message, name: error.name, status: error.status ?? 500 },
+    });
     return createErrorResponse(error);
   }
 }

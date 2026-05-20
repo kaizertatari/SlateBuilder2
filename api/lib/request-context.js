@@ -14,3 +14,7 @@ export function logPrefix() {
   const ctx = storage.getStore();
   return ctx?.reqId ? `[${ctx.reqId}] ` : "";
 }
+
+export function getReqId() {
+  return storage.getStore()?.reqId ?? null;
+}

@@ -16,6 +16,7 @@ import { readLines } from "./lib/lines-store.js";
 import { STATS, mapPrizePicksStatType } from "./lib/prop-types.js";
 import { get as cacheGet, set as cacheSet } from "./lib/cache.js";
 import { verifyVerdict, preFilterMechanical } from "./lib/verdict-verifier.js";
+import { logVerdict } from "./lib/verdict-logger.js";
 import { randomUUID } from "node:crypto";
 
 export const runtime = "nodejs";
@@ -275,6 +276,12 @@ async function handlePost(req, reqId) {
       });
       if (preSkip) {
         tierCounts.SKIP += 1;
+        logVerdict({
+          source: "analyze-all",
+          input: { player: task.player, propType: task.propType, line: task.line },
+          result: preSkip,
+          groundTruth: taskGroundTruth,
+        });
         continue;
       }
 
@@ -293,6 +300,12 @@ async function handlePost(req, reqId) {
       if (llm.error) {
         errors.push({ task: `${task.player} ${task.propType}`, error: llm.error });
         tierCounts.UNKNOWN += 1;
+        logVerdict({
+          source: "analyze-all",
+          input: { player: task.player, propType: task.propType, line: task.line },
+          groundTruth: taskGroundTruth,
+          errorInfo: { message: llm.error, name: "LLMError", status: 500 },
+        });
         continue;
       }
 
@@ -313,6 +326,12 @@ async function handlePost(req, reqId) {
 
       const tierKey = tierCounts[verified.tier] !== undefined ? verified.tier : "UNKNOWN";
       tierCounts[tierKey] += 1;
+      logVerdict({
+        source: "analyze-all",
+        input: { player: task.player, propType: task.propType, line: task.line },
+        result: verified,
+        groundTruth: taskGroundTruth,
+      });
       if (verified.tier === "S" || verified.tier === "A") {
         results.push({
           player: task.player,
