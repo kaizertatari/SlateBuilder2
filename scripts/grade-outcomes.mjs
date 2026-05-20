@@ -8,10 +8,16 @@
 // the cron story uniform: one Windows Task Scheduler entry per script.
 //
 // Usage:
-//   node scripts/grade-outcomes.mjs                        # grade yesterday
-//   node scripts/grade-outcomes.mjs --date 2026-05-19      # grade specific UTC date
-//   node scripts/grade-outcomes.mjs --lookback 14          # also retry ungraded from last 14 days
+//   node scripts/grade-outcomes.mjs                        # window ends today UTC, 7d back
+//   node scripts/grade-outcomes.mjs --date 2026-05-19      # window ends on that UTC date
+//   node scripts/grade-outcomes.mjs --lookback 14          # extend backfill / retry window
 //   node scripts/grade-outcomes.mjs --dry-run              # show what would emit, don't write
+//
+// Default --date is today UTC (not yesterday): a 10am-ET run is 15:00 UTC,
+// and the prior ET evening's slate straddles the UTC midnight boundary
+// (east-coast tip-offs on the prior UTC day, west-coast late games on
+// today's UTC day). A "today UTC" window covers both halves; the 7-day
+// lookback handles retries for postponed games.
 //
 // Postponed games stay ungraded automatically: when no gamelog entry
 // matches the verdict's game_start_time, we skip and the next run
@@ -55,7 +61,7 @@ async function main() {
   }
 
   const opts = parseArgs(process.argv.slice(2));
-  const targetDate = opts.date ?? yesterdayUTCDate();
+  const targetDate = opts.date ?? todayUTCDate();
   const lookbackDays = opts.lookback ?? 7;
   const dryRun = !!opts.dryRun;
 
@@ -307,9 +313,8 @@ function iso(d) {
   return d.toISOString();
 }
 
-function yesterdayUTCDate() {
-  const d = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  return d.toISOString().slice(0, 10);
+function todayUTCDate() {
+  return new Date().toISOString().slice(0, 10);
 }
 
 function seasonEndYearForDate(isoString, league) {
