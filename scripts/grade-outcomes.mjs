@@ -73,17 +73,24 @@ async function main() {
   // Pull verdicts + existing outcomes in the window in two queries; join
   // in JS. APL has a join operator but the syntax is fussier than this
   // two-shot approach, and the dataset is small.
-  const verdicts = await queryAxiom(token, dataset, {
-    apl: `['${dataset}'] | where event_type == "verdict" and isnotnull(game_start_time) and isnotnull(espn_id)`,
+  //
+  // We DON'T filter by isnotnull(game_start_time) in APL because Axiom's
+  // schema is data-driven: a where-clause referencing a field that has
+  // never been ingested throws "invalid field" at query time. Instead we
+  // pull all verdict events in the window and filter in JS. Old-schema
+  // events (without game_start_time / espn_id) drop out naturally.
+  const verdictsRaw = await queryAxiom(token, dataset, {
+    apl: `['${dataset}'] | where event_type == "verdict"`,
     startTime: iso(windowStart),
     endTime: iso(windowEnd),
   });
+  const verdicts = verdictsRaw.filter((v) => v.game_start_time && v.espn_id);
   const outcomes = await queryAxiom(token, dataset, {
     apl: `['${dataset}'] | where event_type == "outcome"`,
     startTime: iso(windowStart),
     endTime: iso(windowEnd),
   });
-  console.log(`Found ${verdicts.length} verdict events, ${outcomes.length} existing outcome events in window`);
+  console.log(`Found ${verdicts.length}/${verdictsRaw.length} usable verdict events (with game_start_time + espn_id), ${outcomes.length} existing outcome events in window`);
 
   // Build a Set of join keys that ALREADY have outcomes — we won't regrade.
   const graded = new Set();

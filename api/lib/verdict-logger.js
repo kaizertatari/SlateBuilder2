@@ -69,7 +69,10 @@ export function logVerdict({
     line: input?.line ?? null,
     direction,
     stat_field: stat ? (PROP_TO_FIELD[stat] ?? null) : null,
-    game_start_time: groundTruth?.game?.start_time ?? null,
+    // composeGroundTruth stores ESPN's full ISO timestamp under `game.date`
+    // (see api/lib/ground-truth.js:64). Fall back to `start_time` for any
+    // future change in the upstream field name.
+    game_start_time: groundTruth?.game?.date ?? groundTruth?.game?.start_time ?? null,
     nba_id: playerInfo?.nba ?? groundTruth?.info?.player_id ?? null,
     espn_id: playerInfo?.espn ?? null,
     // Latency / provider — null on pre-filter SKIPs that never called LLM
