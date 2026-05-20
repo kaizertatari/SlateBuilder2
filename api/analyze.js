@@ -208,7 +208,7 @@ export async function gatherGroundTruth({ player, propType, line }) {
     seasonAvg, l5, splits, winProb, allInjuries, opponentDefense, primaryDefender,
   });
 
-   return { groundTruth, missing, trace };
+   return { groundTruth, missing, trace, playerInfo };
  }
 
 /**
@@ -267,6 +267,11 @@ async function gatherGroundTruthWithRetry({ player, propType, line }) {
  * @returns {Promise<Response>} JSON response with analysis results or error
  */
 async function handlePost(req) {
+  // duration_ms in verdict events is measured from here so it covers
+  // ground-truth fetch + LLM round-trip + verifier — i.e., what the user
+  // actually waited for.
+  const startedAt = Date.now();
+  const elapsed = () => Date.now() - startedAt;
   try {
     // Extract and sanitize client IP for rate limiting
     const ip = (req.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim();
@@ -277,7 +282,7 @@ async function handlePost(req) {
     if (!limit.ok) {
       const retryAfterMs = limit.retryAfterMs || rateLimitWindowMs;
       return createErrorResponse(new RateLimitError(
-        "Rate limit exceeded. Try again shortly.", 
+        "Rate limit exceeded. Try again shortly.",
         retryAfterMs
       ));
     }
@@ -295,11 +300,16 @@ async function handlePost(req) {
     // Handle SKIP conditions from data gathering
     if (gathered.skipReason) {
       const skip = skipResult(gathered.skipReason, gathered.message);
-      logVerdict({ source: "analyze", input: { player, propType, line }, result: skip });
+      logVerdict({
+        source: "analyze",
+        input: { player, propType, line },
+        result: skip,
+        durationMs: elapsed(),
+      });
       return Response.json(skip);
     }
 
-    const { groundTruth, missing, trace } = gathered;
+    const { groundTruth, missing, trace, playerInfo } = gathered;
 
     // Check for missing required data
     if (missing.length > 0) {
@@ -308,6 +318,9 @@ async function handlePost(req) {
         input: { player, propType, line },
         result: { verdict: "SKIP", tier: "SKIP", flags: missing.map((f) => `missing: ${f}`) },
         groundTruth,
+        playerInfo,
+        trace,
+        durationMs: elapsed(),
       });
       return createMissingDataResponse(missing, trace);
     }
@@ -324,7 +337,15 @@ async function handlePost(req) {
       line,
     });
     if (preSkip) {
-      logVerdict({ source: "analyze", input: { player, propType, line }, result: preSkip, groundTruth });
+      logVerdict({
+        source: "analyze",
+        input: { player, propType, line },
+        result: preSkip,
+        groundTruth,
+        playerInfo,
+        trace,
+        durationMs: elapsed(),
+      });
       return createSuccessResponse(preSkip, groundTruth);
     }
 
@@ -342,7 +363,10 @@ async function handlePost(req) {
         source: "analyze",
         input: { player, propType, line },
         groundTruth,
+        playerInfo,
+        trace,
         errorInfo: { message: "LLM call failed", name: "LLMError", status: 500 },
+        durationMs: elapsed(),
       });
       return llmResponse.response;
     }
@@ -359,13 +383,24 @@ async function handlePost(req) {
     });
 
     // Return successful response with (possibly overridden) verdict
-    logVerdict({ source: "analyze", input: { player, propType, line }, result: verified, groundTruth });
+    logVerdict({
+      source: "analyze",
+      input: { player, propType, line },
+      result: verified,
+      groundTruth,
+      playerInfo,
+      trace,
+      durationMs: elapsed(),
+      llmProvider: llmResponse.provider,
+      llmModel: llmResponse.model,
+    });
     return createSuccessResponse(verified, groundTruth);
   } catch (error) {
     // Handle unexpected errors with proper error categorization
     logVerdict({
       source: "analyze",
       errorInfo: { message: error.message, name: error.name, status: error.status ?? 500 },
+      durationMs: elapsed(),
     });
     return createErrorResponse(error);
   }
@@ -375,7 +410,7 @@ async function handlePost(req) {
  * Invokes the routed LLM (Groq/Gemini) with the given ground truth data.
  * Provider selection happens inside callLLM per LLM_PROVIDERS.
  * @param {Object} groundTruth - The verified data to use for analysis
- * @returns {{isError: boolean, response?: Response, data?: Object}} Result containing either the LLM response or error
+ * @returns {{isError: boolean, response?: Response, data?: Object, provider?: string, model?: string}}
  */
 async function invokeLLM(groundTruth) {
   try {
@@ -390,10 +425,12 @@ async function invokeLLM(groundTruth) {
         response: Response.json({ error: llm.error, debug: llm.debug }, { status: 500 })
       };
     }
-    
+
     return {
       isError: false,
-      data: llm.json
+      data: llm.json,
+      provider: llm.provider ?? null,
+      model: llm.model ?? null,
     };
   } catch (error) {
     return {
@@ -975,13 +1012,14 @@ async function groqAttempt(apiKey, prompt, model, { maxTokens = 1500, validator 
       debug: jsonStr.slice(0, 800),
     };
   }
-  return { json: parsed };
+  return { json: parsed, provider: "groq", model };
 }
 
 /**
  * Single attempt against Gemini's generateContent endpoint. Same return
- * shape as groqAttempt: { json } on success, { error, retryable, debug? }
- * on failure. Used by callGeminiChain inside the multi-provider router.
+ * shape as groqAttempt: { json, provider, model } on success,
+ * { error, retryable, debug? } on failure. Used by callGeminiChain
+ * inside the multi-provider router.
  */
 async function geminiAttempt(apiKey, prompt, model, { maxTokens = 1500, validator = validateLLMOutput } = {}) {
   let res;
@@ -1052,7 +1090,7 @@ async function geminiAttempt(apiKey, prompt, model, { maxTokens = 1500, validato
       debug: jsonStr.slice(0, 800),
     };
   }
-  return { json: parsed };
+  return { json: parsed, provider: "gemini", model };
 }
 
 const VALID_VERDICTS = new Set(["OVER", "UNDER", "SKIP"]);

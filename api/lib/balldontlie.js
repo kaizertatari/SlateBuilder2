@@ -5,6 +5,7 @@
 // Season convention: balldontlie uses the START year. 2025-26 → season=2025.
 
 import { logPrefix } from "./request-context.js";
+import { logEvent } from "./verdict-logger.js";
 import { fmtDate, normalizeLite } from "./string-utils.js";
 import { swr } from "./cache.js";
 
@@ -27,6 +28,12 @@ async function bdlFetch(path, params = {}) {
   const auth = authHeader();
   if (!auth) {
     console.error(`${logPrefix()}BALLDONTLIE_API_KEY not set`);
+    logEvent({
+      level: "error",
+      source: "balldontlie",
+      message: "BALLDONTLIE_API_KEY not set",
+      context: { path },
+    });
     return null;
   }
   const qs = new URLSearchParams();
@@ -38,12 +45,28 @@ async function bdlFetch(path, params = {}) {
   try {
     const res = await fetch(url, { headers: auth, signal: AbortSignal.timeout(8000) });
     if (!res.ok) {
+      const level = (res.status === 408 || res.status === 429) ? "warn" : "error";
       console.error(`${logPrefix()}balldontlie ${path} ${res.status}`);
+      logEvent({
+        level,
+        source: "balldontlie",
+        message: `balldontlie ${path} HTTP ${res.status}`,
+        errorStatus: res.status,
+        context: { url, path },
+      });
       return null;
     }
     return await res.json();
   } catch (err) {
+    const isTimeout = err.name === "AbortError" || /timeout/i.test(err.message);
     console.error(`${logPrefix()}balldontlie ${path} threw:`, err.message);
+    logEvent({
+      level: isTimeout ? "warn" : "error",
+      source: "balldontlie",
+      message: `balldontlie ${path} threw: ${err.message}`,
+      errorName: err.name,
+      context: { url, path, timeout_ms: 8000 },
+    });
     return null;
   }
 }
@@ -125,7 +148,14 @@ async function findPlayerUncached(name) {
   const match = exactWithSuffix ?? exactFull ?? nicknameMatch;
   if (!match) return { player: null };
   if (!exactWithSuffix && !exactFull && nicknameMatch) {
-    console.warn(`${logPrefix()}balldontlie nickname match for "${name}" → "${nicknameMatch.first_name} ${nicknameMatch.last_name}"`);
+    const matched = `${nicknameMatch.first_name} ${nicknameMatch.last_name}`;
+    console.warn(`${logPrefix()}balldontlie nickname match for "${name}" → "${matched}"`);
+    logEvent({
+      level: "warn",
+      source: "balldontlie",
+      message: `nickname-only match: "${name}" → "${matched}"`,
+      context: { query: name, matched },
+    });
   }
   return {
     player: {

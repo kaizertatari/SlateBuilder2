@@ -180,6 +180,11 @@ async function handlePost(req, reqId) {
        const tasks = [];
        const skipped = [];
        let sharedGroundTruth = null;
+       // Captured alongside sharedGroundTruth on the first successful
+       // gatherGroundTruth call. They describe the player and the data
+       // sources used; both apply to every task in this request.
+       let sharedTrace = null;
+       let sharedPlayerInfo = null;
 
      for (const [stat, props] of buckets) {
        if (tasks.length >= MAX_LINES) break;
@@ -208,6 +213,8 @@ async function handlePost(req, reqId) {
            break;
          }
          sharedGroundTruth = r.groundTruth;
+         sharedTrace = r.trace ?? null;
+         sharedPlayerInfo = r.playerInfo ?? null;
        }
 
        for (const chosen of chosenLines) {
@@ -262,6 +269,11 @@ async function handlePost(req, reqId) {
         prop_type: task.propType,
         line: task.line,
       };
+      // Per-task latency for the verdict event. ground-truth fetch already
+      // happened (shared across tasks); this measures pre-filter + LLM +
+      // verifier for THIS task, which is what makes per-provider latency
+      // comparisons meaningful.
+      const taskStartedAt = Date.now();
 
       // PRE-FILTER: run the mechanical framework checks before paying for
       // an LLM call. If the arithmetic says SKIP (e.g., OVER buffer fails,
@@ -281,6 +293,9 @@ async function handlePost(req, reqId) {
           input: { player: task.player, propType: task.propType, line: task.line },
           result: preSkip,
           groundTruth: taskGroundTruth,
+          playerInfo: sharedPlayerInfo,
+          trace: sharedTrace,
+          durationMs: Date.now() - taskStartedAt,
         });
         continue;
       }
@@ -304,7 +319,10 @@ async function handlePost(req, reqId) {
           source: "analyze-all",
           input: { player: task.player, propType: task.propType, line: task.line },
           groundTruth: taskGroundTruth,
+          playerInfo: sharedPlayerInfo,
+          trace: sharedTrace,
           errorInfo: { message: llm.error, name: "LLMError", status: 500 },
+          durationMs: Date.now() - taskStartedAt,
         });
         continue;
       }
@@ -331,6 +349,11 @@ async function handlePost(req, reqId) {
         input: { player: task.player, propType: task.propType, line: task.line },
         result: verified,
         groundTruth: taskGroundTruth,
+        playerInfo: sharedPlayerInfo,
+        trace: sharedTrace,
+        durationMs: Date.now() - taskStartedAt,
+        llmProvider: llm.provider ?? null,
+        llmModel: llm.model ?? null,
       });
       if (verified.tier === "S" || verified.tier === "A") {
         results.push({

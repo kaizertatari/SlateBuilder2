@@ -12,6 +12,7 @@
 import nbaSnapshot from "../../data/bbref-splits.json" with { type: "json" };
 import wnbaSnapshot from "../../data/bbref-splits-wnba.json" with { type: "json" };
 import { logPrefix } from "./request-context.js";
+import { logEvent } from "./verdict-logger.js";
 
 const SUPPORTED_SEASON_TYPES = new Set(["Regular Season"]);
 
@@ -38,7 +39,14 @@ export function getHomeAwaySplits(playerName, {
   // data_warnings entry and the framework caps the verdict accordingly.
   const isPriorSeason = !!(season && snapshot.season && season !== snapshot.season);
   if (isPriorSeason) {
-    console.warn(`${logPrefix()}bbref snapshot (${league}) is ${snapshot.season}, caller asked for ${season} — returning prior-season fallback`);
+    const msg = `bbref snapshot (${league}) is ${snapshot.season}, caller asked for ${season} — returning prior-season fallback`;
+    console.warn(`${logPrefix()}${msg}`);
+    logEvent({
+      level: "warn",
+      source: "bbref",
+      message: msg,
+      context: { league, snapshot_season: snapshot.season, requested_season: season, player: playerName },
+    });
   }
 
   const row = snapshot.players[playerName];

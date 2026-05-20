@@ -7,6 +7,7 @@
 // where season is the END year of the season label, e.g. 2026 for "2025-26".
 
 import { logPrefix } from "./request-context.js";
+import { logEvent } from "./verdict-logger.js";
 import { fmtDate } from "./string-utils.js";
 
 const LEAGUE_SLUG = { NBA: "nba", WNBA: "wnba" };
@@ -91,12 +92,28 @@ async function fetchGamelog(athleteId, endYear, league = "NBA") {
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (!res.ok) {
+      const level = (res.status === 408 || res.status === 429) ? "warn" : "error";
       console.error(`${logPrefix()}espn gamelog ${athleteId} ${res.status}`);
+      logEvent({
+        level,
+        source: "espn-stats",
+        message: `espn gamelog ${athleteId} HTTP ${res.status}`,
+        errorStatus: res.status,
+        context: { url, athlete_id: athleteId, end_year: endYear, league },
+      });
       return null;
     }
     return await res.json();
   } catch (err) {
+    const isTimeout = err.name === "AbortError" || /timeout/i.test(err.message);
     console.error(`${logPrefix()}espn gamelog ${athleteId} threw:`, err.message);
+    logEvent({
+      level: isTimeout ? "warn" : "error",
+      source: "espn-stats",
+      message: `espn gamelog ${athleteId} threw: ${err.message}`,
+      errorName: err.name,
+      context: { url, athlete_id: athleteId, end_year: endYear, league, timeout_ms: 8000 },
+    });
     return null;
   }
 }
@@ -137,12 +154,16 @@ function bucketLayoutOk(bucket) {
   const labels = findLabels(bucket);
   if (!labels) return true; // absent — happy path, IDX assumed
   if (labels.length < EXPECTED_LABELS.length) {
-    console.error(`${logPrefix()}espn gamelog layout diverged: expected >=${EXPECTED_LABELS.length} cols, got ${labels.length}`);
+    const msg = `espn gamelog layout diverged: expected >=${EXPECTED_LABELS.length} cols, got ${labels.length}`;
+    console.error(`${logPrefix()}${msg}`);
+    logEvent({ level: "error", source: "espn-stats", message: msg, context: { labels } });
     return false;
   }
   for (let i = 0; i < EXPECTED_LABELS.length; i++) {
     if (String(labels[i]).toUpperCase() !== EXPECTED_LABELS[i]) {
-      console.error(`${logPrefix()}espn gamelog layout diverged at col ${i}: expected "${EXPECTED_LABELS[i]}", got "${labels[i]}"`);
+      const msg = `espn gamelog layout diverged at col ${i}: expected "${EXPECTED_LABELS[i]}", got "${labels[i]}"`;
+      console.error(`${logPrefix()}${msg}`);
+      logEvent({ level: "error", source: "espn-stats", message: msg, context: { col: i, expected: EXPECTED_LABELS[i], got: labels[i] } });
       return false;
     }
   }

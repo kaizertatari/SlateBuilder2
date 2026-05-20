@@ -4,6 +4,7 @@
 
 import * as cache from "./cache.js";
 import { logPrefix } from "./request-context.js";
+import { logEvent } from "./verdict-logger.js";
 
 const LEAGUE_SLUG = { NBA: "nba", WNBA: "wnba" };
 
@@ -34,12 +35,30 @@ async function jsonFetch(url) {
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (!res.ok) {
+      // ESPN is normally reliable, so any non-2xx is news. Treat 408/429
+      // as warn (transient backoff worth retrying); the rest as error.
+      const level = (res.status === 408 || res.status === 429) ? "warn" : "error";
       console.error(`${logPrefix()}espn ${url} ${res.status}`);
+      logEvent({
+        level,
+        source: "espn",
+        message: `espn ${url} HTTP ${res.status}`,
+        errorStatus: res.status,
+        context: { url },
+      });
       return null;
     }
     return await res.json();
   } catch (err) {
+    const isTimeout = err.name === "AbortError" || /timeout/i.test(err.message);
     console.error(`${logPrefix()}espn ${url} threw:`, err.message);
+    logEvent({
+      level: isTimeout ? "warn" : "error",
+      source: "espn",
+      message: `espn ${url} threw: ${err.message}`,
+      errorName: err.name,
+      context: { url, timeout_ms: 8000 },
+    });
     return null;
   }
 }

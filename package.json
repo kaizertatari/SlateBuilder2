@@ -12,6 +12,7 @@
     "refresh-wnba-players": "node scripts/refresh-wnba-players.mjs",
     "refresh-prizepicks": "node scripts/refresh-prizepicks.mjs",
     "refresh-team-defense": "node scripts/refresh-team-defense.mjs",
+    "grade-outcomes": "node scripts/grade-outcomes.mjs",
     "build-bbref-ids": "node scripts/build-bbref-ids.mjs",
     "refresh-bbref-splits": "node scripts/refresh-bbref-splits.mjs",
     "check-models": "node scripts/check-models.mjs",

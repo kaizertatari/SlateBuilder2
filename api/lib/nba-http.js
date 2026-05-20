@@ -6,6 +6,7 @@
 // tightens its bot detection or rotates header expectations.
 
 import { logPrefix } from "./request-context.js";
+import { logEvent } from "./verdict-logger.js";
 
 export const NBA_BASE = "https://stats.nba.com/stats";
 export const WNBA_BASE = "https://stats.wnba.com/stats";
@@ -58,12 +59,33 @@ export async function nbaFetch(endpoint, params, opts = {}) {
       signal: AbortSignal.timeout(NBA_FETCH_TIMEOUT_MS),
     });
     if (!res.ok) {
+      // 408/429 and 4xx from Vercel-IP throttling are expected weather;
+      // 5xx is a real outage. Severity reflects that so dashboards don't
+      // look red every time stats.nba.com declines us.
+      const level = res.status >= 500 ? "error" : "warn";
       console.error(`${logPrefix()}${base} ${endpoint} ${res.status}`);
+      logEvent({
+        level,
+        source: "nba-http",
+        message: `${base} ${endpoint} HTTP ${res.status}`,
+        errorStatus: res.status,
+        context: { url, league_id: leagueId },
+      });
       return null;
     }
     return await res.json();
   } catch (err) {
+    // AbortError = our own 6s timeout firing (Vercel-IP throttle), which
+    // is the dominant failure mode on this edge — classify as warn.
+    const isTimeout = err.name === "AbortError" || /timeout/i.test(err.message);
     console.error(`${logPrefix()}${base} ${endpoint} threw:`, err.message);
+    logEvent({
+      level: isTimeout ? "warn" : "error",
+      source: "nba-http",
+      message: `${base} ${endpoint} threw: ${err.message}`,
+      errorName: err.name,
+      context: { url, league_id: leagueId, timeout_ms: NBA_FETCH_TIMEOUT_MS },
+    });
     return null;
   }
 }
