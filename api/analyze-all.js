@@ -36,6 +36,46 @@ function buildCacheKey(player, fetchedAt, sortedStats, direction) {
   return `analyze-all:${normalizePlayer(player)}::${fetchedAt || "unknown"}::${sortedStats}::${direction}`;
 }
 
+/**
+ * Choose which lines from a (player, stat) bucket get analyzed.
+ *
+ * Priority order:
+ *   1. Lowest-line goblin (easier OVER, discount payout)
+ *   2. Standard (regular price)
+ * Demon lines (harder OVER, boosted payout) are intentionally not analyzed.
+ *
+ * Fallback: if neither goblin nor standard exists for the stat — common
+ * for combo props and newly-published stat types — return the lowest
+ * available line of any type. Keeps coverage instead of silently dropping
+ * the bucket.
+ *
+ * Dedupe: if goblin and standard land on the same numeric line (rare but
+ * possible), return one entry.
+ *
+ * Exported so the smoke test can re-derive the same selection from the
+ * raw lines JSON.
+ *
+ * @param {Array<Object>} props  props for one (player, stat) bucket
+ * @returns {Array<Object>} 0-2 chosen line objects
+ */
+export function selectLinesForStat(props) {
+  if (!Array.isArray(props) || props.length === 0) return [];
+  const lowestByType = (type) =>
+    props
+      .filter((p) => p.odds_type === type)
+      .sort((a, b) => a.line - b.line)[0] ?? null;
+  const goblin = lowestByType("goblin");
+  const standard = lowestByType("standard");
+  const chosen = [];
+  if (goblin) chosen.push(goblin);
+  if (standard && (!goblin || standard.line !== goblin.line)) chosen.push(standard);
+  if (chosen.length === 0) {
+    const fallback = [...props].sort((a, b) => a.line - b.line)[0];
+    if (fallback) chosen.push(fallback);
+  }
+  return chosen;
+}
+
 // Per-player line budget. Each task is now one LLM call (looped, not
 // batched), so this directly caps LLM calls per analyze-all request.
 // Default 40 covers the realistic max (9 stats × 2 lines × 2 dirs = 36).
@@ -172,11 +212,13 @@ async function handlePost(req, reqId) {
      // player-wide skip (no upcoming game, retired, etc.) short-circuits
      // the whole request.
      //
-     // Per stat: pick BOTH the lowest line (PrizePicks "discount") and the
-     // median line so the model gets a shot at each price point. This was
-     // reverted in 2cfcdc7 because Gemini free-tier 20 RPM couldn't sustain
-     // 36 tasks; now that batching collapses N tasks into ~ceil(N/8) LLM
-     // calls, even 40 tasks cost only ~5 calls — well under any cap.
+     // Per stat: pick the LOWEST GOBLIN line (PrizePicks "discount" — the
+     // easier OVER) plus the STANDARD line (regular price). Matches the
+     // two price points the operator is most likely to bet from. Demon
+     // lines (harder OVER, higher payout) are intentionally NOT analyzed.
+     // Fallback: if a stat has neither goblin nor standard (rare — typically
+     // a combo stat or new prop type), analyze the lowest line of any type
+     // so we don't silently lose coverage.
        const tasks = [];
        const skipped = [];
        let sharedGroundTruth = null;
@@ -188,14 +230,8 @@ async function handlePost(req, reqId) {
 
      for (const [stat, props] of buckets) {
        if (tasks.length >= MAX_LINES) break;
-
-          // Lowest + median. If only one distinct line is published (or
-          // lowest === median), dedupe so we don't analyze the same prop
-          // twice.
-          const sorted = [...props].sort((a, b) => a.line - b.line);
-          const lowest = sorted[0];
-          const median = sorted[Math.floor(sorted.length / 2)];
-          const chosenLines = lowest.line === median.line ? [lowest] : [lowest, median];
+       const chosenLines = selectLinesForStat(props);
+       if (chosenLines.length === 0) continue;
 
        // Fetch the player-wide groundTruth on first stat we see. Reuse for
        // every subsequent bucket — caches inside gatherGroundTruth would
@@ -205,7 +241,9 @@ async function handlePost(req, reqId) {
          const r = await gatherGroundTruth({
            player,
            propType: `${stat} ${directions[0]}`,
-           line: lowest.line,
+           // groundTruth is line-agnostic except for the prop_type/line metadata
+           // (overwritten per-task below), so any chosen line works as a seed.
+           line: chosenLines[0].line,
          });
          if (r.skipReason) {
            // Player-wide skip — record and stop building tasks.

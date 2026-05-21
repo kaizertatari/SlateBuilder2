@@ -19,6 +19,7 @@ loadEnvLocal();
 
 import { readLines, writeLines } from "../api/lib/lines-store.js";
 import { gatherGroundTruth, buildPrompt, callLLM } from "../api/analyze.js";
+import { selectLinesForStat } from "../api/analyze-all.js";
 import { MODEL_FRAMEWORK } from "../api/lib/framework.js";
 import { mapPrizePicksStatType, STATS } from "../api/lib/prop-types.js";
 
@@ -119,9 +120,9 @@ await test("pick player with most props", () => {
   return { note: `${sample.name} (${sample.props.length} props)` };
 });
 
-// ─── 4. Bucket + Goblin/Normal selection ──────────────────────────────────
+// ─── 4. Bucket + Goblin/Standard selection ────────────────────────────────
 
-header("4. Bucket selection (matches analyze-all logic)");
+header("4. Bucket selection (lowest goblin + standard)");
 const buckets = new Map();
 await test("bucketize by canonical stat", () => {
   if (!sample) return { skip: "no sample player" };
@@ -134,21 +135,41 @@ await test("bucketize by canonical stat", () => {
   if (buckets.size === 0) throw new Error("no buckets after stat mapping");
   return { note: `${buckets.size} stats: ${[...buckets.keys()].join(", ")}` };
 });
-await test("lowest + median sort and tag", () => {
+await test("selectLinesForStat picks goblin/standard correctly", () => {
   if (buckets.size === 0) return { skip: "no buckets" };
+  let goblinPicks = 0, standardPicks = 0, fallbackPicks = 0;
   for (const [stat, props] of buckets) {
-    const sorted = [...props].sort((a, b) => a.line - b.line);
-    const lowest = sorted[0];
-    const median = sorted[Math.floor(sorted.length / 2)];
-    if (!Number.isFinite(lowest.line)) throw new Error(`${stat}: lowest line not numeric`);
-    if (!Number.isFinite(median.line)) throw new Error(`${stat}: median line not numeric`);
-    if (lowest.line > median.line) throw new Error(`${stat}: lowest (${lowest.line}) > median (${median.line})`);
-    const chosen = lowest.line === median.line
-      ? [{ prop: lowest, lineType: "Normal" }]
-      : [{ prop: lowest, lineType: "Goblin" }, { prop: median, lineType: "Normal" }];
-    if (chosen.length === 2 && chosen[0].lineType !== "Goblin") throw new Error("dual-line not tagged Goblin/Normal");
-    if (chosen.length === 1 && chosen[0].lineType !== "Normal") throw new Error("single-line not tagged Normal");
+    const chosen = selectLinesForStat(props);
+    if (chosen.length === 0) throw new Error(`${stat}: selection returned empty array`);
+    if (chosen.length > 2) throw new Error(`${stat}: selection returned ${chosen.length} (>2)`);
+    const goblinPresent = props.some((p) => p.odds_type === "goblin");
+    const standardPresent = props.some((p) => p.odds_type === "standard");
+    // Verify the chosen entries reflect what PrizePicks actually published.
+    for (const c of chosen) {
+      if (!props.includes(c)) throw new Error(`${stat}: chosen entry not in source bucket`);
+      if (c.odds_type === "goblin") goblinPicks += 1;
+      else if (c.odds_type === "standard") standardPicks += 1;
+      else fallbackPicks += 1;
+    }
+    // When both goblin and standard exist, both must be in the chosen set
+    // (unless they collapsed to the same numeric line).
+    if (goblinPresent && standardPresent) {
+      const lowestGoblin = props.filter((p) => p.odds_type === "goblin").sort((a, b) => a.line - b.line)[0];
+      const lowestStandard = props.filter((p) => p.odds_type === "standard").sort((a, b) => a.line - b.line)[0];
+      const sameLine = lowestGoblin.line === lowestStandard.line;
+      if (!sameLine && chosen.length !== 2) {
+        throw new Error(`${stat}: goblin+standard both published but only ${chosen.length} chosen`);
+      }
+    }
+    // No demons should ever be selected when goblin/standard exist.
+    const hasGoblinOrStandard = goblinPresent || standardPresent;
+    if (hasGoblinOrStandard) {
+      for (const c of chosen) {
+        if (c.odds_type === "demon") throw new Error(`${stat}: demon chosen despite goblin/standard available`);
+      }
+    }
   }
+  return { note: `goblin=${goblinPicks}, standard=${standardPicks}, fallback=${fallbackPicks}` };
 });
 
 // ─── 5. Ground truth ─────────────────────────────────────────────────────
@@ -324,6 +345,48 @@ await test("cached response carries same lines_fetched_at", () => {
   if (!cacheBody || !body) return { skip: "no cache body" };
   if (cacheBody.lines_fetched_at !== body.lines_fetched_at) {
     throw new Error(`fetched_at drift: first=${body.lines_fetched_at}, cached=${cacheBody.lines_fetched_at}`);
+  }
+});
+
+// ─── 8c. Line consistency: scraper → analyze-all → response ──────────────
+
+header("8c. Line consistency: chosen line + odds_type round-trip");
+await test("every top_10 entry maps back to a published line", () => {
+  if (!body || !sample) return { skip: "no analyze-all body" };
+  // Build a fast lookup keyed on (stat, line, odds_type → unique?). PrizePicks
+  // sometimes publishes a single (line, odds_type) pair, sometimes multiples;
+  // dedupe by mapping to a Set of (line:odds_type) strings.
+  const publishedByStat = new Map();
+  for (const p of sample.props) {
+    const stat = mapPrizePicksStatType(p.stat_type);
+    if (!stat) continue;
+    if (!publishedByStat.has(stat)) publishedByStat.set(stat, new Set());
+    publishedByStat.get(stat).add(`${p.line}:${p.odds_type ?? "null"}`);
+  }
+  for (const r of body.top_10 || []) {
+    const stat = r.prop_type;
+    const key = `${r.line}:${r.odds_type ?? "null"}`;
+    const pub = publishedByStat.get(stat);
+    if (!pub || !pub.has(key)) {
+      throw new Error(`${r.player} ${stat} line=${r.line} odds=${r.odds_type} not found in published lines`);
+    }
+  }
+  return { note: `${body.top_10?.length || 0} entries verified` };
+});
+await test("no demon lines in top_10 when goblin/standard available", () => {
+  if (!body || !sample) return { skip: "no analyze-all body" };
+  // For each (stat) that has at least one goblin or standard, no demon
+  // should appear in top_10 for that stat.
+  const hasNonDemon = new Set();
+  for (const p of sample.props) {
+    const stat = mapPrizePicksStatType(p.stat_type);
+    if (!stat) continue;
+    if (p.odds_type === "goblin" || p.odds_type === "standard") hasNonDemon.add(stat);
+  }
+  for (const r of body.top_10 || []) {
+    if (r.odds_type === "demon" && hasNonDemon.has(r.prop_type)) {
+      throw new Error(`${r.player} ${r.prop_type}: demon ${r.line} ranked despite goblin/standard published`);
+    }
   }
 });
 

@@ -14,6 +14,7 @@ import { computeWeightedL5 } from "../api/lib/weighted-l5.js";
 import { preFilterMechanical, verifyVerdict } from "../api/lib/verdict-verifier.js";
 import { composeGroundTruth } from "../api/lib/ground-truth.js";
 import { FRAMEWORK_SCALING, ftFloorBaseline, getFramework } from "../api/lib/framework.js";
+import { selectLinesForStat } from "../api/analyze-all.js";
 
 let passed = 0, failed = 0;
 function check(name, cond, detail = "") {
@@ -298,6 +299,68 @@ header("11. WNBA variant scaling honored");
   check("WNBA road deduction 1.2 applied (line 19.5 > 19.3 fails)", pre !== null);
   const pre2 = preFilterMechanical({ groundTruth: gtWnba, statType: "Points", direction: "OVER", line: 19.0 });
   check("WNBA line 19.0 passes", pre2 === null);
+}
+
+// ─── 12. selectLinesForStat (goblin + standard) ──────────────────────────
+header("12. selectLinesForStat: goblin + standard selection");
+{
+  // a) Both goblin and standard present → both selected, demon ignored.
+  const both = [
+    { line: 24.5, odds_type: "goblin" },
+    { line: 27.5, odds_type: "standard" },
+    { line: 30.5, odds_type: "demon" },
+  ];
+  const r1 = selectLinesForStat(both);
+  check("returns both goblin and standard when both exist", r1.length === 2);
+  check("includes goblin", r1.some((p) => p.odds_type === "goblin"));
+  check("includes standard", r1.some((p) => p.odds_type === "standard"));
+  check("excludes demon", r1.every((p) => p.odds_type !== "demon"));
+
+  // b) Goblin only → just goblin.
+  const goblinOnly = [
+    { line: 24.5, odds_type: "goblin" },
+    { line: 30.5, odds_type: "demon" },
+  ];
+  const r2 = selectLinesForStat(goblinOnly);
+  check("goblin-only returns just goblin", r2.length === 1 && r2[0].odds_type === "goblin");
+
+  // c) Standard only → just standard.
+  const standardOnly = [
+    { line: 27.5, odds_type: "standard" },
+    { line: 30.5, odds_type: "demon" },
+  ];
+  const r3 = selectLinesForStat(standardOnly);
+  check("standard-only returns just standard", r3.length === 1 && r3[0].odds_type === "standard");
+
+  // d) Demon only → fallback to lowest of any type.
+  const demonOnly = [
+    { line: 30.5, odds_type: "demon" },
+    { line: 28.5, odds_type: "demon" },
+  ];
+  const r4 = selectLinesForStat(demonOnly);
+  check("demon-only falls back to lowest line", r4.length === 1 && r4[0].line === 28.5);
+
+  // e) Multiple goblins → lowest wins.
+  const multiGoblin = [
+    { line: 26.5, odds_type: "goblin" },
+    { line: 24.5, odds_type: "goblin" },
+    { line: 27.5, odds_type: "standard" },
+  ];
+  const r5 = selectLinesForStat(multiGoblin);
+  const goblinPicked = r5.find((p) => p.odds_type === "goblin");
+  check("lowest goblin wins when multiple present", goblinPicked?.line === 24.5);
+
+  // f) Goblin and standard at same numeric line → dedupe (return one).
+  const sameLine = [
+    { line: 24.5, odds_type: "goblin" },
+    { line: 24.5, odds_type: "standard" },
+  ];
+  const r6 = selectLinesForStat(sameLine);
+  check("dedupes goblin+standard at identical line", r6.length === 1);
+
+  // g) Empty input → empty result.
+  check("empty bucket returns empty", selectLinesForStat([]).length === 0);
+  check("non-array input returns empty", selectLinesForStat(null).length === 0);
 }
 
 console.log(`\n=== Verdict ===`);
