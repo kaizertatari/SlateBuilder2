@@ -908,6 +908,12 @@ async function callGroqChain(apiKey, prompt, opts = {}) {
   const FALLBACK = process.env.GROQ_FALLBACK_MODEL || "openai/gpt-oss-120b";
   const primaryDelays = (process.env.GROQ_PRIMARY_DELAYS || "0,500,1500")
     .split(",").map((d) => parseInt(d, 10));
+  // v3.5: the fallback model `openai/gpt-oss-120b` has an 8K TPM cap, and the
+  // 14K-char v3.5 framework body plus a heavy playoff GT can push a single
+  // request past it. Cap the fallback's output reservation to free input
+  // headroom; the primary chain still uses the caller-supplied budget. Tunable
+  // via env so we can ratchet it lower without a redeploy if needed.
+  const fallbackMaxTokens = parseInt(process.env.GROQ_FALLBACK_MAX_TOKENS || "900", 10);
 
   let last;
   for (const delay of primaryDelays) {
@@ -919,7 +925,11 @@ async function callGroqChain(apiKey, prompt, opts = {}) {
 
   const fallbackDelay = parseInt(process.env.GROQ_FALLBACK_DELAY || "500", 10);
   await sleep(fallbackDelay);
-  last = await groqAttempt(apiKey, prompt, FALLBACK, opts);
+  // Respect a caller's smaller budget if they already passed one (e.g., a
+  // single-task batched call). Only cap *down* from the caller value.
+  const callerMax = opts.maxTokens ?? Infinity;
+  const fallbackOpts = { ...opts, maxTokens: Math.min(callerMax, fallbackMaxTokens) };
+  last = await groqAttempt(apiKey, prompt, FALLBACK, fallbackOpts);
   return stripRetryable(last);
 }
 

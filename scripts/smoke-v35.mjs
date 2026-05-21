@@ -15,6 +15,7 @@ import { preFilterMechanical, verifyVerdict } from "../api/lib/verdict-verifier.
 import { composeGroundTruth } from "../api/lib/ground-truth.js";
 import { FRAMEWORK_SCALING, ftFloorBaseline, getFramework } from "../api/lib/framework.js";
 import { selectLinesForStat } from "../api/analyze-all.js";
+import { callLLM } from "../api/analyze.js";
 
 let passed = 0, failed = 0;
 function check(name, cond, detail = "") {
@@ -361,6 +362,64 @@ header("12. selectLinesForStat: goblin + standard selection");
   // g) Empty input → empty result.
   check("empty bucket returns empty", selectLinesForStat([]).length === 0);
   check("non-array input returns empty", selectLinesForStat(null).length === 0);
+}
+
+// ─── 13. Groq fallback max_tokens cap ────────────────────────────────────
+header("13. Groq fallback uses smaller max_tokens than primary");
+{
+  // Stub global fetch to capture each Groq call's request body. Primary
+  // returns a non-retryable 400 so the chain falls straight to the fallback.
+  // Fallback returns a valid verdict JSON, exercised through the full
+  // callLLM → routeLLM → callGroqChain path.
+  const captured = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, opts) => {
+    if (typeof url === "string" && url.includes("api.groq.com")) {
+      const body = JSON.parse(opts.body);
+      captured.push({ model: body.model, max_tokens: body.max_tokens });
+      // First Groq call (primary) → non-retryable 400.
+      if (captured.length === 1) {
+        return new Response(JSON.stringify({ error: { message: "bad request" } }), {
+          status: 400,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      // Subsequent (fallback) → valid verdict.
+      return new Response(JSON.stringify({
+        choices: [{ message: { content: JSON.stringify({
+          verdict: "SKIP", tier: "SKIP", confidence: 0,
+          justification: "stub", flags: [], data_used: null,
+        }) } }],
+      }), { status: 200, headers: { "content-type": "application/json" } });
+    }
+    return realFetch(url, opts);
+  };
+
+  // Ensure single-provider routing (Groq only) so we don't fall through to
+  // Gemini and miss the fallback-budget assertion. Snapshot env to restore.
+  const prevProviders = process.env.LLM_PROVIDERS;
+  const prevKey = process.env.GROQ_API_KEY;
+  const prevGoogle = process.env.GOOGLE_API_KEY;
+  process.env.LLM_PROVIDERS = "groq";
+  process.env.GROQ_API_KEY = process.env.GROQ_API_KEY || "test-key";
+  delete process.env.GOOGLE_API_KEY;
+
+  const result = await callLLM("test prompt");
+
+  // Restore.
+  globalThis.fetch = realFetch;
+  if (prevProviders == null) delete process.env.LLM_PROVIDERS; else process.env.LLM_PROVIDERS = prevProviders;
+  if (prevKey == null) delete process.env.GROQ_API_KEY; else process.env.GROQ_API_KEY = prevKey;
+  if (prevGoogle != null) process.env.GOOGLE_API_KEY = prevGoogle;
+
+  check("router falls through primary 400 to fallback", captured.length >= 2,
+    `captured ${captured.length} calls`);
+  check("primary call uses default 1500 max_tokens",
+    captured[0]?.max_tokens === 1500, `got ${captured[0]?.max_tokens}`);
+  check("fallback call uses 900 max_tokens (TPM cap)",
+    captured[captured.length - 1]?.max_tokens === 900,
+    `got ${captured[captured.length - 1]?.max_tokens}`);
+  check("fallback verdict reaches caller", !result.error, result.error || "ok");
 }
 
 console.log(`\n=== Verdict ===`);
