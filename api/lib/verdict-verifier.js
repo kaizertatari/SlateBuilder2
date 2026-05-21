@@ -112,12 +112,28 @@ export function auditDataUsed({ groundTruth, llmResult, statType }) {
     mismatches.push({ field: "season_avg", expected: expectedSeason, got: used.season_avg });
   }
 
-  // Numeric: l5_avg
-  const expectedL5 = (field && groundTruth?.l5?.averages)
+  // Numeric: l5_avg — accept either the raw or the weighted L5 value.
+  // The framework's WEIGHTED L5 section tells the LLM to govern off
+  // weighted when present, so emitting the weighted average here is
+  // framework-correct even though the data_used schema literally says
+  // to copy from l5.averages. Either one counts as a clean echo;
+  // anything else is a hallucination.
+  const expectedL5Raw = (field && groundTruth?.l5?.averages)
     ? (groundTruth.l5.averages[field] ?? null)
     : null;
-  if ("l5_avg" in used && !numsClose(used.l5_avg, expectedL5)) {
-    mismatches.push({ field: "l5_avg", expected: expectedL5, got: used.l5_avg });
+  const expectedL5Weighted = (field && groundTruth?.l5?.weighted?.averages)
+    ? (groundTruth.l5.weighted.averages[field] ?? null)
+    : null;
+  if ("l5_avg" in used) {
+    const matchesRaw = numsClose(used.l5_avg, expectedL5Raw);
+    const matchesWeighted = expectedL5Weighted != null && numsClose(used.l5_avg, expectedL5Weighted);
+    if (!matchesRaw && !matchesWeighted) {
+      mismatches.push({
+        field: "l5_avg",
+        expected: expectedL5Weighted != null ? `${expectedL5Raw} (raw) or ${expectedL5Weighted} (weighted)` : expectedL5Raw,
+        got: used.l5_avg,
+      });
+    }
   }
 
   // Numeric: win_prob (0-1 float)
@@ -366,15 +382,22 @@ function computeOverBufferCheck({ groundTruth, statType, line, seasonAvg, l5Avg,
   const adjusted = baseline - roadDed;
 
   // v3.5 OVER buffer:
-  //   base = 2.5 when l5.weighted.outlier_present  else 1.5
+  //   base = 2.5 when l5.weighted.outlier_present  else scale.over_buffer_by_stat[statType] ?? scale.over_buffer_base
   //   variance widens: when σ > league threshold and prop is points-family,
   //                    buffer becomes 1.5 + 0.25 × (σ − threshold). When
   //                    the outlier base (2.5) is larger, the larger of the
   //                    two governs (spec §5a: "variance addendum applies
   //                    to whichever base is larger").
   //   poor FT shooter (<70%): +2 on points-containing props.
+  //
+  // Per-stat buffer override: low-volume props (3PM=0.75, BLK/STL=0.5,
+  // Rebounds/Assists/RA=1.0) use smaller buffers than the 1.5 default so
+  // props with a real OVER edge aren't filtered out by a buffer rule that
+  // was calibrated for Points. Outlier base of 2.5 still wins when it
+  // applies (post-outlier widening keeps its absolute floor).
+  const statBase = scale.over_buffer_by_stat?.[statType] ?? scale.over_buffer_base;
   const outlierActive = !!groundTruth?.l5?.weighted?.outlier_present;
-  const outlierBase = outlierActive ? 2.5 : scale.over_buffer_base;
+  const outlierBase = outlierActive ? Math.max(2.5, statBase) : statBase;
   const sigma = groundTruth?.variance?.ppg_stddev ?? null;
   const isPointsFamily = POINTS_CONTAINING.has(statType);
   let varianceBuffer = null;

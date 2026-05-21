@@ -44,6 +44,47 @@ const halAudit = auditDataUsed({ groundTruth: baseGroundTruth, llmResult: halRes
 assert("season_avg mismatch flagged", halAudit.length === 1 && halAudit[0].field === "season_avg",
   `got ${JSON.stringify(halAudit)}`);
 
+// (a2) Weighted L5 echo — should NOT flag as mismatch. The framework
+// tells the LLM to govern off weighted L5 when present, so emitting the
+// weighted value is framework-correct even though the data_used schema
+// literally says to copy from l5.averages.
+const weightedGT = {
+  ...baseGroundTruth,
+  l5: {
+    type: "Regular Season", n: 4,
+    averages: { ppg: 26.75, rpg: 1.5, apg: 5.5, pra: 33.8, pa: 32.3 },
+    weighted: { averages: { ppg: 26.9, pa: 33 } },
+  },
+};
+const weightedResult = {
+  verdict: "OVER", tier: "B", confidence: 65,
+  flags: [],
+  data_used: { season_avg: 32.3, l5_avg: 33, home_away: "away", win_prob: 0.4, opponent: "Phoenix Mercury" },
+};
+const weightedAudit = auditDataUsed({ groundTruth: weightedGT, llmResult: weightedResult, statType: "PA" });
+assert("weighted L5 echo accepted (no mismatch)", weightedAudit.length === 0,
+  `got ${JSON.stringify(weightedAudit)}`);
+
+// (a3) Raw L5 echo when both raw and weighted exist — still accepted.
+const rawL5Result = {
+  verdict: "OVER", tier: "B", confidence: 65,
+  flags: [],
+  data_used: { season_avg: 32.3, l5_avg: 32.3, home_away: "away", win_prob: 0.4, opponent: "Phoenix Mercury" },
+};
+const rawL5Audit = auditDataUsed({ groundTruth: weightedGT, llmResult: rawL5Result, statType: "PA" });
+assert("raw L5 echo accepted when weighted also present", rawL5Audit.length === 0,
+  `got ${JSON.stringify(rawL5Audit)}`);
+
+// (a4) Neither raw nor weighted — flagged.
+const fabricatedL5Result = {
+  verdict: "OVER", tier: "B", confidence: 65,
+  flags: [],
+  data_used: { season_avg: 32.3, l5_avg: 99, home_away: "away", win_prob: 0.4, opponent: "Phoenix Mercury" },
+};
+const fabricatedAudit = auditDataUsed({ groundTruth: weightedGT, llmResult: fabricatedL5Result, statType: "PA" });
+assert("fabricated l5_avg (neither raw nor weighted) flagged", fabricatedAudit.length === 1 && fabricatedAudit[0].field === "l5_avg",
+  `got ${JSON.stringify(fabricatedAudit)}`);
+
 const halVerified = verifyVerdict({
   groundTruth: baseGroundTruth, statType: "Points", direction: "OVER", line: 20.5, llmResult: halResult,
 });

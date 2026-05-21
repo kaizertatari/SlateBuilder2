@@ -23,6 +23,25 @@ export const FRAMEWORK_SCALING = {
     teams: 30,
     road_deduction_pts: 1.5,
     over_buffer_base: 1.5,
+    // Per-stat OVER buffer overrides. Stats not listed fall back to
+    // over_buffer_base. Mild scaling — low-volume props (3PM, BLK, STL) get
+    // a smaller absolute buffer so the rule doesn't kill props where a 1.5
+    // buffer is disproportionate to the natural increment. Points-family
+    // stays at the 1.5 baseline so variance/outlier addenda land where the
+    // framework expects.
+    over_buffer_by_stat: {
+      "Points": 1.5,
+      "PR": 1.5,
+      "PA": 1.5,
+      "PRA": 1.5,
+      "Rebounds": 1.0,
+      "Assists": 1.0,
+      "RA": 1.0,
+      "3-Pointers Made": 0.75,
+      "FG Attempted": 1.5,
+      "Blocks": 0.5,
+      "Steals": 0.5,
+    },
     variance_threshold_ppg: 6,
     // Per-position worst-case FG floor vs elite D for Rule 5i. The verifier
     // selects via groundTruth.derived.ft_floor_baseline (which the data
@@ -42,6 +61,22 @@ export const FRAMEWORK_SCALING = {
     // Per v3.5 spec §13. ~83% scaling vs NBA, rounded to the published value.
     road_deduction_pts: 1.2,
     over_buffer_base: 1.5,
+    // Same per-stat overrides as NBA — the natural increments of these
+    // stats don't change between leagues. See NBA.over_buffer_by_stat for
+    // rationale.
+    over_buffer_by_stat: {
+      "Points": 1.5,
+      "PR": 1.5,
+      "PA": 1.5,
+      "PRA": 1.5,
+      "Rebounds": 1.0,
+      "Assists": 1.0,
+      "RA": 1.0,
+      "3-Pointers Made": 0.75,
+      "FG Attempted": 1.5,
+      "Blocks": 0.5,
+      "Steals": 0.5,
+    },
     variance_threshold_ppg: 5,
     ft_floor_by_position: { G: 4, F: 6, C: 8 },
     ft_floor_default_position: "F",
@@ -110,12 +145,17 @@ ROAD DEDUCTION (Rule 5a):
 - On road games, subtract ${c.road_deduction_pts} pts from the governing baseline (season or L5 per the L5-vs-Season governance rule, with weighted L5 if present) before line comparison on points-containing scoring props (Points, PR, PA, PRA). Rebounds / Assists / RA / 3PM / FGA unaffected.
 
 OVER BUFFER RULES (Rule 5a + addendum):
-- Standard buffer: line must be ${c.over_buffer_base}+ pts BELOW road-adjusted baseline to qualify.
-- Poor FT shooters (season.averages.ft_pct < 0.70): stacks an extra 2pt on top of the standard buffer.
+- Per-stat buffer (replaces the prior flat ${c.over_buffer_base}-pt rule): line must be N+ pts BELOW road-adjusted baseline to qualify, where N depends on the stat:
+    Points / PR / PA / PRA / FG Attempted: 1.5
+    Rebounds / Assists / RA: 1.0
+    3-Pointers Made: 0.75
+    Blocks / Steals: 0.5
+  Rationale: a 1.5-pt buffer is calibrated for Points-scale increments; for low-volume stats (3PM, BLK, STL) a 1.5 buffer disproportionately rejects valid OVERs.
+- Poor FT shooters (season.averages.ft_pct < 0.70): stacks an extra 2pt on top of the stat buffer for points-containing props (Points, PR, PA, PRA).
 - VARIANCE-ADJUSTED ADDENDUM: when groundTruth.variance.ppg_stddev is non-null AND > ${c.variance_threshold_ppg} (the league threshold), widen the OVER buffer to:
       buffer = 1.5 + 0.25 × (ppg_stddev − ${c.variance_threshold_ppg})
-  Applies to Points-family props (Points, PR, PA, PRA). Cite σ in the justification (e.g., "σ=8.2 vs threshold ${c.variance_threshold_ppg}, buffer widened to 2.05"). If σ is null (sample <8 games), use baseline ${c.over_buffer_base}.
-- POST-OUTLIER WINDOW: when groundTruth.l5.weighted.outlier_present === true, OVER buffer widens to 2.5 pts on this pick AND add flag "⚠️ post-outlier window — buffer widened to 2.5 pts". This widening replaces the standard 1.5 baseline; variance addendum applies to whichever base is larger.
+  Applies to Points-family props (Points, PR, PA, PRA). Cite σ in the justification (e.g., "σ=8.2 vs threshold ${c.variance_threshold_ppg}, buffer widened to 2.05"). If σ is null (sample <8 games), use the stat buffer above.
+- POST-OUTLIER WINDOW: when groundTruth.l5.weighted.outlier_present === true, OVER buffer widens to max(2.5, stat_buffer) on this pick AND add flag "⚠️ post-outlier window — buffer widened to 2.5 pts". Variance addendum applies to whichever base is larger.
 
 WEIGHTED L5 (v3.5):
 - The L5 baseline used for Rule 5a, Rule 5f, the S-tier gate item 4, and the L5-vs-season tiebreaker is groundTruth.l5.weighted.averages when present, otherwise groundTruth.l5.averages.
