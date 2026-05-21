@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import playersData from "../data/players.json";
 import { STATS } from "../api/lib/prop-types.js";
-import { readNewestCached, writeCached, clearStaleForPlayer, clearAllAnalyzeAll, buildKey } from "./lib/result-cache.js";
+import { readNewestCached, writeCached, clearStaleForPlayer, buildKey } from "./lib/result-cache.js";
 
 const TIER_ORDER = { S: 0, A: 1, B: 2, SKIP: 3 };
 
@@ -51,10 +51,6 @@ export default function App() {
   // "HIT" when served from sessionStorage or when server returned X-Cache:HIT.
   // "MISS" on a fresh network analysis. null on first render / between calls.
   const [cacheStatus, setCacheStatus] = useState(null);
-  const [clearing, setClearing] = useState(false);
-  // Shown briefly after the CLEAR CACHE button completes. Null when no
-  // recent clear action; cleared by the next analyze call.
-  const [clearMessage, setClearMessage] = useState(null);
 
   const allStatsSelected = selectedStats.length === STATS.length;
 
@@ -127,7 +123,6 @@ export default function App() {
     setError(null);
     setResults(null);
     setCacheStatus(null);
-    setClearMessage(null);
 
     // Browser-side cache check. Same (player, statTypes, direction) within
     // the current lines snapshot → return instantly, no server round-trip,
@@ -177,41 +172,6 @@ export default function App() {
       setAnalyzing(false);
     }
   }, [player, selectedStats, direction, league]);
-
-  // Manual cache wipe — drops every analyze-all entry from this tab's
-  // sessionStorage AND asks the server to drop its in-process Map for the
-  // analyze-all namespace. The next Analyze click is guaranteed to do real
-  // work (fresh GT fetch + LLM call). Per-warm-instance only on the server
-  // side — multi-instance deployments may keep serving cached entries from
-  // other workers until they age out.
-  const clearCache = useCallback(async () => {
-    if (clearing) return;
-    setClearing(true);
-    setClearMessage(null);
-    setError(null);
-    let serverCleared = 0;
-    let serverError = null;
-    try {
-      const response = await fetch("/api/cache-clear", { method: "POST" });
-      const data = await response.json();
-      if (!response.ok) {
-        serverError = data?.error || `HTTP ${response.status}`;
-      } else {
-        serverCleared = data.cleared ?? 0;
-      }
-    } catch (e) {
-      serverError = e.message;
-    }
-    const browserCleared = clearAllAnalyzeAll();
-    setCacheStatus(null);
-    setResults(null);
-    setClearMessage(
-      serverError
-        ? `Browser: ${browserCleared} cleared. Server: ${serverError}`
-        : `Cleared ${serverCleared} server + ${browserCleared} browser entries.`
-    );
-    setClearing(false);
-  }, [clearing]);
 
   return (
     <div style={{
@@ -451,58 +411,25 @@ export default function App() {
             )}
           </div>
 
-          {/* Analyze + Clear Cache Buttons */}
-          <div style={{ display: "flex", gap: 8 }}>
-            <button
-              onClick={analyzeAll}
-              disabled={analyzing}
-              style={{
-                flex: 1,
-                background: analyzing ? "#1a2a3a" : "#0066cc",
-                color: analyzing ? "#446688" : "#ffffff",
-                border: `1px solid ${analyzing ? "#1e3040" : "#0088ff"}`,
-                padding: "10px 28px",
-                fontFamily: "'Courier New', monospace",
-                fontSize: 12,
-                fontWeight: "bold",
-                letterSpacing: 2,
-                cursor: analyzing ? "not-allowed" : "pointer",
-                transition: "all 0.15s",
-              }}
-            >
-              {analyzing ? "ANALYZING..." : "ANALYZE ALL LINES"}
-            </button>
-            <button
-              onClick={clearCache}
-              disabled={clearing || analyzing}
-              title="Drop cached analyze-all responses (browser + server). Next analyze runs cold."
-              style={{
-                background: "#0a1420",
-                color: clearing || analyzing ? "#446688" : "#cc8844",
-                border: `1px solid ${clearing || analyzing ? "#1e3040" : "#663300"}`,
-                padding: "10px 16px",
-                fontFamily: "'Courier New', monospace",
-                fontSize: 11,
-                fontWeight: "bold",
-                letterSpacing: 2,
-                cursor: clearing || analyzing ? "not-allowed" : "pointer",
-                transition: "all 0.15s",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {clearing ? "CLEARING..." : "CLEAR CACHE"}
-            </button>
-          </div>
-          {clearMessage && (
-            <div style={{
-              fontSize: 10,
-              color: "#886644",
-              letterSpacing: 1,
-              padding: "2px 4px",
-            }}>
-              {clearMessage}
-            </div>
-          )}
+          {/* Analyze Button */}
+          <button
+            onClick={analyzeAll}
+            disabled={analyzing}
+            style={{
+              background: analyzing ? "#1a2a3a" : "#0066cc",
+              color: analyzing ? "#446688" : "#ffffff",
+              border: `1px solid ${analyzing ? "#1e3040" : "#0088ff"}`,
+              padding: "10px 28px",
+              fontFamily: "'Courier New', monospace",
+              fontSize: 12,
+              fontWeight: "bold",
+              letterSpacing: 2,
+              cursor: analyzing ? "not-allowed" : "pointer",
+              transition: "all 0.15s",
+            }}
+          >
+            {analyzing ? "ANALYZING..." : "ANALYZE ALL LINES"}
+          </button>
         </div>
 
         {/* Error */}

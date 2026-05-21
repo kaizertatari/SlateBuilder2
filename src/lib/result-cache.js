@@ -97,11 +97,9 @@ export function clearStaleForPlayer(currentKey, player) {
 }
 
 // Drop every analyze-all:* entry. Used as a last resort when sessionStorage
-// throws QuotaExceededError on write, and by the manual CLEAR CACHE button
-// to invalidate this tab's snapshot alongside the server's. Returns the
-// number of entries removed.
-export function clearAllAnalyzeAll() {
-  if (!isBrowser()) return 0;
+// throws QuotaExceededError on write.
+function clearAllAnalyzeAll() {
+  if (!isBrowser()) return;
   const toDelete = [];
   for (let i = 0; i < window.sessionStorage.length; i++) {
     const key = window.sessionStorage.key(i);
@@ -110,7 +108,6 @@ export function clearAllAnalyzeAll() {
   for (const k of toDelete) {
     try { window.sessionStorage.removeItem(k); } catch { /* ignore */ }
   }
-  return toDelete.length;
 }
 
 // Persist a response under `key`. If sessionStorage is full, drop every

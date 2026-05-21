@@ -19,21 +19,6 @@ import { logPrefix } from "./request-context.js";
 const store = new Map();
 const inflight = new Map();
 
-// Drop every entry whose key starts with `prefix`. Returns the count of
-// entries removed. Used by the /api/cache-clear endpoint to evict the
-// analyze-all response cache without disturbing other namespaces (e.g.,
-// ESPN scoreboard, team-defense SWR entries) that are safe to leave warm.
-export function clearByPrefix(prefix) {
-  let removed = 0;
-  for (const key of Array.from(store.keys())) {
-    if (key.startsWith(prefix)) {
-      store.delete(key);
-      removed += 1;
-    }
-  }
-  return removed;
-}
-
 export function get(key) {
   const entry = store.get(key);
   if (!entry) return null;
