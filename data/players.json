@@ -6,21 +6,21 @@
     "league": "NBA"
   },
   "A'ja Wilson": {
-    "nba": null,
+    "nba": 1628932,
     "espn": 3149391,
     "bbref": "wilsoa01w",
     "team_abbr": "LV",
     "league": "WNBA"
   },
   "Aaliyah Edwards": {
-    "nba": null,
+    "nba": 1642290,
     "espn": 4433408,
     "bbref": "edwaraa01w",
     "team_abbr": "CON",
     "league": "WNBA"
   },
   "Aaliyah Nye": {
-    "nba": null,
+    "nba": 1642801,
     "espn": 4597509,
     "bbref": "nyeaa01w",
     "team_abbr": "TOR",
@@ -51,7 +51,7 @@
     "league": "NBA"
   },
   "Aicha Coulibaly": {
-    "nba": null,
+    "nba": 1642786,
     "espn": 4433433,
     "bbref": "couliai01w",
     "team_abbr": "CHI",
@@ -71,7 +71,7 @@
     "league": "NBA"
   },
   "Alanna Smith": {
-    "nba": null,
+    "nba": 1629501,
     "espn": 3913881,
     "bbref": "smithal01w",
     "team_abbr": "DAL",
@@ -84,28 +84,28 @@
     "league": "NBA"
   },
   "Alex Fowler": {
-    "nba": null,
+    "nba": 1643525,
     "espn": 4595823,
     "bbref": "fowleal01w",
     "team_abbr": "NY",
     "league": "WNBA"
   },
   "Alex Wilson": {
-    "nba": null,
+    "nba": 1642775,
     "espn": 5278157,
     "bbref": null,
     "team_abbr": "WSH",
     "league": "WNBA"
   },
   "Aliyah Boston": {
-    "nba": null,
+    "nba": 1641648,
     "espn": 4432831,
     "bbref": "bostoal01w",
     "team_abbr": "IND",
     "league": "WNBA"
   },
   "Allisha Gray": {
-    "nba": null,
+    "nba": 1628277,
     "espn": 3058901,
     "bbref": "grayal01w",
     "team_abbr": "ATL",
@@ -118,14 +118,14 @@
     "league": "NBA"
   },
   "Alysha Clark": {
-    "nba": null,
+    "nba": 202252,
     "espn": 924,
     "bbref": "clarkal01w",
     "team_abbr": "DAL",
     "league": "WNBA"
   },
   "Alyssa Thomas": {
-    "nba": null,
+    "nba": 203826,
     "espn": 2529140,
     "bbref": "thomaal01w",
     "team_abbr": "PHX",
@@ -152,14 +152,14 @@
     "league": "NBA"
   },
   "Amy Okonkwo": {
-    "nba": null,
+    "nba": 1629539,
     "espn": 3142242,
     "bbref": "okonkam01w",
     "team_abbr": "DAL",
     "league": "WNBA"
   },
   "Anastasiia Olairi Kosu": {
-    "nba": null,
+    "nba": 1642797,
     "espn": 5278237,
     "bbref": "kosuan01w",
     "team_abbr": "MIN",
@@ -172,21 +172,21 @@
     "league": "NBA"
   },
   "Aneesah Morrow": {
-    "nba": null,
+    "nba": 1642800,
     "espn": 4684384,
     "bbref": "morroan02w",
     "team_abbr": "CON",
     "league": "WNBA"
   },
   "Angel Reese": {
-    "nba": null,
+    "nba": 1642291,
     "espn": 4433402,
     "bbref": "reesean01w",
     "team_abbr": "ATL",
     "league": "WNBA"
   },
   "Angela Dugalic": {
-    "nba": null,
+    "nba": 1643455,
     "espn": 4433411,
     "bbref": "dugalan01w",
     "team_abbr": "WSH",
@@ -218,21 +218,21 @@
     "league": "NBA"
   },
   "Antonia Delaere": {
-    "nba": null,
+    "nba": 1643489,
     "espn": 4873358,
     "bbref": "delaean01w",
     "team_abbr": "MIN",
     "league": "WNBA"
   },
   "Ariel Atkins": {
-    "nba": null,
+    "nba": 1628878,
     "espn": 3146151,
     "bbref": "atkinar01w",
     "team_abbr": "LA",
     "league": "WNBA"
   },
   "Arike Ogunbowale": {
-    "nba": null,
+    "nba": 1629481,
     "espn": 3904577,
     "bbref": "ogunbar01w",
     "team_abbr": "DAL",
@@ -246,7 +246,7 @@
     "league": "WNBA"
   },
   "Ashlon Jackson": {
-    "nba": null,
+    "nba": 1643437,
     "espn": 5106232,
     "bbref": "jacksas01w",
     "team_abbr": "GS",
@@ -273,7 +273,7 @@
     "league": "NBA"
   },
   "Awak Kuier": {
-    "nba": null,
+    "nba": 1630386,
     "espn": 4790266,
     "bbref": "kuieraw01w",
     "team_abbr": "DAL",
@@ -286,14 +286,14 @@
     "league": "NBA"
   },
   "Aziaha James": {
-    "nba": null,
+    "nba": 1642793,
     "espn": 4433807,
     "bbref": "jamesaz01w",
     "team_abbr": "DAL",
     "league": "WNBA"
   },
   "Azzi Fudd": {
-    "nba": null,
+    "nba": 1643425,
     "espn": 4433790,
     "bbref": "fuddaz01w",
     "team_abbr": "DAL",
@@ -326,7 +326,7 @@
     "league": "WNBA"
   },
   "Betnijah Laney-Hamilton": {
-    "nba": null,
+    "nba": 204335,
     "espn": 2593770,
     "bbref": "laneybe01w",
     "team_abbr": "NY",
@@ -345,35 +345,35 @@
     "league": "NBA"
   },
   "Breanna Stewart": {
-    "nba": null,
+    "nba": 1627668,
     "espn": 2998928,
     "bbref": "stewabr01w",
     "team_abbr": "NY",
     "league": "WNBA"
   },
   "Brianna Turner": {
-    "nba": null,
+    "nba": 1629488,
     "espn": 3142086,
     "bbref": "turnebr01w",
     "team_abbr": "LV",
     "league": "WNBA"
   },
   "Bridget Carleton": {
-    "nba": null,
+    "nba": 1629524,
     "espn": 3906972,
     "bbref": "carlebr01w",
     "team_abbr": "POR",
     "league": "WNBA"
   },
   "Brittney Griner": {
-    "nba": null,
+    "nba": 203398,
     "espn": 2490553,
     "bbref": "grinebr01w",
     "team_abbr": "CON",
     "league": "WNBA"
   },
   "Brittney Sykes": {
-    "nba": null,
+    "nba": 1628279,
     "espn": 2988756,
     "bbref": "sykesbr01w",
     "team_abbr": "TOR",
@@ -398,14 +398,14 @@
     "league": "NBA"
   },
   "Caitlin Clark": {
-    "nba": null,
+    "nba": 1642286,
     "espn": 4433403,
     "bbref": "clarkca02w",
     "team_abbr": "IND",
     "league": "WNBA"
   },
   "Cameron Brink": {
-    "nba": null,
+    "nba": 1642287,
     "espn": 4433404,
     "bbref": "brinkca01w",
     "team_abbr": "LA",
@@ -424,7 +424,7 @@
     "league": "NBA"
   },
   "Carla Leite": {
-    "nba": null,
+    "nba": 1642304,
     "espn": 5208982,
     "bbref": "leiteca01w",
     "team_abbr": "POR",
@@ -450,7 +450,7 @@
     "league": "NBA"
   },
   "Cassandre Prosper": {
-    "nba": null,
+    "nba": 1643467,
     "espn": 5122345,
     "bbref": "prospca01w",
     "team_abbr": "WSH",
@@ -464,35 +464,35 @@
     "league": "WNBA"
   },
   "Cecilia Zandalasini": {
-    "nba": null,
+    "nba": 1628508,
     "espn": 4257500,
     "bbref": "zandace01w",
     "team_abbr": "GS",
     "league": "WNBA"
   },
   "Chance Gray": {
-    "nba": null,
+    "nba": 1643462,
     "espn": 5105729,
     "bbref": "graych02w",
     "team_abbr": "LA",
     "league": "WNBA"
   },
   "Charlisse Leger-Walker": {
-    "nba": null,
+    "nba": 1643449,
     "espn": 4703609,
     "bbref": "legerch01w",
     "team_abbr": "CON",
     "league": "WNBA"
   },
   "Chelsea Gray": {
-    "nba": null,
+    "nba": 203833,
     "espn": 2529122,
     "bbref": "graych01w",
     "team_abbr": "LV",
     "league": "WNBA"
   },
   "Chennedy Carter": {
-    "nba": null,
+    "nba": 1630150,
     "espn": 4280892,
     "bbref": "cartech01w",
     "team_abbr": "LV",
@@ -505,7 +505,7 @@
     "league": "NBA"
   },
   "Cheyenne Parker-Tyus": {
-    "nba": null,
+    "nba": 204323,
     "espn": 2529458,
     "bbref": "parkech01w",
     "team_abbr": "LV",
@@ -562,21 +562,21 @@
     "league": "NBA"
   },
   "Costanza Verona": {
-    "nba": null,
+    "nba": 1643424,
     "espn": 5345473,
     "bbref": "veronco01w",
     "team_abbr": "DAL",
     "league": "WNBA"
   },
   "Cotie McMahon": {
-    "nba": null,
+    "nba": 1643430,
     "espn": 4583144,
     "bbref": "mcmahco01w",
     "team_abbr": "WSH",
     "league": "WNBA"
   },
   "Courtney Williams": {
-    "nba": null,
+    "nba": 1627675,
     "espn": 2987891,
     "bbref": "willico01w",
     "team_abbr": "MIN",
@@ -589,7 +589,7 @@
     "league": "NBA"
   },
   "Damiris Dantas": {
-    "nba": null,
+    "nba": 203024,
     "espn": 2955898,
     "bbref": "dantada01w",
     "team_abbr": "IND",
@@ -609,7 +609,7 @@
     "league": "WNBA"
   },
   "Darianna Littlepage-Buggs": {
-    "nba": null,
+    "nba": 1643440,
     "espn": 5106145,
     "bbref": "littlda02w",
     "team_abbr": "WSH",
@@ -640,7 +640,7 @@
     "league": "NBA"
   },
   "Dearica Hamby": {
-    "nba": null,
+    "nba": 204324,
     "espn": 2566106,
     "bbref": "hambyde01w",
     "team_abbr": "LA",
@@ -696,14 +696,14 @@
     "league": "NBA"
   },
   "DeWanna Bonner": {
-    "nba": null,
+    "nba": 201886,
     "espn": 869,
     "bbref": "bonnede01w",
     "team_abbr": "PHX",
     "league": "WNBA"
   },
   "Diamond Miller": {
-    "nba": null,
+    "nba": 1641649,
     "espn": 4433635,
     "bbref": "milledi03w",
     "team_abbr": "CON",
@@ -722,7 +722,7 @@
     "league": "NBA"
   },
   "Dominique Malonga": {
-    "nba": null,
+    "nba": 1642798,
     "espn": 5220150,
     "bbref": "malondo01w",
     "team_abbr": "SEA",
@@ -753,7 +753,7 @@
     "league": "NBA"
   },
   "Dulcy Fankam Mendjiadeu": {
-    "nba": null,
+    "nba": 1641675,
     "espn": 4594527,
     "bbref": "fankadu01w",
     "team_abbr": "DAL",
@@ -778,7 +778,7 @@
     "league": "NBA"
   },
   "Eliska Hamzova": {
-    "nba": null,
+    "nba": 1643490,
     "espn": 5345478,
     "bbref": "hamzoel01w",
     "team_abbr": "MIN",
@@ -792,7 +792,7 @@
     "league": "WNBA"
   },
   "Elizabeth Williams": {
-    "nba": null,
+    "nba": 204322,
     "espn": 2566081,
     "bbref": "williel01w",
     "team_abbr": "CHI",
@@ -806,35 +806,35 @@
     "league": "WNBA"
   },
   "Emese Hof": {
-    "nba": null,
+    "nba": 1629581,
     "espn": 3913680,
     "bbref": "hofem01w",
     "team_abbr": "MIN",
     "league": "WNBA"
   },
   "Emily Engstler": {
-    "nba": null,
+    "nba": 1631083,
     "espn": 4398729,
     "bbref": "engstem01w",
     "team_abbr": "POR",
     "league": "WNBA"
   },
   "Emma Cannon": {
-    "nba": null,
+    "nba": 1628242,
     "espn": 2284331,
     "bbref": "cannoem01w",
     "team_abbr": "LA",
     "league": "WNBA"
   },
   "Emma Cechova": {
-    "nba": null,
+    "nba": 1643488,
     "espn": 5345322,
     "bbref": "cechoem01w",
     "team_abbr": "MIN",
     "league": "WNBA"
   },
   "Erica Wheeler": {
-    "nba": null,
+    "nba": 204365,
     "espn": 2491214,
     "bbref": "wheeler01w",
     "team_abbr": "LA",
@@ -847,7 +847,7 @@
     "league": "NBA"
   },
   "Flau'jae Johnson": {
-    "nba": null,
+    "nba": 1643428,
     "espn": 4698736,
     "bbref": "johnsfl03w",
     "team_abbr": "SEA",
@@ -866,14 +866,14 @@
     "league": "NBA"
   },
   "Frieda Buhner": {
-    "nba": null,
+    "nba": 1643494,
     "espn": 5105406,
     "bbref": "buhnefr01w",
     "team_abbr": "POR",
     "league": "WNBA"
   },
   "Gabby Williams": {
-    "nba": null,
+    "nba": 1628931,
     "espn": 3142328,
     "bbref": "williga01w",
     "team_abbr": "GS",
@@ -886,21 +886,21 @@
     "league": "NBA"
   },
   "Gabriela Jaquez": {
-    "nba": null,
+    "nba": 1643447,
     "espn": 4858656,
     "bbref": "jaquega01w",
     "team_abbr": "CHI",
     "league": "WNBA"
   },
   "Georgia Amoore": {
-    "nba": null,
+    "nba": 1642781,
     "espn": 4704180,
     "bbref": "amoorge01w",
     "team_abbr": "WSH",
     "league": "WNBA"
   },
   "Gianna Kneepkens": {
-    "nba": null,
+    "nba": 1643429,
     "espn": 4898898,
     "bbref": "kneepgi01w",
     "team_abbr": "CON",
@@ -939,21 +939,21 @@
     "league": "NBA"
   },
   "Hailey Van Lith": {
-    "nba": null,
+    "nba": 1642817,
     "espn": 4433412,
     "bbref": "vanliha01w",
-    "team_abbr": "CHI",
+    "team_abbr": "CON",
     "league": "WNBA"
   },
   "Haley Jones": {
-    "nba": null,
+    "nba": 1641650,
     "espn": 4595910,
     "bbref": "jonesha01w",
     "team_abbr": "POR",
     "league": "WNBA"
   },
   "Han Xu": {
-    "nba": null,
+    "nba": 1629566,
     "espn": 4337216,
     "bbref": "xuha01w",
     "team_abbr": "NY",
@@ -973,14 +973,14 @@
     "league": "NBA"
   },
   "Holly Winterburn": {
-    "nba": null,
+    "nba": 1641683,
     "espn": 4433690,
     "bbref": "winteho01w",
     "team_abbr": "ATL",
     "league": "WNBA"
   },
   "Indya Nivar": {
-    "nba": null,
+    "nba": 1643469,
     "espn": 5105740,
     "bbref": "nivarin01w",
     "team_abbr": "ATL",
@@ -1005,7 +1005,7 @@
     "league": "NBA"
   },
   "Isobel Borlase": {
-    "nba": null,
+    "nba": 1642302,
     "espn": 5208983,
     "bbref": "borlais01w",
     "team_abbr": "ATL",
@@ -1024,14 +1024,14 @@
     "league": "NBA"
   },
   "Jackie Young": {
-    "nba": null,
+    "nba": 1629498,
     "espn": 4065870,
     "bbref": "youngja01w",
     "team_abbr": "LV",
     "league": "WNBA"
   },
   "Jacy Sheldon": {
-    "nba": null,
+    "nba": 1642292,
     "espn": 4432865,
     "bbref": "sheldja01w",
     "team_abbr": "CHI",
@@ -1045,7 +1045,7 @@
     "league": "WNBA"
   },
   "Jade Melbourne": {
-    "nba": null,
+    "nba": 1631141,
     "espn": 5017726,
     "bbref": "melboja01w",
     "team_abbr": "SEA",
@@ -1156,14 +1156,14 @@
     "league": "NBA"
   },
   "Janelle Salaun": {
-    "nba": null,
+    "nba": 1642767,
     "espn": 4790264,
     "bbref": "salauja01w",
     "team_abbr": "GS",
     "league": "WNBA"
   },
   "Janiah Barker": {
-    "nba": null,
+    "nba": 1643434,
     "espn": 4565501,
     "bbref": "barkeja01w",
     "team_abbr": "LV",
@@ -1243,7 +1243,7 @@
     "league": "NBA"
   },
   "Jessica Shepard": {
-    "nba": null,
+    "nba": 1629491,
     "espn": 3906949,
     "bbref": "shepaje01w",
     "team_abbr": "DAL",
@@ -1257,14 +1257,14 @@
     "league": "WNBA"
   },
   "Jewell Loyd": {
-    "nba": null,
+    "nba": 204319,
     "espn": 2987869,
     "bbref": "loydje01w",
     "team_abbr": "LV",
     "league": "WNBA"
   },
   "Jihyun Park": {
-    "nba": null,
+    "nba": 1630148,
     "espn": 4874375,
     "bbref": "parkji02w",
     "team_abbr": "LA",
@@ -1284,7 +1284,7 @@
     "league": "NBA"
   },
   "JJ Quinerly": {
-    "nba": null,
+    "nba": 1642808,
     "espn": 4434015,
     "bbref": "quinejj01w",
     "team_abbr": "DAL",
@@ -1309,7 +1309,7 @@
     "league": "NBA"
   },
   "Jonquel Jones": {
-    "nba": null,
+    "nba": 1627673,
     "espn": 2999101,
     "bbref": "jonesjo01w",
     "team_abbr": "NY",
@@ -1336,7 +1336,7 @@
     "league": "WNBA"
   },
   "Jordan Horston": {
-    "nba": null,
+    "nba": 1641651,
     "espn": 4432830,
     "bbref": "horstjo02w",
     "team_abbr": "SEA",
@@ -1356,7 +1356,7 @@
     "league": "NBA"
   },
   "Jordin Canada": {
-    "nba": null,
+    "nba": 1628886,
     "espn": 3142250,
     "bbref": "canadjo01w",
     "team_abbr": "ATL",
@@ -1381,7 +1381,7 @@
     "league": "NBA"
   },
   "Jovana Nogic": {
-    "nba": null,
+    "nba": 1643505,
     "espn": 3906769,
     "bbref": "nogicjo01w",
     "team_abbr": "PHX",
@@ -1406,14 +1406,14 @@
     "league": "NBA"
   },
   "Julie Allemand": {
-    "nba": null,
+    "nba": 1627700,
     "espn": 4001679,
     "bbref": "allemju01w",
     "team_abbr": "TOR",
     "league": "WNBA"
   },
   "Julie Vanloo": {
-    "nba": null,
+    "nba": 1642210,
     "espn": 2566110,
     "bbref": "vanloju01w",
     "team_abbr": "NY",
@@ -1432,28 +1432,28 @@
     "league": "NBA"
   },
   "Justine Pissott": {
-    "nba": null,
+    "nba": 1643495,
     "espn": 4682855,
     "bbref": "pissoju01w",
     "team_abbr": "IND",
     "league": "WNBA"
   },
   "Kahleah Copper": {
-    "nba": null,
+    "nba": 1627674,
     "espn": 2998938,
     "bbref": "coppeka01w",
     "team_abbr": "PHX",
     "league": "WNBA"
   },
   "Kaila Charles": {
-    "nba": null,
+    "nba": 1630097,
     "espn": 4065780,
     "bbref": "charlka01w",
     "team_abbr": "GS",
     "league": "WNBA"
   },
   "Kaitlyn Chen": {
-    "nba": null,
+    "nba": 1642822,
     "espn": 4899328,
     "bbref": "chenka01w",
     "team_abbr": "GS",
@@ -1467,14 +1467,14 @@
     "league": "WNBA"
   },
   "Kamiah Smalls": {
-    "nba": null,
+    "nba": 1630154,
     "espn": 4068346,
     "bbref": "smallka01w",
     "team_abbr": "POR",
     "league": "WNBA"
   },
   "Kamilla Cardoso": {
-    "nba": null,
+    "nba": 1642289,
     "espn": 4433405,
     "bbref": "cardoka01w",
     "team_abbr": "CHI",
@@ -1494,7 +1494,7 @@
     "league": "NBA"
   },
   "Kate Martin": {
-    "nba": null,
+    "nba": 1642324,
     "espn": 4398907,
     "bbref": "martika01w",
     "team_abbr": "GS",
@@ -1508,14 +1508,14 @@
     "league": "WNBA"
   },
   "Kayla McBride": {
-    "nba": null,
+    "nba": 203825,
     "espn": 2529205,
     "bbref": "mcbrika01w",
     "team_abbr": "MIN",
     "league": "WNBA"
   },
   "Kayla Thornton": {
-    "nba": null,
+    "nba": 203866,
     "espn": 2529622,
     "bbref": "thornka01w",
     "team_abbr": "GS",
@@ -1534,21 +1534,21 @@
     "league": "NBA"
   },
   "Kelsey Mitchell": {
-    "nba": null,
+    "nba": 1628909,
     "espn": 3142191,
     "bbref": "mitchke01w",
     "team_abbr": "IND",
     "league": "WNBA"
   },
   "Kelsey Plum": {
-    "nba": null,
+    "nba": 1628276,
     "espn": 3065570,
     "bbref": "plumke01w",
     "team_abbr": "LA",
     "league": "WNBA"
   },
   "Kennedy Burke": {
-    "nba": null,
+    "nba": 1629568,
     "espn": 3922628,
     "bbref": "burkeke01w",
     "team_abbr": "CON",
@@ -1579,42 +1579,42 @@
     "league": "NBA"
   },
   "Kia Nurse": {
-    "nba": null,
+    "nba": 1628915,
     "espn": 3142327,
     "bbref": "nurseki01w",
     "team_abbr": "TOR",
     "league": "WNBA"
   },
   "Kiah Stokes": {
-    "nba": null,
+    "nba": 204329,
     "espn": 2590093,
     "bbref": "stokeki01w",
     "team_abbr": "GS",
     "league": "WNBA"
   },
   "Kiana Williams": {
-    "nba": null,
+    "nba": 1630461,
     "espn": 4282168,
     "bbref": "williki02w",
     "team_abbr": "PHX",
     "league": "WNBA"
   },
   "Kierstan Bell": {
-    "nba": null,
+    "nba": 1631006,
     "espn": 4433633,
     "bbref": "bellki01w",
     "team_abbr": "LV",
     "league": "WNBA"
   },
   "Kiki Iriafen": {
-    "nba": null,
+    "nba": 1642792,
     "espn": 4898384,
     "bbref": "iriafki01w",
     "team_abbr": "WSH",
     "league": "WNBA"
   },
   "Kiki Rice": {
-    "nba": null,
+    "nba": 1643445,
     "espn": 4565505,
     "bbref": "riceki01w",
     "team_abbr": "TOR",
@@ -1634,7 +1634,7 @@
     "league": "WNBA"
   },
   "Kyara Linskens": {
-    "nba": null,
+    "nba": 1642768,
     "espn": 4873359,
     "bbref": "linskky01w",
     "team_abbr": "PHX",
@@ -1654,7 +1654,7 @@
     "league": "NBA"
   },
   "Laeticia Amihere": {
-    "nba": null,
+    "nba": 1641656,
     "espn": 4432834,
     "bbref": "amihela01w",
     "team_abbr": "GS",
@@ -1694,21 +1694,21 @@
     "league": "WNBA"
   },
   "Laura Juskaite": {
-    "nba": null,
+    "nba": 1643420,
     "espn": 5345444,
     "bbref": "juskala01w",
     "team_abbr": "TOR",
     "league": "WNBA"
   },
   "Laura Ziegler": {
-    "nba": null,
+    "nba": 1643461,
     "espn": 5107515,
     "bbref": "zieglla01w",
     "team_abbr": "LA",
     "league": "WNBA"
   },
   "Lauren Betts": {
-    "nba": null,
+    "nba": 1643427,
     "espn": 5105737,
     "bbref": "bettsla01w",
     "team_abbr": "WSH",
@@ -1728,35 +1728,35 @@
     "league": "NBA"
   },
   "Lexi Held": {
-    "nba": null,
+    "nba": 1631118,
     "espn": 4399342,
     "bbref": "heldle01w",
     "team_abbr": "TOR",
     "league": "WNBA"
   },
   "Lexie Brown": {
-    "nba": null,
+    "nba": 1628882,
     "espn": 3058892,
     "bbref": "brownle02w",
     "team_abbr": "SEA",
     "league": "WNBA"
   },
   "Lexie Hull": {
-    "nba": null,
+    "nba": 1631086,
     "espn": 4398829,
     "bbref": "hullle01w",
     "team_abbr": "IND",
     "league": "WNBA"
   },
   "Li Yueru": {
-    "nba": null,
+    "nba": 1629574,
     "espn": 4336633,
     "bbref": "yueruli01w",
     "team_abbr": "DAL",
     "league": "WNBA"
   },
   "Liatu King": {
-    "nba": null,
+    "nba": 1642820,
     "espn": 4596309,
     "bbref": "kingli01w",
     "team_abbr": "MIN",
@@ -1770,7 +1770,7 @@
     "league": "WNBA"
   },
   "Lucy Olsen": {
-    "nba": null,
+    "nba": 1642802,
     "espn": 4433815,
     "bbref": "olsenlu01w",
     "team_abbr": "WSH",
@@ -1783,7 +1783,7 @@
     "league": "NBA"
   },
   "Luisa Geiselsoder": {
-    "nba": null,
+    "nba": 1630143,
     "espn": 4682797,
     "bbref": "geiselu01w",
     "team_abbr": "POR",
@@ -1814,7 +1814,7 @@
     "league": "NBA"
   },
   "Mackenzie Holmes": {
-    "nba": null,
+    "nba": 1642307,
     "espn": 4433643,
     "bbref": "holmema01w",
     "team_abbr": "SEA",
@@ -1828,21 +1828,21 @@
     "league": "WNBA"
   },
   "Maddy Siegrist": {
-    "nba": null,
+    "nba": 1641652,
     "espn": 4399415,
     "bbref": "siegrma01w",
     "team_abbr": "DAL",
     "league": "WNBA"
   },
   "Maddy Westbeld": {
-    "nba": null,
+    "nba": 1642818,
     "espn": 4433424,
     "bbref": "westbma01w",
     "team_abbr": "CHI",
     "league": "WNBA"
   },
   "Madina Okot": {
-    "nba": null,
+    "nba": 1643431,
     "espn": 5108587,
     "bbref": "okotma01w",
     "team_abbr": "ATL",
@@ -1877,7 +1877,7 @@
     "league": "WNBA"
   },
   "Makayla Timpson": {
-    "nba": null,
+    "nba": 1642815,
     "espn": 4433546,
     "bbref": "timpsma01w",
     "team_abbr": "IND",
@@ -1897,35 +1897,35 @@
     "league": "NBA"
   },
   "Maria Conde": {
-    "nba": null,
+    "nba": 1629576,
     "espn": 3910470,
     "bbref": "condema01w",
     "team_abbr": "TOR",
     "league": "WNBA"
   },
   "Mariella Fasoula": {
-    "nba": null,
+    "nba": 1630108,
     "espn": 3904479,
     "bbref": "fasouma01w",
     "team_abbr": "GS",
     "league": "WNBA"
   },
   "Marina Mabrey": {
-    "nba": null,
+    "nba": 1629497,
     "espn": 3904576,
     "bbref": "mabrema01w",
     "team_abbr": "TOR",
     "league": "WNBA"
   },
   "Marine Johannes": {
-    "nba": null,
+    "nba": 1629546,
     "espn": 4038379,
     "bbref": "johanma01w",
     "team_abbr": "NY",
     "league": "WNBA"
   },
   "Marta Suarez": {
-    "nba": null,
+    "nba": 1643438,
     "espn": 4704594,
     "bbref": "suarema01w",
     "team_abbr": "GS",
@@ -1944,14 +1944,14 @@
     "league": "NBA"
   },
   "Maya Caldwell": {
-    "nba": null,
+    "nba": 1630471,
     "espn": 4280850,
     "bbref": "caldwma01w",
-    "team_abbr": "POR",
+    "team_abbr": "MIN",
     "league": "WNBA"
   },
   "Megan Gustafson": {
-    "nba": null,
+    "nba": 1629484,
     "espn": 3934218,
     "bbref": "gustame01w",
     "team_abbr": "POR",
@@ -1972,7 +1972,7 @@
     "league": "WNBA"
   },
   "Miela Sowah": {
-    "nba": null,
+    "nba": 1631039,
     "espn": 4398577,
     "bbref": "sowahmi01w",
     "team_abbr": "GS",
@@ -2003,7 +2003,7 @@
     "league": "NBA"
   },
   "Monique Billings": {
-    "nba": null,
+    "nba": 1628881,
     "espn": 3142255,
     "bbref": "billimo01w",
     "team_abbr": "IND",
@@ -2023,49 +2023,49 @@
     "league": "NBA"
   },
   "Myisha Hines-Allen": {
-    "nba": null,
+    "nba": 1628899,
     "espn": 3142055,
     "bbref": "hinesmy01w",
     "team_abbr": "IND",
     "league": "WNBA"
   },
   "NaLyssa Smith": {
-    "nba": null,
+    "nba": 1631019,
     "espn": 4398776,
     "bbref": "smithna01w",
     "team_abbr": "LV",
     "league": "WNBA"
   },
   "Natasha Cloud": {
-    "nba": null,
+    "nba": 204333,
     "espn": 2529137,
     "bbref": "cloudna01w",
     "team_abbr": "CHI",
     "league": "WNBA"
   },
   "Natasha Howard": {
-    "nba": null,
+    "nba": 203827,
     "espn": 2529130,
     "bbref": "howarna01w",
     "team_abbr": "MIN",
     "league": "WNBA"
   },
   "Natasha Mack": {
-    "nba": null,
+    "nba": 1630442,
     "espn": 4068042,
     "bbref": "mackna01w",
     "team_abbr": "PHX",
     "league": "WNBA"
   },
   "Natisha Hiedeman": {
-    "nba": null,
+    "nba": 1629567,
     "espn": 3906753,
     "bbref": "hiedena01w",
     "team_abbr": "SEA",
     "league": "WNBA"
   },
   "Naz Hillmon": {
-    "nba": null,
+    "nba": 1631044,
     "espn": 4398915,
     "bbref": "hillmna01w",
     "team_abbr": "ATL",
@@ -2078,7 +2078,7 @@
     "league": "NBA"
   },
   "Ndjakalenga Mwenentanda": {
-    "nba": null,
+    "nba": 1643479,
     "espn": 5106170,
     "bbref": "mwenend01w",
     "team_abbr": "GS",
@@ -2090,8 +2090,15 @@
     "bbref": "quetane01",
     "league": "NBA"
   },
+  "Nell Angloma": {
+    "nba": 1643448,
+    "espn": 5345319,
+    "bbref": null,
+    "team_abbr": "CON",
+    "league": "WNBA"
+  },
   "Nia Coffey": {
-    "nba": null,
+    "nba": 1628269,
     "espn": 3054590,
     "bbref": "coffeni01w",
     "team_abbr": "MIN",
@@ -2116,21 +2123,21 @@
     "league": "NBA"
   },
   "Nikolina Milic": {
-    "nba": null,
+    "nba": 1631263,
     "espn": 4874475,
     "bbref": "milicni01w",
     "team_abbr": "TOR",
     "league": "WNBA"
   },
   "Nneka Ogwumike": {
-    "nba": null,
+    "nba": 203014,
     "espn": 1068,
     "bbref": "ogwumnn01w",
     "team_abbr": "LA",
     "league": "WNBA"
   },
   "Noemie Brochant": {
-    "nba": null,
+    "nba": 1643493,
     "espn": 5345524,
     "bbref": "brochno01w",
     "team_abbr": "PHX",
@@ -2144,14 +2151,14 @@
     "league": "WNBA"
   },
   "Nyadiew Puoch": {
-    "nba": null,
+    "nba": 1642296,
     "espn": 5209202,
     "bbref": "puochny01w",
     "team_abbr": "POR",
     "league": "WNBA"
   },
   "Nyara Sabally": {
-    "nba": null,
+    "nba": 1631055,
     "espn": 4398768,
     "bbref": "sabalny01w",
     "team_abbr": "TOR",
@@ -2165,7 +2172,7 @@
     "league": "WNBA"
   },
   "Odyssey Sims": {
-    "nba": null,
+    "nba": 203824,
     "espn": 2529047,
     "bbref": "simsod01w",
     "team_abbr": "DAL",
@@ -2178,14 +2185,14 @@
     "league": "NBA"
   },
   "Olivia Miles": {
-    "nba": null,
+    "nba": 1643426,
     "espn": 4433791,
     "bbref": "milesol01w",
     "team_abbr": "MIN",
     "league": "WNBA"
   },
   "Olivia Nelson-Ododa": {
-    "nba": null,
+    "nba": 1631135,
     "espn": 4398966,
     "bbref": "nelsool01w",
     "team_abbr": "CON",
@@ -2204,7 +2211,7 @@
     "league": "NBA"
   },
   "Paige Bueckers": {
-    "nba": null,
+    "nba": 1642784,
     "espn": 4433730,
     "bbref": "bueckpa01w",
     "team_abbr": "DAL",
@@ -2223,7 +2230,7 @@
     "league": "NBA"
   },
   "Pauline Astier": {
-    "nba": null,
+    "nba": 1631136,
     "espn": 5345320,
     "bbref": "astiepa01w",
     "team_abbr": "NY",
@@ -2256,28 +2263,28 @@
     "league": "WNBA"
   },
   "Rachel Banham": {
-    "nba": null,
+    "nba": 1627671,
     "espn": 2566186,
     "bbref": "banhara01w",
     "team_abbr": "CHI",
     "league": "WNBA"
   },
   "Rae Burrell": {
-    "nba": null,
+    "nba": 1630996,
     "espn": 4398764,
     "bbref": "burrera01w",
     "team_abbr": "LA",
     "league": "WNBA"
   },
   "Raegan Beers": {
-    "nba": null,
+    "nba": 1643441,
     "espn": 5105732,
     "bbref": "beersra01w",
     "team_abbr": "CON",
     "league": "WNBA"
   },
   "Raven Johnson": {
-    "nba": null,
+    "nba": 1643433,
     "espn": 4433797,
     "bbref": "johnsra04w",
     "team_abbr": "IND",
@@ -2291,14 +2298,14 @@
     "league": "WNBA"
   },
   "Rebecca Allen": {
-    "nba": null,
+    "nba": 204296,
     "espn": 3102133,
     "bbref": "allenre01w",
     "team_abbr": "NY",
     "league": "WNBA"
   },
   "Rebekah Gardner": {
-    "nba": null,
+    "nba": 203822,
     "espn": 2327695,
     "bbref": "gardnre01w",
     "team_abbr": "NY",
@@ -2325,14 +2332,14 @@
     "league": "WNBA"
   },
   "Rhyne Howard": {
-    "nba": null,
+    "nba": 1631009,
     "espn": 4398674,
     "bbref": "howarrh01w",
     "team_abbr": "ATL",
     "league": "WNBA"
   },
   "Rickea Jackson": {
-    "nba": null,
+    "nba": 1642288,
     "espn": 4433630,
     "bbref": "jacksri02w",
     "team_abbr": "CHI",
@@ -2357,7 +2364,7 @@
     "league": "NBA"
   },
   "Rori Harmon": {
-    "nba": null,
+    "nba": 1643450,
     "espn": 4433523,
     "bbref": "harmoro01w",
     "team_abbr": "WSH",
@@ -2388,7 +2395,7 @@
     "league": "NBA"
   },
   "Sabrina Ionescu": {
-    "nba": null,
+    "nba": 1629477,
     "espn": 4066533,
     "bbref": "ionessa01w",
     "team_abbr": "NY",
@@ -2421,7 +2428,7 @@
     "league": "NBA"
   },
   "Sami Whitcomb": {
-    "nba": null,
+    "nba": 1628244,
     "espn": 887,
     "bbref": "whitcsa01w",
     "team_abbr": "PHX",
@@ -2434,21 +2441,21 @@
     "league": "NBA"
   },
   "Sania Feagin": {
-    "nba": null,
+    "nba": 1642790,
     "espn": 4433795,
     "bbref": "feagisa01w",
     "team_abbr": "LA",
     "league": "WNBA"
   },
   "Saniya Rivers": {
-    "nba": null,
+    "nba": 1642809,
     "espn": 4433514,
     "bbref": "riversa01w",
     "team_abbr": "CON",
     "league": "WNBA"
   },
   "Sarah Ashlee Barker": {
-    "nba": null,
+    "nba": 1642782,
     "espn": 4703794,
     "bbref": "barkesa01w",
     "team_abbr": "POR",
@@ -2474,7 +2481,7 @@
     "league": "NBA"
   },
   "Serah Williams": {
-    "nba": null,
+    "nba": 1643436,
     "espn": 5108550,
     "bbref": "willise02w",
     "team_abbr": "POR",
@@ -2507,21 +2514,21 @@
     "league": "NBA"
   },
   "Shakira Austin": {
-    "nba": null,
+    "nba": 1631022,
     "espn": 4398911,
     "bbref": "austish01w",
     "team_abbr": "WSH",
     "league": "WNBA"
   },
   "Shatori Walker-Kimbrough": {
-    "nba": null,
+    "nba": 1628278,
     "espn": 3058893,
     "bbref": "walkesh01w",
     "team_abbr": "IND",
     "league": "WNBA"
   },
   "Shay Ciezki": {
-    "nba": null,
+    "nba": 1643470,
     "espn": 4688629,
     "bbref": "ciezksh01w",
     "team_abbr": "PHX",
@@ -2535,28 +2542,28 @@
     "league": "WNBA"
   },
   "Sika Kone": {
-    "nba": null,
+    "nba": 1631021,
     "espn": 5017721,
     "bbref": "konesi01w",
     "team_abbr": "ATL",
     "league": "WNBA"
   },
   "Skylar Diggins": {
-    "nba": null,
+    "nba": 203400,
     "espn": 2491205,
     "bbref": "diggisk01w",
     "team_abbr": "CHI",
     "league": "WNBA"
   },
   "Sonia Citron": {
-    "nba": null,
+    "nba": 1642785,
     "espn": 4433524,
     "bbref": "citroso01w",
     "team_abbr": "WSH",
     "league": "WNBA"
   },
   "Sophie Cunningham": {
-    "nba": null,
+    "nba": 1629482,
     "espn": 3907781,
     "bbref": "cunniso01w",
     "team_abbr": "IND",
@@ -2569,7 +2576,7 @@
     "league": "NBA"
   },
   "Stefanie Dolson": {
-    "nba": null,
+    "nba": 203828,
     "espn": 2529183,
     "bbref": "dolsost01w",
     "team_abbr": "SEA",
@@ -2583,7 +2590,7 @@
     "league": "WNBA"
   },
   "Stephanie Talbot": {
-    "nba": null,
+    "nba": 203855,
     "espn": 3099736,
     "bbref": "talbost01w",
     "team_abbr": "LV",
@@ -2602,28 +2609,28 @@
     "league": "NBA"
   },
   "Sug Sutton": {
-    "nba": null,
+    "nba": 1630134,
     "espn": 4068159,
     "bbref": "suttosu01w",
     "team_abbr": "POR",
     "league": "WNBA"
   },
   "Sydney Taylor": {
-    "nba": null,
+    "nba": 1642321,
     "espn": 4594786,
     "bbref": "taylosy01w",
     "team_abbr": "CHI",
     "league": "WNBA"
   },
   "Ta'Niya Latson": {
-    "nba": null,
+    "nba": 1643444,
     "espn": 4609797,
     "bbref": "latsota01w",
     "team_abbr": "LA",
     "league": "WNBA"
   },
   "Taina Mair": {
-    "nba": null,
+    "nba": 1643473,
     "espn": 5106222,
     "bbref": "mairta01w",
     "team_abbr": "SEA",
@@ -2643,28 +2650,28 @@
     "league": "WNBA"
   },
   "Taylor Thierry": {
-    "nba": null,
+    "nba": 1642814,
     "espn": 4898400,
     "bbref": "thierta01w",
     "team_abbr": "ATL",
     "league": "WNBA"
   },
   "Te-Hina Paopao": {
-    "nba": null,
+    "nba": 1642804,
     "espn": 4433431,
     "bbref": "paopate01w",
     "team_abbr": "ATL",
     "league": "WNBA"
   },
   "Temi Fagbenle": {
-    "nba": null,
+    "nba": 1627701,
     "espn": 2569044,
     "bbref": "fagbete01w",
     "team_abbr": "TOR",
     "league": "WNBA"
   },
   "Teonni Key": {
-    "nba": null,
+    "nba": 1643457,
     "espn": 4434020,
     "bbref": "keyte01w",
     "team_abbr": "TOR",
@@ -2677,7 +2684,7 @@
     "league": "NBA"
   },
   "Tiffany Hayes": {
-    "nba": null,
+    "nba": 203026,
     "espn": 1054,
     "bbref": "hayesti01w",
     "team_abbr": "GS",
@@ -2727,7 +2734,7 @@
     "league": "NBA"
   },
   "Tyasha Harris": {
-    "nba": null,
+    "nba": 1630112,
     "espn": 4065760,
     "bbref": "harrity01w",
     "team_abbr": "IND",
@@ -2758,14 +2765,14 @@
     "league": "NBA"
   },
   "Valeriane Ayayi": {
-    "nba": null,
+    "nba": 204468,
     "espn": 3919496,
     "bbref": "ayayiva01w",
     "team_abbr": "PHX",
     "league": "WNBA"
   },
   "Veronica Burton": {
-    "nba": null,
+    "nba": 1631007,
     "espn": 4398935,
     "bbref": "burtove01w",
     "team_abbr": "GS",
@@ -2802,7 +2809,7 @@
     "league": "NBA"
   },
   "Zia Cooke": {
-    "nba": null,
+    "nba": 1641660,
     "espn": 4432832,
     "bbref": "cookezi01w",
     "team_abbr": "SEA",
