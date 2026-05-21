@@ -477,7 +477,7 @@ export default function App() {
               justifyContent: "space-between",
             }}>
               <span>Analyzed: {results.total_analyzed} lines</span>
-              <span>S/A Tier: {results.total_s_a} picks</span>
+              <span>S/A/B Tier: {results.total_s_a} picks</span>
               <span>Showing: {Math.min(results.top_10?.length || 0, 10)} results</span>
               {cacheStatus && (
                 <span style={{ color: cacheStatus === "HIT" ? "#00FF88" : "#446688" }}>
@@ -487,9 +487,9 @@ export default function App() {
             </div>
 
             {/* Tier breakdown — surfaces what the LLM/verifier actually
-                returned across all analyzed lines. The S/A summary above
+                returned across all analyzed lines. The S/A/B summary above
                 only counts what reaches the table; this row shows where the
-                rest landed (B-tier advisory, mechanical SKIPs, errors). */}
+                rest landed (mechanical SKIPs, errors). */}
             {results.tier_counts && (
               <div style={{
                 background: "#0a1420",

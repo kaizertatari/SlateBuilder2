@@ -355,7 +355,7 @@ async function handlePost(req, reqId) {
         llmProvider: llm.provider ?? null,
         llmModel: llm.model ?? null,
       });
-      if (verified.tier === "S" || verified.tier === "A") {
+      if (verified.tier === "S" || verified.tier === "A" || verified.tier === "B") {
         results.push({
           player: task.player,
           game: task.game || "—",
@@ -373,7 +373,7 @@ async function handlePost(req, reqId) {
 
     // Sort by tier (S first), then confidence (desc)
     results.sort((a, b) => {
-      const tierOrder = { S: 0, A: 1 };
+      const tierOrder = { S: 0, A: 1, B: 2 };
       const tierDiff = (tierOrder[a.tier] ?? 9) - (tierOrder[b.tier] ?? 9);
       if (tierDiff !== 0) return tierDiff;
       return (b.confidence || 0) - (a.confidence || 0);
