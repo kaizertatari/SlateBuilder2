@@ -1,7 +1,7 @@
-// Deterministic framework checker. Re-derives a small set of mechanical
-// rules from groundTruth and either:
+// Deterministic framework checker (v3.5). Re-derives a small set of
+// mechanical rules from groundTruth and either:
 //   • PRE-LLM: short-circuits to SKIP without calling the LLM (saves
-//     ~6800 tokens / call when the rule is going to fail anyway).
+//     ~7K tokens / call when the rule is going to fail anyway).
 //   • POST-LLM: downgrades an LLM verdict to SKIP when it violated the
 //     same rule. Catches qualitative-mode drift.
 //
@@ -10,14 +10,18 @@
 //
 // Intentionally conservative — only handles rules the framework defines
 // as hard, mechanical disqualifiers:
-//   • OVER 1.5pt buffer (framework: "OVER BUFFER RULES" + Rule 5a road)
-//   • Rule 5i FT-Floor Insurance Guard (UNDER on Points/PRA)
+//   • OVER buffer (Rule 5a baseline + variance-adjusted + outlier-window
+//     widening + FT-shooter extra)
+//   • Rule 5i FT-Floor Insurance Guard (UNDER on Points/PRA, with the
+//     Mechanism 1 minutes-restriction override)
+//   • Rule R9 assist win-prob gate
 //
-// Does NOT adjudicate suppressor stacking, mechanism naming, S-tier gate
-// promotion, or any qualitative call — those stay with the LLM.
+// Does NOT adjudicate suppressor stacking, mechanism naming (beyond
+// Mechanism 1 for 5i), S-tier gate promotion, or any qualitative call —
+// those stay with the LLM.
 
 import { PROP_TO_FIELD } from "./prop-types.js";
-import { FRAMEWORK_SCALING } from "./framework.js";
+import { FRAMEWORK_SCALING, ftFloorBaseline } from "./framework.js";
 
 // Pulls the per-league scaled constants the verifier shares with the
 // framework prompt. Defaults to NBA so any pre-league callsite still works.
@@ -41,16 +45,6 @@ const ASSIST_WP_BAND_PLAYOFF = { lo: 0.45, hi: 0.70 };
 /**
  * Pre-LLM mechanical filter. Returns a SKIP verdict object if the
  * framework would reject this task on arithmetic grounds, null otherwise.
- *
- * Use this before calling the LLM to avoid spending tokens on tasks that
- * are already mechanically dead.
- *
- * @param {Object} params
- * @param {Object} params.groundTruth
- * @param {string} params.statType   canonical stat (e.g., "Points")
- * @param {string} params.direction  "OVER" | "UNDER"
- * @param {number} params.line
- * @returns {Object|null} SKIP verdict object or null
  */
 export function preFilterMechanical({ groundTruth, statType, direction, line }) {
   const overrides = collectMechanicalFailures({ groundTruth, statType, direction, line });
@@ -74,25 +68,12 @@ export function preFilterMechanical({ groundTruth, statType, direction, line }) 
 /**
  * Post-LLM verifier. Takes the LLM's verdict and downgrades to SKIP if
  * a mechanical check it skipped is violated. Pass-through on LLM SKIPs.
- *
- * @param {Object} params
- * @param {Object} params.groundTruth
- * @param {string} params.statType
- * @param {string} params.direction
- * @param {number} params.line
- * @param {Object} params.llmResult  parsed LLM verdict object
- * @returns {Object} (possibly overridden) result plus `overridden: bool`
  */
 export function verifyVerdict({ groundTruth, statType, direction, line, llmResult }) {
-  // SKIPs from the LLM stand — the verifier only tightens, never loosens.
   if (llmResult.verdict === "SKIP" || llmResult.tier === "SKIP") {
     return { ...llmResult, overridden: false };
   }
 
-  // Only check OVER outputs against OVER buffer, UNDER outputs against 5i.
-  // (collectMechanicalFailures keys off `direction`, so passing the LLM's
-  // own verdict prevents false-overriding e.g. an LLM UNDER with the
-  // OVER buffer rule.)
   const effective = llmResult.verdict === "OVER" ? "OVER"
                   : llmResult.verdict === "UNDER" ? "UNDER"
                   : direction;
@@ -122,27 +103,23 @@ export function verifyVerdict({ groundTruth, statType, direction, line, llmResul
 
 // --- shared core ----------------------------------------------------------
 
-/**
- * Runs the mechanical checks and returns an array of failures.
- * Each failure has { reason, detail }. Empty array = checks passed.
- *
- * Shared by preFilterMechanical (no LLM result) and verifyVerdict
- * (with LLM result). Behavior is identical in both modes — there is one
- * source of truth for what "mechanical SKIP" means.
- */
 function collectMechanicalFailures({ groundTruth, statType, direction, line }) {
   const field = PROP_TO_FIELD[statType];
   if (!field) return [];
 
   const seasonAvg = groundTruth.season?.averages?.[field] ?? null;
-  const l5Avg = groundTruth.l5?.averages?.[field] ?? null;
+  // v3.5 — weighted L5 governs when present; raw l5 is the fallback. Game-
+  // level reads still pull raw values from l5.games[] elsewhere.
+  const l5WeightedAvg = groundTruth.l5?.weighted?.averages?.[field] ?? null;
+  const l5RawAvg = groundTruth.l5?.averages?.[field] ?? null;
+  const l5Avg = l5WeightedAvg ?? l5RawAvg;
   const hasBaseline = seasonAvg != null || l5Avg != null;
 
   // No baseline = no math is defensible. Without season or L5 averages the
   // OVER buffer and FT-floor checks can't run, which would let the LLM's
-  // hallucinated numbers slip through verification (opening-day WNBA, etc.).
-  // Hard-SKIP here so both the pre-filter and the post-LLM verifier paths
-  // short-circuit before any qualitative call is trusted.
+  // hallucinated numbers slip through verification. Hard-SKIP here so both
+  // the pre-filter and the post-LLM verifier paths short-circuit before any
+  // qualitative call is trusted.
   if (!hasBaseline) {
     return [{
       reason: "missing_baseline",
@@ -153,11 +130,11 @@ function collectMechanicalFailures({ groundTruth, statType, direction, line }) {
   const out = [];
 
   if (direction === "OVER") {
-    const buf = computeOverBufferCheck({ groundTruth, statType, line, seasonAvg, l5Avg });
+    const buf = computeOverBufferCheck({ groundTruth, statType, line, seasonAvg, l5Avg, l5WeightedUsed: l5WeightedAvg != null });
     if (buf && !buf.passes) {
       out.push({
         reason: "over_buffer_failed",
-        detail: `governing=${buf.governing} (baseline ${buf.baseline.toFixed(2)}, adjusted ${buf.adjusted.toFixed(2)}); required line ≤ ${buf.required.toFixed(2)}, got ${line}`,
+        detail: `governing=${buf.governing} (baseline ${buf.baseline.toFixed(2)}, adjusted ${buf.adjusted.toFixed(2)}); required line ≤ ${buf.required.toFixed(2)}, got ${line}, buffer ${buf.buffer.toFixed(2)}`,
       });
     }
   }
@@ -167,14 +144,11 @@ function collectMechanicalFailures({ groundTruth, statType, direction, line }) {
     if (ft && ft.invalid) {
       out.push({
         reason: "rule_5i_ft_floor_violation",
-        detail: `source=${ft.source} fta=${ft.fta}, ft_pct=${ft.ftPct}, ft_floor_pts=${ft.ftFloorPts.toFixed(2)}, total_floor=${ft.totalFloor.toFixed(2)} ≥ line=${line}`,
+        detail: `source=${ft.source} fta=${ft.fta}, ft_pct=${ft.ftPct}, ft_floor_pts=${ft.ftFloorPts.toFixed(2)}, total_floor=${ft.totalFloor.toFixed(2)} ≥ line=${line} (fg_floor=${ft.fgFloor})`,
       });
     }
   }
 
-  // R9 — assist win-prob gate. Hard SKIP on either direction when win_prob
-  // is outside the (playoff-aware) band. Skipped silently when win_prob is
-  // missing — upstream should have set a "missing: win_prob" flag already.
   if (ASSIST_CONTAINING.has(statType)) {
     const wp = computeAssistWinProbCheck({ groundTruth });
     if (wp && wp.outside) {
@@ -202,11 +176,7 @@ function computeAssistWinProbCheck({ groundTruth }) {
   };
 }
 
-// Playoff context = "today's game is a playoff game". Set by the data
-// layer: ESPN tags the scoreboard event with series state, which composes
-// into groundTruth.series. l5.type === "Playoffs" means the L5 sample
-// itself is playoff games (the player has accumulated 1+ playoff games
-// this postseason); l5.n is the sample size.
+// l5.type === "Playoffs" + n≥3 = playoff sample size large enough to govern.
 function isPlayoffL5(groundTruth) {
   return groundTruth?.l5?.type === "Playoffs" && (groundTruth?.l5?.n ?? 0) >= 3;
 }
@@ -214,45 +184,59 @@ function isPlayoffGame(groundTruth) {
   return !!groundTruth?.series;
 }
 
-function computeOverBufferCheck({ groundTruth, statType, line, seasonAvg, l5Avg }) {
-  // R1 — playoff L5 governance override:
-  // When today's L5 sample is 3+ playoff games, L5 governs regardless of
-  // conflict size. season.averages is regular-season data in playoff games
-  // (a different population), so the 3-pt drift threshold doesn't apply.
-  // Falls back to the default rule (conflict ≥ 3 → L5) otherwise.
+function computeOverBufferCheck({ groundTruth, statType, line, seasonAvg, l5Avg, l5WeightedUsed }) {
+  // Baseline governance. Playoff L5 override unchanged from v3.4; default
+  // rule is "L5 governs when conflict ≥ 3 pts." l5Avg here is already the
+  // weighted value when present (per collectMechanicalFailures).
   let baseline;
   let governing;
   const playoffL5 = isPlayoffL5(groundTruth);
   if (seasonAvg != null && l5Avg != null) {
     if (playoffL5) {
-      governing = "L5_playoff_override";
+      governing = l5WeightedUsed ? "L5_weighted_playoff_override" : "L5_playoff_override";
+      baseline = l5Avg;
+    } else if (Math.abs(seasonAvg - l5Avg) >= 3) {
+      governing = l5WeightedUsed ? "L5_weighted" : "L5";
       baseline = l5Avg;
     } else {
-      governing = Math.abs(seasonAvg - l5Avg) >= 3 ? "L5" : "season";
-      baseline = governing === "L5" ? l5Avg : seasonAvg;
+      governing = "season";
+      baseline = seasonAvg;
     }
   } else {
-    governing = seasonAvg != null ? "season" : "L5";
+    governing = seasonAvg != null ? "season" : (l5WeightedUsed ? "L5_weighted" : "L5");
     baseline = seasonAvg ?? l5Avg;
   }
 
-  // Rule 5a road deduction: applies to points-containing scoring props on
-  // road games only. Rebounds/Assists/RA/3PM/FGA unaffected. Deduction
-  // values come from FRAMEWORK_SCALING[league] — NBA uses -1.5/-2.0,
-  // WNBA scales to -1.25/-1.75 for the shorter 40-minute game. Stacks
-  // with the R6 OVER buffer below.
+  // Rule 5a road deduction. v3.5 collapses regular/playoff to a single
+  // per-league value (NBA=1.5, WNBA=1.2 per spec §13). Variance and
+  // outlier-window widening on the buffer carry the playoff-specific
+  // tightening responsibility instead.
   const scale = scaleFor(groundTruth);
   let roadDed = 0;
   if (groundTruth.home_away === "away" && POINTS_CONTAINING.has(statType)) {
-    roadDed = isPlayoffGame(groundTruth) ? scale.road_deduction_playoff : scale.road_deduction_regular;
+    roadDed = scale.road_deduction_pts;
   }
   const adjusted = baseline - roadDed;
 
-  // R6 — playoff variance buffer. NBA uses 1.5/2.0; WNBA scales to 1.25/1.75.
-  // Poor FT shooters (<70%) stack an extra 2pt on top, regardless of season.
-  const baseBuffer = isPlayoffGame(groundTruth) ? scale.over_buffer_playoff : scale.over_buffer_regular;
+  // v3.5 OVER buffer:
+  //   base = 2.5 when l5.weighted.outlier_present  else 1.5
+  //   variance widens: when σ > league threshold and prop is points-family,
+  //                    buffer becomes 1.5 + 0.25 × (σ − threshold). When
+  //                    the outlier base (2.5) is larger, the larger of the
+  //                    two governs (spec §5a: "variance addendum applies
+  //                    to whichever base is larger").
+  //   poor FT shooter (<70%): +2 on points-containing props.
+  const outlierActive = !!groundTruth?.l5?.weighted?.outlier_present;
+  const outlierBase = outlierActive ? 2.5 : scale.over_buffer_base;
+  const sigma = groundTruth?.variance?.ppg_stddev ?? null;
+  const isPointsFamily = POINTS_CONTAINING.has(statType);
+  let varianceBuffer = null;
+  if (sigma != null && isPointsFamily && sigma > scale.variance_threshold_ppg) {
+    varianceBuffer = 1.5 + 0.25 * (sigma - scale.variance_threshold_ppg);
+  }
+  const baseBuffer = varianceBuffer != null ? Math.max(outlierBase, varianceBuffer) : outlierBase;
   const ftPct = groundTruth.season?.averages?.ft_pct ?? null;
-  const poorFt = (ftPct != null && ftPct < 0.70 && POINTS_CONTAINING.has(statType));
+  const poorFt = (ftPct != null && ftPct < 0.70 && isPointsFamily);
   const buffer = baseBuffer + (poorFt ? 2 : 0);
   const required = adjusted - buffer;
 
@@ -267,10 +251,8 @@ function computeOverBufferCheck({ groundTruth, statType, line, seasonAvg, l5Avg 
 }
 
 function computeFtFloorCheck({ groundTruth, line }) {
-  // R2 — playoff FT-floor override:
-  // Use l5 FTA/FT% when in playoff context with sufficient sample; otherwise
-  // fall back to season averages. l5 fields may be absent on older data —
-  // if missing, drop back to season cleanly rather than skipping the check.
+  // v3.4 playoff FT-floor override carries forward to v3.5: use l5 FTA/FT%
+  // when in playoff L5 with sufficient sample; otherwise season averages.
   let fta;
   let ftPct;
   let source;
@@ -287,13 +269,34 @@ function computeFtFloorCheck({ groundTruth, line }) {
   if (fta == null || ftPct == null) return null;
   const scale = scaleFor(groundTruth);
   if (fta < scale.ft_floor_gate_fta) return null;
-  const ftFloorPts = fta * ftPct;
-  const totalFloor = ftFloorPts + scale.ft_floor_fg_constant;
+
+  // v3.5 per-position FG floor. composeGroundTruth fills derived.ft_floor_baseline
+  // from player position (falls back to F when unknown). Honor whatever the
+  // composer produced; if absent, recompute the same default (F).
+  const fgFloor = groundTruth?.derived?.ft_floor_baseline
+    ?? ftFloorBaseline(groundTruth?.league, null);
+
+  let ftFloorPts = fta * ftPct;
+
+  // Mechanism 1 override: confirmed minutes restriction R below the league
+  // threshold scales FT volume proportionally. Use a structured field on
+  // groundTruth (set by analyze.js based on injury/rest reports). When not
+  // set the override is a no-op.
+  const restriction = groundTruth?.minutes_restriction ?? null;
+  const mechanismThresh = Math.floor(scale.game_minutes * 30 / 48);
+  const mechanismScaler = Math.floor(scale.game_minutes * 32 / 48);
+  if (restriction != null && Number.isFinite(restriction) && restriction < mechanismThresh) {
+    ftFloorPts = ftFloorPts * (restriction / mechanismScaler);
+    source = `${source}+mech1(R=${restriction})`;
+  }
+
+  const totalFloor = ftFloorPts + fgFloor;
   return {
     fta,
     ftPct,
     ftFloorPts,
     totalFloor,
+    fgFloor,
     source,
     invalid: totalFloor >= line,
   };

@@ -14,7 +14,7 @@ import { loadEnvLocal } from "./_env.mjs";
 loadEnvLocal();
 
 import { PROP_TO_FIELD } from "../api/lib/prop-types.js";
-import { FRAMEWORK_SCALING } from "../api/lib/framework.js";
+import { FRAMEWORK_SCALING, ftFloorBaseline } from "../api/lib/framework.js";
 
 const [, , playerArg, propTypeArg, lineArg] = process.argv;
 if (!playerArg || !propTypeArg || lineArg == null) {
@@ -149,10 +149,15 @@ if (direction === "OVER") {
   }
 
   const isPoints = POINTS_CONTAINING.has(statType);
-  const roadDed = (home === "away" && isPoints)
-    ? (isPlayoffGame ? scale.road_deduction_playoff : scale.road_deduction_regular)
-    : 0;
-  const baseBuffer = isPlayoffGame ? scale.over_buffer_playoff : scale.over_buffer_regular;
+  const roadDed = (home === "away" && isPoints) ? scale.road_deduction_pts : 0;
+  // v3.5: outlier-window widens to 2.5, variance addendum picks the larger
+  // of (outlier base, 1.5 + 0.25 × (σ − threshold)). Poor-FT shooters stack +2.
+  const outlierActive = !!gt?.l5?.weighted?.outlier_present;
+  const outlierBase = outlierActive ? 2.5 : scale.over_buffer_base;
+  const sigma = gt?.variance?.ppg_stddev ?? null;
+  const varianceBuffer = (sigma != null && isPoints && sigma > scale.variance_threshold_ppg)
+    ? 1.5 + 0.25 * (sigma - scale.variance_threshold_ppg) : null;
+  const baseBuffer = varianceBuffer != null ? Math.max(outlierBase, varianceBuffer) : outlierBase;
   const ftPct = gt.season?.averages?.ft_pct ?? null;
   const poorFt = (ftPct != null && ftPct < 0.70 && isPoints);
   const buffer = baseBuffer + (poorFt ? 2 : 0);
@@ -187,10 +192,20 @@ if (direction === "UNDER" && FT_FLOOR_PROPS.has(statType)) {
   } else if (fta < scale.ft_floor_gate_fta) {
     console.log(`    fta=${fmt(fta)} < gate ${scale.ft_floor_gate_fta} — check not run`);
   } else {
-    const ftFloorPts = fta * ftPct;
-    const totalFloor = ftFloorPts + scale.ft_floor_fg_constant;
+    // v3.5 per-position FG floor: read from groundTruth.derived.ft_floor_baseline
+    // if the composer plumbed it; otherwise default to F via ftFloorBaseline().
+    const fgFloor = gt?.derived?.ft_floor_baseline ?? ftFloorBaseline(gt?.league, null);
+    let ftFloorPts = fta * ftPct;
+    const restriction = gt?.minutes_restriction ?? null;
+    const mechThresh = Math.floor(scale.game_minutes * 30 / 48);
+    const mechScaler = Math.floor(scale.game_minutes * 32 / 48);
+    if (restriction != null && Number.isFinite(restriction) && restriction < mechThresh) {
+      ftFloorPts = ftFloorPts * (restriction / mechScaler);
+      source = `${source}+mech1(R=${restriction})`;
+    }
+    const totalFloor = ftFloorPts + fgFloor;
     const invalid = totalFloor >= line;
-    console.log(`    source=${source}, fta=${fmt(fta)}, ft_pct=${(ftPct*100).toFixed(1)}%`);
+    console.log(`    source=${source}, fta=${fmt(fta)}, ft_pct=${(ftPct*100).toFixed(1)}%, fg_floor=${fgFloor}`);
     console.log(`    ft_floor_pts = ${fmt(ftFloorPts)}   total_floor = ${fmt(totalFloor)}   line = ${line}`);
     console.log(`    UNDER ${invalid ? "INVALID ✗ (floor ≥ line)" : "valid ✓"}`);
   }

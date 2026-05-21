@@ -2,7 +2,7 @@
 // Usage: node scripts/smoke-prompt.mjs ["Player"] ["Prop Type"] [line]
 
 import { gatherGroundTruth, buildPrompt, propTypeToField } from "../api/analyze.js";
-import { MODEL_FRAMEWORK } from "../api/lib/framework.js";
+import { getFramework } from "../api/lib/framework.js";
 
 const player = process.argv[2] || "Nikola Jokic";
 const propType = process.argv[3] || "PRA OVER";
@@ -17,4 +17,4 @@ if (result.skipReason) {
 console.log("propTypeToField:", propTypeToField(propType));
 console.log("missing:", result.missing);
 console.log("\n=== PROMPT ===\n");
-console.log(buildPrompt(MODEL_FRAMEWORK, result.groundTruth));
+console.log(buildPrompt(getFramework(result.groundTruth?.league ?? "NBA"), result.groundTruth));

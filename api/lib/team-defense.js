@@ -35,6 +35,36 @@ function snapshotLookup(seasonType, league) {
   return snapshot?.seasons?.[seasonType] ?? null;
 }
 
+// Returns a { team_abbr → def_rank } map for the requested season+type,
+// preferring the live SWR cache and falling back to the bundled snapshot.
+// Used by composeGroundTruth to feed weighted-L5's per-game opponent
+// quality multiplier (v3.5). Missing teams resolve to undefined so the
+// weighted-L5 module can treat them as the "null → 1.0" branch.
+export async function getDefRankByAbbr({
+  season,
+  seasonType = "Regular Season",
+  league = "NBA",
+} = {}) {
+  const seasonLabel = season ?? currentSeason(new Date(), league);
+  const live = await fetchLeague(seasonLabel, seasonType, league).catch(() => null);
+  if (live && typeof live === "object") {
+    const map = {};
+    for (const [abbr, row] of Object.entries(live)) {
+      if (row?.def_rank != null) map[abbr] = row.def_rank;
+    }
+    if (Object.keys(map).length > 0) return map;
+  }
+  const snap = snapshotLookup(seasonType, league);
+  if (snap && typeof snap === "object") {
+    const map = {};
+    for (const [abbr, row] of Object.entries(snap)) {
+      if (row?.def_rank != null) map[abbr] = row.def_rank;
+    }
+    return map;
+  }
+  return null;
+}
+
 // Returns { def_rating, def_rank, source } for the opponent, or null if
 // the abbreviation is unknown to both live and snapshot data.
 export async function getOpponentDefense(opponentEspnAbbr, {

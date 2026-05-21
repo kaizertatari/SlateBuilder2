@@ -9,7 +9,7 @@ import {
 } from "./lib/nba-stats.js";
 import * as bdl from "./lib/balldontlie.js";
 import * as espnStats from "./lib/espn-stats.js";
-import { getOpponentDefense } from "./lib/team-defense.js";
+import { getOpponentDefense, getDefRankByAbbr } from "./lib/team-defense.js";
 import { getPrimaryDefender } from "./lib/matchup-defender.js";
 import {
   getTodaysGames,
@@ -171,12 +171,17 @@ export async function gatherGroundTruth({ player, propType, line }) {
   const bbrefSplits = bbref.getHomeAwaySplits(player, { season, league });
   // ESPN primary for season averages; stats-edge fallback below. Defender
   // and matchup data have no ESPN equivalent and stay on stats edge.
-  const [espnSeasonAvg, statsSplits, winProb, opponentDefense, primaryDefender] = await Promise.all([
+  const [espnSeasonAvg, statsSplits, winProb, opponentDefense, primaryDefender, defRankByAbbr] = await Promise.all([
     espnId ? espnStats.getSeasonAverages(espnId, { season, league }) : null,
     bbrefSplits ? null : getHomeAwaySplits(playerId, { seasonType: "Regular Season", league }),
     getWinProbability(game.game_id, game.competition_id, { league }),
     opponentSide ? getOpponentDefense(opponentSide.abbr, { seasonType: "Regular Season", league }) : null,
     opponentSide ? getPrimaryDefender(playerId, opponentSide.abbr, { seasonType, league }) : null,
+    // v3.5 weighted-L5 reads per-game opponent quality from the
+    // current-season def-rank snapshot (per-game historical lookup is a
+    // deliberate spec limitation). Failures degrade gracefully — without
+    // the map, weighted-L5 uses the 1.0 default multiplier.
+    getDefRankByAbbr({ seasonType: "Regular Season", league }).catch(() => null),
   ]);
   const splits = bbrefSplits ?? statsSplits;
   trace.splits = bbrefSplits ? "bbref_snapshot" : (statsSplits ? "stats_edge" : "missing");
@@ -206,6 +211,7 @@ export async function gatherGroundTruth({ player, propType, line }) {
     player, propType, line, league,
     info, game, daysOut, seasonType,
     seasonAvg, l5, splits, winProb, allInjuries, opponentDefense, primaryDefender,
+    defRankByAbbr,
   });
 
    return { groundTruth, missing, trace, playerInfo };
@@ -603,7 +609,7 @@ export function buildPrompt(framework, groundTruth) {
   // Build the prompt components. League label is read from groundTruth so the
   // role line matches the framework variant.
   const leagueLabel = String(groundTruth?.league ?? "NBA").toUpperCase();
-  const roleDefinition = `You are the ${leagueLabel} PrizePicks Model v3.4 verdict engine. Output exactly one JSON object — no prose, no markdown, no code fences.`;
+  const roleDefinition = `You are the ${leagueLabel} PrizePicks Model v3.5 verdict engine. Output exactly one JSON object — no prose, no markdown, no code fences.`;
 
   const dataRules = `DATA RULES — non-negotiable:
 1. Use ONLY values from the GROUND TRUTH block below. Do NOT invent, estimate, recall from prior knowledge, or guess any number. Treat your training-data memory of player stats as forbidden.
@@ -625,19 +631,22 @@ ${JSON.stringify(slimGt)}`;
   
   const whereToFindValues = `WHERE TO FIND VALUES (path → meaning):
 - groundTruth.season.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fgm,fga,fg_pct,ft_pct,fg3_pct,fta,ftm,minutes}  → regular-season per-game averages (fta/ftm needed for Rule 5i FT-Floor Insurance Guard default)
-- groundTruth.l5.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fga,fta,ftm,ft_pct,minutes}            → most-recent 5 games (playoff if l5.type==="Playoffs"). l5.averages.{fta,ftm,ft_pct} are the [v3.4] Rule 5i playoff override inputs — use them in place of season.averages.{fta,ft_pct} when l5.type==="Playoffs" AND l5.n>=3.
-- groundTruth.l5.type / l5.n                                                                   → sample type ("Playoffs" | "Regular Season") and size. When type==="Playoffs" AND n>=3, applies the [v3.4] playoff overrides to (a) L5-vs-Season governance (L5 governs regardless of conflict size) and (b) Rule 5i (l5 FTA/FT% govern the floor).
+- groundTruth.l5.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fga,fta,ftm,ft_pct,minutes}            → most-recent 5 games (playoff if l5.type==="Playoffs"). l5.averages.{fta,ftm,ft_pct} are the [v3.5] Rule 5i playoff override inputs — use them in place of season.averages.{fta,ft_pct} when l5.type==="Playoffs" AND l5.n>=3.
+- groundTruth.l5.type / l5.n                                                                   → sample type ("Playoffs" | "Regular Season") and size. When type==="Playoffs" AND n>=3, applies the [v3.5] playoff overrides to (a) L5-vs-Season governance (L5 governs regardless of conflict size) and (b) Rule 5i (l5 FTA/FT% govern the floor).
 - groundTruth.l5.games[i].{fgm,fga,fg_pct}                                                      → per-game shooting (used by Rule 5b.ii shooting-slump rebound suppressor; only embedded for Rebounds OVER props)
+- groundTruth.l5.weighted.{averages,raw_vs_weighted_delta,outlier_present,mode}                → [v3.5] Weighted L5 baseline used by Rule 5a/5f/S-tier item 4 and the L5-vs-season tiebreaker. Game-level reads (5b.ii, 4c) keep using raw l5. Emit diagnostic flags when |weighted.ppg − raw l5.ppg| ≥ 2 ("weighted L5 diverges…") or weighted.outlier_present === true (post-outlier window — OVER buffer widens to 2.5 pts) or weighted.mode === "playoff_raw_fallback" (small playoff sample — proceed with raw L5 unchanged).
+- groundTruth.variance.ppg_stddev                                                             → [v3.5] Per-player ppg σ for the Rule 5a addendum. Null when sample <8 games. When non-null AND > league threshold (NBA=6, WNBA=5), OVER buffer becomes 1.5 + 0.25 × (σ − threshold) on points-family props. Cite σ in justification.
+- groundTruth.derived.ft_floor_baseline                                                       → [v3.5] Per-position FG floor for Rule 5i (FT-Floor Insurance Guard). NBA G/F/C = 6/8/10, WNBA = 4/6/8. Falls back to F when player position is unknown.
 - groundTruth.splits.{home,road}.{...}                                                       → regular-season home/away splits
 - groundTruth.home_away                                                                       → "home" | "away" for tonight's game
 - groundTruth.opponent_team.name / abbr                                                       → tonight's opponent
 - groundTruth.win_prob.player_team_pct                                                        → 0-1 float (multiply by 100 for the % the framework uses). Two distinct rules consume this value — do not conflate them:
     (a) Rule 5f BLOWOUT SUPPRESSOR — applies to OVERs of ANY stat. Triggered by extreme win prob (very high or very low). Downgrades or skips per framework wording. This is what fires on plain Points/Rebounds/etc. when win prob is lopsided.
-    (b) [v3.4 R9] ASSIST WIN-PROB GATE — applies ONLY to props whose stat is in {Assists, PA, RA, PRA}. Band: [0.40, 0.75] regular season, [0.45, 0.70] playoff. Outside the band → SKIP. DO NOT apply R9 to Points, Rebounds, PR, 3-Pointers Made, FG Attempted, or any other non-assist-containing prop — for those props this rule does not exist and a low/high win prob is governed by 5f only.
+    (b) [v3.5 R9] ASSIST WIN-PROB GATE — applies ONLY to props whose stat is in {Assists, PA, RA, PRA}. Band: [0.40, 0.75] regular season, [0.45, 0.70] playoff. Outside the band → SKIP. DO NOT apply R9 to Points, Rebounds, PR, 3-Pointers Made, FG Attempted, or any other non-assist-containing prop — for those props this rule does not exist and a low/high win prob is governed by 5f only.
 - groundTruth.injuries.player_team / opponent                                                 → {player,status,detail,date}[] (used for role compression / matchup ceiling)
 - groundTruth.player_recent.is_listed_injured                                                 → boolean — TRUE means post-injury return gate (Section 6) applies
-- groundTruth.opponent_defense                                                                → {def_rating, def_rank (1-30, 1=best), primary_defender: {player, share_pct, n_games, confirmed} | null, source}; null only when both live and snapshot fail. primary_defender is the season-aggregated top defender vs this player from stats.nba.com matchup data; confirmed=true when share_pct >= 0.40. Use def_rank for Rule 5h baseline + Mechanism 3 matchup ceiling (top-5 = def_rank<=5); use primary_defender to gate the v3.4 5h FT-leak modifier on a named matchup.
-- groundTruth.series                                                                          → playoff series state {games_played, player_team_wins, opponent_wins, next_game_number, series_record, series_summary, leading_team_abbr, round, source}; null in regular season. Non-null = playoff game, which activates BOTH the [v3.4] OVER 2.0pt buffer (R6, vs 1.5pt regular season) AND the [v3.4] R7 -2.0 road deduction on Rule 5a (vs -1.5 regular season). leading_team_abbr is null when series is tied, otherwise the abbr of the team ahead — use it for Rule 5f tied-series and lead-3-0/3-1 gating instead of parsing series_record or series_summary.`;
+- groundTruth.opponent_defense                                                                → {def_rating, def_rank (1-30, 1=best), primary_defender: {player, share_pct, n_games, confirmed} | null, source}; null only when both live and snapshot fail. primary_defender is the season-aggregated top defender vs this player from stats.nba.com matchup data; confirmed=true when share_pct >= 0.40. Use def_rank for Rule 5h baseline + Mechanism 3 matchup ceiling (top-5 = def_rank<=5); use primary_defender to gate the v3.5 5h FT-leak modifier on a named matchup.
+- groundTruth.series                                                                          → playoff series state {games_played, player_team_wins, opponent_wins, next_game_number, series_record, series_summary, leading_team_abbr, round, source}; null in regular season. Non-null = playoff game (activates playoff-specific rules: Game 1/2 caps, S-tier floor 85%, weighted-L5 series-game multiplier, etc.). leading_team_abbr is null when series is tied, otherwise the abbr of the team ahead — use it for Rule 5f tied-series and lead-3-0/3-1 gating instead of parsing series_record or series_summary.`;
   
   const propSpecificInfo = `For this prop ("${groundTruth.prop_type}" line ${groundTruth.line}), the relevant averages field is "${field ?? "(unknown — output SKIP)"}". Use season.averages.${field ?? "?"} and l5.averages.${field ?? "?"} as the baselines.`;
   
@@ -700,7 +709,7 @@ export function buildBatchPrompt(framework, groundTruth, tasks) {
   const { prop_type: _pt, line: _l, ...gtCommon } = groundTruth;
 
   const leagueLabel = String(groundTruth?.league ?? "NBA").toUpperCase();
-  const roleDefinition = `You are the ${leagueLabel} PrizePicks Model v3.4 verdict engine. Output exactly one JSON object — no prose, no markdown, no code fences.`;
+  const roleDefinition = `You are the ${leagueLabel} PrizePicks Model v3.5 verdict engine. Output exactly one JSON object — no prose, no markdown, no code fences.`;
 
   const dataRules = `DATA RULES — non-negotiable:
 1. Use ONLY values from the GROUND TRUTH block below. Do NOT invent, estimate, recall from prior knowledge, or guess any number. Treat your training-data memory of player stats as forbidden.
@@ -716,19 +725,22 @@ ${JSON.stringify(gtCommon, null, 2)}`;
 
   const whereToFindValues = `WHERE TO FIND VALUES (path → meaning):
 - groundTruth.season.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fgm,fga,fg_pct,ft_pct,fg3_pct,fta,ftm,minutes}  → regular-season per-game averages (fta/ftm needed for Rule 5i FT-Floor Insurance Guard default)
-- groundTruth.l5.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fga,fta,ftm,ft_pct,minutes}            → most-recent 5 games (playoff if l5.type==="Playoffs"). l5.averages.{fta,ftm,ft_pct} are the [v3.4] Rule 5i playoff override inputs — use them in place of season.averages.{fta,ft_pct} when l5.type==="Playoffs" AND l5.n>=3.
-- groundTruth.l5.type / l5.n                                                                   → sample type ("Playoffs" | "Regular Season") and size. When type==="Playoffs" AND n>=3, applies the [v3.4] playoff overrides to (a) L5-vs-Season governance (L5 governs regardless of conflict size) and (b) Rule 5i (l5 FTA/FT% govern the floor).
+- groundTruth.l5.averages.{ppg,rpg,apg,pra,pr,pa,ra,fg3m,fga,fta,ftm,ft_pct,minutes}            → most-recent 5 games (playoff if l5.type==="Playoffs"). l5.averages.{fta,ftm,ft_pct} are the [v3.5] Rule 5i playoff override inputs — use them in place of season.averages.{fta,ft_pct} when l5.type==="Playoffs" AND l5.n>=3.
+- groundTruth.l5.type / l5.n                                                                   → sample type ("Playoffs" | "Regular Season") and size. When type==="Playoffs" AND n>=3, applies the [v3.5] playoff overrides to (a) L5-vs-Season governance (L5 governs regardless of conflict size) and (b) Rule 5i (l5 FTA/FT% govern the floor).
 - groundTruth.l5.games[i].{fgm,fga,fg_pct}                                                      → per-game shooting (used by Rule 5b.ii shooting-slump rebound suppressor; only embedded for Rebounds OVER props)
+- groundTruth.l5.weighted.{averages,raw_vs_weighted_delta,outlier_present,mode}                → [v3.5] Weighted L5 baseline used by Rule 5a/5f/S-tier item 4 and the L5-vs-season tiebreaker. Game-level reads (5b.ii, 4c) keep using raw l5. Emit diagnostic flags when |weighted.ppg − raw l5.ppg| ≥ 2 ("weighted L5 diverges…") or weighted.outlier_present === true (post-outlier window — OVER buffer widens to 2.5 pts) or weighted.mode === "playoff_raw_fallback" (small playoff sample — proceed with raw L5 unchanged).
+- groundTruth.variance.ppg_stddev                                                             → [v3.5] Per-player ppg σ for the Rule 5a addendum. Null when sample <8 games. When non-null AND > league threshold (NBA=6, WNBA=5), OVER buffer becomes 1.5 + 0.25 × (σ − threshold) on points-family props. Cite σ in justification.
+- groundTruth.derived.ft_floor_baseline                                                       → [v3.5] Per-position FG floor for Rule 5i (FT-Floor Insurance Guard). NBA G/F/C = 6/8/10, WNBA = 4/6/8. Falls back to F when player position is unknown.
 - groundTruth.splits.{home,road}.{...}                                                       → regular-season home/away splits
 - groundTruth.home_away                                                                       → "home" | "away" for tonight's game
 - groundTruth.opponent_team.name / abbr                                                       → tonight's opponent
 - groundTruth.win_prob.player_team_pct                                                        → 0-1 float (multiply by 100 for the % the framework uses). Two distinct rules consume this value — do not conflate them:
     (a) Rule 5f BLOWOUT SUPPRESSOR — applies to OVERs of ANY stat. Triggered by extreme win prob (very high or very low). Downgrades or skips per framework wording. This is what fires on plain Points/Rebounds/etc. when win prob is lopsided.
-    (b) [v3.4 R9] ASSIST WIN-PROB GATE — applies ONLY to props whose stat is in {Assists, PA, RA, PRA}. Band: [0.40, 0.75] regular season, [0.45, 0.70] playoff. Outside the band → SKIP. DO NOT apply R9 to Points, Rebounds, PR, 3-Pointers Made, FG Attempted, or any other non-assist-containing prop — for those props this rule does not exist and a low/high win prob is governed by 5f only.
+    (b) [v3.5 R9] ASSIST WIN-PROB GATE — applies ONLY to props whose stat is in {Assists, PA, RA, PRA}. Band: [0.40, 0.75] regular season, [0.45, 0.70] playoff. Outside the band → SKIP. DO NOT apply R9 to Points, Rebounds, PR, 3-Pointers Made, FG Attempted, or any other non-assist-containing prop — for those props this rule does not exist and a low/high win prob is governed by 5f only.
 - groundTruth.injuries.player_team / opponent                                                 → {player,status,detail,date}[] (used for role compression / matchup ceiling)
 - groundTruth.player_recent.is_listed_injured                                                 → boolean — TRUE means post-injury return gate (Section 6) applies
-- groundTruth.opponent_defense                                                                → {def_rating, def_rank (1-30, 1=best), primary_defender: {player, share_pct, n_games, confirmed} | null, source}; null only when both live and snapshot fail. primary_defender is the season-aggregated top defender vs this player from stats.nba.com matchup data; confirmed=true when share_pct >= 0.40. Use def_rank for Rule 5h baseline + Mechanism 3 matchup ceiling (top-5 = def_rank<=5); use primary_defender to gate the v3.4 5h FT-leak modifier on a named matchup.
-- groundTruth.series                                                                          → playoff series state {games_played, player_team_wins, opponent_wins, next_game_number, series_record, series_summary, leading_team_abbr, round, source}; null in regular season. Non-null = playoff game, which activates BOTH the [v3.4] OVER 2.0pt buffer (R6, vs 1.5pt regular season) AND the [v3.4] R7 -2.0 road deduction on Rule 5a (vs -1.5 regular season). leading_team_abbr is null when series is tied, otherwise the abbr of the team ahead — use it for Rule 5f tied-series and lead-3-0/3-1 gating instead of parsing series_record or series_summary.`;
+- groundTruth.opponent_defense                                                                → {def_rating, def_rank (1-30, 1=best), primary_defender: {player, share_pct, n_games, confirmed} | null, source}; null only when both live and snapshot fail. primary_defender is the season-aggregated top defender vs this player from stats.nba.com matchup data; confirmed=true when share_pct >= 0.40. Use def_rank for Rule 5h baseline + Mechanism 3 matchup ceiling (top-5 = def_rank<=5); use primary_defender to gate the v3.5 5h FT-leak modifier on a named matchup.
+- groundTruth.series                                                                          → playoff series state {games_played, player_team_wins, opponent_wins, next_game_number, series_record, series_summary, leading_team_abbr, round, source}; null in regular season. Non-null = playoff game (activates playoff-specific rules: Game 1/2 caps, S-tier floor 85%, weighted-L5 series-game multiplier, etc.). leading_team_abbr is null when series is tied, otherwise the abbr of the team ahead — use it for Rule 5f tied-series and lead-3-0/3-1 gating instead of parsing series_record or series_summary.`;
 
   const taskListLines = tasks.map((t) => {
     const f = propTypeToField(t.prop_type);

@@ -1,0 +1,259 @@
+// PrizePicks Model v3.5 — weighted L5 baseline computation.
+//
+// Combines three independent multipliers per game (recency, opponent
+// quality OR series-game position, outlier dampener) and normalizes the
+// resulting weights to 1.0. Used by Rules 5a/5f, the S-tier gate
+// independent-signal count, and the L5-vs-season tiebreaker.
+//
+// Game-level reads (5b.ii shooting-slump, 4c multi-star counts) continue
+// to use raw L5 averages — only the *baseline* moves to weighted.
+//
+// Returns the {averages, raw_vs_weighted_delta, outlier_present, mode}
+// shape consumed by composeGroundTruth + verdict-verifier.
+
+const RECENCY_RAMP = [0.30, 0.25, 0.20, 0.15, 0.10];
+
+// Opponent-quality multiplier — regular-season mode.
+function opponentMultiplier(defRank) {
+  if (defRank == null) return 1.00;
+  if (defRank <= 5) return 1.15;
+  if (defRank <= 15) return 1.00;
+  if (defRank <= 25) return 0.90;
+  return 0.80;
+}
+
+// Series-game multiplier — playoff mode replaces opponent quality with this.
+// game_number is the ordinal position within the current series (1..N).
+function seriesMultiplier(gameNumber) {
+  if (gameNumber == null) return 1.00; // non-series leftover
+  if (gameNumber <= 2) return 0.75;
+  if (gameNumber <= 4) return 1.00;
+  return 1.20;
+}
+
+// Outlier dampener vs season ppg. Pulls hot games down hard (0.60) and
+// cold games down lightly (0.85); on-trend games are unchanged.
+function outlierMultiplier(pts, seasonPpg) {
+  if (seasonPpg == null || pts == null) return 1.00;
+  if (pts > 1.5 * seasonPpg) return 0.60; // hot outlier
+  if (pts < 0.50 * seasonPpg) return 0.85; // cold outlier
+  return 1.00;
+}
+
+// Parse opponent abbr out of an L5 game's matchup string. ESPN gamelog
+// matchups come back as "BOS @ MIA" or "BOS vs MIA" — opponent is the
+// team that isn't the player's own. Filters out matchup connectors (VS,
+// AT, @) and home-away prefixes so we don't mistake "vs" for a team abbr.
+const MATCHUP_CONNECTOR_TOKENS = new Set(["VS", "AT", "V", "@"]);
+function parseOpponentAbbr(matchup, ownAbbr) {
+  if (!matchup) return null;
+  const own = String(ownAbbr || "").toUpperCase();
+  const tokens = String(matchup).toUpperCase().split(/\s+/).filter(Boolean);
+  for (const t of tokens) {
+    const clean = t.replace(/[^A-Z]/g, "");
+    if (clean.length < 2 || clean.length > 4) continue;
+    if (clean === own) continue;
+    if (MATCHUP_CONNECTOR_TOKENS.has(clean)) continue;
+    return clean;
+  }
+  return null;
+}
+
+// Detect whether any L5 game is an outlier vs season ppg. Surfaced on
+// l5.weighted.outlier_present so Rule 5a can widen the OVER buffer for
+// "post-outlier window" picks.
+function hasOutlier(games, seasonPpg) {
+  if (seasonPpg == null) return false;
+  return games.some((g) => {
+    const pts = g.pts ?? null;
+    if (pts == null) return false;
+    return pts > 1.5 * seasonPpg || pts < 0.50 * seasonPpg;
+  });
+}
+
+// Average the per-game values weighted by `weights`. Both arrays must be
+// the same length; weights must already be normalized to sum 1.0.
+function weightedMean(games, weights, key) {
+  let sum = 0;
+  let totalWeight = 0;
+  for (let i = 0; i < games.length; i++) {
+    const v = games[i]?.[key];
+    if (v == null) continue;
+    sum += v * weights[i];
+    totalWeight += weights[i];
+  }
+  if (totalWeight === 0) return null;
+  // Re-normalize when some games miss the field — keeps the average on the
+  // same scale as a single-game value.
+  return Number((sum / totalWeight).toFixed(2));
+}
+
+// Identify which L5 games are vs the current playoff opponent and assign
+// series-game ordinals (oldest-first numbering). Returns an array aligned
+// with the games[] input: each entry is the series-game number or null
+// when the game isn't part of the current series.
+function assignSeriesNumbers(games, opponentAbbr, ownAbbr) {
+  if (!opponentAbbr) return games.map(() => null);
+  const opp = String(opponentAbbr).toUpperCase();
+  // games[] is newest-first per ESPN — invert to assign G1, G2, ... in
+  // chronological order, then map back to the newest-first layout.
+  const oldestFirst = [...games].reverse();
+  let counter = 0;
+  const numbersOldestFirst = oldestFirst.map((g) => {
+    const parsed = parseOpponentAbbr(g?.matchup, ownAbbr);
+    if (parsed === opp) {
+      counter += 1;
+      return counter;
+    }
+    return null;
+  });
+  return numbersOldestFirst.reverse();
+}
+
+/**
+ * Compute weighted L5 averages per v3.5 spec section 7.
+ *
+ * @param {Object} params
+ * @param {Array<Object>} params.games  L5 games (newest-first). Each game
+ *   should carry per-game stats {pts, reb, ast, fgm, fga, ftm, fta, blk,
+ *   stl, tov, minutes, pra, matchup}.
+ * @param {number|null} params.seasonPpg  Season points-per-game (drives the
+ *   outlier dampener). Null disables outlier dampening.
+ * @param {string|null} params.ownAbbr  Player's own team abbreviation
+ *   (used to parse opponent out of matchup strings).
+ * @param {Object|null} params.series  Playoff series context, if any
+ *   (groundTruth.series shape). Triggers playoff_series / playoff_raw_fallback
+ *   modes.
+ * @param {Object|null} params.defRankByAbbr  Map of team_abbr → def_rank
+ *   from the current-season snapshot. Used for the regular-season opponent
+ *   quality multiplier. Per-game lookups are a deliberate v3.5 limitation
+ *   (uses current-season as a proxy).
+ * @returns {{averages: Object, raw_vs_weighted_delta: Object, outlier_present: boolean, mode: string}|null}
+ *   Null when `games` is empty.
+ */
+export function computeWeightedL5({ games, seasonPpg, ownAbbr, series, defRankByAbbr }) {
+  if (!Array.isArray(games) || games.length === 0) return null;
+
+  const isPlayoff = !!series;
+
+  // Decide mode + per-game opponent multipliers up front so callers can
+  // emit the correct diagnostic flag without re-deriving.
+  let mode;
+  let perGameMultipliers;
+  if (isPlayoff) {
+    // Identify current-opponent L5 games for series mode; <3 = fallback.
+    const opponentAbbr = series?.opponent_abbr ?? series?.opponent_team_abbr ?? null;
+    const seriesNumbers = assignSeriesNumbers(games, opponentAbbr, ownAbbr);
+    const vsCurrentOpp = seriesNumbers.filter((x) => x != null).length;
+    if (vsCurrentOpp < 3) {
+      mode = "playoff_raw_fallback";
+    } else {
+      mode = "playoff_series";
+    }
+    perGameMultipliers = seriesNumbers.map((num) => seriesMultiplier(num));
+  } else {
+    mode = "regular";
+    perGameMultipliers = games.map((g) => {
+      const oppAbbr = parseOpponentAbbr(g?.matchup, ownAbbr);
+      const defRank = oppAbbr && defRankByAbbr ? defRankByAbbr[oppAbbr] ?? null : null;
+      return opponentMultiplier(defRank);
+    });
+  }
+
+  // Raw fallback: spec requires returning raw averages — caller treats
+  // l5.weighted.averages as raw and emits the small-sample flag.
+  if (mode === "playoff_raw_fallback") {
+    const raw = rawAverages(games);
+    return {
+      averages: raw,
+      raw_vs_weighted_delta: zeroDelta(raw),
+      outlier_present: hasOutlier(games, seasonPpg),
+      mode,
+    };
+  }
+
+  // Composite weights: recency × (opponent OR series) × outlier.
+  const rawWeights = games.map((g, i) => {
+    const recency = RECENCY_RAMP[i] ?? 0;
+    const groupMul = perGameMultipliers[i] ?? 1.0;
+    const outMul = outlierMultiplier(g?.pts ?? null, seasonPpg);
+    return recency * groupMul * outMul;
+  });
+  const totalWeight = rawWeights.reduce((a, b) => a + b, 0) || 1;
+  const weights = rawWeights.map((w) => w / totalWeight);
+
+  // Compute weighted averages for the core stat fields. Composite stats
+  // (pr/pa/ra/pra) are derived from the weighted ppg/rpg/apg so they stay
+  // internally consistent with the headline averages.
+  const ppg = weightedMean(games, weights, "pts") ?? 0;
+  const rpg = weightedMean(games, weights, "reb") ?? 0;
+  const apg = weightedMean(games, weights, "ast") ?? 0;
+  const round1 = (v) => v == null ? null : Number(v.toFixed(1));
+  const averages = {
+    ppg: round1(ppg),
+    rpg: round1(rpg),
+    apg: round1(apg),
+    fgm: weightedMean(games, weights, "fgm"),
+    fga: weightedMean(games, weights, "fga"),
+    ftm: weightedMean(games, weights, "ftm"),
+    fta: weightedMean(games, weights, "fta"),
+    blk: weightedMean(games, weights, "blk"),
+    stl: weightedMean(games, weights, "stl"),
+    tov: weightedMean(games, weights, "tov"),
+    minutes: weightedMean(games, weights, "minutes"),
+    pra: round1(ppg + rpg + apg),
+    pr: round1(ppg + rpg),
+    pa: round1(ppg + apg),
+    ra: round1(rpg + apg),
+  };
+
+  const raw = rawAverages(games);
+  const delta = {
+    ppg: round1((averages.ppg ?? 0) - (raw.ppg ?? 0)),
+    rpg: round1((averages.rpg ?? 0) - (raw.rpg ?? 0)),
+    apg: round1((averages.apg ?? 0) - (raw.apg ?? 0)),
+    pra: round1((averages.pra ?? 0) - (raw.pra ?? 0)),
+  };
+
+  return {
+    averages,
+    raw_vs_weighted_delta: delta,
+    outlier_present: hasOutlier(games, seasonPpg),
+    mode,
+  };
+}
+
+// Plain mean over the games. Mirrors what ESPN's getLastNGames already
+// produces, but recomputed here so the weighted module is self-contained
+// (and so we can drive the raw_vs_weighted_delta without depending on the
+// caller's enrichment path).
+function rawAverages(games) {
+  const round1 = (v) => v == null ? null : Number(v.toFixed(1));
+  const avg = (key) => {
+    let sum = 0;
+    let count = 0;
+    for (const g of games) {
+      const v = g?.[key];
+      if (v == null) continue;
+      sum += v;
+      count += 1;
+    }
+    return count === 0 ? null : sum / count;
+  };
+  const ppg = avg("pts") ?? 0;
+  const rpg = avg("reb") ?? 0;
+  const apg = avg("ast") ?? 0;
+  return {
+    ppg: round1(ppg),
+    rpg: round1(rpg),
+    apg: round1(apg),
+    pra: round1(ppg + rpg + apg),
+    pr: round1(ppg + rpg),
+    pa: round1(ppg + apg),
+    ra: round1(rpg + apg),
+  };
+}
+
+function zeroDelta() {
+  return { ppg: 0, rpg: 0, apg: 0, pra: 0 };
+}
