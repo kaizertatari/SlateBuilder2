@@ -239,16 +239,56 @@ export async function getWinProbability(eventId, competitionId, { league = "NBA"
     `${CORE}/events/${eventId}/competitions/${competitionId}/probabilities?limit=200`
   );
   const items = probs?.items || [];
-  if (!items.length) return null;
-  const latest = items[items.length - 1];
-  const home = latest.homeWinPercentage;
-  const away = latest.awayWinPercentage;
-  if (home == null && away == null) return null;
-  return {
-    source: "probabilities",
-    home_win_pct: home,
-    away_win_pct: away ?? (home != null ? 1 - home : null),
-  };
+  if (items.length) {
+    const latest = items[items.length - 1];
+    const home = latest.homeWinPercentage;
+    const away = latest.awayWinPercentage;
+    if (home != null || away != null) {
+      return {
+        source: "probabilities",
+        home_win_pct: home,
+        away_win_pct: away ?? (home != null ? 1 - home : null),
+      };
+    }
+  }
+  // Third fallback: sportsbook moneyline from the ESPN summary endpoint.
+  // ESPN frequently 400s the /probabilities endpoint for WNBA games and
+  // /predictor returns null pre-tip. The summary's pickcenter.moneyline
+  // (DraftKings closing line by default) is a reliable signal — we derive
+  // implied probability from the odds and normalize for vig.
+  const summary = await jsonFetch(
+    `${siteUrl(league)}/summary?event=${eventId}`
+  );
+  const ml = summary?.pickcenter?.[0]?.moneyline;
+  const homeOdds = parseMoneyline(ml?.home?.close?.odds ?? ml?.home?.open?.odds);
+  const awayOdds = parseMoneyline(ml?.away?.close?.odds ?? ml?.away?.open?.odds);
+  if (homeOdds != null && awayOdds != null) {
+    const rawHome = impliedProb(homeOdds);
+    const rawAway = impliedProb(awayOdds);
+    const total = rawHome + rawAway;
+    if (total > 0) {
+      // Normalize so home + away = 1.0 (removes the bookmaker's vig).
+      return {
+        source: "moneyline",
+        home_win_pct: rawHome / total,
+        away_win_pct: rawAway / total,
+      };
+    }
+  }
+  return null;
+}
+
+// American moneyline → implied probability. Positive = underdog, negative
+// = favorite. Returns null on unparseable input.
+function parseMoneyline(s) {
+  if (s == null) return null;
+  const n = Number(String(s).replace(/\s/g, ""));
+  return Number.isFinite(n) && n !== 0 ? n : null;
+}
+
+function impliedProb(odds) {
+  if (odds > 0) return 100 / (odds + 100);
+  return -odds / (-odds + 100);
 }
 
 function normalizeInjury(entry) {
