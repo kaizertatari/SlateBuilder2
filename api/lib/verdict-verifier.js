@@ -42,6 +42,114 @@ const ASSIST_CONTAINING = new Set(["Assists", "PA", "RA", "PRA"]);
 const ASSIST_WP_BAND_REG = { lo: 0.40, hi: 0.75 };
 const ASSIST_WP_BAND_PLAYOFF = { lo: 0.35, hi: 0.80 };
 
+// Framework-prescribed flag fragments and rule labels the LLM emits when it
+// SKIPs for a documented reason. Presence of any of these in flags[] is the
+// signal that the model grounded the SKIP in the framework rather than
+// returning SKIP as a soft refusal. Substring match is case-insensitive.
+// Pattern \b\d+[a-z]\b matches short rule labels like "5i", "5f", "4c"; \bR\d+
+// matches "R9". Keep this list in lock-step with the flag strings prescribed
+// in api/lib/framework.js.
+const FRAMEWORK_RULE_PATTERN = /\b(?:\d+[a-z]|R\d+)\b/i;
+const FRAMEWORK_SKIP_TOKENS = [
+  "b-tier confidence band",
+  "game 1", "game 2",
+  "mechanism 1", "mechanism 2", "mechanism 3",
+  "no named mechanism", "no mechanism",
+  "missing:", "missing data",
+  "prior-season",
+  "post-outlier window",
+  "weighted l5",
+  "s-tier gate",
+  "small playoff sample",
+  "blowout",
+  "win-prob gate", "assist win-prob",
+  "ft floor", "ft-floor",
+  "post-injury",
+  "5h capped",
+  "team-rank proxy",
+  "shooting-slump",
+  "foul-prone",
+  "multi-star",
+  "sole alpha",
+];
+
+function hasFrameworkSkipToken(flags) {
+  if (!Array.isArray(flags) || flags.length === 0) return false;
+  const joined = flags.join(" | ").toLowerCase();
+  if (FRAMEWORK_RULE_PATTERN.test(joined)) return true;
+  return FRAMEWORK_SKIP_TOKENS.some((tok) => joined.includes(tok));
+}
+
+// Tolerance for numeric data_used comparisons. The LLM is instructed to
+// echo verbatim, but rounding from 26.75 → 26.8 shouldn't trip a mismatch.
+// 0.05 is wide enough for one-decimal rounding and tight enough to catch a
+// hallucinated value off by even a single full unit.
+const DATA_USED_NUMERIC_TOLERANCE = 0.05;
+
+function numsClose(a, b) {
+  if (a == null || b == null) return a == null && b == null;
+  if (typeof a !== "number" || typeof b !== "number") return false;
+  return Math.abs(a - b) <= DATA_USED_NUMERIC_TOLERANCE;
+}
+
+/**
+ * Compare the LLM's data_used echo against groundTruth. Returns an array of
+ * { field, expected, got } objects for each mismatched field. Empty array
+ * means clean. Detection only — caller decides what to do with the result.
+ */
+export function auditDataUsed({ groundTruth, llmResult, statType }) {
+  const used = llmResult?.data_used;
+  if (!used || typeof used !== "object") return [];
+
+  const field = PROP_TO_FIELD[statType] ?? null;
+  const mismatches = [];
+
+  // Numeric: season_avg
+  const expectedSeason = (field && groundTruth?.season?.averages)
+    ? (groundTruth.season.averages[field] ?? null)
+    : null;
+  if ("season_avg" in used && !numsClose(used.season_avg, expectedSeason)) {
+    mismatches.push({ field: "season_avg", expected: expectedSeason, got: used.season_avg });
+  }
+
+  // Numeric: l5_avg
+  const expectedL5 = (field && groundTruth?.l5?.averages)
+    ? (groundTruth.l5.averages[field] ?? null)
+    : null;
+  if ("l5_avg" in used && !numsClose(used.l5_avg, expectedL5)) {
+    mismatches.push({ field: "l5_avg", expected: expectedL5, got: used.l5_avg });
+  }
+
+  // Numeric: win_prob (0-1 float)
+  const expectedWp = groundTruth?.win_prob?.player_team_pct ?? null;
+  if ("win_prob" in used && !numsClose(used.win_prob, expectedWp)) {
+    mismatches.push({ field: "win_prob", expected: expectedWp, got: used.win_prob });
+  }
+
+  // String: home_away
+  const expectedHA = groundTruth?.home_away ?? null;
+  if ("home_away" in used && used.home_away !== expectedHA && used.home_away != null) {
+    mismatches.push({ field: "home_away", expected: expectedHA, got: used.home_away });
+  }
+
+  // String: opponent — schema says copy groundTruth.opponent_team.name. Tolerate
+  // abbr substitution (LLM emits "PHX" while GT has "Phoenix Mercury") since
+  // that's a format quirk, not a hallucination. Anything unrelated to the
+  // expected name/abbr is a mismatch.
+  const expectedOppName = groundTruth?.opponent_team?.name ?? null;
+  const expectedOppAbbr = groundTruth?.opponent_team?.abbr ?? null;
+  if ("opponent" in used && used.opponent != null) {
+    const got = String(used.opponent);
+    const okName = expectedOppName && (got === expectedOppName || got.includes(expectedOppName) || expectedOppName.includes(got));
+    const okAbbr = expectedOppAbbr && got.toUpperCase() === String(expectedOppAbbr).toUpperCase();
+    if (!okName && !okAbbr) {
+      mismatches.push({ field: "opponent", expected: expectedOppName ?? expectedOppAbbr, got });
+    }
+  }
+
+  return mismatches;
+}
+
 /**
  * Pre-LLM mechanical filter. Returns a SKIP verdict object if the
  * framework would reject this task on arithmetic grounds, null otherwise.
@@ -66,14 +174,49 @@ export function preFilterMechanical({ groundTruth, statType, direction, line }) 
 }
 
 /**
- * Post-LLM verifier. Takes the LLM's verdict and downgrades to SKIP if
- * a mechanical check it skipped is violated. Pass-through on LLM SKIPs.
+ * Post-LLM verifier. Three responsibilities:
+ *   1. Audit `data_used` against groundTruth for hallucinated values
+ *      (every verdict, including SKIPs). Mismatches surface in
+ *      `data_used_mismatches` for caller-side logging.
+ *   2. Downgrade non-SKIP verdicts to SKIP when a mechanical rule the LLM
+ *      skipped is violated (existing behavior).
+ *   3. Classify LLM SKIPs as `mechanical_justified`, `framework_cited`, or
+ *      unjustified. Unjustified SKIPs emit `should_retry: true` so the
+ *      orchestrator can re-prompt once. Pass `isRetry: true` on the second
+ *      verification so an unjustified result is finalized as
+ *      `unjustified_after_retry` (no further retry).
  */
-export function verifyVerdict({ groundTruth, statType, direction, line, llmResult }) {
+export function verifyVerdict({ groundTruth, statType, direction, line, llmResult, isRetry = false }) {
+  const data_used_mismatches = auditDataUsed({ groundTruth, llmResult, statType });
+
+  // SKIP path — classify, don't override.
   if (llmResult.verdict === "SKIP" || llmResult.tier === "SKIP") {
-    return { ...llmResult, overridden: false };
+    const overrides = collectMechanicalFailures({ groundTruth, statType, direction, line });
+    let skip_kind;
+    let should_retry = false;
+    let retry_reason = null;
+    if (overrides.length > 0) {
+      skip_kind = "mechanical_justified";
+    } else if (hasFrameworkSkipToken(llmResult.flags)) {
+      skip_kind = "framework_cited";
+    } else if (isRetry) {
+      skip_kind = "unjustified_after_retry";
+    } else {
+      skip_kind = "unjustified";
+      should_retry = true;
+      retry_reason = "unjustified_skip";
+    }
+    return {
+      ...llmResult,
+      overridden: false,
+      skip_kind,
+      data_used_mismatches,
+      should_retry,
+      retry_reason,
+    };
   }
 
+  // Non-SKIP path — existing override behavior with mismatches threaded through.
   const effective = llmResult.verdict === "OVER" ? "OVER"
                   : llmResult.verdict === "UNDER" ? "UNDER"
                   : direction;
@@ -83,7 +226,9 @@ export function verifyVerdict({ groundTruth, statType, direction, line, llmResul
     direction: effective,
     line,
   });
-  if (overrides.length === 0) return { ...llmResult, overridden: false };
+  if (overrides.length === 0) {
+    return { ...llmResult, overridden: false, data_used_mismatches };
+  }
 
   const overrideFlags = overrides.map((o) => `⚠️ verifier override: ${o.reason} (${o.detail})`);
   const origJust = typeof llmResult.justification === "string" ? llmResult.justification : "";
@@ -98,6 +243,8 @@ export function verifyVerdict({ groundTruth, statType, direction, line, llmResul
     data_used: llmResult.data_used ?? null,
     overridden: true,
     override_reasons: overrides.map((o) => o.reason),
+    skip_kind: "mechanical_override",
+    data_used_mismatches,
   };
 }
 

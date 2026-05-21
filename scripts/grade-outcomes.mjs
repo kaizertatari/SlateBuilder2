@@ -130,6 +130,14 @@ async function main() {
   console.log(`Grouped into ${groups.size} player+season gamelog fetches`);
 
   let hits = 0, misses = 0, pushes = 0, voids = 0, postponed = 0, unmatched = 0, errors = 0;
+  // Audit counters for the LLM hallucination + unjustified-SKIP guardrails.
+  // These describe behavior the verifier tagged on the verdict; they aren't
+  // affected by the win/loss grading above.
+  let auditRetryRecovered = 0;          // retry fired and salvaged the pick
+  let auditUnjustifiedAfterRetry = 0;   // retry fired and still came back unjustified
+  let auditMissedPicks = 0;             // unjustified_after_retry that the actual outcome shows would have hit
+  let auditMismatches = 0;              // verdicts where data_used disagreed with groundTruth
+  const missedPickSamples = [];
   const outcomeEvents = [];
 
   for (const g of groups.values()) {
@@ -149,6 +157,12 @@ async function main() {
     const games = gamelog?.games ?? [];
 
     for (const v of g.verdicts) {
+      // Audit counters — tally regardless of whether the actual game is
+      // gradeable. These reflect verifier decisions on the verdict itself.
+      if (v.retry_recovered === true) auditRetryRecovered++;
+      if (v.skip_kind === "unjustified_after_retry") auditUnjustifiedAfterRetry++;
+      if (Array.isArray(v.data_used_mismatches) && v.data_used_mismatches.length > 0) auditMismatches++;
+
       // Match on calendar date. game_start_time is an ISO string with TZ;
       // gamelog `date` is "YYYY-MM-DD" (per fmtDate in api/lib/string-utils).
       const targetDay = v.game_start_time ? v.game_start_time.slice(0, 10) : null;
@@ -165,6 +179,28 @@ async function main() {
       }
       const actual = getActual(entry);
       const minutes = num(entry.minutes);
+
+      // Missed-picks report: SKIP verdicts the LLM never grounded in a rule.
+      // If the actual outcome would have hit the requested direction, that's
+      // edge the model left on the table. Skip DNPs — a void doesn't reveal
+      // anything about model judgment.
+      if (v.skip_kind === "unjustified_after_retry" && minutes > 0) {
+        const wouldHaveBeen = gradeRaw(actual, num(v.line), v.direction);
+        if (wouldHaveBeen === "hit") {
+          auditMissedPicks++;
+          if (missedPickSamples.length < 10) {
+            missedPickSamples.push({
+              player: v.player,
+              prop_type: v.prop_type,
+              direction: v.direction,
+              line: v.line,
+              actual,
+              date: targetDay,
+            });
+          }
+        }
+      }
+
       let outcome;
       if (minutes === 0) {
         outcome = { hit_or_miss: "void", reason: "dnp", actual_value: null };
@@ -189,6 +225,27 @@ async function main() {
   if (non_void > 0) {
     console.log(`Hit rate: ${((hits / non_void) * 100).toFixed(1)}%  (excludes pushes? no — pushes counted in denominator)`);
   }
+
+  // LLM-guardrail audit summary. Surfaces (a) whether the one-shot retry
+  // for unjustified SKIPs is paying for itself, (b) how much edge the
+  // model leaves on the table when it SKIPs without grounding, (c) the
+  // hallucination rate on data_used echoes.
+  const retryAttempts = auditRetryRecovered + auditUnjustifiedAfterRetry;
+  console.log(`\n--- LLM audit ---`);
+  console.log(`Retry attempts: ${retryAttempts}  (recovered ${auditRetryRecovered}, still unjustified ${auditUnjustifiedAfterRetry})`);
+  if (retryAttempts > 0) {
+    console.log(`Retry recovery rate: ${((auditRetryRecovered / retryAttempts) * 100).toFixed(1)}%`);
+  }
+  if (auditUnjustifiedAfterRetry > 0) {
+    console.log(`Missed picks (unjustified SKIP would have hit): ${auditMissedPicks}/${auditUnjustifiedAfterRetry}  (${((auditMissedPicks / auditUnjustifiedAfterRetry) * 100).toFixed(1)}%)`);
+    if (missedPickSamples.length) {
+      console.log(`Sample missed picks:`);
+      for (const s of missedPickSamples) {
+        console.log(`  ${s.date}  ${s.player}  ${s.prop_type} ${s.direction} ${s.line}  → actual ${s.actual}`);
+      }
+    }
+  }
+  console.log(`Data_used mismatches: ${auditMismatches}  (LLM echoed values diverging from groundTruth)`);
 
   if (dryRun) {
     console.log(`\nDRY RUN — would emit ${outcomeEvents.length} outcome events. Sample:`);

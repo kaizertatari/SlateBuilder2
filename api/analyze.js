@@ -396,14 +396,40 @@ async function handlePost(req) {
 
     // Re-derive the mechanical framework checks on the LLM's output as a
     // second layer of defense (catches qualitative-mode drift). Same
-    // logic as the pre-filter above.
-    const verified = verifyVerdict({
+    // logic as the pre-filter above. Also classifies LLM SKIPs and audits
+    // data_used for hallucinated values.
+    let verified = verifyVerdict({
       groundTruth,
       statType,
       direction,
       line,
       llmResult: llmResponse.data,
     });
+    let llmProviderFinal = llmResponse.provider;
+    let llmModelFinal = llmResponse.model;
+
+    // One-shot retry path: the LLM SKIPped without citing a framework rule
+    // or tripping a mechanical gate. Re-prompt once with an addendum that
+    // requires citation or a revised verdict. Cap: exactly one retry per
+    // task — second-pass unjustified SKIPs are finalized as
+    // "unjustified_after_retry" by passing isRetry=true.
+    if (verified.should_retry) {
+      const retryResponse = await invokeLLM(groundTruth, UNJUSTIFIED_SKIP_RETRY_ADDENDUM);
+      if (!retryResponse.isError) {
+        const reverified = verifyVerdict({
+          groundTruth,
+          statType,
+          direction,
+          line,
+          llmResult: retryResponse.data,
+          isRetry: true,
+        });
+        const recovered = reverified.verdict !== "SKIP" || reverified.skip_kind === "framework_cited";
+        verified = { ...reverified, retry_recovered: recovered };
+        llmProviderFinal = retryResponse.provider;
+        llmModelFinal = retryResponse.model;
+      }
+    }
 
     // Return successful response with (possibly overridden) verdict
     logVerdict({
@@ -414,8 +440,8 @@ async function handlePost(req) {
       playerInfo,
       trace,
       durationMs: elapsed(),
-      llmProvider: llmResponse.provider,
-      llmModel: llmResponse.model,
+      llmProvider: llmProviderFinal,
+      llmModel: llmModelFinal,
     });
     return createSuccessResponse(verified, groundTruth);
   } catch (error) {
@@ -430,17 +456,27 @@ async function handlePost(req) {
 }
 
 /**
+ * Addendum appended to the prompt on the unjustified-SKIP retry. The first
+ * pass returned SKIP without citing a framework rule and without tripping a
+ * mechanical gate — re-ask with explicit instructions to ground the verdict
+ * before falling back to SKIP again.
+ */
+export const UNJUSTIFIED_SKIP_RETRY_ADDENDUM = `\n\nRETRY NOTICE:\nYour previous response returned SKIP with no framework rule cited in flags and no mechanical gate failing. Either (a) revise the verdict to OVER or UNDER with a citation of the governing baseline and any suppressors applied, or (b) keep SKIP and include in flags[] at least one specific framework rule label (e.g. "Rule 5i", "5f", "R9", "Mechanism 1", "Game 1", "B-tier confidence band") that requires this SKIP. Output a single JSON object only — no prose, no markdown.`;
+
+/**
  * Invokes the routed LLM (Groq/Gemini) with the given ground truth data.
  * Provider selection happens inside callLLM per LLM_PROVIDERS.
  * @param {Object} groundTruth - The verified data to use for analysis
+ * @param {string} [addendum] - Optional text appended to the prompt (e.g., retry addendum)
  * @returns {{isError: boolean, response?: Response, data?: Object, provider?: string, model?: string}}
  */
-async function invokeLLM(groundTruth) {
+async function invokeLLM(groundTruth, addendum) {
   try {
     // Build prompt and invoke the routed LLM. Framework variant is picked
     // from the league field on groundTruth — NBA-default for legacy callers.
     const framework = getFramework(groundTruth?.league ?? "NBA");
-    const prompt = buildPrompt(framework, groundTruth);
+    const basePrompt = buildPrompt(framework, groundTruth);
+    const prompt = addendum ? `${basePrompt}${addendum}` : basePrompt;
     const llm = await callLLM(prompt);
     if (llm.error) {
       return {

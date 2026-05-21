@@ -87,6 +87,15 @@ export function logVerdict({
     overridden: !!result?.overridden,
     override_reasons: result?.override_reasons ?? null,
     pre_filtered: !!result?.pre_filtered,
+    // SKIP audit + hallucination guard (from verdict-verifier). skip_kind
+    // discriminates mechanical/framework_cited/unjustified_after_retry/
+    // mechanical_override. data_used_mismatches surfaces hallucinated
+    // numbers the LLM emitted that diverge from groundTruth.
+    // retry_recovered flags verdicts that were salvaged by the one-shot
+    // unjustified-SKIP retry — null when no retry fired.
+    skip_kind: result?.skip_kind ?? null,
+    data_used_mismatches: result?.data_used_mismatches ?? null,
+    retry_recovered: result?.retry_recovered ?? null,
     // Error path (mutually exclusive with verdict)
     error: errorInfo?.message ?? null,
     error_name: errorInfo?.name ?? null,

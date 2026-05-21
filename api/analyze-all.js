@@ -8,7 +8,7 @@
 //
 // Returns: { total_analyzed, total_s_a, top_10: [...] }
 
-import { gatherGroundTruth, buildPrompt, callLLM } from "./analyze.js";
+import { gatherGroundTruth, buildPrompt, callLLM, UNJUSTIFIED_SKIP_RETRY_ADDENDUM } from "./analyze.js";
 import { getFramework } from "./lib/framework.js";
 import { rateLimit } from "./lib/rate-limit.js";
 import { runWithRequestContext } from "./lib/request-context.js";
@@ -370,15 +370,37 @@ async function handlePost(req, reqId) {
       const r = llm.json;
 
       // Re-derive the mechanical framework checks the LLM might have
-      // dropped (OVER 1.5pt buffer, Rule 5i FT-floor). The verifier
-      // only downgrades to SKIP; clean LLM verdicts pass through.
-      const verified = verifyVerdict({
+      // dropped (OVER 1.5pt buffer, Rule 5i FT-floor). The verifier also
+      // classifies LLM SKIPs and audits data_used for hallucinated values.
+      let verified = verifyVerdict({
         groundTruth: taskGroundTruth,
         statType: task.statType,
         direction: task.direction,
         line: task.line,
         llmResult: r,
       });
+      let llmForLog = llm;
+
+      // One-shot retry on unjustified SKIPs. Reuses the same prompt with
+      // an addendum demanding either a framework citation or a revised
+      // verdict. Capped at one re-call per task by passing isRetry=true on
+      // the second verification.
+      if (verified.should_retry) {
+        const retryLlm = await callLLM(`${prompt}${UNJUSTIFIED_SKIP_RETRY_ADDENDUM}`);
+        if (!retryLlm.error && retryLlm.json) {
+          const reverified = verifyVerdict({
+            groundTruth: taskGroundTruth,
+            statType: task.statType,
+            direction: task.direction,
+            line: task.line,
+            llmResult: retryLlm.json,
+            isRetry: true,
+          });
+          const recovered = reverified.verdict !== "SKIP" || reverified.skip_kind === "framework_cited";
+          verified = { ...reverified, retry_recovered: recovered };
+          llmForLog = retryLlm;
+        }
+      }
 
       const tierKey = tierCounts[verified.tier] !== undefined ? verified.tier : "UNKNOWN";
       tierCounts[tierKey] += 1;
@@ -390,8 +412,8 @@ async function handlePost(req, reqId) {
         playerInfo: sharedPlayerInfo,
         trace: sharedTrace,
         durationMs: Date.now() - taskStartedAt,
-        llmProvider: llm.provider ?? null,
-        llmModel: llm.model ?? null,
+        llmProvider: llmForLog.provider ?? null,
+        llmModel: llmForLog.model ?? null,
       });
       if (verified.tier === "S" || verified.tier === "A" || verified.tier === "B") {
         results.push({
