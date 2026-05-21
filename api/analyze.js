@@ -131,8 +131,10 @@ export async function gatherGroundTruth({ player, propType, line }) {
 
   // Season type is decided by the ESPN scoreboard event, not by which gamelog
   // tier returned data. Otherwise a transient playoff-tier failure would
-  // silently mislabel a playoff game as regular season.
-  const isPlayoff = !!(game.series || game.round);
+  // silently mislabel a playoff game as regular season. Require an explicit
+  // playoff series.type — game.round alone (a competition-type abbreviation)
+  // misfires on regular-season events that carry a non-null round string.
+  const isPlayoff = game.series?.type === "playoff";
   const seasonType = isPlayoff ? "Playoffs" : "Regular Season";
   // ESPN primary, stats.nba.com fallback. Vercel egress IPs are throttled by
   // stats.nba.com, so the NBA path is unreliable — try ESPN first when an
@@ -141,16 +143,26 @@ export async function gatherGroundTruth({ player, propType, line }) {
     ? await espnStats.getLastNGames(espnId, 5, { season, postseason: isPlayoff, league })
     : null;
   trace.l5 = l5?.games?.length ? "espn_gamelog" : null;
+  // WNBA early-playoff: if the playoff gamelog is empty (G1 not yet logged),
+  // retry against current-season regular-season games before falling through
+  // to stats edge. Stays in 2026 — no prior-season carry-over.
+  if (!trace.l5 && league === "WNBA" && isPlayoff && espnId) {
+    const reg = await espnStats.getLastNGames(espnId, 5, { season, postseason: false, league });
+    if (reg?.games?.length) {
+      l5 = reg;
+      trace.l5 = "espn_gamelog_regular_fallback";
+    }
+  }
   if (!trace.l5) {
     l5 = await getLastNGames(playerId, 5, { seasonType, league });
     trace.l5 = l5?.games?.length ? "stats_edge" : null;
   }
-  // Opening-day cliff: when the current-season gamelog is empty (WNBA mid-May,
-  // NBA early October) the LLM has no baseline and either hallucinates or
-  // SKIPs every prop via the verifier's missing_baseline gate. Pull the prior
-  // season's most-recent regular-season games as a fallback and tag the
-  // result so composeGroundTruth surfaces a data_warnings entry.
-  if (!l5?.games?.length) {
+  // Opening-day cliff: NBA early October only. WNBA intentionally skips the
+  // prior-season carry-over so a 2-game 2026 sample stays a 2-game sample —
+  // computeWeightedL5 renormalizes the recency ramp over however many games
+  // exist. For NBA, pull the prior season's most-recent regular-season games
+  // and tag the result so composeGroundTruth surfaces a data_warnings entry.
+  if (!l5?.games?.length && league !== "WNBA") {
     const priorSeason = priorSeasonLabel(season, league);
     if (priorSeason && espnId) {
       const fb = await espnStats.getLastNGames(espnId, 5, { season: priorSeason, postseason: false, league });
@@ -160,7 +172,12 @@ export async function gatherGroundTruth({ player, propType, line }) {
       }
     }
   }
-  if (!l5?.games?.length) trace.l5 = "missing";
+  if (!l5?.games?.length) {
+    trace.l5 = "missing";
+    if (league === "WNBA") {
+      return { skipReason: "no_current_season_games", message: `${player} has no games in the current WNBA season` };
+    }
+  }
 
   // Splits and opponent defense use regular season — playoff samples are too
   // small to be a stable baseline. Same logic as Rule 5a road deduction.
@@ -191,11 +208,11 @@ export async function gatherGroundTruth({ player, propType, line }) {
 
   let seasonAvg = espnSeasonAvg ?? await getSeasonAverages(playerId, { seasonType: "Regular Season", league });
   trace.season_avg = espnSeasonAvg ? "espn_gamelog" : (seasonAvg ? "stats_edge" : null);
-  // Same opening-day fallback as L5: when the current season has no games
-  // yet, pull the prior-season aggregate so the framework has something to
-  // anchor against. The is_prior_season tag propagates through to the
-  // groundTruth data_warnings.
-  if (!seasonAvg) {
+  // Same opening-day fallback as L5: NBA-only. WNBA short-circuits earlier
+  // when L5 is empty, and falling back to 2025 averages here would
+  // contradict the no-carry-over policy for any WNBA player who has L5
+  // games but a missing aggregate.
+  if (!seasonAvg && league !== "WNBA") {
     const priorSeason = priorSeasonLabel(season, league);
     if (priorSeason && espnId) {
       const fb = await espnStats.getSeasonAverages(espnId, { season: priorSeason, league });
