@@ -214,7 +214,7 @@ if (direction === "UNDER" && FT_FLOOR_PROPS.has(statType)) {
 if (ASSIST_CONTAINING.has(statType)) {
   const wp = gt.win_prob?.player_team_pct;
   if (wp != null) {
-    const band = isPlayoffGame ? { lo: 0.45, hi: 0.70 } : { lo: 0.40, hi: 0.75 };
+    const band = isPlayoffGame ? { lo: 0.35, hi: 0.80 } : { lo: 0.40, hi: 0.75 };
     const inBand = wp >= band.lo && wp <= band.hi;
     console.log(`  R9 assist win-prob gate (${isPlayoffGame ? "playoff" : "reg"}):`);
     console.log(`    band [${band.lo.toFixed(2)}, ${band.hi.toFixed(2)}]   wp=${wp.toFixed(3)}   ${inBand ? "INSIDE ✓" : "OUTSIDE ✗ (forces SKIP)"}`);

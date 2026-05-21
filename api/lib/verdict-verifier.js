@@ -40,7 +40,7 @@ const FT_FLOOR_PROPS = new Set(["Points", "PRA"]);
 const ASSIST_CONTAINING = new Set(["Assists", "PA", "RA", "PRA"]);
 // Win-prob bands, regular season vs playoff (R9).
 const ASSIST_WP_BAND_REG = { lo: 0.40, hi: 0.75 };
-const ASSIST_WP_BAND_PLAYOFF = { lo: 0.45, hi: 0.70 };
+const ASSIST_WP_BAND_PLAYOFF = { lo: 0.35, hi: 0.80 };
 
 /**
  * Pre-LLM mechanical filter. Returns a SKIP verdict object if the

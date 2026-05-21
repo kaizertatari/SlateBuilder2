@@ -302,6 +302,49 @@ header("11. WNBA variant scaling honored");
   check("WNBA line 19.0 passes", pre2 === null);
 }
 
+// ─── 11b. R9 assist win-prob band (regular vs playoff) ───────────────────
+header("11b. R9 assist win-prob gate: regular [0.40, 0.75], playoff [0.35, 0.80]");
+{
+  const baseGT = (wp, isPlayoff) => ({
+    league: "NBA",
+    home_away: "home",
+    season: { averages: { ppg: 18, apg: 7, pra: 30, ft_pct: 0.85, fta: 4 } },
+    l5: { type: isPlayoff ? "Playoffs" : "Regular Season", n: 5, averages: { ppg: 18, apg: 7, pra: 30 } },
+    variance: { ppg_stddev: null },
+    win_prob: { player_team_pct: wp },
+    series: isPlayoff ? { games_played: 2, opponent_abbr: "MIA" } : null,
+  });
+  // Helper — does the R9 gate fire for this groundTruth?
+  // (Other rules like OVER buffer may also fire; we only care about R9.)
+  const r9Fired = (gt, statType, direction, line) => {
+    const r = preFilterMechanical({ groundTruth: gt, statType, direction, line });
+    return r?.override_reasons?.includes("rule_r9_assist_winprob_outside_band") === true;
+  };
+  // Use a line that comfortably clears the OVER buffer (apg 7, buffer 1.5 → ≤ 5.5).
+  // Regular-season band [0.40, 0.75]
+  check("regular wp=0.50 → R9 inside band", r9Fired(baseGT(0.50, false), "Assists", "OVER", 5.0) === false);
+  check("regular wp=0.35 → R9 outside band", r9Fired(baseGT(0.35, false), "Assists", "OVER", 5.0) === true);
+  check("regular wp=0.80 → R9 outside band", r9Fired(baseGT(0.80, false), "Assists", "OVER", 5.0) === true);
+  // Playoff band [0.35, 0.80] — loosened from previous [0.45, 0.70]
+  check("playoff wp=0.45 → R9 INSIDE loosened band (was outside)",
+    r9Fired(baseGT(0.45, true), "Assists", "OVER", 5.0) === false);
+  check("playoff wp=0.70 → R9 INSIDE loosened band (was edge of prior)",
+    r9Fired(baseGT(0.70, true), "Assists", "OVER", 5.0) === false);
+  check("playoff wp=0.35 → R9 INSIDE (lower edge)",
+    r9Fired(baseGT(0.35, true), "Assists", "OVER", 5.0) === false);
+  check("playoff wp=0.80 → R9 INSIDE (upper edge)",
+    r9Fired(baseGT(0.80, true), "Assists", "OVER", 5.0) === false);
+  check("playoff wp=0.34 → R9 outside band, fires",
+    r9Fired(baseGT(0.34, true), "Assists", "OVER", 5.0) === true);
+  check("playoff wp=0.81 → R9 outside band, fires",
+    r9Fired(baseGT(0.81, true), "Assists", "OVER", 5.0) === true);
+  // PRA contains assists → R9 applies; Points does not → R9 doesn't fire.
+  check("PRA prop also gated by R9",
+    r9Fired(baseGT(0.30, true), "PRA", "OVER", 26.0) === true);
+  check("Points prop NOT gated by R9 (only Rule 5f)",
+    r9Fired(baseGT(0.30, true), "Points", "OVER", 15.5) === false);
+}
+
 // ─── 12. selectLinesForStat (goblin + standard) ──────────────────────────
 header("12. selectLinesForStat: goblin + standard selection");
 {
