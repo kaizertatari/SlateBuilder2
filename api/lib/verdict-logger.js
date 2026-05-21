@@ -22,7 +22,7 @@ import { getReqId } from "./request-context.js";
 import { PROP_TO_FIELD } from "./prop-types.js";
 
 const INGEST_URL_BASE = "https://api.axiom.co/v1/datasets";
-const TIMEOUT_MS = 2000;
+const TIMEOUT_MS = 5000;
 
 /**
  * Emit a structured verdict event. Pass whatever you have — missing pieces
