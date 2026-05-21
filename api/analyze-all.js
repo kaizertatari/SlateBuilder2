@@ -82,6 +82,29 @@ export function selectLinesForStat(props) {
 // Lower this if free-tier daily quotas tighten.
 const MAX_LINES = parseInt(process.env.MAX_LINES_PER_PLAYER || "40", 10);
 
+// Groq's on-demand tier caps token throughput at 8K TPM on
+// openai/gpt-oss-120b. Each verdict call requests ~7K tokens, so two
+// consecutive Groq calls without spacing reliably 429. 8s between calls
+// keeps a single batch under the per-minute budget; switch to a token
+// bucket (or upgrade to a paid tier) if you need higher throughput.
+const GROQ_INTER_CALL_DELAY_MS = 8000;
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Groq's 429 body carries the wait hint in prose
+// ("Please try again in 38.467499999s"). Extract it so the error-retry
+// path can honor it instead of guessing.
+function parseGroqRetryAfterMs(errMsg) {
+  if (typeof errMsg !== "string") return null;
+  const m = errMsg.match(/try again in\s+([\d.]+)\s*s/i);
+  if (!m) return null;
+  const secs = Number(m[1]);
+  if (!Number.isFinite(secs) || secs <= 0) return null;
+  // Add 250ms of slack and cap at 60s — anything longer means the bucket
+  // is too far underwater to recover within one batch.
+  return Math.min(60_000, Math.ceil(secs * 1000) + 250);
+}
+
 // We deliberately do NOT batch the LLM calls anymore — buildBatchPrompt /
 // callLLMBatched still exist in analyze.js for one-off use but the
 // batched LLM was diverging from the single-prop endpoint (different
@@ -296,8 +319,18 @@ async function handlePost(req, reqId) {
     const results = [];
     const errors = [];
     const tierCounts = { S: 0, A: 0, B: 0, SKIP: 0, UNKNOWN: 0 };
+    // Tracks the provider used by the previous task's LLM call so the next
+    // task can pace itself against Groq's 8K TPM cap. null on the first
+    // iteration and after pre-filter SKIPs (no LLM tokens consumed).
+    let lastLlmProvider = null;
 
     for (const task of tasks) {
+      // Pace Groq calls: if the previous task hit Groq, wait the per-call
+      // delay before starting this one to keep the rolling minute under
+      // 8K tokens. Pre-filter SKIPs and Gemini calls don't trigger this.
+      if (lastLlmProvider === "groq") {
+        await sleep(GROQ_INTER_CALL_DELAY_MS);
+      }
       // sharedGroundTruth has the FIRST task's prop_type/line baked in
       // (from the initial gatherGroundTruth call). Overwrite with this
       // task's values so buildPrompt embeds the correct prop in the
@@ -345,14 +378,24 @@ async function handlePost(req, reqId) {
       if (llm.error) {
         // One outer retry — the router already exhausted both providers'
         // primary→fallback chains, so this is a last-ditch attempt
-        // against transient provider-wide weather.
-        await new Promise((r) => setTimeout(r, 1500));
+        // against transient provider-wide weather. Honor the upstream
+        // Retry-After hint when the failure was a Groq TPM 429; fall
+        // back to a small fixed delay for other provider-wide errors.
+        const hint = parseGroqRetryAfterMs(llm.error);
+        await sleep(hint ?? 1500);
         llm = await callLLM(prompt);
       }
 
       if (llm.error) {
         errors.push({ task: `${task.player} ${task.propType}`, error: llm.error });
         tierCounts.UNKNOWN += 1;
+        // Mark Groq as the last provider when the error came from Groq so
+        // the next iteration paces — a 429 means tokens may still be on
+        // the bucket even though no verdict landed. Substring match on the
+        // model id is reliable: Groq's error body always names the model.
+        if (typeof llm.error === "string" && /openai\/gpt-oss|groq/i.test(llm.error)) {
+          lastLlmProvider = "groq";
+        }
         logVerdict({
           source: "analyze-all",
           input: { player: task.player, propType: task.propType, line: task.line },
@@ -384,8 +427,13 @@ async function handlePost(req, reqId) {
       // One-shot retry on unjustified SKIPs. Reuses the same prompt with
       // an addendum demanding either a framework citation or a revised
       // verdict. Capped at one re-call per task by passing isRetry=true on
-      // the second verification.
+      // the second verification. Pace the retry against Groq's TPM cap
+      // when the main call hit Groq, otherwise tokens stack inside the
+      // same rolling minute.
       if (verified.should_retry) {
+        if (llm.provider === "groq") {
+          await sleep(GROQ_INTER_CALL_DELAY_MS);
+        }
         const retryLlm = await callLLM(`${prompt}${UNJUSTIFIED_SKIP_RETRY_ADDENDUM}`);
         if (!retryLlm.error && retryLlm.json) {
           const reverified = verifyVerdict({
@@ -404,6 +452,8 @@ async function handlePost(req, reqId) {
 
       const tierKey = tierCounts[verified.tier] !== undefined ? verified.tier : "UNKNOWN";
       tierCounts[tierKey] += 1;
+      // Record the provider used so the next iteration can pace Groq calls.
+      lastLlmProvider = llmForLog.provider ?? null;
       logVerdict({
         source: "analyze-all",
         input: { player: task.player, propType: task.propType, line: task.line },
@@ -427,6 +477,16 @@ async function handlePost(req, reqId) {
           tier: verified.tier,
           confidence: verified.confidence || 0,
           justification: verified.justification || "",
+          // LLM-guardrail audit fields. skip_kind classifies SKIPs;
+          // data_used_mismatches surfaces hallucinated values; retry_recovered
+          // flags verdicts the one-shot unjustified-SKIP retry salvaged.
+          // null on clean verdicts; null on issued verdicts where no retry
+          // fired and no mismatch was found.
+          skip_kind: verified.skip_kind ?? null,
+          data_used: verified.data_used ?? null,
+          data_used_mismatches: verified.data_used_mismatches ?? [],
+          retry_recovered: verified.retry_recovered ?? null,
+          flags: Array.isArray(verified.flags) ? verified.flags : [],
         });
       }
     }
