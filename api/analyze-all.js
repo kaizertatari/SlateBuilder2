@@ -358,6 +358,7 @@ async function handlePost(req, reqId) {
         logVerdict({
           source: "analyze-all",
           input: { player: task.player, propType: task.propType, line: task.line },
+          oddsType: task.oddsType,
           result: preSkip,
           groundTruth: taskGroundTruth,
           playerInfo: sharedPlayerInfo,
@@ -379,6 +380,7 @@ async function handlePost(req, reqId) {
       logVerdict({
         source: "analyze-all",
         input: { player: task.player, propType: task.propType, line: task.line },
+        oddsType: task.oddsType,
         result: verified,
         groundTruth: taskGroundTruth,
         playerInfo: sharedPlayerInfo,

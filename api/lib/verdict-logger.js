@@ -30,6 +30,7 @@ const TIMEOUT_MS = 5000;
  *
  * @param {Object} args
  * @param {Object} [args.input]        { player, propType, line }
+ * @param {string} [args.oddsType]     "goblin" | "standard" | "demon" | null — the PrizePicks pricing tier the analyzed line came from
  * @param {Object} [args.result]       { verdict, tier, confidence, flags, overridden, override_reasons, pre_filtered }
  * @param {Object} [args.groundTruth]  raw groundTruth from gatherGroundTruth
  * @param {Object} [args.playerInfo]   resolved player identity { nba, espn, league, ... } from resolvePlayer
@@ -42,6 +43,7 @@ const TIMEOUT_MS = 5000;
  */
 export function logVerdict({
   input,
+  oddsType,
   result,
   groundTruth,
   playerInfo,
@@ -65,6 +67,10 @@ export function logVerdict({
     player: input?.player ?? null,
     prop_type: input?.propType ?? null,
     line: input?.line ?? null,
+    // PrizePicks pricing tier: "goblin" | "standard" | "demon" | null.
+    // Lowercased so Axiom dashboards can group cleanly; null for the
+    // single-prop /api/analyze path where the caller doesn't supply one.
+    odds_type: oddsType ? String(oddsType).toLowerCase() : null,
     direction,
     stat_field: stat ? (PROP_TO_FIELD[stat] ?? null) : null,
     // composeGroundTruth stores ESPN's full ISO timestamp under `game.date`
