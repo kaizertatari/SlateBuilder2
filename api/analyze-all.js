@@ -274,13 +274,15 @@ async function handlePost(req, reqId) {
        if (!sharedGroundTruth) {
          const firstDir = directions.find((d) => perDirection.get(d)?.length > 0);
          const seedLine = perDirection.get(firstDir)[0].line;
-         // Bounded retry budget: one extra attempt at 250ms backoff. ESPN
-         // scoreboard fetches occasionally cross the 8s jsonFetch timeout
-         // under parallel load (6 players fanning out from the UI). With
-         // no retry, a single slow ESPN response drops the whole player.
-         // Tight budget keeps the parallel wall clock bounded in true
-         // outages — a wider 3-retry × 1s budget belongs on the single-
-         // prop /api/analyze path, not on the multi-player batch.
+         // Retry budget: 2 extra attempts at 500ms exponential backoff.
+         // bdl.findPlayer + getCommonPlayerInfo both have 8s timeouts and
+         // are racing — under 6-player parallel load they regularly fail
+         // BOTH on a single attempt, dropping the player to total_analyzed=0.
+         // The 6-player probe (607b764) reproduced this with Holmgren after
+         // a 1-retry budget was already in place. Three attempts with
+         // progressive backoff (~500ms + 1s = 1.5s of waits) buys upstream
+         // breathing room while keeping the parallel wall clock under ~25s
+         // worst case for a single stressed player.
          const r = await gatherGroundTruthWithRetry(
            {
              player,
@@ -290,7 +292,7 @@ async function handlePost(req, reqId) {
              // works as a seed.
              line: seedLine,
            },
-           { maxRetries: 1, baseDelayMs: 250 }
+           { maxRetries: 2, baseDelayMs: 500 }
          );
          if (r.skipReason) {
            // Player-wide skip — record and stop building tasks.
