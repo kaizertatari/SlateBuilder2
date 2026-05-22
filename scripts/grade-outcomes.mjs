@@ -38,6 +38,14 @@ const AXIOM_QUERY_URL = "https://api.axiom.co/v1/datasets/_apl?format=tabular";
 // Per-stat extractor against an ESPN gamelog entry. Composites are summed
 // in JS so we don't depend on the gamelog shipping a PRA/PR/PA/RA field
 // (it doesn't — getLastNGames computes PRA but not the partials).
+//
+// Fantasy Score uses the FanDuel formula:
+//   pts + 1.2·reb + 1.5·ast + 3·stl + 3·blk − 1·tov
+// matching api/lib/ground-truth.js fantasyScoreFanDuel. Missing tov in the
+// gamelog (rare; ESPN ships TO in the column map) underestimates the
+// penalty by at most ~2-3 pts on a ~50-pt baseline — acceptable risk for
+// hit/miss decisions; if it becomes a problem we can return null and
+// treat the grade as unknown like postponed games.
 const STAT_TO_ACTUAL = {
   Points: (g) => num(g.pts),
   Rebounds: (g) => num(g.reb),
@@ -47,7 +55,16 @@ const STAT_TO_ACTUAL = {
   PA: (g) => num(g.pts) + num(g.ast),
   RA: (g) => num(g.reb) + num(g.ast),
   "3-Pointers Made": (g) => num(g.fg3m),
+  "3-Pointers Attempted": (g) => num(g.fg3a),
   "FG Attempted": (g) => num(g.fga),
+  "Blocks+Steals": (g) => num(g.blk) + num(g.stl),
+  "Fantasy Score": (g) =>
+    num(g.pts)
+    + 1.2 * num(g.reb)
+    + 1.5 * num(g.ast)
+    + 3 * num(g.stl)
+    + 3 * num(g.blk)
+    - num(g.tov),
 };
 
 // ─── Main ──────────────────────────────────────────────────────────────────
@@ -163,10 +180,18 @@ async function main() {
       if (v.skip_kind === "unjustified_after_retry") auditUnjustifiedAfterRetry++;
       if (Array.isArray(v.data_used_mismatches) && v.data_used_mismatches.length > 0) auditMismatches++;
 
-      // Match on calendar date. game_start_time is an ISO string with TZ;
-      // gamelog `date` is "YYYY-MM-DD" (per fmtDate in api/lib/string-utils).
+      // Match on calendar date. game_start_time is an ISO string with TZ
+      // ("2026-05-22T23:30Z"); gamelog `date` is the human-readable
+      // "MMM DD, YYYY" format from fmtDate (string-utils.js). Parse the
+      // gamelog date into ISO YYYY-MM-DD before comparing — earlier
+      // versions of fmtDate emitted YYYY-MM-DD which is why the comment
+      // claimed direct equality; that contract changed but this matcher
+      // was never updated.
       const targetDay = v.game_start_time ? v.game_start_time.slice(0, 10) : null;
-      const entry = games.find((x) => x.date === targetDay);
+      const entry = games.find((x) => {
+        const d = new Date(x.date);
+        return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === targetDay;
+      });
       if (!entry) {
         postponed++;
         continue;
