@@ -8,7 +8,7 @@
 //
 // Returns: { total_analyzed, total_s_a, top_10: [...] }
 
-import { gatherGroundTruth } from "./analyze.js";
+import { gatherGroundTruthWithRetry } from "./analyze.js";
 import { rateLimit } from "./lib/rate-limit.js";
 import { runWithRequestContext } from "./lib/request-context.js";
 import { readLines } from "./lib/lines-store.js";
@@ -274,13 +274,24 @@ async function handlePost(req, reqId) {
        if (!sharedGroundTruth) {
          const firstDir = directions.find((d) => perDirection.get(d)?.length > 0);
          const seedLine = perDirection.get(firstDir)[0].line;
-         const r = await gatherGroundTruth({
-           player,
-           propType: `${stat} ${firstDir}`,
-           // groundTruth is line-agnostic except for the prop_type/line metadata
-           // (overwritten per-task below), so any chosen line works as a seed.
-           line: seedLine,
-         });
+         // Bounded retry budget: one extra attempt at 250ms backoff. ESPN
+         // scoreboard fetches occasionally cross the 8s jsonFetch timeout
+         // under parallel load (6 players fanning out from the UI). With
+         // no retry, a single slow ESPN response drops the whole player.
+         // Tight budget keeps the parallel wall clock bounded in true
+         // outages — a wider 3-retry × 1s budget belongs on the single-
+         // prop /api/analyze path, not on the multi-player batch.
+         const r = await gatherGroundTruthWithRetry(
+           {
+             player,
+             propType: `${stat} ${firstDir}`,
+             // groundTruth is line-agnostic except for the prop_type/line
+             // metadata (overwritten per-task below), so any chosen line
+             // works as a seed.
+             line: seedLine,
+           },
+           { maxRetries: 1, baseDelayMs: 250 }
+         );
          if (r.skipReason) {
            // Player-wide skip — record and stop building tasks.
            skipped.push({ stat, reason: r.skipReason });

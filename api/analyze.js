@@ -243,33 +243,45 @@ export async function gatherGroundTruth({ player, propType, line }) {
  * @param {number} params.line - Prop line value
  * @returns {Promise<Object>} Ground truth data or skip reason
  */
-async function gatherGroundTruthWithRetry({ player, propType, line }) {
-  // Define which errors should trigger retries
-  const maxRetries = 3;
-  const baseDelayMs = 1000;
-  
+// skipReasons that indicate a transient upstream blip (typically an ESPN
+// scoreboard fetch that crossed the 8s jsonFetch timeout). gatherGroundTruth
+// catches its own errors and returns these instead of throwing — without
+// retry, a single slow ESPN response drops the whole player. Persistent
+// skips (player_not_configured, no_upcoming_game) stay in the no-retry
+// path so we don't waste time on definitive misses.
+const RETRIABLE_SKIP_REASONS = new Set(["schedule_unavailable"]);
+
+export async function gatherGroundTruthWithRetry(
+  { player, propType, line },
+  { maxRetries = 3, baseDelayMs = 1000 } = {}
+) {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const result = await gatherGroundTruth({ player, propType, line });
-      
-      // If we got a skip reason, don't retry - it's a definitive result
+
       if (result.skipReason) {
+        // Retry transient skips while attempts remain; otherwise return.
+        const isTransient = RETRIABLE_SKIP_REASONS.has(result.skipReason);
+        if (isTransient && attempt < maxRetries) {
+          const delay = calculateBackoffDelay(attempt, baseDelayMs);
+          await new Promise((r) => setTimeout(r, delay));
+          continue;
+        }
         return result;
       }
-      
-      // Otherwise, we got valid data, return it
+
       return result;
     } catch (error) {
       // If this is the last attempt, don't retry
       if (attempt === maxRetries) {
         throw error;
       }
-      
+
       // Check if the error is retryable
       if (!isRetryableError(error)) {
         throw error;
       }
-      
+
       // Wait before retrying with exponential backoff
       const delay = calculateBackoffDelay(attempt, baseDelayMs);
       await new Promise((r) => setTimeout(r, delay));
