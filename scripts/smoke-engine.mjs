@@ -212,5 +212,129 @@ console.log("\n[h] UNDER mechanism gate");
   assert("3 mechanisms → tier ≥ A (S possible)", v3.tier === "S" || v3.tier === "A", `got ${v3.tier}`);
 }
 
+// (i) Fantasy Score — R9 fires (FS contains assists), Rule 5a applies
+// road deduction since FS is in ROAD_DEDUCTION_PROPS.
+console.log("\n[i] Fantasy Score — R9 + road deduction");
+{
+  // In-band win_prob: should clear R9, evaluate normally. FanDuel-style
+  // baseline ~50; line 42.5 has ~7.5 edge so 5a clears too.
+  const v = applyEngine({
+    groundTruth: gt({
+      season: {
+        averages: {
+          ppg: 26.75, rpg: 5.0, apg: 6.5, fta: 6.75, ft_pct: 0.77,
+          spg: 1.2, bpg: 0.4, topg: 3.0,
+          // FanDuel: 26.75 + 1.2*5 + 1.5*6.5 + 3*1.2 + 3*0.4 − 1*3.0 = 48.45
+          fs: 48.5,
+        },
+      },
+      l5: {
+        type: "Regular Season",
+        n: 5,
+        averages: { ppg: 26.75, rpg: 5.0, apg: 6.5, fs: 48.5 },
+        weighted: { averages: { ppg: 26.75, rpg: 5.0, apg: 6.5, fs: 48.5 } },
+        games: [],
+      },
+    }),
+    statType: "Fantasy Score", direction: "OVER", line: 42.5,
+  });
+  assert("FS OVER 42.5 → viable", v.verdict === "OVER", `got ${v.verdict}/${v.tier}`);
+  // R9 should appear in rules_fired (assist-containing prop, in-band win_prob).
+  assert("FS triggers R9 (assist-containing)", v.rules_fired.includes("R9"));
+}
+
+// (j) Fantasy Score — R9 SKIP when win_prob outside band on assist family.
+console.log("\n[j] Fantasy Score — R9 outside band");
+{
+  const v = applyEngine({
+    groundTruth: gt({
+      win_prob: { player_team_pct: 0.20 },  // way below reg-season lo=0.40
+      season: {
+        averages: {
+          ppg: 26.75, rpg: 5.0, apg: 6.5, fta: 6.75, ft_pct: 0.77,
+          spg: 1.2, bpg: 0.4, topg: 3.0, fs: 48.5,
+        },
+      },
+      l5: {
+        type: "Regular Season", n: 5,
+        averages: { ppg: 26.75, rpg: 5.0, apg: 6.5, fs: 48.5 },
+        weighted: { averages: { fs: 48.5 } },
+        games: [],
+      },
+    }),
+    statType: "Fantasy Score", direction: "OVER", line: 42.5,
+  });
+  assert("FS outside R9 band → SKIP", v.verdict === "SKIP", `got ${v.verdict}`);
+  assert("FS SKIP via R9", v.rules_fired.includes("R9"));
+}
+
+// (k) Blocks+Steals — 5b foul-prone fires (mobility-impaired ≥ 2).
+console.log("\n[k] Blocks+Steals — 5b foul-prone");
+{
+  const v = applyEngine({
+    groundTruth: gt({
+      season: { averages: { ppg: 22, rpg: 11, apg: 4, fta: 6, spg: 1.0, bpg: 3.0, topg: 2.0, bs: 4.0, fs: 50 } },
+      l5: {
+        type: "Regular Season", n: 5,
+        averages: { ppg: 22, rpg: 11, apg: 4, bs: 4.0, fs: 50 },
+        weighted: { averages: { bs: 4.0 } },
+        games: [],
+      },
+      // 2+ mobility-impaired teammates / opponents trigger 5b.i.
+      injuries: {
+        player_team: [{ player: "Teammate A", status: "OUT", detail: "knee" }],
+        opponent: [{ player: "Opp Big B", status: "OUT", detail: "ankle" }],
+      },
+      injury_regions: {
+        "Teammate A": { knee: true },
+        "Opp Big B": { ankle: true },
+      },
+    }),
+    statType: "Blocks+Steals", direction: "OVER", line: 2.5,
+  });
+  assert("Blks+Stls 5b fires when foul-prone", v.rules_fired.includes("5b"));
+  assert("Blks+Stls capped at A by 5b", v.tier === "A" || v.tier === "B" || v.tier === "SKIP", `got ${v.tier}`);
+}
+
+// (l) 3-Pointers Attempted — 5h tier-2 fires (active 3pt shooter vs elite D).
+console.log("\n[l] 3-Pointers Attempted — 5h tier-2");
+{
+  const v = applyEngine({
+    groundTruth: gt({
+      season: { averages: { ppg: 24, rpg: 5, apg: 5, fta: 4, spg: 1, bpg: 0.3, topg: 2.5, fg3a: 8, fs: 45 } },
+      l5: {
+        type: "Regular Season", n: 5,
+        averages: { ppg: 24, fg3a: 8 },
+        weighted: { averages: { fg3a: 8 } },
+        games: [],
+      },
+      opponent_defense: { def_rank: 1, primary_defender: null },  // elite perimeter
+    }),
+    statType: "3-Pointers Attempted", direction: "OVER", line: 5.5,
+  });
+  assert("3PA 5h tier-2 fires vs elite perimeter defense", v.rules_fired.includes("5h"));
+  // 5h is a suppressor → tier capped at A max (per 5h tier_cap).
+  assert("3PA suppressor caps tier ≤ A", v.tier === "A" || v.tier === "B" || v.tier === "SKIP", `got ${v.tier}`);
+}
+
+// (m) 3-Pointers Attempted — low volume shooter → 5h does NOT fire.
+console.log("\n[m] 3-Pointers Attempted — low-volume shooter, no 5h");
+{
+  const v = applyEngine({
+    groundTruth: gt({
+      season: { averages: { ppg: 16, rpg: 8, apg: 2, fta: 3, spg: 0.5, bpg: 1.5, topg: 1.5, fg3a: 1.5, fs: 35 } },
+      l5: {
+        type: "Regular Season", n: 5,
+        averages: { ppg: 16, fg3a: 1.5 },
+        weighted: { averages: { fg3a: 1.5 } },
+        games: [],
+      },
+      opponent_defense: { def_rank: 1, primary_defender: null },
+    }),
+    statType: "3-Pointers Attempted", direction: "OVER", line: 1.5,
+  });
+  assert("3PA below volume gate → 5h doesn't fire", !v.rules_fired.includes("5h"));
+}
+
 console.log(`\n=== smoke-engine: ${passed} pass, ${failed} fail ===`);
 process.exit(failed > 0 ? 1 : 0);

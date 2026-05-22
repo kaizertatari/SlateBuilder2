@@ -106,6 +106,10 @@ function parseStatsRow(stats, idx) {
     ast: num(stats[idx.ast]),
     blk: num(stats[idx.blk]),
     stl: num(stats[idx.stl]),
+    // tov: needed for Fantasy Score (FanDuel formula penalizes -1 per TO).
+    // idx.to is null in older snapshots where ESPN omitted TO; fall back to
+    // 0 in that case rather than NaN-ing the downstream average.
+    tov: idx.to != null ? num(stats[idx.to]) : 0,
     pts: num(stats[idx.pts]),
   };
 }
@@ -218,6 +222,11 @@ export async function getSeasonAverages(athleteId, { season, league = "NBA" } = 
     ftm: avg("ftm"),
     fta: avg("fta"),
     ft_pct: avg("ft_pct"),
+    // Surfaced for the Blocks+Stls and Fantasy Score baselines. bpg/spg
+    // also feed Rule 5b's foul-prone gate when extended to block props.
+    bpg: avg("blk"),
+    spg: avg("stl"),
+    topg: avg("tov"),
   };
 }
 
@@ -262,6 +271,7 @@ export async function getLastNGames(athleteId, n = 5, { season, postseason = fal
     reb: g.reb,
     ast: g.ast,
     fg3m: g.fg3m,
+    fg3a: g.fg3a,
     fgm: g.fgm,
     fga: g.fga,
     fg_pct: g.fg_pct,
@@ -271,6 +281,13 @@ export async function getLastNGames(athleteId, n = 5, { season, postseason = fal
     ftm: g.ftm,
     fta: g.fta,
     ft_pct: g.ft_pct,
+    // Blocks/steals/turnovers feed the new prop families (Blks+Stls,
+    // Fantasy Score). weighted-l5 already references these keys; keeping
+    // them on the per-game shape so the weighted averages don't silently
+    // re-normalize on missing fields.
+    blk: g.blk,
+    stl: g.stl,
+    tov: g.tov,
     pra: g.pts + g.reb + g.ast,
   }));
   if (!games.length) return null;
@@ -285,12 +302,17 @@ export async function getLastNGames(athleteId, n = 5, { season, postseason = fal
       rpg: avg("reb"),
       apg: avg("ast"),
       fg3m: avg("fg3m"),
+      fg3a: avg("fg3a"),
       fga: avg("fga"),
       ftm: avg("ftm"),
       fta: avg("fta"),
       ft_pct: avg("ft_pct"),
       pra: avg("pra"),
       minutes: avg("minutes"),
+      // For Blks+Stls and Fantasy Score baselines on L5.
+      bpg: avg("blk"),
+      spg: avg("stl"),
+      topg: avg("tov"),
     },
   };
 }

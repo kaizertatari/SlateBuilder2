@@ -181,18 +181,38 @@ export function composeGroundTruth(params) {
   return { groundTruth, missing };
 }
 
+// FanDuel-style fantasy score per the user direction. Returns null when
+// any of the four required inputs is missing — the framework should
+// rather SKIP a Fantasy Score prop than evaluate it against a baseline
+// inflated by a missing turnover penalty.
+function fantasyScoreFanDuel({ ppg, rpg, apg, spg, bpg, topg }) {
+  if (ppg == null || rpg == null || apg == null || topg == null) return null;
+  return ppg + 1.2 * rpg + 1.5 * apg + 3 * (spg ?? 0) + 3 * (bpg ?? 0) - 1 * topg;
+}
+
 function enrichL5Averages(a) {
   if (!a) return a;
   const round1 = (n) => Number(n.toFixed(1));
   const ppg = a.ppg ?? 0;
   const rpg = a.rpg ?? 0;
   const apg = a.apg ?? 0;
+  const spg = a.spg ?? null;
+  const bpg = a.bpg ?? null;
+  const topg = a.topg ?? null;
+  const fs = fantasyScoreFanDuel({ ppg, rpg, apg, spg, bpg, topg });
   return {
     ...a,
     pra: round1(ppg + rpg + apg),
     pr: round1(ppg + rpg),
     pa: round1(ppg + apg),
     ra: round1(rpg + apg),
+    // Blocks + Steals as a single average (Blks+Stls prop). When either
+    // is missing, default to 0 — the sum stays well-defined; the framework
+    // doesn't get a misleading null.
+    bs: round1((bpg ?? 0) + (spg ?? 0)),
+    // Fantasy Score (FanDuel formula). Null when inputs are missing so
+    // Rule 5a can SKIP cleanly instead of evaluating against a bad baseline.
+    fs: fs != null ? round1(fs) : null,
   };
 }
 
@@ -200,7 +220,11 @@ function pickAverages(s) {
   const ppg = s.ppg ?? 0;
   const rpg = s.rpg ?? 0;
   const apg = s.apg ?? 0;
+  const spg = s.spg ?? null;
+  const bpg = s.bpg ?? null;
+  const topg = s.topg ?? null;
   const round1 = (n) => Number(n.toFixed(1));
+  const fs = fantasyScoreFanDuel({ ppg, rpg, apg, spg, bpg, topg });
   return {
     games: s.games,
     minutes: s.minutes,
@@ -215,10 +239,17 @@ function pickAverages(s) {
     fga: s.fga,
     fg_pct: s.fg_pct,
     fg3m: s.fg3m,
+    fg3a: s.fg3a,
     fg3_pct: s.fg3_pct,
     ftm: s.ftm,
     fta: s.fta,
     ft_pct: s.ft_pct,
+    // New prop baselines.
+    bpg: s.bpg,
+    spg: s.spg,
+    topg: s.topg,
+    bs: round1((bpg ?? 0) + (spg ?? 0)),
+    fs: fs != null ? round1(fs) : null,
   };
 }
 

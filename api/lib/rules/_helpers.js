@@ -12,14 +12,28 @@ import { FRAMEWORK_SCALING, ftFloorBaseline } from "../framework.js";
 
 export { PROP_TO_FIELD, FRAMEWORK_SCALING, ftFloorBaseline };
 
-// Props that include points — road deduction (Rule 5a) and the FT-shooter
-// extra buffer apply to these.
+// Props that include points — used both for road deduction (Rule 5a)
+// and for the variance addendum (which uses ppg_stddev as a proxy).
 export const POINTS_CONTAINING = new Set(["Points", "PR", "PA", "PRA"]);
-// Framework limits Rule 5i to Points/PRA UNDER.
+// Props that get the road-deduction adjustment. Fantasy Score is included
+// because Points dominates the FanDuel-weighted composite — a 1.5-pt
+// road dip translates ~1:1 to Fantasy Score (Points weight = 1.0). The
+// variance addendum stays POINTS_CONTAINING-only because we don't have a
+// stddev for Fantasy Score (would mix units).
+export const ROAD_DEDUCTION_PROPS = new Set([
+  "Points", "PR", "PA", "PRA", "Fantasy Score",
+]);
+// Framework limits Rule 5i to Points/PRA UNDER. Fantasy Score is
+// intentionally NOT included — too many non-points components for the
+// FT-floor math to remain clean.
 export const FT_FLOOR_PROPS = new Set(["Points", "PRA"]);
 // Rule R9 (assist win-prob gate) applies to props with an assists
-// component. Both directions are gated.
-export const ASSIST_CONTAINING = new Set(["Assists", "PA", "RA", "PRA"]);
+// component. Both directions are gated. Fantasy Score is included
+// because the FanDuel weight on assists is 1.5x — outside the band, FS
+// becomes unreliable for the same reason raw Assists does.
+export const ASSIST_CONTAINING = new Set([
+  "Assists", "PA", "RA", "PRA", "Fantasy Score",
+]);
 // Win-prob bands, regular season vs playoff (R9).
 export const ASSIST_WP_BAND_REG = { lo: 0.40, hi: 0.75 };
 export const ASSIST_WP_BAND_PLAYOFF = { lo: 0.35, hi: 0.80 };
@@ -74,10 +88,11 @@ export function computeOverBufferCheck({ groundTruth, statType, line, seasonAvg,
     baseline = seasonAvg ?? l5Avg;
   }
 
-  // Rule 5a road deduction (per-league, points-family only).
+  // Rule 5a road deduction (per-league). Applies to Points-family +
+  // Fantasy Score (FS is Points-dominant in the FanDuel formula).
   const scale = scaleFor(groundTruth);
   let roadDed = 0;
-  if (groundTruth.home_away === "away" && POINTS_CONTAINING.has(statType)) {
+  if (groundTruth.home_away === "away" && ROAD_DEDUCTION_PROPS.has(statType)) {
     roadDed = scale.road_deduction_pts;
   }
   const adjusted = baseline - roadDed;

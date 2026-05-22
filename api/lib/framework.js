@@ -40,9 +40,18 @@ export const FRAMEWORK_SCALING = {
       "Assists": 1.0,
       "RA": 1.0,
       "3-Pointers Made": 0.75,
+      "3-Pointers Attempted": 1.0,
       "FG Attempted": 1.5,
       "Blocks": 0.5,
       "Steals": 0.5,
+      // Blks+Stls: sum of the two 0.5 components, slightly tightened so
+      // a player averaging 2.5 needs the line ≤ ~1.75 to clear — matches
+      // the variance class of two low-volume stats stacked.
+      "Blocks+Steals": 0.75,
+      // Fantasy Score: composite with FanDuel weights, typical baselines
+      // 30-70. 3.0 buffer (~5% of mid baseline) keeps OVER selectivity
+      // comparable to Points at 1.5 (~6% of a 25-pt baseline).
+      "Fantasy Score": 3.0,
     },
     variance_threshold_ppg: 6,
     // Per-position worst-case FG floor vs elite D for Rule 5i. The verifier
@@ -75,9 +84,18 @@ export const FRAMEWORK_SCALING = {
       "Assists": 1.0,
       "RA": 1.0,
       "3-Pointers Made": 0.75,
+      "3-Pointers Attempted": 1.0,
       "FG Attempted": 1.5,
       "Blocks": 0.5,
       "Steals": 0.5,
+      // Blks+Stls: sum of the two 0.5 components, slightly tightened so
+      // a player averaging 2.5 needs the line ≤ ~1.75 to clear — matches
+      // the variance class of two low-volume stats stacked.
+      "Blocks+Steals": 0.75,
+      // Fantasy Score: composite with FanDuel weights, typical baselines
+      // 30-70. 3.0 buffer (~5% of mid baseline) keeps OVER selectivity
+      // comparable to Points at 1.5 (~6% of a 25-pt baseline).
+      "Fantasy Score": 3.0,
     },
     variance_threshold_ppg: 5,
     ft_floor_by_position: { G: 4, F: 6, C: 8 },

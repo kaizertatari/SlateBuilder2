@@ -1,14 +1,21 @@
-// Rule 5b — rebound prop suppressors.
+// Rule 5b — rebound + block-prop suppressors.
 //   5b.i  Foul-Prone Matchup: 2+ frontcourt (C/PF) on either team with
 //         mobility-limiting injuries → reduce rebound expectation by
 //         1.5 boards on OVER side. Tier-cap to A-max.
+//         Also fires on Blks+Stls OVER — frontcourt mobility-impaired
+//         players draw fouls instead of contesting shots, capping the
+//         minutes available for blocks.
 //   5b.ii Shooting-Slump: player has shot fg_pct < 0.35 in 2+ of l5.games
 //         → -15% on rebound OVER. Tier-cap to A-max.
-// Only applies to Rebounds OVER (or rebound-containing props PR/RA/PRA).
+//         Rebound-family only; Blks+Stls aren't FG-dependent.
 
 // (No helpers imported — this rule reads injuries/regions/l5 directly.)
 
 const REBOUND_FAMILY = new Set(["Rebounds", "PR", "RA", "PRA"]);
+// Block-family props that share the foul-prone (5b.i) suppressor logic.
+// Standalone Blocks/Steals aren't in STATS today; if they're ever added,
+// extend this set + the buffer table.
+const BLOCK_FAMILY = new Set(["Blocks+Steals"]);
 const MOBILITY_REGIONS = ["knee", "ankle", "lower_leg", "achilles", "hip", "back"];
 
 function isFrontcourtName(playerName, regions) {
@@ -36,9 +43,10 @@ function countMobilityImpaired(injuries, injuryRegions) {
 
 export function apply(ctx) {
   const { groundTruth, statType, direction } = ctx;
-  if (direction !== "OVER" || !REBOUND_FAMILY.has(statType)) {
-    return { fired: false, rule_id: "5b" };
-  }
+  if (direction !== "OVER") return { fired: false, rule_id: "5b" };
+  const isRebound = REBOUND_FAMILY.has(statType);
+  const isBlock = BLOCK_FAMILY.has(statType);
+  if (!isRebound && !isBlock) return { fired: false, rule_id: "5b" };
 
   const own = groundTruth?.injuries?.player_team ?? [];
   const opp = groundTruth?.injuries?.opponent ?? [];
@@ -47,10 +55,13 @@ export function apply(ctx) {
   const oppImpaired = countMobilityImpaired(opp, regions);
   const foulProne = (ownImpaired + oppImpaired) >= 2;
 
-  // 5b.ii shooting slump — raw L5 game-level fg_pct.
+  // 5b.ii shooting slump — raw L5 game-level fg_pct. Rebound family only;
+  // a cold shooting stretch doesn't suppress block/steal opportunities.
   const l5Games = groundTruth?.l5?.games ?? [];
-  const slumpGames = l5Games.filter((g) => (g?.fg_pct ?? 1) < 0.35).length;
-  const slump = slumpGames >= 2;
+  const slumpGames = isRebound
+    ? l5Games.filter((g) => (g?.fg_pct ?? 1) < 0.35).length
+    : 0;
+  const slump = isRebound && slumpGames >= 2;
 
   if (!foulProne && !slump) {
     return { fired: false, rule_id: "5b" };
@@ -60,13 +71,14 @@ export function apply(ctx) {
   if (foulProne) parts.push(`5b.i foul-prone matchup (${ownImpaired + oppImpaired} frontcourt mobility-impaired)`);
   if (slump) parts.push(`5b.ii shooting slump (${slumpGames} of last 5 games <35% FG)`);
 
+  const propLabel = isRebound ? "rebound" : "block/steal";
   return {
     fired: true,
     rule_id: "5b",
     tier_cap: "A",
     confidence_delta: -ctx.weights.suppressor_penalty,
     flag: `⚠️ ${parts.join(" + ")}`,
-    justification_part: `Rule 5b — ${parts.join("; ")}; rebound OVER capped at A-tier.`,
+    justification_part: `Rule 5b — ${parts.join("; ")}; ${propLabel} OVER capped at A-tier.`,
     suppressor: true,
   };
 }

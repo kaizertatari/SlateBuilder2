@@ -189,22 +189,36 @@ export function computeWeightedL5({ games, seasonPpg, ownAbbr, series, defRankBy
   const rpg = weightedMean(games, weights, "reb") ?? 0;
   const apg = weightedMean(games, weights, "ast") ?? 0;
   const round1 = (v) => v == null ? null : Number(v.toFixed(1));
+  const wBlk = weightedMean(games, weights, "blk");
+  const wStl = weightedMean(games, weights, "stl");
+  const wTov = weightedMean(games, weights, "tov");
+  // Fantasy Score weighted from weighted underlying stats so the
+  // composite stays consistent with the headline averages. Returns null
+  // when tov is unknown — matches the Rule 5a baseline-missing semantics
+  // used elsewhere (the framework SKIPs cleanly instead of evaluating
+  // against an inflated FS).
+  const wFs = (wTov == null)
+    ? null
+    : ppg + 1.2 * rpg + 1.5 * apg + 3 * (wStl ?? 0) + 3 * (wBlk ?? 0) - 1 * wTov;
   const averages = {
     ppg: round1(ppg),
     rpg: round1(rpg),
     apg: round1(apg),
     fgm: weightedMean(games, weights, "fgm"),
     fga: weightedMean(games, weights, "fga"),
+    fg3a: weightedMean(games, weights, "fg3a"),
     ftm: weightedMean(games, weights, "ftm"),
     fta: weightedMean(games, weights, "fta"),
-    blk: weightedMean(games, weights, "blk"),
-    stl: weightedMean(games, weights, "stl"),
-    tov: weightedMean(games, weights, "tov"),
+    blk: wBlk,
+    stl: wStl,
+    tov: wTov,
     minutes: weightedMean(games, weights, "minutes"),
     pra: round1(ppg + rpg + apg),
     pr: round1(ppg + rpg),
     pa: round1(ppg + apg),
     ra: round1(rpg + apg),
+    bs: round1((wBlk ?? 0) + (wStl ?? 0)),
+    fs: wFs != null ? round1(wFs) : null,
   };
 
   const raw = rawAverages(games);
@@ -243,6 +257,13 @@ function rawAverages(games) {
   const ppg = avg("pts") ?? 0;
   const rpg = avg("reb") ?? 0;
   const apg = avg("ast") ?? 0;
+  const bpg = avg("blk");
+  const spg = avg("stl");
+  const topg = avg("tov");
+  const fg3a = avg("fg3a");
+  const fs = (topg == null)
+    ? null
+    : ppg + 1.2 * rpg + 1.5 * apg + 3 * (spg ?? 0) + 3 * (bpg ?? 0) - 1 * topg;
   return {
     ppg: round1(ppg),
     rpg: round1(rpg),
@@ -251,6 +272,9 @@ function rawAverages(games) {
     pr: round1(ppg + rpg),
     pa: round1(ppg + apg),
     ra: round1(rpg + apg),
+    bs: round1((bpg ?? 0) + (spg ?? 0)),
+    fs: fs != null ? round1(fs) : null,
+    fg3a: round1(fg3a),
   };
 }
 

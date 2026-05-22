@@ -13,7 +13,10 @@ export const STATS = [
   "PA",
   "RA",
   "3-Pointers Made",
+  "3-Pointers Attempted",
   "FG Attempted",
+  "Blocks+Steals",
+  "Fantasy Score",
 ];
 
 // Stat name → key inside an averages object (groundTruth.season.averages,
@@ -27,7 +30,10 @@ export const PROP_TO_FIELD = {
   PA: "pa",
   RA: "ra",
   "3-Pointers Made": "fg3m",
+  "3-Pointers Attempted": "fg3a",
   "FG Attempted": "fga",
+  "Blocks+Steals": "bs",
+  "Fantasy Score": "fs",
 };
 
 // PrizePicks publishes stat types under abbreviated lowercase labels; map
@@ -38,10 +44,13 @@ const PRIZEPICKS_TO_CANONICAL = {
   "pts+asts": "PA",
   "rebs+asts": "RA",
   "3-pt made": "3-Pointers Made",
+  "3-pt attempted": "3-Pointers Attempted",
   "fg attempted": "FG Attempted",
   "points": "Points",
   "rebounds": "Rebounds",
   "assists": "Assists",
+  "blks+stls": "Blocks+Steals",
+  "fantasy score": "Fantasy Score",
 };
 
 export function mapPrizePicksStatType(statType) {
