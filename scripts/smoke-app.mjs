@@ -18,9 +18,9 @@ import { loadEnvLocal } from "./_env.mjs";
 loadEnvLocal();
 
 import { readLines, writeLines } from "../api/lib/lines-store.js";
-import { gatherGroundTruth, buildPrompt, callLLM } from "../api/analyze.js";
+import { gatherGroundTruth } from "../api/analyze.js";
 import { selectLinesForStat } from "../api/analyze-all.js";
-import { MODEL_FRAMEWORK } from "../api/lib/framework.js";
+import { applyEngine } from "../api/lib/engine.js";
 import { mapPrizePicksStatType, STATS } from "../api/lib/prop-types.js";
 
 // ─── Test runner ──────────────────────────────────────────────────────────
@@ -59,15 +59,11 @@ console.log(`node: ${process.version}`);
 console.log(`cwd:  ${process.cwd()}`);
 
 header("1. Environment");
-await test("LLM provider key (GROQ_API_KEY or GOOGLE_API_KEY)", () => {
-  if (!process.env.GROQ_API_KEY && !process.env.GOOGLE_API_KEY) {
-    throw new Error("neither GROQ_API_KEY nor GOOGLE_API_KEY set in .env.local");
-  }
-  const have = [
-    process.env.GROQ_API_KEY && "groq",
-    process.env.GOOGLE_API_KEY && "gemini",
-  ].filter(Boolean).join(",");
-  return { note: have };
+await test("VERDICT_ENGINE=rules (engine-only branch)", () => {
+  // The experiment branch is engine-only. No LLM provider keys are
+  // required. We still surface a note so the operator sees which
+  // verdict path is active.
+  return { note: "rules (deterministic, no LLM)" };
 });
 await test("BLOB_READ_WRITE_TOKEN (optional)", () => {
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
@@ -196,62 +192,53 @@ await test("GT has season + opponent_team + win_prob", () => {
   return { note: `vs ${gt.opponent_team.abbr}, win_prob=${(gt.win_prob.player_team_pct * 100).toFixed(0)}%` };
 });
 
-// ─── 6. Prompt build ─────────────────────────────────────────────────────
+// ─── 6 + 7. Engine call (replaces former prompt build + LLM call) ────────
 
-header("6. Prompt build (buildPrompt)");
-let prompt = null;
-await test("buildPrompt returns non-empty string", () => {
-  if (!gt) return { skip: "no GT" };
-  prompt = buildPrompt(MODEL_FRAMEWORK, gt);
-  if (typeof prompt !== "string") throw new Error("not a string");
-  if (prompt.length < 1000) throw new Error(`suspiciously short: ${prompt.length} chars`);
-  return { note: `${prompt.length} chars` };
-});
-await test("prompt contains FRAMEWORK block", () => {
-  if (!prompt) return { skip: "no prompt" };
-  if (!prompt.includes("FRAMEWORK:")) throw new Error("FRAMEWORK marker missing");
-});
-await test("prompt contains the line value", () => {
-  if (!prompt || !firstProp) return { skip: "no prompt" };
-  if (!prompt.includes(String(firstProp.line))) throw new Error(`line ${firstProp.line} not in prompt`);
-});
-await test("prompt contains DATA RULES anti-hallucination block", () => {
-  if (!prompt) return { skip: "no prompt" };
-  if (!prompt.includes("Treat your training-data memory")) {
-    throw new Error("anti-hallucination guard missing — data integrity at risk");
-  }
-});
-
-// ─── 7. Routed LLM call ──────────────────────────────────────────────────
-
-header("7. Routed LLM call (callLLM → Groq/Gemini per LLM_PROVIDERS)");
-let llm = null;
-await test("callLLM returns parseable JSON", async () => {
-  if (!prompt) return { skip: "no prompt" };
-  llm = await callLLM(prompt);
-  if (llm.error) throw new Error(llm.error);
-  if (!llm.json) throw new Error("no json in response");
+header("6. Engine call (applyEngine — deterministic, no LLM)");
+let engineResult = null;
+await test("applyEngine returns verdict object", () => {
+  if (!gt || !firstStat || !firstProp) return { skip: "no GT / bucket" };
+  const direction = "OVER";
+  engineResult = applyEngine({
+    groundTruth: gt,
+    statType: firstStat,
+    direction,
+    line: firstProp.line,
+  });
+  if (!engineResult || typeof engineResult !== "object") throw new Error("no result");
 });
 await test("verdict ∈ {OVER, UNDER, SKIP}", () => {
-  if (!llm?.json) return { skip: "no llm" };
-  const v = llm.json.verdict;
-  if (!["OVER", "UNDER", "SKIP"].includes(v)) throw new Error(`bad verdict: ${v}`);
-  return { note: v };
+  if (!engineResult) return { skip: "no result" };
+  if (!["OVER", "UNDER", "SKIP"].includes(engineResult.verdict)) {
+    throw new Error(`bad verdict: ${engineResult.verdict}`);
+  }
+  return { note: engineResult.verdict };
 });
 await test("tier ∈ {S, A, B, SKIP}", () => {
-  if (!llm?.json) return { skip: "no llm" };
-  const t = llm.json.tier;
-  if (!["S", "A", "B", "SKIP"].includes(t)) throw new Error(`bad tier: ${t}`);
-  return { note: t };
-});
-await test("data_used echoes GT averages (no hallucination)", () => {
-  if (!llm?.json || !gt) return { skip: "no llm/gt" };
-  const used = llm.json.data_used;
-  if (!used) throw new Error("data_used missing");
-  // Spot-check: home_away should match GT exactly (model must copy, not infer)
-  if (used.home_away && gt.home_away && used.home_away !== gt.home_away) {
-    throw new Error(`home_away mismatch — model said "${used.home_away}", GT had "${gt.home_away}"`);
+  if (!engineResult) return { skip: "no result" };
+  if (!["S", "A", "B", "SKIP"].includes(engineResult.tier)) {
+    throw new Error(`bad tier: ${engineResult.tier}`);
   }
+  return { note: engineResult.tier };
+});
+await test("confidence in [0, 100]", () => {
+  if (!engineResult) return { skip: "no result" };
+  if (typeof engineResult.confidence !== "number" || engineResult.confidence < 0 || engineResult.confidence > 100) {
+    throw new Error(`bad confidence: ${engineResult.confidence}`);
+  }
+  return { note: `${engineResult.confidence}%` };
+});
+await test("rules_fired is an array", () => {
+  if (!engineResult) return { skip: "no result" };
+  if (!Array.isArray(engineResult.rules_fired)) throw new Error("rules_fired not an array");
+  return { note: engineResult.rules_fired.join(",") || "(none)" };
+});
+await test("justification is a non-empty string", () => {
+  if (!engineResult) return { skip: "no result" };
+  if (typeof engineResult.justification !== "string" || engineResult.justification.length < 10) {
+    throw new Error(`bad justification: ${engineResult.justification}`);
+  }
+  return { note: `${engineResult.justification.length} chars` };
 });
 
 // ─── 8. End-to-end analyze-all ────────────────────────────────────────────
@@ -437,9 +424,9 @@ if (body?.tier_counts) {
     }
   }
 }
-if (llm?.json) {
-  console.log("Sample LLM verdict (raw JSON):");
-  console.log(JSON.stringify(llm.json, null, 2));
+if (engineResult) {
+  console.log("Sample engine verdict (raw JSON):");
+  console.log(JSON.stringify(engineResult, null, 2));
 }
 console.log("");
 process.exit(failed > 0 ? 1 : 0);

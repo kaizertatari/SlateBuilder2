@@ -11,11 +11,11 @@
 // Run: node scripts/smoke-v35.mjs
 
 import { computeWeightedL5 } from "../api/lib/weighted-l5.js";
-import { preFilterMechanical, verifyVerdict } from "../api/lib/verdict-verifier.js";
+import { preFilterMechanical } from "../api/lib/verdict-verifier.js";
 import { composeGroundTruth } from "../api/lib/ground-truth.js";
-import { FRAMEWORK_SCALING, ftFloorBaseline, getFramework } from "../api/lib/framework.js";
+import { FRAMEWORK_SCALING, ftFloorBaseline } from "../api/lib/framework.js";
 import { selectLinesForStat } from "../api/analyze-all.js";
-import { callLLM } from "../api/analyze.js";
+import { applyEngine } from "../api/lib/engine.js";
 
 let passed = 0, failed = 0;
 function check(name, cond, detail = "") {
@@ -210,20 +210,32 @@ header("8. ftFloorBaseline lookup");
   check("unknown league → NBA default", ftFloorBaseline("XYZ", "F") === 8);
 }
 
-// ─── 9. Framework body sanity ────────────────────────────────────────────
-header("9. Framework body contents");
+// ─── 9. Engine end-to-end on synthetic groundTruth ───────────────────────
+header("9. applyEngine on synthetic groundTruth (replaces former framework-body check)");
 {
-  const nba = getFramework("NBA");
-  const wnba = getFramework("WNBA");
-  check("NBA body labels v3.5", nba.includes("PRIZEPICKS MODEL v3.5"));
-  check("WNBA body labels v3.5", wnba.includes("PRIZEPICKS MODEL v3.5"));
-  check("body mentions weighted L5", nba.includes("WEIGHTED L5"));
-  check("body mentions variance-adjusted addendum", nba.includes("VARIANCE-ADJUSTED ADDENDUM"));
-  check("body mentions pre-tip blowout override", nba.includes("PRE-TIP BLOWOUT-PROJECTION OVERRIDE"));
-  check("body mentions per-position FT floor", nba.includes("G=6, F=8, C=10"));
-  check("WNBA body has correct positional FT floor", wnba.includes("G=4, F=6, C=8"));
-  check("body mentions Game 1 UNDER Mechanism 1 exception",
-    nba.includes("Mechanism 1") && nba.includes("EXCEPTION"));
+  // Minimal groundTruth that exercises rule5a + provenance + s-tier.
+  const gt = {
+    league: "NBA",
+    home_away: "away",
+    opponent_team: { name: "Boston Celtics", abbr: "BOS" },
+    win_prob: { player_team_pct: 0.5 },
+    season: { averages: { ppg: 25, fta: 6, ft_pct: 0.8 } },
+    l5: { type: "Regular Season", n: 5, averages: { ppg: 25 }, weighted: { averages: { ppg: 26 } }, games: [] },
+    opponent_defense: { def_rank: 10 },
+    injuries: { player_team: [], opponent: [] },
+    injury_regions: {},
+    player_recent: { is_listed_injured: false },
+    info: { full_name: "Test Player" },
+    derived: { ft_floor_baseline: 8 },
+    mechanisms: { mech1: { confirmed: false }, mech2: { confirmed: false }, mech3: { confirmed: false }, opponent_starters_out: 0 },
+    data_warnings: null,
+    series: null,
+  };
+  const v = applyEngine({ groundTruth: gt, statType: "Points", direction: "OVER", line: 18.5 });
+  check("engine returns verdict", v && typeof v.verdict === "string");
+  check("verdict is OVER (clean baseline)", v.verdict === "OVER", `got ${v.verdict}`);
+  check("rules_fired includes 5a", Array.isArray(v.rules_fired) && v.rules_fired.includes("5a"));
+  check("justification non-empty", typeof v.justification === "string" && v.justification.length > 10);
 }
 
 // ─── 10. composeGroundTruth integration ──────────────────────────────────
@@ -407,63 +419,8 @@ header("12. selectLinesForStat: goblin + standard selection");
   check("non-array input returns empty", selectLinesForStat(null).length === 0);
 }
 
-// ─── 13. Groq fallback max_tokens cap ────────────────────────────────────
-header("13. Groq fallback uses smaller max_tokens than primary");
-{
-  // Stub global fetch to capture each Groq call's request body. Primary
-  // returns a non-retryable 400 so the chain falls straight to the fallback.
-  // Fallback returns a valid verdict JSON, exercised through the full
-  // callLLM → routeLLM → callGroqChain path.
-  const captured = [];
-  const realFetch = globalThis.fetch;
-  globalThis.fetch = async (url, opts) => {
-    if (typeof url === "string" && url.includes("api.groq.com")) {
-      const body = JSON.parse(opts.body);
-      captured.push({ model: body.model, max_tokens: body.max_tokens });
-      // First Groq call (primary) → non-retryable 400.
-      if (captured.length === 1) {
-        return new Response(JSON.stringify({ error: { message: "bad request" } }), {
-          status: 400,
-          headers: { "content-type": "application/json" },
-        });
-      }
-      // Subsequent (fallback) → valid verdict.
-      return new Response(JSON.stringify({
-        choices: [{ message: { content: JSON.stringify({
-          verdict: "SKIP", tier: "SKIP", confidence: 0,
-          justification: "stub", flags: [], data_used: null,
-        }) } }],
-      }), { status: 200, headers: { "content-type": "application/json" } });
-    }
-    return realFetch(url, opts);
-  };
-
-  // Ensure single-provider routing (Groq only) so we don't fall through to
-  // Gemini and miss the fallback-budget assertion. Snapshot env to restore.
-  const prevProviders = process.env.LLM_PROVIDERS;
-  const prevKey = process.env.GROQ_API_KEY;
-  const prevGoogle = process.env.GOOGLE_API_KEY;
-  process.env.LLM_PROVIDERS = "groq";
-  process.env.GROQ_API_KEY = process.env.GROQ_API_KEY || "test-key";
-  delete process.env.GOOGLE_API_KEY;
-
-  const result = await callLLM("test prompt");
-
-  // Restore.
-  globalThis.fetch = realFetch;
-  if (prevProviders == null) delete process.env.LLM_PROVIDERS; else process.env.LLM_PROVIDERS = prevProviders;
-  if (prevKey == null) delete process.env.GROQ_API_KEY; else process.env.GROQ_API_KEY = prevKey;
-  if (prevGoogle != null) process.env.GOOGLE_API_KEY = prevGoogle;
-
-  check("router falls through primary 400 to fallback", captured.length >= 2,
-    `captured ${captured.length} calls`);
-  check("primary call uses default 1500 max_tokens",
-    captured[0]?.max_tokens === 1500, `got ${captured[0]?.max_tokens}`);
-  check("fallback call uses 900 max_tokens (TPM cap)",
-    captured[captured.length - 1]?.max_tokens === 900,
-    `got ${captured[captured.length - 1]?.max_tokens}`);
-  check("fallback verdict reaches caller", !result.error, result.error || "ok");
-}
+// (Section 13 — Groq fallback max_tokens test — removed on the engine-only
+// branch. The LLM router is gone; nothing to test.)
 
 console.log(`\n=== Verdict ===`);
 console.log(`PASS: ${passed}`);
