@@ -12,6 +12,7 @@
 // Pure local — no LLM, no network. Builds synthetic groundTruth inline.
 
 import { applyEngine } from "../api/lib/engine.js";
+import { computeOverBufferCheck } from "../api/lib/rules/_helpers.js";
 
 let passed = 0, failed = 0;
 function assert(name, cond, detail) {
@@ -334,6 +335,102 @@ console.log("\n[m] 3-Pointers Attempted — low-volume shooter, no 5h");
     statType: "3-Pointers Attempted", direction: "OVER", line: 1.5,
   });
   assert("3PA below volume gate → 5h doesn't fire", !v.rules_fired.includes("5h"));
+}
+
+// (n) Current-series blend fires when vsCurrentOpp >= 3 (playoff_series).
+// Verified through computeOverBufferCheck directly since constructing a
+// full applyEngine fixture with seriesNumbers wiring is heavy.
+console.log("\n[n] Current-series blend — vsCurrentOpp >= 3");
+{
+  const base = gt({
+    series: { next_game_number: 4, leading_team_abbr: null, player_team_wins: 1, opponent_wins: 2, round: "RD16", series_record: "1-2" },
+    l5: {
+      type: "Playoffs",
+      n: 5,
+      averages: { ppg: 26.75 },
+      weighted: {
+        mode: "playoff_series",
+        averages: { ppg: 26.0 },     // full playoff-L5 (blended sample)
+        current_series_averages: { ppg: 30.0 },  // only current-opp games
+        current_series_n: 3,
+      },
+      games: [],
+    },
+  });
+  // 60/40 blend: 0.6 * 30.0 + 0.4 * 26.0 = 28.4
+  // Away road deduction (Points-family) − 1.2 (WNBA) = 27.2
+  // Buffer 1.5 → required = 25.7. Line 24.5 → passes; line 26 → fails.
+  const buf = computeOverBufferCheck({
+    groundTruth: base, statType: "Points", line: 24.5,
+    seasonAvg: 26.0, l5Avg: 26.0, l5WeightedUsed: true,
+  });
+  assert("blended baseline ≈ 28.4 (60% × 30 + 40% × 26)",
+    Math.abs(buf.baseline - 28.4) < 0.05, `got ${buf.baseline}`);
+  assert("governing label flags the blend",
+    /current_series_blend/.test(buf.governing), `got ${buf.governing}`);
+  assert("blended baseline clears line 24.5", buf.passes);
+
+  // Line 27.0 — adjusted 27.2 with buffer 1.5 → required 25.7 → fails.
+  const buf2 = computeOverBufferCheck({
+    groundTruth: base, statType: "Points", line: 27.0,
+    seasonAvg: 26.0, l5Avg: 26.0, l5WeightedUsed: true,
+  });
+  assert("blended baseline rejects line 27.0", !buf2.passes);
+}
+
+// (o) Current-series blend does NOT fire when vsCurrentOpp < 3 — falls
+// back to weighted-L5 alone (current behavior preserved).
+console.log("\n[o] Current-series blend — fallback when vsCurrentOpp < 3");
+{
+  const base = gt({
+    series: { next_game_number: 1, leading_team_abbr: null, player_team_wins: 0, opponent_wins: 0, round: "RD16", series_record: "0-0" },
+    l5: {
+      type: "Playoffs",
+      n: 5,
+      averages: { ppg: 26.75 },
+      weighted: {
+        mode: "playoff_series",
+        averages: { ppg: 26.0 },
+        current_series_averages: null,  // <3 games vs current opp
+        current_series_n: 1,
+      },
+      games: [],
+    },
+  });
+  const buf = computeOverBufferCheck({
+    groundTruth: base, statType: "Points", line: 22.5,
+    seasonAvg: 26.0, l5Avg: 26.0, l5WeightedUsed: true,
+  });
+  assert("no blend when current_series_averages is null",
+    buf.baseline === 26.0, `got ${buf.baseline}`);
+  assert("governing label does NOT mention blend",
+    !/current_series_blend/.test(buf.governing), `got ${buf.governing}`);
+}
+
+// (p) Regular-season game — current-series blend never fires.
+console.log("\n[p] Current-series blend — never fires outside playoffs");
+{
+  const base = gt({
+    series: null,
+    l5: {
+      type: "Regular Season",
+      n: 5,
+      averages: { ppg: 26.0 },
+      weighted: {
+        mode: "regular",
+        averages: { ppg: 26.0 },
+        current_series_averages: null,
+        current_series_n: 0,
+      },
+      games: [],
+    },
+  });
+  const buf = computeOverBufferCheck({
+    groundTruth: base, statType: "Points", line: 22.5,
+    seasonAvg: 26.0, l5Avg: 26.0, l5WeightedUsed: true,
+  });
+  assert("regular season → no blend, baseline = l5_weighted alone",
+    buf.baseline === 26.0 && !/current_series_blend/.test(buf.governing));
 }
 
 console.log(`\n=== smoke-engine: ${passed} pass, ${failed} fail ===`);

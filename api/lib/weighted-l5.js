@@ -13,6 +13,36 @@
 
 const RECENCY_RAMP = [0.30, 0.25, 0.20, 0.15, 0.10];
 
+// Move 1 (current-series accuracy hybrid) — per-game weight modifier based
+// on which opponent the game was against. Applies in playoff_series mode
+// only; regular mode + playoff_raw_fallback keep their existing weighting.
+//
+// CURRENT_OPP: 1.5 — game vs the team in tonight's series. The matchup-
+//   specific signal (scheme, primary defender, pace) is most predictive
+//   of tonight's production.
+// OTHER_PLAYOFF: 1.0 — game vs a different playoff opponent this year.
+//   Still postseason context, just a different scheme.
+// REGULAR_SEASON: 0.7 — defined for future use if/when reg-season head-
+//   to-heads are mixed into the playoff L5 sample (Move 3 in the design
+//   doc). Today only postseason games enter the playoff L5 path, so this
+//   constant doesn't fire yet — kept here so the calibration baseline
+//   stays visible alongside its siblings.
+const OPPONENT_MATCH_WEIGHTS = {
+  CURRENT_OPP: 1.5,
+  OTHER_PLAYOFF: 1.0,
+  REGULAR_SEASON: 0.7,
+};
+
+// Move 2 — when 3+ L5 games are vs the current playoff opponent, compute
+// a separate unweighted mean over JUST those games and surface it as
+// l5.weighted.current_series_averages. Rule 5a blends it with the full
+// weighted-L5 baseline at this ratio:
+//   blended = BLEND_CURRENT_SERIES × current_series + (1 − ratio) × full
+// 0.6 tilts toward matchup-specific signal while keeping the full-sample
+// stability anchor. See _helpers.computeOverBufferCheck.
+export const BLEND_CURRENT_SERIES_RATIO = 0.6;
+const CURRENT_SERIES_MIN_GAMES = 3;
+
 // Opponent-quality multiplier — regular-season mode.
 function opponentMultiplier(defRank) {
   if (defRank == null) return 1.00;
@@ -138,14 +168,19 @@ export function computeWeightedL5({ games, seasonPpg, ownAbbr, series, defRankBy
 
   // Decide mode + per-game opponent multipliers up front so callers can
   // emit the correct diagnostic flag without re-deriving.
+  //
+  // `seriesNumbers` is hoisted so Move 1 (opponent_match weighting) and
+  // Move 2 (current_series_averages) can both read which L5 games are
+  // vs the current playoff opponent without re-parsing matchup strings.
   let mode;
   let perGameMultipliers;
+  let seriesNumbers = null;
+  let vsCurrentOpp = 0;
   if (isPlayoff) {
-    // Identify current-opponent L5 games for series mode; <3 = fallback.
     const opponentAbbr = series?.opponent_abbr ?? series?.opponent_team_abbr ?? null;
-    const seriesNumbers = assignSeriesNumbers(games, opponentAbbr, ownAbbr);
-    const vsCurrentOpp = seriesNumbers.filter((x) => x != null).length;
-    if (vsCurrentOpp < 3) {
+    seriesNumbers = assignSeriesNumbers(games, opponentAbbr, ownAbbr);
+    vsCurrentOpp = seriesNumbers.filter((x) => x != null).length;
+    if (vsCurrentOpp < CURRENT_SERIES_MIN_GAMES) {
       mode = "playoff_raw_fallback";
     } else {
       mode = "playoff_series";
@@ -172,12 +207,23 @@ export function computeWeightedL5({ games, seasonPpg, ownAbbr, series, defRankBy
     };
   }
 
-  // Composite weights: recency × (opponent OR series) × outlier.
+  // perOpponentMatch — Move 1's per-game weight modifier. In playoff_series
+  // mode, games vs the current opponent (seriesNumbers[i] != null) get a
+  // CURRENT_OPP boost; other playoff games get OTHER_PLAYOFF (1.0, no-op).
+  // In regular mode the modifier is a no-op for every game.
+  const perOpponentMatch = (isPlayoff && seriesNumbers)
+    ? seriesNumbers.map((num) =>
+        num != null ? OPPONENT_MATCH_WEIGHTS.CURRENT_OPP : OPPONENT_MATCH_WEIGHTS.OTHER_PLAYOFF
+      )
+    : games.map(() => 1.0);
+
+  // Composite weights: recency × (opponent OR series) × outlier × opponent_match.
   const rawWeights = games.map((g, i) => {
     const recency = RECENCY_RAMP[i] ?? 0;
     const groupMul = perGameMultipliers[i] ?? 1.0;
     const outMul = outlierMultiplier(g?.pts ?? null, seasonPpg);
-    return recency * groupMul * outMul;
+    const matchMul = perOpponentMatch[i] ?? 1.0;
+    return recency * groupMul * outMul * matchMul;
   });
   const totalWeight = rawWeights.reduce((a, b) => a + b, 0) || 1;
   const weights = rawWeights.map((w) => w / totalWeight);
@@ -229,11 +275,30 @@ export function computeWeightedL5({ games, seasonPpg, ownAbbr, series, defRankBy
     pra: round1((averages.pra ?? 0) - (raw.pra ?? 0)),
   };
 
+  // Move 2 — current-series mini-baseline. Computed in playoff_series
+  // mode when vsCurrentOpp >= CURRENT_SERIES_MIN_GAMES (already the gate
+  // separating playoff_series from playoff_raw_fallback). Unweighted mean
+  // over the current-opponent subset; recency is already captured by the
+  // full weighted-L5 baseline this gets blended against in _helpers.js.
+  let current_series_averages = null;
+  let current_series_n = 0;
+  if (mode === "playoff_series" && seriesNumbers) {
+    const subset = games.filter((_, i) => seriesNumbers[i] != null);
+    current_series_n = subset.length;
+    if (current_series_n >= CURRENT_SERIES_MIN_GAMES) {
+      current_series_averages = rawAverages(subset);
+    }
+  }
+
   return {
     averages,
     raw_vs_weighted_delta: delta,
     outlier_present: hasOutlier(games, seasonPpg),
     mode,
+    // null when not playoff_series or sample too small. Rule 5a only
+    // blends when present.
+    current_series_averages,
+    current_series_n,
   };
 }
 
@@ -261,6 +326,13 @@ function rawAverages(games) {
   const spg = avg("stl");
   const topg = avg("tov");
   const fg3a = avg("fg3a");
+  const fg3m = avg("fg3m");
+  const fga = avg("fga");
+  const fgm = avg("fgm");
+  const ftm = avg("ftm");
+  const fta = avg("fta");
+  const ft_pct = avg("ft_pct");
+  const minutes = avg("minutes");
   const fs = (topg == null)
     ? null
     : ppg + 1.2 * rpg + 1.5 * apg + 3 * (spg ?? 0) + 3 * (bpg ?? 0) - 1 * topg;
@@ -274,7 +346,14 @@ function rawAverages(games) {
     ra: round1(rpg + apg),
     bs: round1((bpg ?? 0) + (spg ?? 0)),
     fs: fs != null ? round1(fs) : null,
+    fg3m: round1(fg3m),
     fg3a: round1(fg3a),
+    fgm: round1(fgm),
+    fga: round1(fga),
+    ftm: round1(ftm),
+    fta: round1(fta),
+    ft_pct: round1(ft_pct),
+    minutes: round1(minutes),
   };
 }
 

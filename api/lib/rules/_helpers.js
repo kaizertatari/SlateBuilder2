@@ -9,6 +9,7 @@
 
 import { PROP_TO_FIELD } from "../prop-types.js";
 import { FRAMEWORK_SCALING, ftFloorBaseline } from "../framework.js";
+import { BLEND_CURRENT_SERIES_RATIO } from "../weighted-l5.js";
 
 export { PROP_TO_FIELD, FRAMEWORK_SCALING, ftFloorBaseline };
 
@@ -86,6 +87,26 @@ export function computeOverBufferCheck({ groundTruth, statType, line, seasonAvg,
   } else {
     governing = seasonAvg != null ? "season" : (l5WeightedUsed ? "L5_weighted" : "L5");
     baseline = seasonAvg ?? l5Avg;
+  }
+
+  // Move 2 — current-series mini-baseline blend. When weighted-L5 exposed
+  // a current_series_averages bucket (vsCurrentOpp >= 3 in playoff_series
+  // mode) AND we're already in a playoff-L5-governing path, blend it in
+  // at the configured ratio. Tilts the baseline toward matchup-specific
+  // signal without abandoning the wider playoff-sample stability anchor.
+  //
+  // We only blend when the path that was already chosen is playoff-L5
+  // governing — outside the playoff context, current_series_averages is
+  // null anyway, and we don't want to bias non-playoff baselines.
+  const field = PROP_TO_FIELD[statType];
+  const currentSeriesAvg = field
+    ? (groundTruth?.l5?.weighted?.current_series_averages?.[field] ?? null)
+    : null;
+  if (playoffL5 && currentSeriesAvg != null && baseline === l5Avg) {
+    const ratio = BLEND_CURRENT_SERIES_RATIO;
+    baseline = ratio * currentSeriesAvg + (1 - ratio) * l5Avg;
+    const n = groundTruth?.l5?.weighted?.current_series_n ?? 0;
+    governing = `${governing}+current_series_blend(${Math.round(ratio * 100)}/${Math.round((1 - ratio) * 100)},n=${n})`;
   }
 
   // Rule 5a road deduction (per-league). Applies to Points-family +
