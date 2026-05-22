@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import playersData from "../data/players.json";
 import { STATS } from "../api/lib/prop-types.js";
 import { readNewestCached, writeCached, clearStaleForPlayer, buildKey } from "./lib/result-cache.js";
@@ -69,6 +69,15 @@ export default function App() {
   // Odds-type filter for the displayed top picks. Default: all three.
   const [selectedOdds, setSelectedOdds] = useState([...ODDS_TYPES]);
   const [oddsOpen, setOddsOpen] = useState(false);
+
+  // Refs for the four open dropdowns. Wired up to a single document-level
+  // mousedown listener below so clicking outside any open dropdown closes
+  // it — without this, the only way to dismiss Games/Odds/Stats was to
+  // click the chevron again.
+  const playerRef = useRef(null);
+  const gamesRef = useRef(null);
+  const oddsRef = useRef(null);
+  const statsRef = useRef(null);
   // {completed, total} during a multi-player run so the user can see
   // progress as each per-player request lands. null when idle.
   const [progress, setProgress] = useState(null);
@@ -83,6 +92,28 @@ export default function App() {
 
   const allStatsSelected = selectedStats.length === STATS.length;
   const allOddsSelected = selectedOdds.length === ODDS_TYPES.length;
+
+  // Close any open dropdown when the user clicks outside its container.
+  // The `playerOpen` state is also closed by the input's onBlur, which is
+  // kept as a backup for keyboard-driven dismissal (Tab/Esc); the click-
+  // outside handler is what catches mouse dismissal on the other three.
+  useEffect(() => {
+    function handleMouseDown(e) {
+      const tuples = [
+        [playerOpen, playerRef, setPlayerOpen],
+        [gamesOpen, gamesRef, setGamesOpen],
+        [oddsOpen, oddsRef, setOddsOpen],
+        [statsOpen, statsRef, setStatsOpen],
+      ];
+      for (const [isOpen, ref, close] of tuples) {
+        if (isOpen && ref.current && !ref.current.contains(e.target)) {
+          close(false);
+        }
+      }
+    }
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [playerOpen, gamesOpen, oddsOpen, statsOpen]);
 
   // Fetch the PrizePicks slate so we can populate the Game filter and
   // constrain the player picker to players who actually have lines tonight.
@@ -220,6 +251,26 @@ export default function App() {
 
   const removePlayer = (name) => {
     setPlayers((cur) => cur.filter((p) => p !== name));
+  };
+
+  // True when every currently-visible player (league + game filtered) is
+  // already in the chip list. Drives the SELECT ALL / DESELECT ALL toggle
+  // copy and checkbox state.
+  const allLeaguePlayersSelected =
+    leaguePlayers.length > 0 && leaguePlayers.every((p) => players.includes(p));
+
+  const toggleAllPlayers = () => {
+    if (allLeaguePlayersSelected) {
+      // Deselect every chip that belongs to the current league+game pool.
+      // Chips from other leagues/games (rare — only possible if the user
+      // changes filters after picking) are preserved.
+      const pool = new Set(leaguePlayers);
+      setPlayers((cur) => cur.filter((p) => !pool.has(p)));
+    } else {
+      setPlayers((cur) => Array.from(new Set([...cur, ...leaguePlayers])));
+    }
+    setPlayerQuery("");
+    setPlayerHighlight(0);
   };
 
   const handlePlayerKeyDown = (e) => {
@@ -432,7 +483,7 @@ export default function App() {
 
           {/* Player Multi-Select — chips above, search below */}
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <div style={{ position: "relative", flex: 1, minWidth: 180 }}>
+            <div ref={playerRef} style={{ position: "relative", flex: 1, minWidth: 180 }}>
               {players.length > 0 && (
                 <div
                   style={{
@@ -505,7 +556,7 @@ export default function App() {
                 }
                 style={{ ...selectStyle, flex: undefined, minWidth: undefined, width: "100%", boxSizing: "border-box" }}
               />
-              {playerOpen && filteredPlayers.length > 0 && (
+              {playerOpen && leaguePlayers.length > 0 && (
                 <ul
                   id="player-listbox"
                   role="listbox"
@@ -524,28 +575,78 @@ export default function App() {
                     zIndex: 10,
                   }}
                 >
-                  {filteredPlayers.map((p, i) => (
+                  {/* SELECT ALL row — always visible so the user can both
+                      add every visible player and deselect them later. The
+                      toggle scope is the current league + game filter, so
+                      pairing this with a Game pick is the realistic path
+                      (selecting all 180 NBA players at once will still
+                      tip the 20/min rate limit even after the bump). */}
+                  <li
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      toggleAllPlayers();
+                    }}
+                    style={{
+                      padding: "8px 12px",
+                      fontSize: 12,
+                      cursor: "pointer",
+                      background: allLeaguePlayersSelected ? "#0066cc22" : "transparent",
+                      borderBottom: "1px solid #1e3040",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={allLeaguePlayersSelected}
+                      readOnly
+                      style={{ cursor: "pointer" }}
+                    />
+                    <strong>
+                      {allLeaguePlayersSelected
+                        ? `DESELECT ALL (${leaguePlayers.length})`
+                        : `SELECT ALL (${leaguePlayers.length})`}
+                    </strong>
+                  </li>
+
+                  {filteredPlayers.length === 0 ? (
                     <li
-                      key={p}
-                      id={`player-opt-${i}`}
-                      role="option"
-                      aria-selected={i === playerHighlight}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        selectPlayer(p);
-                      }}
-                      onMouseEnter={() => setPlayerHighlight(i)}
                       style={{
                         padding: "8px 12px",
-                        fontSize: 12,
-                        cursor: "pointer",
-                        background: i === playerHighlight ? "#0066cc" : "transparent",
-                        color: i === playerHighlight ? "#ffffff" : "#c8d8e8",
+                        fontSize: 11,
+                        color: "#446688",
+                        fontStyle: "italic",
                       }}
                     >
-                      {p}
+                      {players.length > 0
+                        ? "(all visible players selected)"
+                        : "(no players match)"}
                     </li>
-                  ))}
+                  ) : (
+                    filteredPlayers.map((p, i) => (
+                      <li
+                        key={p}
+                        id={`player-opt-${i}`}
+                        role="option"
+                        aria-selected={i === playerHighlight}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          selectPlayer(p);
+                        }}
+                        onMouseEnter={() => setPlayerHighlight(i)}
+                        style={{
+                          padding: "8px 12px",
+                          fontSize: 12,
+                          cursor: "pointer",
+                          background: i === playerHighlight ? "#0066cc" : "transparent",
+                          color: i === playerHighlight ? "#ffffff" : "#c8d8e8",
+                        }}
+                      >
+                        {p}
+                      </li>
+                    ))
+                  )}
                 </ul>
               )}
             </div>
@@ -554,7 +655,7 @@ export default function App() {
           {/* Game Multi-Select — pulled from /api/lines on mount. Filters
               the player picker to players who have lines in the selected
               games. Empty selection = no filter (all players visible). */}
-          <div style={{ position: "relative" }}>
+          <div ref={gamesRef} style={{ position: "relative" }}>
             <div
               onClick={() => setGamesOpen(!gamesOpen)}
               style={{
@@ -627,7 +728,7 @@ export default function App() {
               all three selected (goblin + standard + demon). Empty
               selection = hide all results (same as unchecking everything
               on the stats picker). tier_counts ignores this filter. */}
-          <div style={{ position: "relative" }}>
+          <div ref={oddsRef} style={{ position: "relative" }}>
             <div
               onClick={() => setOddsOpen(!oddsOpen)}
               style={{
@@ -716,7 +817,7 @@ export default function App() {
           </div>
 
           {/* Stat Multi-Select */}
-          <div style={{ position: "relative" }}>
+          <div ref={statsRef} style={{ position: "relative" }}>
             <div
               onClick={() => setStatsOpen(!statsOpen)}
               style={{
