@@ -43,6 +43,16 @@ const OPPONENT_MATCH_WEIGHTS = {
 export const BLEND_CURRENT_SERIES_RATIO = 0.6;
 const CURRENT_SERIES_MIN_GAMES = 3;
 
+// Move 3 — regular-season H2H mini-baseline. computeH2HAverages takes a
+// deeper gamelog (typically last 50 reg-season games), filters to games
+// against the current opponent via matchup parsing, and returns an
+// unweighted average over the subset. Rule 5a blends it with the
+// regular-mode baseline (season or weighted_L5) at 50/50 when at least
+// H2H_MIN_GAMES are available. Playoff_L5 path does NOT consume this;
+// that's the current-series blend's job.
+export const BLEND_H2H_RATIO = 0.5;
+export const H2H_MIN_GAMES = 2;
+
 // Opponent-quality multiplier — regular-season mode.
 function opponentMultiplier(defRank) {
   if (defRank == null) return 1.00;
@@ -359,4 +369,44 @@ function rawAverages(games) {
 
 function zeroDelta() {
   return { ppg: 0, rpg: 0, apg: 0, pra: 0 };
+}
+
+/**
+ * Compute regular-season H2H averages for a player vs the current
+ * opponent. Filters a deeper gamelog (typically last 50 reg-season
+ * games) to games against `opponentAbbr` by parsing each game's
+ * `matchup` string, then averages over the subset.
+ *
+ * Returns { averages, n, opponent_abbr } or { averages: null, n: 0 }
+ * when no H2H games exist. Callers must apply their own minimum-sample
+ * gate (H2H_MIN_GAMES) — this helper doesn't enforce it.
+ *
+ * Designed for the regular-season blend path only; playoff_L5 has its
+ * own current-series mechanism via computeWeightedL5.
+ *
+ * @param {Object} params
+ * @param {Array<Object>} params.games   Reg-season gamelog (per-game shape
+ *   from espnStats.getLastNGames). Each game must carry `matchup` for
+ *   opponent identification + the underlying stat keys for rawAverages.
+ * @param {string|null} params.ownAbbr   Player's team abbr (used to
+ *   discriminate the opponent token from the player's own team in the
+ *   matchup string).
+ * @param {string|null} params.opponentAbbr  Tonight's opponent (matchup
+ *   filter target). Null/empty → returns { averages: null, n: 0 }.
+ */
+export function computeH2HAverages({ games, ownAbbr, opponentAbbr }) {
+  if (!Array.isArray(games) || games.length === 0) {
+    return { averages: null, n: 0, opponent_abbr: null };
+  }
+  if (!opponentAbbr) return { averages: null, n: 0, opponent_abbr: null };
+  const opp = String(opponentAbbr).toUpperCase();
+  const h2hGames = games.filter((g) => parseOpponentAbbr(g?.matchup, ownAbbr) === opp);
+  if (h2hGames.length === 0) {
+    return { averages: null, n: 0, opponent_abbr: opp };
+  }
+  return {
+    averages: rawAverages(h2hGames),
+    n: h2hGames.length,
+    opponent_abbr: opp,
+  };
 }

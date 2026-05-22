@@ -27,6 +27,9 @@ export function composeGroundTruth(params) {
     primaryDefender,
     defRankByAbbr,
     league = "NBA",
+    // Move 3 — regular-season H2H baseline; null on playoff games or
+    // when the gamelog fetch returned no current-opponent matches.
+    h2h = null,
   } = params || {};
 
   const playerAbbr = info?.team_abbr ?? null;
@@ -134,6 +137,12 @@ export function composeGroundTruth(params) {
       ? { ...opponentDefense, primary_defender: primaryDefender ?? null }
       : (primaryDefender ? { primary_defender: primaryDefender } : null),
     series: seriesWithOpponent,
+    // Move 3 — regular-season H2H baseline derived from a 50-game season
+    // gamelog filtered to the current opponent. computeOverBufferCheck
+    // blends this with the regular-mode baseline at BLEND_H2H_RATIO when
+    // h2h.n meets H2H_MIN_GAMES. Null on playoff games (current-series
+    // blend owns that path) or when no H2H games exist in-season.
+    h2h: h2h && h2h.n > 0 ? h2h : null,
     // v3.5 variance addendum (Rule 5a). σ over the available scoring sample
     // — null when fewer than 8 game-level points are available (per spec).
     // l5.games carries per-game pts; once we wire a longer season window

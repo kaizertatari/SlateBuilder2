@@ -118,6 +118,12 @@ export function logVerdict({
     current_series_n: groundTruth?.l5?.weighted?.current_series_n ?? 0,
     current_series_avg: pickAvg(groundTruth?.l5?.weighted?.current_series_averages, input?.propType),
     l5_mode: groundTruth?.l5?.weighted?.mode ?? null,
+    // Move 3 — regular-season H2H baseline. n=0 when playoff path or no
+    // matchup history; non-zero only when current-season gamelog had
+    // games against tonight's opponent. h2h_avg is null when the gate
+    // (H2H_MIN_GAMES) isn't met OR the field doesn't apply to this stat.
+    h2h_n: groundTruth?.h2h?.n ?? 0,
+    h2h_avg: pickAvg(groundTruth?.h2h?.averages, input?.propType),
     season_ft_pct: groundTruth?.season?.averages?.ft_pct ?? null,
     home_away: groundTruth?.home_away ?? null,
     win_prob: groundTruth?.win_prob?.player_team_pct ?? null,

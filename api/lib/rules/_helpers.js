@@ -9,7 +9,7 @@
 
 import { PROP_TO_FIELD } from "../prop-types.js";
 import { FRAMEWORK_SCALING, ftFloorBaseline } from "../framework.js";
-import { BLEND_CURRENT_SERIES_RATIO } from "../weighted-l5.js";
+import { BLEND_CURRENT_SERIES_RATIO, BLEND_H2H_RATIO, H2H_MIN_GAMES } from "../weighted-l5.js";
 
 export { PROP_TO_FIELD, FRAMEWORK_SCALING, ftFloorBaseline };
 
@@ -107,6 +107,21 @@ export function computeOverBufferCheck({ groundTruth, statType, line, seasonAvg,
     baseline = ratio * currentSeriesAvg + (1 - ratio) * l5Avg;
     const n = groundTruth?.l5?.weighted?.current_series_n ?? 0;
     governing = `${governing}+current_series_blend(${Math.round(ratio * 100)}/${Math.round((1 - ratio) * 100)},n=${n})`;
+  }
+
+  // Move 3 — regular-season H2H blend. Mutually exclusive with the
+  // playoff current-series blend: H2H fires only outside playoff_L5
+  // context. Gates on H2H_MIN_GAMES so a single-game H2H sample doesn't
+  // swing the baseline; 50/50 blend acknowledges that reg-season H2H is
+  // a smaller, noisier sample than playoff series (2-4 games vs 4-7).
+  const h2hAvg = field
+    ? (groundTruth?.h2h?.averages?.[field] ?? null)
+    : null;
+  const h2hN = groundTruth?.h2h?.n ?? 0;
+  if (!playoffL5 && h2hAvg != null && h2hN >= H2H_MIN_GAMES) {
+    const ratio = BLEND_H2H_RATIO;
+    baseline = ratio * h2hAvg + (1 - ratio) * baseline;
+    governing = `${governing}+h2h_blend(${Math.round(ratio * 100)}/${Math.round((1 - ratio) * 100)},n=${h2hN})`;
   }
 
   // Rule 5a road deduction (per-league). Applies to Points-family +

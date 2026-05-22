@@ -433,5 +433,99 @@ console.log("\n[p] Current-series blend — never fires outside playoffs");
     buf.baseline === 26.0 && !/current_series_blend/.test(buf.governing));
 }
 
+// (q) Move 3 — regular-season H2H blend fires at n>=2 outside playoff context.
+console.log("\n[q] H2H blend — reg-season, n>=2 → fires at 50/50");
+{
+  const base = gt({
+    series: null,  // reg-season
+    l5: {
+      type: "Regular Season",
+      n: 5,
+      averages: { ppg: 26.0 },
+      weighted: { mode: "regular", averages: { ppg: 26.0 } },
+      games: [],
+    },
+    h2h: {
+      n: 3,
+      opponent_abbr: "PHX",
+      averages: { ppg: 32.0 },
+    },
+  });
+  // baseline path with seasonAvg=26.0, l5Avg=26.0 → governs to "season"
+  // (delta < 3). H2H 50/50 blend: 0.5*32 + 0.5*26 = 29.0.
+  // Away road deduction (WNBA Points-family): -1.2 → adjusted 27.8.
+  // Buffer 1.5 → required 26.3. Line 25 → passes; line 27 → fails.
+  const buf = computeOverBufferCheck({
+    groundTruth: base, statType: "Points", line: 25,
+    seasonAvg: 26.0, l5Avg: 26.0, l5WeightedUsed: true,
+  });
+  assert("h2h blend baseline ≈ 29.0 (50% × 32 + 50% × 26)",
+    Math.abs(buf.baseline - 29.0) < 0.05, `got ${buf.baseline}`);
+  assert("governing label reflects h2h blend",
+    /h2h_blend/.test(buf.governing), `got ${buf.governing}`);
+  assert("h2h blended baseline clears line 25", buf.passes);
+
+  const buf2 = computeOverBufferCheck({
+    groundTruth: base, statType: "Points", line: 27,
+    seasonAvg: 26.0, l5Avg: 26.0, l5WeightedUsed: true,
+  });
+  assert("h2h blended baseline rejects line 27", !buf2.passes);
+}
+
+// (r) H2H blend does NOT fire when n<2 — falls back to existing baseline.
+console.log("\n[r] H2H blend — n<2 → no blend");
+{
+  const base = gt({
+    series: null,
+    l5: {
+      type: "Regular Season",
+      n: 5,
+      averages: { ppg: 26.0 },
+      weighted: { mode: "regular", averages: { ppg: 26.0 } },
+      games: [],
+    },
+    h2h: { n: 1, opponent_abbr: "PHX", averages: { ppg: 35.0 } },
+  });
+  const buf = computeOverBufferCheck({
+    groundTruth: base, statType: "Points", line: 22.5,
+    seasonAvg: 26.0, l5Avg: 26.0, l5WeightedUsed: true,
+  });
+  assert("no h2h blend when n<2", buf.baseline === 26.0, `got ${buf.baseline}`);
+  assert("governing label does NOT mention h2h",
+    !/h2h_blend/.test(buf.governing), `got ${buf.governing}`);
+}
+
+// (s) Playoff context — H2H blend NEVER fires; current-series blend owns
+// that path. Verifies the mutual-exclusion design constraint.
+console.log("\n[s] H2H blend — never fires in playoff_L5 context");
+{
+  const base = gt({
+    series: { next_game_number: 4, leading_team_abbr: null, player_team_wins: 1, opponent_wins: 2, round: "RD16", series_record: "1-2" },
+    l5: {
+      type: "Playoffs",
+      n: 5,
+      averages: { ppg: 26.0 },
+      weighted: {
+        mode: "playoff_series",
+        averages: { ppg: 26.0 },
+        current_series_averages: { ppg: 30.0 },
+        current_series_n: 3,
+      },
+      games: [],
+    },
+    h2h: { n: 5, opponent_abbr: "PHX", averages: { ppg: 40.0 } },  // would dominate if it fired
+  });
+  const buf = computeOverBufferCheck({
+    groundTruth: base, statType: "Points", line: 24.5,
+    seasonAvg: 26.0, l5Avg: 26.0, l5WeightedUsed: true,
+  });
+  // 60/40 current-series blend should win: 0.6*30 + 0.4*26 = 28.4 (not h2h's 33).
+  assert("playoff path uses current-series blend, ignores h2h",
+    Math.abs(buf.baseline - 28.4) < 0.05, `got ${buf.baseline}`);
+  assert("playoff path governing has current_series, not h2h",
+    /current_series_blend/.test(buf.governing) && !/h2h_blend/.test(buf.governing),
+    `got ${buf.governing}`);
+}
+
 console.log(`\n=== smoke-engine: ${passed} pass, ${failed} fail ===`);
 process.exit(failed > 0 ? 1 : 0);

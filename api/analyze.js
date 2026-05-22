@@ -20,6 +20,7 @@ import {
   opponentFor,
 } from "./lib/espn.js";
 import { composeGroundTruth } from "./lib/ground-truth.js";
+import { computeH2HAverages } from "./lib/weighted-l5.js";
 import { rateLimit } from "./lib/rate-limit.js";
 import { runWithRequestContext } from "./lib/request-context.js";
 import { PROP_TO_FIELD } from "./lib/prop-types.js";
@@ -207,7 +208,14 @@ export async function gatherGroundTruth({ player, propType, line, teamAbbrHint =
   const bbrefSplits = bbref.getHomeAwaySplits(player, { season, league });
   // ESPN primary for season averages; stats-edge fallback below. Defender
   // and matchup data have no ESPN equivalent and stay on stats edge.
-  const [espnSeasonAvg, statsSplits, winProb, opponentDefense, primaryDefender, defRankByAbbr] = await Promise.all([
+  //
+  // h2hGamelog: Move-3 input. Fetched only for regular-season games when
+  // both espnId and opponent are known. Pulls last 50 reg-season games
+  // (enough to cover the full season for an active player) so the H2H
+  // filter has the deepest sample possible. Skipped on playoff games —
+  // that path uses the current-series blend instead.
+  const needsH2H = !isPlayoff && espnId && opponentSide;
+  const [espnSeasonAvg, statsSplits, winProb, opponentDefense, primaryDefender, defRankByAbbr, h2hGamelog] = await Promise.all([
     espnId ? espnStats.getSeasonAverages(espnId, { season, league }) : null,
     bbrefSplits ? null : getHomeAwaySplits(playerId, { seasonType: "Regular Season", league }),
     getWinProbability(game.game_id, game.competition_id, { league }),
@@ -218,6 +226,9 @@ export async function gatherGroundTruth({ player, propType, line, teamAbbrHint =
     // deliberate spec limitation). Failures degrade gracefully — without
     // the map, weighted-L5 uses the 1.0 default multiplier.
     getDefRankByAbbr({ seasonType: "Regular Season", league }).catch(() => null),
+    needsH2H
+      ? espnStats.getLastNGames(espnId, 50, { season, postseason: false, league }).catch(() => null)
+      : null,
   ]);
   const splits = bbrefSplits ?? statsSplits;
   trace.splits = bbrefSplits ? "bbref_snapshot" : (statsSplits ? "stats_edge" : "missing");
@@ -243,11 +254,29 @@ export async function gatherGroundTruth({ player, propType, line, teamAbbrHint =
   }
   if (!seasonAvg) trace.season_avg = "missing";
 
+  // Move 3 — derive H2H baseline from the season gamelog. Null when:
+  //   • Playoff path (needsH2H was false)
+  //   • Gamelog fetch failed or returned empty
+  //   • No games match the current opponent
+  //   • Opponent abbr unknown
+  // computeH2HAverages does NOT enforce the min-games gate — that's
+  // applied in computeOverBufferCheck so the telemetry sees n=1 events
+  // (informative even when the blend doesn't fire).
+  const h2h = h2hGamelog?.games?.length
+    ? computeH2HAverages({
+        games: h2hGamelog.games,
+        ownAbbr: info?.team_abbr,
+        opponentAbbr: opponentSide?.abbr,
+      })
+    : null;
+  trace.h2h = (h2h && h2h.n > 0) ? `espn_gamelog(n=${h2h.n})` : (needsH2H ? "no_matches" : "n/a_playoff");
+
   const { groundTruth, missing } = composeGroundTruth({
     player, propType, line, league,
     info, game, daysOut, seasonType,
     seasonAvg, l5, splits, winProb, allInjuries, opponentDefense, primaryDefender,
     defRankByAbbr,
+    h2h,
   });
 
    return { groundTruth, missing, trace, playerInfo };
