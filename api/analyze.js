@@ -49,7 +49,13 @@ export const runtime = "nodejs";
  */
 // Exported for smoke testing — fetches real data and composes groundTruth
 // without calling the LLM.
-export async function gatherGroundTruth({ player, propType, line }) {
+//
+// teamAbbrHint: optional team abbreviation supplied by the caller. Used as
+// the last-resort identity source when both balldontlie + stats edge fail
+// (parallel 6-player UI fan-outs occasionally see both 8s-timeout out at
+// once). analyze-all passes the player_team from the PrizePicks scrape,
+// which is the same data we already have on hand and never times out.
+export async function gatherGroundTruth({ player, propType, line, teamAbbrHint = null }) {
   const playerInfo = resolvePlayer(player);
   if (!playerInfo) {
     return { skipReason: "player_not_configured", message: `No player entry for ${player}` };
@@ -108,6 +114,19 @@ export async function gatherGroundTruth({ player, propType, line }) {
         team_abbr: playerInfo.team_abbr,
       };
       infoSource = "players_json";
+    } else if (teamAbbrHint) {
+      // Caller-supplied team abbr — typically the PrizePicks scrape's
+      // player_team. Used when bdl + stats edge both timed out under
+      // parallel load. Trusts the scrape because it published the prop
+      // with this team in the same request flow.
+      info = {
+        player_id: playerId,
+        full_name: player,
+        team_id: null,
+        team_name: null,
+        team_abbr: teamAbbrHint,
+      };
+      infoSource = "prizepicks_hint";
     } else {
       return { skipReason: "player_lookup_failed", message: `Could not resolve ${player} via balldontlie, stats edge, or players.json` };
     }
@@ -265,12 +284,12 @@ const RETRIABLE_SKIP_REASONS = new Set([
 ]);
 
 export async function gatherGroundTruthWithRetry(
-  { player, propType, line },
+  { player, propType, line, teamAbbrHint = null },
   { maxRetries = 3, baseDelayMs = 1000 } = {}
 ) {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      const result = await gatherGroundTruth({ player, propType, line });
+      const result = await gatherGroundTruth({ player, propType, line, teamAbbrHint });
 
       if (result.skipReason) {
         // Retry transient skips while attempts remain; otherwise return.

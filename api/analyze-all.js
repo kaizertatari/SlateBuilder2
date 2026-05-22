@@ -273,7 +273,13 @@ async function handlePost(req, reqId) {
        // anyway. Seed with the first direction's first chosen line.
        if (!sharedGroundTruth) {
          const firstDir = directions.find((d) => perDirection.get(d)?.length > 0);
-         const seedLine = perDirection.get(firstDir)[0].line;
+         const seedProp = perDirection.get(firstDir)[0];
+         const seedLine = seedProp.line;
+         // PrizePicks already told us the player's team in the scrape —
+         // pass it as a hint so gatherGroundTruth can fall back to it when
+         // bdl.findPlayer + getCommonPlayerInfo both 8s-time-out under
+         // parallel UI load (the player_lookup_failed class).
+         const teamAbbrHint = seedProp.player_team || null;
          // Retry budget: 2 extra attempts at 500ms exponential backoff.
          // bdl.findPlayer + getCommonPlayerInfo both have 8s timeouts and
          // are racing — under 6-player parallel load they regularly fail
@@ -291,6 +297,7 @@ async function handlePost(req, reqId) {
              // metadata (overwritten per-task below), so any chosen line
              // works as a seed.
              line: seedLine,
+             teamAbbrHint,
            },
            { maxRetries: 2, baseDelayMs: 500 }
          );
