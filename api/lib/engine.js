@@ -1,0 +1,209 @@
+// Deterministic PrizePicks v3.5 verdict engine.
+//
+// Applies the framework's rule modules in canonical suppressor-priority
+// order, resolves the most-restrictive tier cap, computes a confidence
+// score via the Bayesian-style weights in rule-weights.js, and renders
+// an operator-facing justification string. Returns the same shape the
+// LLM used to return: { verdict, tier, confidence, flags, justification,
+// rules_fired }.
+//
+// The engine is pure — no fetches, no LLM, no side effects beyond the
+// returned object. preFilterMechanical (verdict-verifier.js) still
+// runs ahead of it as a fast-path that short-circuits on the three
+// arithmetic hard-gates before engine setup; this module is what runs
+// when the pre-filter passes.
+
+import * as rule5a from "./rules/rule5a.js";
+import * as rule5b from "./rules/rule5b.js";
+import * as rule5f from "./rules/rule5f.js";
+import * as rule5h from "./rules/rule5h.js";
+import * as rule5i from "./rules/rule5i.js";
+import * as rule4 from "./rules/rule4.js";
+import * as rule4i from "./rules/rule4i.js";
+import * as rule6 from "./rules/rule6.js";
+import * as ruleR9 from "./rules/ruleR9.js";
+import * as ruleGameCap from "./rules/rule-game-cap.js";
+import * as ruleProvenance from "./rules/rule-provenance.js";
+import * as ruleUnderMechanism from "./rules/rule-under-mechanism.js";
+import * as ruleSTier from "./rules/rule-s-tier.js";
+
+import { scaleFor } from "./rules/_helpers.js";
+import { RULE_WEIGHTS, TIER_RANK, tierMin, snapToBand, TIER_BAND } from "./rule-weights.js";
+
+// Pre-S-tier rules in canonical order. Suppressor priority from
+// framework line 237: Rule 6 → 4c → 4i → 5f → 5c (R9). 5a/5i are
+// hard-gates (run early); 5b/5h are stat-specific suppressors that
+// also run early so their tier caps participate in suppressor stacking.
+// rule-game-cap runs late so playoff caps don't get over-ridden by
+// earlier passes. rule-s-tier MUST run last — it inspects the
+// accumulated state to decide whether S is reachable.
+const RULES_PRE_S = [
+  ["5a", rule5a],
+  ["5i", rule5i],
+  ["R9", ruleR9],
+  ["6", rule6],
+  ["4", rule4],
+  ["4i", rule4i],
+  ["5f", rule5f],
+  ["5h", rule5h],
+  ["5b", rule5b],
+  ["provenance", ruleProvenance],
+  ["game-cap", ruleGameCap],
+  // UNDER mechanism gate runs late so it sees the fully-populated
+  // mechanisms object. It hard-SKIPs UNDER props without a named
+  // mechanism — the framework explicitly forbids UNDER without one.
+  ["under-mechanism", ruleUnderMechanism],
+];
+
+/**
+ * Run the deterministic v3.5 framework on a single (player, prop, line)
+ * task. Returns the verdict shape the rest of the app expects.
+ *
+ * @param {Object} args
+ * @param {Object} args.groundTruth - composed ground truth (must include
+ *   mechanisms + injury_regions; see api/lib/ground-truth.js)
+ * @param {string} args.statType
+ * @param {"OVER"|"UNDER"} args.direction
+ * @param {number} args.line
+ * @returns {{
+ *   verdict: "OVER" | "UNDER" | "SKIP",
+ *   tier: "S" | "A" | "B" | "SKIP",
+ *   confidence: number,
+ *   flags: string[],
+ *   justification: string,
+ *   rules_fired: string[],
+ * }}
+ */
+export function applyEngine({ groundTruth, statType, direction, line }) {
+  const scale = scaleFor(groundTruth);
+  const weights = RULE_WEIGHTS;
+  const ctx = { groundTruth, statType, direction, line, scale, weights };
+
+  // Accumulators.
+  let tierCap = "S"; // start optimistic; rules narrow it down
+  let hardSkip = false;
+  let score = weights.base;
+  let suppressorCount = 0;
+  let signalCount = 0;
+  const flags = [];
+  const justParts = [];
+  const rulesFired = [];
+
+  // Track rule5a's buffer result so we can compute the edge bonus once
+  // after the loop (avoids each rule independently re-deriving margin).
+  let rule5aBuf = null;
+
+  for (const [id, mod] of RULES_PRE_S) {
+    const out = mod.apply(ctx);
+    if (!out || !out.fired) {
+      // Still surface a justification fragment if the rule cared enough
+      // to emit one (e.g., "rule disabled, suppressor off" notes from 5f).
+      if (out?.justification_part) justParts.push(out.justification_part);
+      continue;
+    }
+    rulesFired.push(out.rule_id);
+    if (out.flag) flags.push(out.flag);
+    if (out.justification_part) justParts.push(out.justification_part);
+    if (typeof out.confidence_delta === "number") score += out.confidence_delta;
+    if (out.tier_cap) tierCap = tierMin(tierCap, out.tier_cap);
+    if (out.hard_skip || out.tier_cap === "SKIP") hardSkip = true;
+    if (out.suppressor) suppressorCount += 1;
+    if (id === "5a") {
+      rule5aBuf = out._buf ?? null;
+      // Clean OVER buffer pass counts as one independent signal.
+      if (out._buf && out._buf.passes) signalCount += 1;
+    }
+  }
+
+  // Edge bonus — applied once based on rule5a's road-adjusted margin.
+  if (direction === "OVER" && rule5aBuf && rule5aBuf.passes) {
+    const edge = rule5aBuf.adjusted - line;
+    if (edge > 0) score += edge * weights.edge_unit_bonus;
+    // Additional signal: large edge (>3pts) counts as a bonus signal.
+    if (edge >= 3) signalCount += 1;
+  }
+
+  // Win-prob in healthy band (non-suppressor case) counts as a signal.
+  const wp = groundTruth?.win_prob?.player_team_pct;
+  if (typeof wp === "number" && wp >= 0.45 && wp <= 0.65) {
+    signalCount += 1;
+  }
+  // L5 sample size ≥ 5 counts as a signal (small samples are riskier).
+  if ((groundTruth?.l5?.n ?? 0) >= 5) signalCount += 1;
+
+  // S-tier gate runs last with the accumulated state visible.
+  const sOut = ruleSTier.apply({
+    ...ctx,
+    _state: { suppressorCount, signalCount, hardSkip },
+  });
+  if (sOut?.fired) {
+    rulesFired.push(sOut.rule_id);
+    if (sOut.flag) flags.push(sOut.flag);
+    if (sOut.justification_part) justParts.push(sOut.justification_part);
+    if (typeof sOut.confidence_delta === "number") score += sOut.confidence_delta;
+    if (sOut.tier_cap) tierCap = tierMin(tierCap, sOut.tier_cap);
+  }
+
+  // Suppressor stacking — 2+ suppressors drops one additional tier
+  // beyond the highest-priority cap, never going below B (no auto-SKIP
+  // from stacking alone).
+  if (!hardSkip && suppressorCount >= 2 && tierCap !== "SKIP") {
+    const ranks = ["S", "A", "B"];
+    const idx = ranks.indexOf(tierCap);
+    if (idx >= 0 && idx < ranks.length - 1) {
+      tierCap = ranks[idx + 1];
+      flags.push(`⚠️ Suppressor stacking — ${suppressorCount} suppressors active, tier dropped to ${tierCap}`);
+    }
+  }
+
+  // Resolve final verdict + tier.
+  let verdict, tier;
+  if (hardSkip || tierCap === "SKIP") {
+    verdict = "SKIP";
+    tier = "SKIP";
+  } else {
+    verdict = direction;
+    tier = tierCap;
+    // Game-2 hard ceiling — never higher than A.
+    if (groundTruth?.series?.next_game_number === 2 && TIER_RANK[tier] > TIER_RANK.A) {
+      tier = "A";
+    }
+  }
+
+  // Snap confidence into the tier's band.
+  let confidence;
+  if (tier === "SKIP") {
+    confidence = 0;
+  } else {
+    confidence = snapToBand(score, tier);
+    // If the raw score doesn't reach the tier's floor, demote the tier
+    // until it fits (e.g., score=64 with tier="A" → demote to B). Keeps
+    // confidence and tier internally consistent.
+    while (confidence < (TIER_BAND[tier]?.lo ?? 0) && tier !== "B") {
+      if (tier === "S") tier = "A";
+      else if (tier === "A") tier = "B";
+      else break;
+      confidence = snapToBand(score, tier);
+    }
+    // If even B's floor isn't reached, the verdict downgrades to SKIP
+    // (framework: "<62% confidence → SKIP").
+    if (confidence < TIER_BAND.B.lo) {
+      verdict = "SKIP";
+      tier = "SKIP";
+      confidence = 0;
+    }
+  }
+
+  const justification = justParts.length
+    ? justParts.join(" ").slice(0, 800)
+    : `Engine — no rules fired; default ${direction} at ${tier} based on baseline math.`;
+
+  return {
+    verdict,
+    tier,
+    confidence,
+    flags,
+    justification,
+    rules_fired: rulesFired,
+  };
+}
