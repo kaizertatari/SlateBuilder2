@@ -8,14 +8,14 @@
 //
 // Returns: { total_analyzed, total_s_a, top_10: [...] }
 
-import { gatherGroundTruth, buildPrompt, callLLM, UNJUSTIFIED_SKIP_RETRY_ADDENDUM } from "./analyze.js";
-import { getFramework } from "./lib/framework.js";
+import { gatherGroundTruth } from "./analyze.js";
 import { rateLimit } from "./lib/rate-limit.js";
 import { runWithRequestContext } from "./lib/request-context.js";
 import { readLines } from "./lib/lines-store.js";
 import { STATS, mapPrizePicksStatType } from "./lib/prop-types.js";
 import { get as cacheGet, set as cacheSet } from "./lib/cache.js";
-import { verifyVerdict, preFilterMechanical } from "./lib/verdict-verifier.js";
+import { preFilterMechanical } from "./lib/verdict-verifier.js";
+import { applyEngine } from "./lib/engine.js";
 import { logVerdict } from "./lib/verdict-logger.js";
 import { randomUUID } from "node:crypto";
 
@@ -76,42 +76,20 @@ export function selectLinesForStat(props) {
   return chosen;
 }
 
-// Per-player line budget. Each task is now one LLM call (looped, not
-// batched), so this directly caps LLM calls per analyze-all request.
-// Default 40 covers the realistic max (9 stats × 2 lines × 2 dirs = 36).
-// Lower this if free-tier daily quotas tighten.
+// Per-player line budget. Each task is now one deterministic engine
+// invocation, so this caps the work per analyze-all request. The
+// realistic max is 9 stats × 2 lines × 2 dirs = 36; default 40
+// covers that with headroom.
 const MAX_LINES = parseInt(process.env.MAX_LINES_PER_PLAYER || "40", 10);
 
-// Groq's on-demand tier caps token throughput at 8K TPM on
-// openai/gpt-oss-120b. Each verdict call requests ~7K tokens, so two
-// consecutive Groq calls without spacing reliably 429. 8s between calls
-// keeps a single batch under the per-minute budget; switch to a token
-// bucket (or upgrade to a paid tier) if you need higher throughput.
-const GROQ_INTER_CALL_DELAY_MS = 8000;
+// (Engine-only branch: no LLM provider, no TPM pacing required.
+// Original Groq token-bucket pacing + Retry-After parser removed.)
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-// Groq's 429 body carries the wait hint in prose
-// ("Please try again in 38.467499999s"). Extract it so the error-retry
-// path can honor it instead of guessing.
-function parseGroqRetryAfterMs(errMsg) {
-  if (typeof errMsg !== "string") return null;
-  const m = errMsg.match(/try again in\s+([\d.]+)\s*s/i);
-  if (!m) return null;
-  const secs = Number(m[1]);
-  if (!Number.isFinite(secs) || secs <= 0) return null;
-  // Add 250ms of slack and cap at 60s — anything longer means the bucket
-  // is too far underwater to recover within one batch.
-  return Math.min(60_000, Math.ceil(secs * 1000) + 250);
-}
-
-// We deliberately do NOT batch the LLM calls anymore — buildBatchPrompt /
-// callLLMBatched still exist in analyze.js for one-off use but the
-// batched LLM was diverging from the single-prop endpoint (different
-// reasoning, attention dilution, smaller per-task token budget). Looping
-// single-prop calls is slower on cold cache but guarantees both endpoints
-// produce the same verdict for the same ground truth. The verifier in
-// api/lib/verdict-verifier.js is the second layer of defense.
+// Engine-only batch: one deterministic call per task. The previous
+// LLM batched/single-prop endpoints have been removed on this branch;
+// the engine in api/lib/engine.js implements the v3.5 framework in
+// JavaScript so analyze-all + /api/analyze produce identical verdicts
+// for the same ground truth.
 
 export async function POST(req) {
   const reqId = randomUUID().slice(0, 8);
@@ -219,19 +197,12 @@ async function handlePost(req, reqId) {
     }
 
      const directions = direction ? [direction] : ["OVER", "UNDER"];
-    // Router (callLLM) picks Groq/Gemini per request from env. Require
-    // at least one provider key to be set; per-call selection happens
-    // inside the router via LLM_PROVIDERS.
-    if (!process.env.GROQ_API_KEY && !process.env.GOOGLE_API_KEY) {
-      return Response.json(
-        { request_id: reqId, error: "No LLM provider configured (set GROQ_API_KEY and/or GOOGLE_API_KEY)" },
-        { status: 500 }
-      );
-    }
+     // Engine-only branch — no LLM provider required. The provider-key
+     // guard that lived here is gone.
 
      // Build the task list once per player. groundTruth is fetched a single
      // time for the entire player (it is stat-agnostic except for the
-     // prop_type/line metadata fields, which buildBatchPrompt strips). Any
+     // prop_type/line metadata fields, which the engine reads per-task). Any
      // player-wide skip (no upcoming game, retired, etc.) short-circuits
      // the whole request.
      //
@@ -311,46 +282,27 @@ async function handlePost(req, reqId) {
       return Response.json(responseBody, { headers: { "X-Cache": "MISS" } });
     }
 
-    // Serial single-prop LLM path: one call per task using the exact
-    // same prompt builder as /api/analyze. The router (callLLM) rotates
-    // Groq/Gemini per call, so consecutive tasks naturally alternate
-    // providers. tier_counts captures the verdict distribution across
-    // all completed analyses.
+    // Serial deterministic path: pre-filter then engine, one task at
+    // a time. No LLM, no provider rotation, no TPM pacing. tier_counts
+    // captures the verdict distribution across all completed analyses.
     const results = [];
     const errors = [];
     const tierCounts = { S: 0, A: 0, B: 0, SKIP: 0, UNKNOWN: 0 };
-    // Tracks the provider used by the previous task's LLM call so the next
-    // task can pace itself against Groq's 8K TPM cap. null on the first
-    // iteration and after pre-filter SKIPs (no LLM tokens consumed).
-    let lastLlmProvider = null;
 
     for (const task of tasks) {
-      // Pace Groq calls: if the previous task hit Groq, wait the per-call
-      // delay before starting this one to keep the rolling minute under
-      // 8K tokens. Pre-filter SKIPs and Gemini calls don't trigger this.
-      if (lastLlmProvider === "groq") {
-        await sleep(GROQ_INTER_CALL_DELAY_MS);
-      }
       // sharedGroundTruth has the FIRST task's prop_type/line baked in
       // (from the initial gatherGroundTruth call). Overwrite with this
-      // task's values so buildPrompt embeds the correct prop in the
-      // role-definition and output-spec sections.
+      // task's values so the engine sees the correct prop.
       const taskGroundTruth = {
         ...sharedGroundTruth,
         prop_type: task.propType,
         line: task.line,
       };
-      // Per-task latency for the verdict event. ground-truth fetch already
-      // happened (shared across tasks); this measures pre-filter + LLM +
-      // verifier for THIS task, which is what makes per-provider latency
-      // comparisons meaningful.
       const taskStartedAt = Date.now();
 
-      // PRE-FILTER: run the mechanical framework checks before paying for
-      // an LLM call. If the arithmetic says SKIP (e.g., OVER buffer fails,
-      // Rule 5i FT-floor on UNDER Points/PRA), short-circuit here. This
-      // is the same check the post-LLM verifier runs, so the verdict can
-      // never differ from the LLM path.
+      // PRE-FILTER: the mechanical framework hard-gates short-circuit
+      // before engine setup. Same checks as the engine's internals so
+      // pre-filter and engine never disagree.
       const preSkip = preFilterMechanical({
         groundTruth: taskGroundTruth,
         statType: task.statType,
@@ -371,89 +323,15 @@ async function handlePost(req, reqId) {
         continue;
       }
 
-      const framework = getFramework(taskGroundTruth?.league ?? "NBA");
-      const prompt = buildPrompt(framework, taskGroundTruth);
-
-      let llm = await callLLM(prompt);
-      if (llm.error) {
-        // One outer retry — the router already exhausted both providers'
-        // primary→fallback chains, so this is a last-ditch attempt
-        // against transient provider-wide weather. Honor the upstream
-        // Retry-After hint when the failure was a Groq TPM 429; fall
-        // back to a small fixed delay for other provider-wide errors.
-        const hint = parseGroqRetryAfterMs(llm.error);
-        await sleep(hint ?? 1500);
-        llm = await callLLM(prompt);
-      }
-
-      if (llm.error) {
-        errors.push({ task: `${task.player} ${task.propType}`, error: llm.error });
-        tierCounts.UNKNOWN += 1;
-        // Mark Groq as the last provider when the error came from Groq so
-        // the next iteration paces — a 429 means tokens may still be on
-        // the bucket even though no verdict landed. Substring match on the
-        // model id is reliable: Groq's error body always names the model.
-        if (typeof llm.error === "string" && /openai\/gpt-oss|groq/i.test(llm.error)) {
-          lastLlmProvider = "groq";
-        }
-        logVerdict({
-          source: "analyze-all",
-          input: { player: task.player, propType: task.propType, line: task.line },
-          groundTruth: taskGroundTruth,
-          playerInfo: sharedPlayerInfo,
-          trace: sharedTrace,
-          errorInfo: { message: llm.error, name: "LLMError", status: 500 },
-          durationMs: Date.now() - taskStartedAt,
-        });
-        continue;
-      }
-
-      // Single-prop LLM returns the verdict object directly (no
-      // `results` array wrapper that the batched validator required).
-      const r = llm.json;
-
-      // Re-derive the mechanical framework checks the LLM might have
-      // dropped (OVER 1.5pt buffer, Rule 5i FT-floor). The verifier also
-      // classifies LLM SKIPs and audits data_used for hallucinated values.
-      let verified = verifyVerdict({
+      const verified = applyEngine({
         groundTruth: taskGroundTruth,
         statType: task.statType,
         direction: task.direction,
         line: task.line,
-        llmResult: r,
       });
-      let llmForLog = llm;
-
-      // One-shot retry on unjustified SKIPs. Reuses the same prompt with
-      // an addendum demanding either a framework citation or a revised
-      // verdict. Capped at one re-call per task by passing isRetry=true on
-      // the second verification. Pace the retry against Groq's TPM cap
-      // when the main call hit Groq, otherwise tokens stack inside the
-      // same rolling minute.
-      if (verified.should_retry) {
-        if (llm.provider === "groq") {
-          await sleep(GROQ_INTER_CALL_DELAY_MS);
-        }
-        const retryLlm = await callLLM(`${prompt}${UNJUSTIFIED_SKIP_RETRY_ADDENDUM}`);
-        if (!retryLlm.error && retryLlm.json) {
-          const reverified = verifyVerdict({
-            groundTruth: taskGroundTruth,
-            statType: task.statType,
-            direction: task.direction,
-            line: task.line,
-            llmResult: retryLlm.json,
-            isRetry: true,
-          });
-          const recovered = reverified.verdict !== "SKIP" || reverified.skip_kind === "framework_cited";
-          verified = { ...reverified, retry_recovered: recovered };
-          llmForLog = retryLlm;
-        }
-      }
 
       const tierKey = tierCounts[verified.tier] !== undefined ? verified.tier : "UNKNOWN";
       tierCounts[tierKey] += 1;
-      // Record the provider used so the next iteration can pace Groq calls.
-      lastLlmProvider = llmForLog.provider ?? null;
       logVerdict({
         source: "analyze-all",
         input: { player: task.player, propType: task.propType, line: task.line },
@@ -462,8 +340,6 @@ async function handlePost(req, reqId) {
         playerInfo: sharedPlayerInfo,
         trace: sharedTrace,
         durationMs: Date.now() - taskStartedAt,
-        llmProvider: llmForLog.provider ?? null,
-        llmModel: llmForLog.model ?? null,
       });
       if (verified.tier === "S" || verified.tier === "A" || verified.tier === "B") {
         results.push({
@@ -477,15 +353,10 @@ async function handlePost(req, reqId) {
           tier: verified.tier,
           confidence: verified.confidence || 0,
           justification: verified.justification || "",
-          // LLM-guardrail audit fields. skip_kind classifies SKIPs;
-          // data_used_mismatches surfaces hallucinated values; retry_recovered
-          // flags verdicts the one-shot unjustified-SKIP retry salvaged.
-          // null on clean verdicts; null on issued verdicts where no retry
-          // fired and no mismatch was found.
-          skip_kind: verified.skip_kind ?? null,
-          data_used: verified.data_used ?? null,
-          data_used_mismatches: verified.data_used_mismatches ?? [],
-          retry_recovered: verified.retry_recovered ?? null,
+          // Engine audit fields. rules_fired lists the framework rules
+          // that contributed to this verdict so the operator (and
+          // grade-outcomes hits per rule) can attribute outcomes.
+          rules_fired: Array.isArray(verified.rules_fired) ? verified.rules_fired : [],
           flags: Array.isArray(verified.flags) ? verified.flags : [],
         });
       }

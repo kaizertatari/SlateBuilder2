@@ -49,8 +49,6 @@ export function logVerdict({
   errorInfo,
   source,
   durationMs,
-  llmProvider,
-  llmModel,
 } = {}) {
   const token = process.env.AXIOM_TOKEN;
   if (!token) return;
@@ -75,27 +73,22 @@ export function logVerdict({
     game_start_time: groundTruth?.game?.date ?? groundTruth?.game?.start_time ?? null,
     nba_id: playerInfo?.nba ?? groundTruth?.info?.player_id ?? null,
     espn_id: playerInfo?.espn ?? null,
-    // Latency / provider — null on pre-filter SKIPs that never called LLM
+    // Latency. No LLM provider/model fields on the engine-only branch.
     duration_ms: durationMs ?? null,
-    llm_provider: llmProvider ?? null,
-    llm_model: llmModel ?? null,
+    // Identifies this branch's verdicts in cross-branch Axiom joins
+    // (Testing/main still log llm_provider/llm_model; this branch logs
+    // engine_mode="rules" instead).
+    engine_mode: "rules",
     // Result
     verdict: result?.verdict ?? null,
     tier: result?.tier ?? null,
     confidence: result?.confidence ?? null,
     flags: result?.flags ?? null,
-    overridden: !!result?.overridden,
-    override_reasons: result?.override_reasons ?? null,
     pre_filtered: !!result?.pre_filtered,
-    // SKIP audit + hallucination guard (from verdict-verifier). skip_kind
-    // discriminates mechanical/framework_cited/unjustified_after_retry/
-    // mechanical_override. data_used_mismatches surfaces hallucinated
-    // numbers the LLM emitted that diverge from groundTruth.
-    // retry_recovered flags verdicts that were salvaged by the one-shot
-    // unjustified-SKIP retry — null when no retry fired.
-    skip_kind: result?.skip_kind ?? null,
-    data_used_mismatches: result?.data_used_mismatches ?? null,
-    retry_recovered: result?.retry_recovered ?? null,
+    // Engine: which rule modules contributed to the verdict. Empty array
+    // when only the pre-filter fast-path ran (those use pre-filter:<reason>
+    // form). Lets grade-outcomes attribute hit rate per rule.
+    rules_fired: result?.rules_fired ?? null,
     // Error path (mutually exclusive with verdict)
     error: errorInfo?.message ?? null,
     error_name: errorInfo?.name ?? null,
