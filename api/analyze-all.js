@@ -127,9 +127,12 @@ export async function POST(req) {
 
 async function handlePost(req, reqId) {
   try {
-    // Rate limit (stricter for batch)
+    // Rate limit. Bumped from 3 → 20 per 60s so the multi-player UI can
+    // fan out 6+ players in parallel without tripping 429s. Single-operator
+    // app, no public traffic — the cap exists to bound abuse, not to
+    // throttle the legitimate UI.
     const ip = (req.headers.get("x-forwarded-for") || "unknown").split(",")[0].trim();
-    const limit = rateLimit(`analyze-all:${ip}`, { windowMs: 60_000, max: 3 });
+    const limit = rateLimit(`analyze-all:${ip}`, { windowMs: 60_000, max: 20 });
     if (!limit.ok) {
       const retryAfterMs = limit.retryAfterMs ?? 0;
       return Response.json(
