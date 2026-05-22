@@ -6,6 +6,8 @@ import { toEspnAbbr } from "./espn.js";
 import { normalizeName } from "./string-utils.js";
 import { computeWeightedL5 } from "./weighted-l5.js";
 import { ftFloorBaseline } from "./framework.js";
+import { parseInjuryRegions } from "./injury-regions.js";
+import { detectMechanisms } from "./mechanisms.js";
 
 export function composeGroundTruth(params) {
   const {
@@ -142,6 +144,11 @@ export function composeGroundTruth(params) {
     derived: {
       ft_floor_baseline: ftFloorBaseline(league, positionFromInfo(info)),
     },
+    // Engine inputs: parsed injury regions (Rule 6 body-region modulation)
+    // and detected UNDER mechanisms (1/2/3). Per-player regions key on
+    // injury entry.player; rule modules look up the active player's name
+    // through info.full_name.
+    injury_regions: parseInjuryRegions([...(ownInjuries || []), ...(oppInjuries || [])]),
   };
 
   // Aggregate per-section prior-season fallback markers into one top-level
@@ -152,6 +159,17 @@ export function composeGroundTruth(params) {
   if (l5?.is_prior_season) dataWarnings.push("prior_season_l5");
   if (splits?.is_prior_season) dataWarnings.push("prior_season_splits");
   groundTruth.data_warnings = dataWarnings.length > 0 ? dataWarnings : null;
+
+  // Detect UNDER mechanisms after the rest of groundTruth is assembled —
+  // detectMechanisms reads injuries, injury_regions, opponent_defense,
+  // and info.full_name from the composed object.
+  groundTruth.info = { full_name: info?.full_name ?? player, ...info };
+  groundTruth.mechanisms = detectMechanisms(groundTruth);
+  // Lift mech1's parsed minutes restriction onto the top-level field that
+  // Rule 5i's FT-floor mechanism-1 override reads.
+  if (groundTruth.mechanisms?.mech1?.restriction != null) {
+    groundTruth.minutes_restriction = groundTruth.mechanisms.mech1.restriction;
+  }
 
   const missing = [];
   if (!groundTruth.season)         missing.push("season_avg");
