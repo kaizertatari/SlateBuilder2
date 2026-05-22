@@ -317,12 +317,25 @@ export default function App() {
   //
   // Direction is fixed to "OVER" — the UNDER UI path was removed. The
   // backend still accepts UNDER, but every UI-initiated request is OVER.
+  //
+  // selectedOdds is sent to the backend so the analysis pool actually
+  // shrinks when the user narrows the filter — fewer engine tasks per
+  // player. The client-side displayedTop10 filter remains as a no-op
+  // for fresh analyses + a courtesy for mid-session filter changes
+  // (changing Odds without re-clicking Analyze re-filters what was
+  // already fetched, but can't broaden it without a new request).
   const analyzeOne = useCallback(async (playerName) => {
-    const cached = readNewestCached(playerName, selectedStats, "OVER");
+    const cached = readNewestCached(playerName, selectedStats, "OVER", selectedOdds);
     if (cached) {
       return { data: cached.data, cacheStatus: "HIT" };
     }
-    const body = { player: playerName, statTypes: selectedStats, league, direction: "OVER" };
+    const body = {
+      player: playerName,
+      statTypes: selectedStats,
+      league,
+      direction: "OVER",
+      oddsTypes: selectedOdds,
+    };
 
     const response = await fetch("/api/analyze-all", {
       method: "POST",
@@ -334,12 +347,12 @@ export default function App() {
     if (!response.ok) throw new Error(data.error || "Request failed");
 
     if (data.lines_fetched_at) {
-      const key = buildKey(playerName, data.lines_fetched_at, selectedStats, "OVER");
+      const key = buildKey(playerName, data.lines_fetched_at, selectedStats, "OVER", selectedOdds);
       writeCached(key, data);
       clearStaleForPlayer(key, playerName);
     }
     return { data, cacheStatus: response.headers.get("X-Cache") || "MISS" };
-  }, [selectedStats, league]);
+  }, [selectedStats, selectedOdds, league]);
 
   const analyzeAll = useCallback(async () => {
     if (players.length === 0) {
@@ -348,6 +361,10 @@ export default function App() {
     }
     if (selectedStats.length === 0) {
       setError("Select at least one stat type.");
+      return;
+    }
+    if (selectedOdds.length === 0) {
+      setError("Select at least one odds type (Goblin/Standard/Demon).");
       return;
     }
 
@@ -429,7 +446,7 @@ export default function App() {
       setAnalyzing(false);
       setProgress(null);
     }
-  }, [players, selectedStats, analyzeOne]);
+  }, [players, selectedStats, selectedOdds, analyzeOne]);
 
   return (
     <div style={{

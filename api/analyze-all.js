@@ -32,8 +32,27 @@ function normalizePlayer(name) {
   return name.trim().toLowerCase();
 }
 
-function buildCacheKey(player, fetchedAt, sortedStats, direction) {
-  return `analyze-all:${normalizePlayer(player)}::${fetchedAt || "unknown"}::${sortedStats}::${direction}`;
+function buildCacheKey(player, fetchedAt, sortedStats, direction, sortedOdds) {
+  return `analyze-all:${normalizePlayer(player)}::${fetchedAt || "unknown"}::${sortedStats}::${direction}::${sortedOdds}`;
+}
+
+const ALL_ODDS_TYPES = ["goblin", "standard", "demon"];
+
+// Normalize an odds-types array into a sorted, deduped, lowercase tuple.
+// Used both for the cache key and for the request validator.
+function normalizeOddsTypes(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) return null;
+  const seen = new Set();
+  const out = [];
+  for (const t of arr) {
+    if (typeof t !== "string") continue;
+    const v = t.toLowerCase();
+    if (!ALL_ODDS_TYPES.includes(v)) continue;
+    if (seen.has(v)) continue;
+    seen.add(v);
+    out.push(v);
+  }
+  return out.length > 0 ? out.sort() : null;
 }
 
 /**
@@ -71,17 +90,23 @@ function buildCacheKey(player, fetchedAt, sortedStats, direction) {
  * @param {"OVER"|"UNDER"} [direction="OVER"]  direction for which to pick lines
  * @returns {Array<Object>} 0-3 chosen line objects
  */
-export function selectLinesForStat(props, direction = "OVER") {
+export function selectLinesForStat(props, direction = "OVER", oddsTypes = null) {
   if (!Array.isArray(props) || props.length === 0) return [];
+  // Resolve the set of requested odds types. null/empty = all three
+  // (back-compat for callers that don't pass the filter). UNDER drops
+  // demon regardless of request — the higher line makes UNDER trivially
+  // easier and would inflate tier counts.
+  const requested = new Set(
+    Array.isArray(oddsTypes) && oddsTypes.length > 0 ? oddsTypes : ALL_ODDS_TYPES
+  );
+  if (direction === "UNDER") requested.delete("demon");
+  if (requested.size === 0) return [];
+
   const lowestByType = (type) =>
     props
       .filter((p) => p.odds_type === type)
       .sort((a, b) => a.line - b.line)[0] ?? null;
-  const goblin = lowestByType("goblin");
-  const standard = lowestByType("standard");
-  // Demons are OVER-only. UNDER picks never see them — the higher line
-  // makes UNDER trivially easier without representing a real edge.
-  const demon = direction === "UNDER" ? null : lowestByType("demon");
+
   const chosen = [];
   const seenLines = new Set();
   const tryAdd = (entry) => {
@@ -90,16 +115,17 @@ export function selectLinesForStat(props, direction = "OVER") {
     seenLines.add(entry.line);
     chosen.push(entry);
   };
-  tryAdd(goblin);
-  tryAdd(standard);
-  tryAdd(demon);
+  // Iterate in canonical order so the resulting list is stable across
+  // callers (engine-task building, smoke fixtures, etc.).
+  for (const t of ALL_ODDS_TYPES) {
+    if (requested.has(t)) tryAdd(lowestByType(t));
+  }
   if (chosen.length === 0) {
-    // Fallback only when no goblin AND no standard exist; on UNDER this
-    // means we never fall back to a demon (would defeat the gate).
-    const candidates = direction === "UNDER"
-      ? props.filter((p) => p.odds_type !== "demon")
-      : props;
-    const fallback = [...candidates].sort((a, b) => a.line - b.line)[0];
+    // Fallback restricted to the requested odds types — picking demon-only
+    // on a bucket without a demon should not silently fall back to a goblin.
+    const fallback = props
+      .filter((p) => requested.has(p.odds_type))
+      .sort((a, b) => a.line - b.line)[0];
     if (fallback) chosen.push(fallback);
   }
   return chosen;
@@ -142,7 +168,7 @@ async function handlePost(req, reqId) {
     }
 
     const body = await req.json();
-    const { player, statTypes, direction, league: rawLeague } = body;
+    const { player, statTypes, direction, league: rawLeague, oddsTypes: rawOddsTypes } = body;
 
     if (!player || typeof player !== "string") {
       return Response.json(
@@ -159,6 +185,27 @@ async function handlePost(req, reqId) {
     const league = rawLeague && ["NBA", "WNBA"].includes(String(rawLeague).toUpperCase())
       ? String(rawLeague).toUpperCase()
       : null;
+    // oddsTypes: optional subset of ["goblin", "standard", "demon"]. When
+    // omitted, defaults to all three (back-compat). When present but
+    // empty/invalid (e.g. ["xyz"]), reject with a 400 rather than
+    // silently widening — protects against the UI sending [] when the
+    // user has unchecked everything but still clicked Analyze.
+    let oddsTypes = null;
+    if (rawOddsTypes !== undefined) {
+      if (!Array.isArray(rawOddsTypes)) {
+        return Response.json(
+          { error: "oddsTypes must be an array of 'goblin'|'standard'|'demon'" },
+          { status: 400 }
+        );
+      }
+      oddsTypes = normalizeOddsTypes(rawOddsTypes);
+      if (oddsTypes === null) {
+        return Response.json(
+          { error: "oddsTypes must contain at least one of 'goblin'|'standard'|'demon'" },
+          { status: 400 }
+        );
+      }
+    }
 
     // Read PrizePicks lines (from /tmp cache when warm, else bundled file).
     let linesData;
@@ -181,7 +228,10 @@ async function handlePost(req, reqId) {
       ? [...statTypes].sort().join(",")
       : "ALL";
     const normDirection = direction || "BOTH";
-    const cacheKey = buildCacheKey(player, linesFetchedAt, sortedStats, normDirection);
+    // Cache key includes the canonical odds tuple so {goblin} and
+    // {goblin,standard,demon} runs don't collide in the response cache.
+    const sortedOdds = oddsTypes ? oddsTypes.join(",") : "ALL";
+    const cacheKey = buildCacheKey(player, linesFetchedAt, sortedStats, normDirection, sortedOdds);
     const cached = cacheGet(cacheKey);
     if (cached) {
       return Response.json(cached, { headers: { "X-Cache": "HIT" } });
@@ -262,7 +312,7 @@ async function handlePost(req, reqId) {
        // bail early when both directions are empty.
        const perDirection = new Map();
        for (const dir of directions) {
-         perDirection.set(dir, selectLinesForStat(props, dir));
+         perDirection.set(dir, selectLinesForStat(props, dir, oddsTypes));
        }
        const anyLines = [...perDirection.values()].some((arr) => arr.length > 0);
        if (!anyLines) continue;

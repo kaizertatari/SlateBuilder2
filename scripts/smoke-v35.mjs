@@ -425,6 +425,36 @@ header("12. selectLinesForStat: direction-aware selection (demons OVER-only)");
   // g) Empty input → empty result.
   check("empty bucket returns empty", selectLinesForStat([]).length === 0);
   check("non-array input returns empty", selectLinesForStat(null).length === 0);
+
+  // h) oddsTypes filter — pre-analysis narrowing from the UI Odds picker.
+  //    null/undefined/[] all mean "no filter" (back-compat). Otherwise
+  //    only the requested types are evaluated, even in the fallback path.
+  const r_goblinOnly = selectLinesForStat(all, "OVER", ["goblin"]);
+  check("oddsTypes=['goblin']: only goblin returned",
+    r_goblinOnly.length === 1 && r_goblinOnly[0].odds_type === "goblin");
+
+  const r_demonOnly = selectLinesForStat(all, "OVER", ["demon"]);
+  check("oddsTypes=['demon']: only lowest demon returned",
+    r_demonOnly.length === 1 && r_demonOnly[0].odds_type === "demon" && r_demonOnly[0].line === 30.5);
+
+  const r_underDemonOnly = selectLinesForStat(all, "UNDER", ["demon"]);
+  check("oddsTypes=['demon'] on UNDER returns empty (UNDER strips demon first)",
+    r_underDemonOnly.length === 0);
+
+  const r_goblinStandard = selectLinesForStat(all, "OVER", ["goblin", "standard"]);
+  check("oddsTypes=['goblin','standard']: two entries, no demon",
+    r_goblinStandard.length === 2 && r_goblinStandard.every((p) => p.odds_type !== "demon"));
+
+  // Fallback path respects the request: demon-only request on a bucket
+  // with only goblin lines should return empty (not silently fall back).
+  const goblinBucket = [{ line: 21.5, odds_type: "goblin" }];
+  const r_fallbackRespect = selectLinesForStat(goblinBucket, "OVER", ["demon"]);
+  check("fallback restricted to requested odds (demon req, goblin bucket → empty)",
+    r_fallbackRespect.length === 0);
+
+  // Null oddsTypes is back-compat → all three considered.
+  const rNullOdds = selectLinesForStat(all, "OVER", null);
+  check("oddsTypes=null behaves like all three", rNullOdds.length === 3);
 }
 
 // (Section 13 — Groq fallback max_tokens test — removed on the engine-only
