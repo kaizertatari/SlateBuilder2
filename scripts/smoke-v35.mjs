@@ -357,46 +357,52 @@ header("11b. R9 assist win-prob gate: regular [0.40, 0.75], playoff [0.35, 0.80]
     r9Fired(baseGT(0.30, true), "Points", "OVER", 15.5) === false);
 }
 
-// ─── 12. selectLinesForStat (goblin + standard + demon) ──────────────────
-header("12. selectLinesForStat: goblin + standard + demon selection");
+// ─── 12. selectLinesForStat (direction-aware: demons OVER-only) ──────────
+header("12. selectLinesForStat: direction-aware selection (demons OVER-only)");
 {
-  // a) All three types present → all three selected (lowest demon).
+  // a) All three types present on OVER → all three selected (lowest demon).
   const all = [
     { line: 24.5, odds_type: "goblin" },
     { line: 27.5, odds_type: "standard" },
     { line: 30.5, odds_type: "demon" },
     { line: 33.5, odds_type: "demon" },
   ];
-  const r1 = selectLinesForStat(all);
-  check("returns goblin + standard + demon when all three exist", r1.length === 3);
-  check("includes goblin", r1.some((p) => p.odds_type === "goblin"));
-  check("includes standard", r1.some((p) => p.odds_type === "standard"));
-  check("includes lowest demon (30.5, not 33.5)",
+  const r1 = selectLinesForStat(all, "OVER");
+  check("OVER: returns goblin + standard + demon when all three exist", r1.length === 3);
+  check("OVER: includes goblin", r1.some((p) => p.odds_type === "goblin"));
+  check("OVER: includes standard", r1.some((p) => p.odds_type === "standard"));
+  check("OVER: includes lowest demon (30.5, not 33.5)",
     r1.some((p) => p.odds_type === "demon" && p.line === 30.5));
 
-  // b) Goblin + demon (no standard) → both selected.
+  // b) Same input on UNDER → demon excluded.
+  const r1u = selectLinesForStat(all, "UNDER");
+  check("UNDER: returns goblin + standard, no demon", r1u.length === 2);
+  check("UNDER: excludes demon entirely", r1u.every((p) => p.odds_type !== "demon"));
+
+  // c) Goblin + demon (no standard) on UNDER → just goblin.
   const goblinDemon = [
     { line: 24.5, odds_type: "goblin" },
     { line: 30.5, odds_type: "demon" },
   ];
-  const r2 = selectLinesForStat(goblinDemon);
-  check("goblin + demon returns both", r2.length === 2);
+  const r2 = selectLinesForStat(goblinDemon, "OVER");
+  check("OVER: goblin + demon returns both", r2.length === 2);
+  const r2u = selectLinesForStat(goblinDemon, "UNDER");
+  check("UNDER: goblin + demon returns just goblin", r2u.length === 1 && r2u[0].odds_type === "goblin");
 
-  // c) Standard + demon (no goblin) → both selected.
-  const standardDemon = [
-    { line: 27.5, odds_type: "standard" },
-    { line: 30.5, odds_type: "demon" },
-  ];
-  const r3 = selectLinesForStat(standardDemon);
-  check("standard + demon returns both", r3.length === 2);
-
-  // d) Demon-only → lowest demon (no fallback needed; demon path picks it).
+  // d) Demon-only on UNDER → fallback skips demons (so returns []), but on
+  //    OVER returns the lowest demon.
   const demonOnly = [
     { line: 30.5, odds_type: "demon" },
     { line: 28.5, odds_type: "demon" },
   ];
-  const r4 = selectLinesForStat(demonOnly);
-  check("demon-only returns lowest demon", r4.length === 1 && r4[0].line === 28.5);
+  const r4 = selectLinesForStat(demonOnly, "OVER");
+  check("OVER: demon-only returns lowest demon", r4.length === 1 && r4[0].line === 28.5);
+  const r4u = selectLinesForStat(demonOnly, "UNDER");
+  check("UNDER: demon-only returns empty (fallback skips demons)", r4u.length === 0);
+
+  // e) Default direction (omitted) behaves like OVER for back-compat.
+  const rDefault = selectLinesForStat(all);
+  check("default direction === OVER (includes demon)", rDefault.length === 3);
 
   // e) Multiple goblins → lowest wins.
   const multiGoblin = [

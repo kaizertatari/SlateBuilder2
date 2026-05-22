@@ -37,32 +37,41 @@ function buildCacheKey(player, fetchedAt, sortedStats, direction) {
 }
 
 /**
- * Choose which lines from a (player, stat) bucket get analyzed.
+ * Choose which lines from a (player, stat) bucket get analyzed for a
+ * given direction.
  *
- * Priority order:
+ * OVER selection (priority order):
  *   1. Lowest-line goblin (easier OVER, discount payout)
  *   2. Standard (regular price)
- *   3. Lowest-line demon (harder OVER, boosted payout)
+ *   3. Lowest-line demon (harder OVER, boosted payout — usually
+ *      pre-filter SKIPs but worth evaluating when math allows)
  *
- * All three price points are now analyzed. The engine's per-direction
- * verdict naturally handles each one — demons typically pre-filter SKIP
- * on OVER (line too far above baseline) but are real UNDER candidates
- * (line is higher, so UNDER has more cushion).
+ * UNDER selection:
+ *   1. Lowest-line goblin
+ *   2. Standard
+ *   Demons are intentionally excluded on UNDER — a demon's higher line
+ *   makes the UNDER trivially easier, which would generate inflated
+ *   tier counts without representing a real edge. Operator only takes
+ *   demons on OVER.
  *
- * Fallback: if none of the three odds_types exist for the stat — rare,
- * usually a newly-published combo prop — return the lowest available
- * line of any type so the bucket isn't silently dropped.
+ * Fallback: if none of the eligible odds_types exist for the stat —
+ * rare, usually a newly-published combo prop — return the lowest
+ * available line of any type so the bucket isn't silently dropped.
  *
- * Dedupe: if any two land on the same numeric line (rare but possible
- * with promo lines), return one entry per distinct line.
+ * Dedupe: if any two of the chosen lines land on the same numeric line
+ * (rare but possible with promo pricing), return one entry per
+ * distinct line.
  *
  * Exported so the smoke test can re-derive the same selection from the
- * raw lines JSON.
+ * raw lines JSON. `direction` is optional; when omitted, defaults to
+ * the OVER selection (3 price points) for back-compatibility with
+ * callers that don't yet thread direction through.
  *
  * @param {Array<Object>} props  props for one (player, stat) bucket
+ * @param {"OVER"|"UNDER"} [direction="OVER"]  direction for which to pick lines
  * @returns {Array<Object>} 0-3 chosen line objects
  */
-export function selectLinesForStat(props) {
+export function selectLinesForStat(props, direction = "OVER") {
   if (!Array.isArray(props) || props.length === 0) return [];
   const lowestByType = (type) =>
     props
@@ -70,7 +79,9 @@ export function selectLinesForStat(props) {
       .sort((a, b) => a.line - b.line)[0] ?? null;
   const goblin = lowestByType("goblin");
   const standard = lowestByType("standard");
-  const demon = lowestByType("demon");
+  // Demons are OVER-only. UNDER picks never see them — the higher line
+  // makes UNDER trivially easier without representing a real edge.
+  const demon = direction === "UNDER" ? null : lowestByType("demon");
   const chosen = [];
   const seenLines = new Set();
   const tryAdd = (entry) => {
@@ -83,7 +94,12 @@ export function selectLinesForStat(props) {
   tryAdd(standard);
   tryAdd(demon);
   if (chosen.length === 0) {
-    const fallback = [...props].sort((a, b) => a.line - b.line)[0];
+    // Fallback only when no goblin AND no standard exist; on UNDER this
+    // means we never fall back to a demon (would defeat the gate).
+    const candidates = direction === "UNDER"
+      ? props.filter((p) => p.odds_type !== "demon")
+      : props;
+    const fallback = [...candidates].sort((a, b) => a.line - b.line)[0];
     if (fallback) chosen.push(fallback);
   }
   return chosen;
@@ -237,20 +253,30 @@ async function handlePost(req, reqId) {
 
      for (const [stat, props] of buckets) {
        if (tasks.length >= MAX_LINES) break;
-       const chosenLines = selectLinesForStat(props);
-       if (chosenLines.length === 0) continue;
+       // Direction-aware line selection: demons are OVER-only, so each
+       // direction may pick a different set of lines from the same bucket.
+       // Seed the per-direction selections once so the loop body below can
+       // bail early when both directions are empty.
+       const perDirection = new Map();
+       for (const dir of directions) {
+         perDirection.set(dir, selectLinesForStat(props, dir));
+       }
+       const anyLines = [...perDirection.values()].some((arr) => arr.length > 0);
+       if (!anyLines) continue;
 
        // Fetch the player-wide groundTruth on first stat we see. Reuse for
        // every subsequent bucket — caches inside gatherGroundTruth would
        // make repeated calls cheap, but batching needs ONE shared object
-       // anyway.
+       // anyway. Seed with the first direction's first chosen line.
        if (!sharedGroundTruth) {
+         const firstDir = directions.find((d) => perDirection.get(d)?.length > 0);
+         const seedLine = perDirection.get(firstDir)[0].line;
          const r = await gatherGroundTruth({
            player,
-           propType: `${stat} ${directions[0]}`,
+           propType: `${stat} ${firstDir}`,
            // groundTruth is line-agnostic except for the prop_type/line metadata
            // (overwritten per-task below), so any chosen line works as a seed.
-           line: chosenLines[0].line,
+           line: seedLine,
          });
          if (r.skipReason) {
            // Player-wide skip — record and stop building tasks.
@@ -262,11 +288,12 @@ async function handlePost(req, reqId) {
          sharedPlayerInfo = r.playerInfo ?? null;
        }
 
-       for (const chosen of chosenLines) {
+       for (const dir of directions) {
          if (tasks.length >= MAX_LINES) break;
-         const game = `${chosen.player_team || ""} @ ${chosen.opponent || ""}`;
-         for (const dir of directions) {
+         const chosenLines = perDirection.get(dir) || [];
+         for (const chosen of chosenLines) {
            if (tasks.length >= MAX_LINES) break;
+           const game = `${chosen.player_team || ""} @ ${chosen.opponent || ""}`;
            tasks.push({
              id: `${stat}-${dir}-${chosen.line}`,
              player,
