@@ -243,13 +243,26 @@ export async function gatherGroundTruth({ player, propType, line }) {
  * @param {number} params.line - Prop line value
  * @returns {Promise<Object>} Ground truth data or skip reason
  */
-// skipReasons that indicate a transient upstream blip (typically an ESPN
-// scoreboard fetch that crossed the 8s jsonFetch timeout). gatherGroundTruth
-// catches its own errors and returns these instead of throwing — without
-// retry, a single slow ESPN response drops the whole player. Persistent
-// skips (player_not_configured, no_upcoming_game) stay in the no-retry
-// path so we don't waste time on definitive misses.
-const RETRIABLE_SKIP_REASONS = new Set(["schedule_unavailable"]);
+// skipReasons that indicate a transient upstream blip — typically an
+// upstream fetch (ESPN scoreboard, ESPN gamelog, balldontlie, stats edge)
+// that crossed an 8s timeout under parallel load. gatherGroundTruth
+// catches its own errors and returns these instead of throwing, so the
+// exception-only retry loop alone never recovers them.
+//
+// - schedule_unavailable: ESPN scoreboard fetch returned null.
+// - player_lookup_failed: balldontlie + stats edge BOTH returned no
+//   team_abbr (NBA path). At least one is a transient class.
+// - no_current_season_games: WNBA gamelog returned empty. Genuinely
+//   persistent in early WNBA season, but the same skipReason also fires
+//   when ESPN gamelog times out — worth one retry.
+//
+// Persistent skips (player_not_configured, no_upcoming_game) stay in the
+// no-retry path so we don't waste time on definitive misses.
+const RETRIABLE_SKIP_REASONS = new Set([
+  "schedule_unavailable",
+  "player_lookup_failed",
+  "no_current_season_games",
+]);
 
 export async function gatherGroundTruthWithRetry(
   { player, propType, line },
