@@ -49,7 +49,7 @@ const LEAGUES = ["NBA", "WNBA"];
 export default function App() {
   const [league, setLeague] = useState("NBA");
   // Multi-player selection. Order preserved so the chip row is stable;
-  // duplicates are prevented at selectPlayer time.
+  // togglePlayer is the single mutation site so duplicates can't accrete.
   const [players, setPlayers] = useState([]);
   const [playerQuery, setPlayerQuery] = useState("");
   const [playerOpen, setPlayerOpen] = useState(false);
@@ -178,11 +178,12 @@ export default function App() {
 
   const filteredPlayers = useMemo(() => {
     const q = playerQuery.trim().toLowerCase();
-    // Hide already-selected players so the dropdown doesn't show duplicates.
-    const available = leaguePlayers.filter((p) => !players.includes(p));
-    if (!q) return available;
-    return available.filter((p) => p.toLowerCase().includes(q));
-  }, [playerQuery, leaguePlayers, players]);
+    // Show every league+game-filtered player. Each row carries its own
+    // checkbox so selected players stay in the list (parity with the
+    // Stats/Odds multi-selects).
+    if (!q) return leaguePlayers;
+    return leaguePlayers.filter((p) => p.toLowerCase().includes(q));
+  }, [playerQuery, leaguePlayers]);
 
   // top_10 narrowed by the Odds filter. Display-only — tier_counts above
   // still reflects the full analyzed pool so the operator can see the
@@ -242,15 +243,18 @@ export default function App() {
     setSelectedOdds(allOddsSelected ? [] : [...ODDS_TYPES]);
   };
 
-  const selectPlayer = (name) => {
-    setPlayers((cur) => (cur.includes(name) ? cur : [...cur, name]));
-    setPlayerQuery("");
-    setPlayerOpen(false);
-    setPlayerHighlight(0);
-  };
-
   const removePlayer = (name) => {
     setPlayers((cur) => cur.filter((p) => p !== name));
+  };
+
+  // Multi-select toggle for the player dropdown rows. Keeps the dropdown
+  // open and the search query intact so the user can keep
+  // checking/unchecking without losing their place — matches Stats/Odds
+  // behavior.
+  const togglePlayer = (name) => {
+    setPlayers((cur) =>
+      cur.includes(name) ? cur.filter((p) => p !== name) : [...cur, name]
+    );
   };
 
   // True when every currently-visible player (league + game filtered) is
@@ -284,7 +288,9 @@ export default function App() {
     } else if (e.key === "Enter") {
       if (playerOpen && filteredPlayers[playerHighlight]) {
         e.preventDefault();
-        selectPlayer(filteredPlayers[playerHighlight]);
+        // Toggle to match the checkbox click behavior — Enter on an
+        // already-selected highlighted row unchecks it.
+        togglePlayer(filteredPlayers[playerHighlight]);
       }
     } else if (e.key === "Escape") {
       setPlayerOpen(false);
@@ -619,33 +625,54 @@ export default function App() {
                         fontStyle: "italic",
                       }}
                     >
-                      {players.length > 0
-                        ? "(all visible players selected)"
-                        : "(no players match)"}
+                      (no players match)
                     </li>
                   ) : (
-                    filteredPlayers.map((p, i) => (
-                      <li
-                        key={p}
-                        id={`player-opt-${i}`}
-                        role="option"
-                        aria-selected={i === playerHighlight}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          selectPlayer(p);
-                        }}
-                        onMouseEnter={() => setPlayerHighlight(i)}
-                        style={{
-                          padding: "8px 12px",
-                          fontSize: 12,
-                          cursor: "pointer",
-                          background: i === playerHighlight ? "#0066cc" : "transparent",
-                          color: i === playerHighlight ? "#ffffff" : "#c8d8e8",
-                        }}
-                      >
-                        {p}
-                      </li>
-                    ))
+                    filteredPlayers.map((p, i) => {
+                      const checked = players.includes(p);
+                      const highlighted = i === playerHighlight;
+                      // Highlight (keyboard nav) overrides selection tint
+                      // so the focused row stays visible regardless of
+                      // checkbox state. Selected-but-not-focused rows use
+                      // the same #0066cc22 tint as the other multi-selects.
+                      const bg = highlighted
+                        ? "#0066cc"
+                        : checked
+                        ? "#0066cc22"
+                        : "transparent";
+                      const fg = highlighted ? "#ffffff" : "#c8d8e8";
+                      return (
+                        <li
+                          key={p}
+                          id={`player-opt-${i}`}
+                          role="option"
+                          aria-selected={checked}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            togglePlayer(p);
+                          }}
+                          onMouseEnter={() => setPlayerHighlight(i)}
+                          style={{
+                            padding: "8px 12px",
+                            fontSize: 12,
+                            cursor: "pointer",
+                            background: bg,
+                            color: fg,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            readOnly
+                            style={{ cursor: "pointer" }}
+                          />
+                          {p}
+                        </li>
+                      );
+                    })
                   )}
                 </ul>
               )}
