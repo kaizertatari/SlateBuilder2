@@ -131,41 +131,37 @@ await test("bucketize by canonical stat", () => {
   if (buckets.size === 0) throw new Error("no buckets after stat mapping");
   return { note: `${buckets.size} stats: ${[...buckets.keys()].join(", ")}` };
 });
-await test("selectLinesForStat picks goblin/standard correctly", () => {
+await test("selectLinesForStat picks goblin + standard + demon correctly", () => {
   if (buckets.size === 0) return { skip: "no buckets" };
-  let goblinPicks = 0, standardPicks = 0, fallbackPicks = 0;
+  let goblinPicks = 0, standardPicks = 0, demonPicks = 0, fallbackPicks = 0;
   for (const [stat, props] of buckets) {
     const chosen = selectLinesForStat(props);
     if (chosen.length === 0) throw new Error(`${stat}: selection returned empty array`);
-    if (chosen.length > 2) throw new Error(`${stat}: selection returned ${chosen.length} (>2)`);
+    if (chosen.length > 3) throw new Error(`${stat}: selection returned ${chosen.length} (>3)`);
     const goblinPresent = props.some((p) => p.odds_type === "goblin");
     const standardPresent = props.some((p) => p.odds_type === "standard");
+    const demonPresent = props.some((p) => p.odds_type === "demon");
     // Verify the chosen entries reflect what PrizePicks actually published.
     for (const c of chosen) {
       if (!props.includes(c)) throw new Error(`${stat}: chosen entry not in source bucket`);
       if (c.odds_type === "goblin") goblinPicks += 1;
       else if (c.odds_type === "standard") standardPicks += 1;
+      else if (c.odds_type === "demon") demonPicks += 1;
       else fallbackPicks += 1;
     }
-    // When both goblin and standard exist, both must be in the chosen set
-    // (unless they collapsed to the same numeric line).
-    if (goblinPresent && standardPresent) {
-      const lowestGoblin = props.filter((p) => p.odds_type === "goblin").sort((a, b) => a.line - b.line)[0];
-      const lowestStandard = props.filter((p) => p.odds_type === "standard").sort((a, b) => a.line - b.line)[0];
-      const sameLine = lowestGoblin.line === lowestStandard.line;
-      if (!sameLine && chosen.length !== 2) {
-        throw new Error(`${stat}: goblin+standard both published but only ${chosen.length} chosen`);
-      }
-    }
-    // No demons should ever be selected when goblin/standard exist.
-    const hasGoblinOrStandard = goblinPresent || standardPresent;
-    if (hasGoblinOrStandard) {
-      for (const c of chosen) {
-        if (c.odds_type === "demon") throw new Error(`${stat}: demon chosen despite goblin/standard available`);
+    // The lowest demon should appear in the chosen set when demons are
+    // published (unless it collapses onto a goblin/standard line via dedupe).
+    if (demonPresent) {
+      const lowestDemon = props.filter((p) => p.odds_type === "demon").sort((a, b) => a.line - b.line)[0];
+      const sameAsGoblin = goblinPresent && chosen.some((c) => c.odds_type === "goblin" && c.line === lowestDemon.line);
+      const sameAsStandard = standardPresent && chosen.some((c) => c.odds_type === "standard" && c.line === lowestDemon.line);
+      const demonPicked = chosen.some((c) => c.odds_type === "demon");
+      if (!demonPicked && !sameAsGoblin && !sameAsStandard) {
+        throw new Error(`${stat}: demon ${lowestDemon.line} published but not in chosen set`);
       }
     }
   }
-  return { note: `goblin=${goblinPicks}, standard=${standardPicks}, fallback=${fallbackPicks}` };
+  return { note: `goblin=${goblinPicks}, standard=${standardPicks}, demon=${demonPicks}, fallback=${fallbackPicks}` };
 });
 
 // ─── 5. Ground truth ─────────────────────────────────────────────────────
@@ -360,19 +356,23 @@ await test("every top_10 entry maps back to a published line", () => {
   }
   return { note: `${body.top_10?.length || 0} entries verified` };
 });
-await test("no demon lines in top_10 when goblin/standard available", () => {
+await test("demon lines in top_10 use the lowest published demon", () => {
   if (!body || !sample) return { skip: "no analyze-all body" };
-  // For each (stat) that has at least one goblin or standard, no demon
-  // should appear in top_10 for that stat.
-  const hasNonDemon = new Set();
+  // Index of (stat → lowest demon line published). Any demon entry that
+  // surfaces in top_10 must be the lowest demon — otherwise the picker
+  // dropped a more favorable demon line.
+  const lowestDemonByStat = new Map();
   for (const p of sample.props) {
     const stat = mapPrizePicksStatType(p.stat_type);
-    if (!stat) continue;
-    if (p.odds_type === "goblin" || p.odds_type === "standard") hasNonDemon.add(stat);
+    if (!stat || p.odds_type !== "demon") continue;
+    const cur = lowestDemonByStat.get(stat);
+    if (cur == null || p.line < cur) lowestDemonByStat.set(stat, p.line);
   }
   for (const r of body.top_10 || []) {
-    if (r.odds_type === "demon" && hasNonDemon.has(r.prop_type)) {
-      throw new Error(`${r.player} ${r.prop_type}: demon ${r.line} ranked despite goblin/standard published`);
+    if (r.odds_type !== "demon") continue;
+    const expected = lowestDemonByStat.get(r.prop_type);
+    if (expected != null && r.line !== expected) {
+      throw new Error(`${r.player} ${r.prop_type}: demon ${r.line} ranked but lowest published demon is ${expected}`);
     }
   }
 });

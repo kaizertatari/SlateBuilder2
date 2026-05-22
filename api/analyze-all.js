@@ -42,21 +42,25 @@ function buildCacheKey(player, fetchedAt, sortedStats, direction) {
  * Priority order:
  *   1. Lowest-line goblin (easier OVER, discount payout)
  *   2. Standard (regular price)
- * Demon lines (harder OVER, boosted payout) are intentionally not analyzed.
+ *   3. Lowest-line demon (harder OVER, boosted payout)
  *
- * Fallback: if neither goblin nor standard exists for the stat — common
- * for combo props and newly-published stat types — return the lowest
- * available line of any type. Keeps coverage instead of silently dropping
- * the bucket.
+ * All three price points are now analyzed. The engine's per-direction
+ * verdict naturally handles each one — demons typically pre-filter SKIP
+ * on OVER (line too far above baseline) but are real UNDER candidates
+ * (line is higher, so UNDER has more cushion).
  *
- * Dedupe: if goblin and standard land on the same numeric line (rare but
- * possible), return one entry.
+ * Fallback: if none of the three odds_types exist for the stat — rare,
+ * usually a newly-published combo prop — return the lowest available
+ * line of any type so the bucket isn't silently dropped.
+ *
+ * Dedupe: if any two land on the same numeric line (rare but possible
+ * with promo lines), return one entry per distinct line.
  *
  * Exported so the smoke test can re-derive the same selection from the
  * raw lines JSON.
  *
  * @param {Array<Object>} props  props for one (player, stat) bucket
- * @returns {Array<Object>} 0-2 chosen line objects
+ * @returns {Array<Object>} 0-3 chosen line objects
  */
 export function selectLinesForStat(props) {
   if (!Array.isArray(props) || props.length === 0) return [];
@@ -66,9 +70,18 @@ export function selectLinesForStat(props) {
       .sort((a, b) => a.line - b.line)[0] ?? null;
   const goblin = lowestByType("goblin");
   const standard = lowestByType("standard");
+  const demon = lowestByType("demon");
   const chosen = [];
-  if (goblin) chosen.push(goblin);
-  if (standard && (!goblin || standard.line !== goblin.line)) chosen.push(standard);
+  const seenLines = new Set();
+  const tryAdd = (entry) => {
+    if (!entry) return;
+    if (seenLines.has(entry.line)) return;
+    seenLines.add(entry.line);
+    chosen.push(entry);
+  };
+  tryAdd(goblin);
+  tryAdd(standard);
+  tryAdd(demon);
   if (chosen.length === 0) {
     const fallback = [...props].sort((a, b) => a.line - b.line)[0];
     if (fallback) chosen.push(fallback);
@@ -78,9 +91,9 @@ export function selectLinesForStat(props) {
 
 // Per-player line budget. Each task is now one deterministic engine
 // invocation, so this caps the work per analyze-all request. The
-// realistic max is 9 stats × 2 lines × 2 dirs = 36; default 40
-// covers that with headroom.
-const MAX_LINES = parseInt(process.env.MAX_LINES_PER_PLAYER || "40", 10);
+// realistic max with goblin + standard + demon per stat is
+// 9 stats × 3 lines × 2 dirs = 54; default 60 covers that with headroom.
+const MAX_LINES = parseInt(process.env.MAX_LINES_PER_PLAYER || "60", 10);
 
 // (Engine-only branch: no LLM provider, no TPM pacing required.
 // Original Groq token-bucket pacing + Retry-After parser removed.)

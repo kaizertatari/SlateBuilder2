@@ -357,44 +357,46 @@ header("11b. R9 assist win-prob gate: regular [0.40, 0.75], playoff [0.35, 0.80]
     r9Fired(baseGT(0.30, true), "Points", "OVER", 15.5) === false);
 }
 
-// ─── 12. selectLinesForStat (goblin + standard) ──────────────────────────
-header("12. selectLinesForStat: goblin + standard selection");
+// ─── 12. selectLinesForStat (goblin + standard + demon) ──────────────────
+header("12. selectLinesForStat: goblin + standard + demon selection");
 {
-  // a) Both goblin and standard present → both selected, demon ignored.
-  const both = [
+  // a) All three types present → all three selected (lowest demon).
+  const all = [
     { line: 24.5, odds_type: "goblin" },
     { line: 27.5, odds_type: "standard" },
     { line: 30.5, odds_type: "demon" },
+    { line: 33.5, odds_type: "demon" },
   ];
-  const r1 = selectLinesForStat(both);
-  check("returns both goblin and standard when both exist", r1.length === 2);
+  const r1 = selectLinesForStat(all);
+  check("returns goblin + standard + demon when all three exist", r1.length === 3);
   check("includes goblin", r1.some((p) => p.odds_type === "goblin"));
   check("includes standard", r1.some((p) => p.odds_type === "standard"));
-  check("excludes demon", r1.every((p) => p.odds_type !== "demon"));
+  check("includes lowest demon (30.5, not 33.5)",
+    r1.some((p) => p.odds_type === "demon" && p.line === 30.5));
 
-  // b) Goblin only → just goblin.
-  const goblinOnly = [
+  // b) Goblin + demon (no standard) → both selected.
+  const goblinDemon = [
     { line: 24.5, odds_type: "goblin" },
     { line: 30.5, odds_type: "demon" },
   ];
-  const r2 = selectLinesForStat(goblinOnly);
-  check("goblin-only returns just goblin", r2.length === 1 && r2[0].odds_type === "goblin");
+  const r2 = selectLinesForStat(goblinDemon);
+  check("goblin + demon returns both", r2.length === 2);
 
-  // c) Standard only → just standard.
-  const standardOnly = [
+  // c) Standard + demon (no goblin) → both selected.
+  const standardDemon = [
     { line: 27.5, odds_type: "standard" },
     { line: 30.5, odds_type: "demon" },
   ];
-  const r3 = selectLinesForStat(standardOnly);
-  check("standard-only returns just standard", r3.length === 1 && r3[0].odds_type === "standard");
+  const r3 = selectLinesForStat(standardDemon);
+  check("standard + demon returns both", r3.length === 2);
 
-  // d) Demon only → fallback to lowest of any type.
+  // d) Demon-only → lowest demon (no fallback needed; demon path picks it).
   const demonOnly = [
     { line: 30.5, odds_type: "demon" },
     { line: 28.5, odds_type: "demon" },
   ];
   const r4 = selectLinesForStat(demonOnly);
-  check("demon-only falls back to lowest line", r4.length === 1 && r4[0].line === 28.5);
+  check("demon-only returns lowest demon", r4.length === 1 && r4[0].line === 28.5);
 
   // e) Multiple goblins → lowest wins.
   const multiGoblin = [
