@@ -16,6 +16,7 @@ import { STATS, mapPrizePicksStatType } from "./lib/prop-types.js";
 import { get as cacheGet, set as cacheSet } from "./lib/cache.js";
 import { preFilterMechanical } from "./lib/verdict-verifier.js";
 import { applyEngine } from "./lib/engine.js";
+import { selectLinesForStat, ALL_ODDS_TYPES } from "./lib/select-lines.js";
 import { logVerdict } from "./lib/verdict-logger.js";
 import { randomUUID } from "node:crypto";
 
@@ -36,8 +37,6 @@ function buildCacheKey(player, fetchedAt, sortedStats, direction, sortedOdds) {
   return `analyze-all:${normalizePlayer(player)}::${fetchedAt || "unknown"}::${sortedStats}::${direction}::${sortedOdds}`;
 }
 
-const ALL_ODDS_TYPES = ["goblin", "standard", "demon"];
-
 // Normalize an odds-types array into a sorted, deduped, lowercase tuple.
 // Used both for the cache key and for the request validator.
 function normalizeOddsTypes(arr) {
@@ -55,81 +54,13 @@ function normalizeOddsTypes(arr) {
   return out.length > 0 ? out.sort() : null;
 }
 
-/**
- * Choose which lines from a (player, stat) bucket get analyzed for a
- * given direction.
- *
- * OVER selection (priority order):
- *   1. Lowest-line goblin (easier OVER, discount payout)
- *   2. Standard (regular price)
- *   3. Lowest-line demon (harder OVER, boosted payout — usually
- *      pre-filter SKIPs but worth evaluating when math allows)
- *
- * UNDER selection:
- *   1. Lowest-line goblin
- *   2. Standard
- *   Demons are intentionally excluded on UNDER — a demon's higher line
- *   makes the UNDER trivially easier, which would generate inflated
- *   tier counts without representing a real edge. Operator only takes
- *   demons on OVER.
- *
- * Fallback: if none of the eligible odds_types exist for the stat —
- * rare, usually a newly-published combo prop — return the lowest
- * available line of any type so the bucket isn't silently dropped.
- *
- * Dedupe: if any two of the chosen lines land on the same numeric line
- * (rare but possible with promo pricing), return one entry per
- * distinct line.
- *
- * Exported so the smoke test can re-derive the same selection from the
- * raw lines JSON. `direction` is optional; when omitted, defaults to
- * the OVER selection (3 price points) for back-compatibility with
- * callers that don't yet thread direction through.
- *
- * @param {Array<Object>} props  props for one (player, stat) bucket
- * @param {"OVER"|"UNDER"} [direction="OVER"]  direction for which to pick lines
- * @returns {Array<Object>} 0-3 chosen line objects
- */
-export function selectLinesForStat(props, direction = "OVER", oddsTypes = null) {
-  if (!Array.isArray(props) || props.length === 0) return [];
-  // Resolve the set of requested odds types. null/empty = all three
-  // (back-compat for callers that don't pass the filter). UNDER drops
-  // demon regardless of request — the higher line makes UNDER trivially
-  // easier and would inflate tier counts.
-  const requested = new Set(
-    Array.isArray(oddsTypes) && oddsTypes.length > 0 ? oddsTypes : ALL_ODDS_TYPES
-  );
-  if (direction === "UNDER") requested.delete("demon");
-  if (requested.size === 0) return [];
-
-  const lowestByType = (type) =>
-    props
-      .filter((p) => p.odds_type === type)
-      .sort((a, b) => a.line - b.line)[0] ?? null;
-
-  const chosen = [];
-  const seenLines = new Set();
-  const tryAdd = (entry) => {
-    if (!entry) return;
-    if (seenLines.has(entry.line)) return;
-    seenLines.add(entry.line);
-    chosen.push(entry);
-  };
-  // Iterate in canonical order so the resulting list is stable across
-  // callers (engine-task building, smoke fixtures, etc.).
-  for (const t of ALL_ODDS_TYPES) {
-    if (requested.has(t)) tryAdd(lowestByType(t));
-  }
-  if (chosen.length === 0) {
-    // Fallback restricted to the requested odds types — picking demon-only
-    // on a bucket without a demon should not silently fall back to a goblin.
-    const fallback = props
-      .filter((p) => requested.has(p.odds_type))
-      .sort((a, b) => a.line - b.line)[0];
-    if (fallback) chosen.push(fallback);
-  }
-  return chosen;
-}
+// selectLinesForStat lives in ./lib/select-lines.js so the browser bundle
+// can preview the engine task count from the lines snapshot without
+// pulling in Node-only deps (rate-limit, request-context, lines-store,
+// engine, etc.). Re-exported above (in the top imports) so smoke tests +
+// existing callers that import from analyze-all.js continue to work.
+// See ./lib/select-lines.js for the full docstring.
+export { selectLinesForStat };
 
 // Per-player line budget. Each task is now one deterministic engine
 // invocation, so this caps the work per analyze-all request. The

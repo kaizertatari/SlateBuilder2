@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import playersData from "../data/players.json";
-import { STATS } from "../api/lib/prop-types.js";
+import { STATS, mapPrizePicksStatType } from "../api/lib/prop-types.js";
+import { selectLinesForStat } from "../api/lib/select-lines.js";
 import { readNewestCached, writeCached, clearStaleForPlayer, buildKey } from "./lib/result-cache.js";
 
 const TIER_ORDER = { S: 0, A: 1, B: 2, SKIP: 3 };
@@ -184,6 +185,56 @@ export default function App() {
     if (!q) return leaguePlayers;
     return leaguePlayers.filter((p) => p.toLowerCase().includes(q));
   }, [playerQuery, leaguePlayers]);
+
+  // Live preview of how much work this Analyze click will dispatch.
+  // Counts are derived from the in-memory PrizePicks slate by running the
+  // same selectLinesForStat used server-side, so numbers stay accurate
+  // even when filters narrow non-trivially (e.g. demon-only on a stat
+  // bucket without a demon → 0 lines). Stats/odds/players counts are
+  // simple lengths. propBuckets = distinct (player, stat) pairs that
+  // would build a task. linesToAnalyze = engine task count (props × the
+  // selected odds types after the per-bucket dedupe).
+  const filterStats = useMemo(() => {
+    const byPlayer = linesData?.data?.by_player || {};
+    const statSet = new Set(selectedStats);
+    let propBuckets = 0;
+    let linesToAnalyze = 0;
+    for (const playerName of players) {
+      const rawProps = byPlayer[playerName] || [];
+      // Group props for this player by canonical stat name. Cross-league
+      // entries are filtered by the backend; we don't bother here because
+      // the picker already scopes to one league.
+      const buckets = new Map();
+      for (const prop of rawProps) {
+        const stat = mapPrizePicksStatType(prop.stat_type);
+        if (!stat || !statSet.has(stat)) continue;
+        let arr = buckets.get(stat);
+        if (!arr) {
+          arr = [];
+          buckets.set(stat, arr);
+        }
+        arr.push(prop);
+      }
+      for (const [, propsForStat] of buckets) {
+        const chosen = selectLinesForStat(propsForStat, "OVER", selectedOdds);
+        if (chosen.length > 0) {
+          propBuckets += 1;
+          linesToAnalyze += chosen.length;
+        }
+      }
+    }
+    return {
+      players: players.length,
+      games: selectedGames.length,
+      gamesTotal: availableGames.length,
+      stats: selectedStats.length,
+      statsTotal: STATS.length,
+      odds: selectedOdds.length,
+      oddsTotal: ODDS_TYPES.length,
+      propBuckets,
+      linesToAnalyze,
+    };
+  }, [linesData, players, selectedStats, selectedOdds, selectedGames, availableGames]);
 
   // top_10 narrowed by the Odds filter. Display-only — tier_counts above
   // still reflects the full analyzed pool so the operator can see the
@@ -952,6 +1003,57 @@ export default function App() {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Filter Summary — live preview of selection state and dispatched
+              work. linesToAnalyze is the exact engine task count the Analyze
+              click will produce (matches what /api/analyze-all would build),
+              so the user can see filters shrink the workload in real time. */}
+          <div
+            style={{
+              background: "#0a1420",
+              border: "1px solid #1e3040",
+              padding: "10px 14px",
+              fontSize: 11,
+              color: "#446688",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 14,
+              letterSpacing: 1,
+            }}
+          >
+            <span style={{ color: "#8ab0cc" }}>
+              <span style={{ color: "#446688" }}>PLAYERS </span>
+              <strong style={{ color: "#c8d8e8" }}>{filterStats.players}</strong>
+            </span>
+            <span style={{ color: "#8ab0cc" }}>
+              <span style={{ color: "#446688" }}>GAMES </span>
+              <strong style={{ color: "#c8d8e8" }}>
+                {filterStats.games === 0
+                  ? `ALL${filterStats.gamesTotal > 0 ? ` (${filterStats.gamesTotal})` : ""}`
+                  : `${filterStats.games} / ${filterStats.gamesTotal}`}
+              </strong>
+            </span>
+            <span style={{ color: "#8ab0cc" }}>
+              <span style={{ color: "#446688" }}>STATS </span>
+              <strong style={{ color: "#c8d8e8" }}>
+                {filterStats.stats} / {filterStats.statsTotal}
+              </strong>
+            </span>
+            <span style={{ color: "#8ab0cc" }}>
+              <span style={{ color: "#446688" }}>ODDS </span>
+              <strong style={{ color: "#c8d8e8" }}>
+                {filterStats.odds} / {filterStats.oddsTotal}
+              </strong>
+            </span>
+            <span style={{ color: "#8ab0cc" }}>
+              <span style={{ color: "#446688" }}>PROPS </span>
+              <strong style={{ color: "#c8d8e8" }}>{filterStats.propBuckets}</strong>
+            </span>
+            <span style={{ color: filterStats.linesToAnalyze > 0 ? "#00FF88" : "#886644" }}>
+              <span style={{ color: "#446688" }}>LINES </span>
+              <strong>{filterStats.linesToAnalyze}</strong>
+            </span>
           </div>
 
           {/* Analyze Button */}
