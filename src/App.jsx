@@ -38,18 +38,25 @@ const LEAGUES = ["NBA", "WNBA"];
 
 export default function App() {
   const [league, setLeague] = useState("NBA");
-  const [player, setPlayer] = useState("");
+  // Multi-player selection. Order preserved so the chip row is stable;
+  // duplicates are prevented at selectPlayer time.
+  const [players, setPlayers] = useState([]);
   const [playerQuery, setPlayerQuery] = useState("");
   const [playerOpen, setPlayerOpen] = useState(false);
   const [playerHighlight, setPlayerHighlight] = useState(0);
   const [selectedStats, setSelectedStats] = useState([...STATS]);
   const [direction, setDirection] = useState("OVER");
   const [analyzing, setAnalyzing] = useState(false);
+  // {completed, total} during a multi-player run so the user can see
+  // progress as each per-player request lands. null when idle.
+  const [progress, setProgress] = useState(null);
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
   const [statsOpen, setStatsOpen] = useState(false);
   // "HIT" when served from sessionStorage or when server returned X-Cache:HIT.
   // "MISS" on a fresh network analysis. null on first render / between calls.
+  // For multi-player runs this reflects the worst case — if any player
+  // missed, we report MISS.
   const [cacheStatus, setCacheStatus] = useState(null);
 
   const allStatsSelected = selectedStats.length === STATS.length;
@@ -58,14 +65,16 @@ export default function App() {
 
   const filteredPlayers = useMemo(() => {
     const q = playerQuery.trim().toLowerCase();
-    if (!q) return leaguePlayers;
-    return leaguePlayers.filter((p) => p.toLowerCase().includes(q));
-  }, [playerQuery, leaguePlayers]);
+    // Hide already-selected players so the dropdown doesn't show duplicates.
+    const available = leaguePlayers.filter((p) => !players.includes(p));
+    if (!q) return available;
+    return available.filter((p) => p.toLowerCase().includes(q));
+  }, [playerQuery, leaguePlayers, players]);
 
   const handleLeagueChange = (next) => {
     if (next === league) return;
     setLeague(next);
-    setPlayer("");
+    setPlayers([]);
     setPlayerQuery("");
     setPlayerOpen(false);
     setPlayerHighlight(0);
@@ -75,10 +84,14 @@ export default function App() {
   };
 
   const selectPlayer = (name) => {
-    setPlayer(name);
-    setPlayerQuery(name);
+    setPlayers((cur) => (cur.includes(name) ? cur : [...cur, name]));
+    setPlayerQuery("");
     setPlayerOpen(false);
     setPlayerHighlight(0);
+  };
+
+  const removePlayer = (name) => {
+    setPlayers((cur) => cur.filter((p) => p !== name));
   };
 
   const handlePlayerKeyDown = (e) => {
@@ -96,7 +109,11 @@ export default function App() {
       }
     } else if (e.key === "Escape") {
       setPlayerOpen(false);
-      setPlayerQuery(player);
+      setPlayerQuery("");
+    } else if (e.key === "Backspace" && playerQuery === "" && players.length > 0) {
+      // Backspace on empty input removes the most recently added chip.
+      e.preventDefault();
+      removePlayer(players[players.length - 1]);
     }
   };
 
@@ -110,9 +127,36 @@ export default function App() {
     setSelectedStats(allStatsSelected ? [] : [...STATS]);
   };
 
+  // Fetch (or load from cache) a single player's analyze-all response.
+  // Returns { data, cacheStatus } or throws on hard error.
+  const analyzeOne = useCallback(async (playerName) => {
+    const cached = readNewestCached(playerName, selectedStats, direction);
+    if (cached) {
+      return { data: cached.data, cacheStatus: "HIT" };
+    }
+    const body = { player: playerName, statTypes: selectedStats, league };
+    if (direction === "OVER" || direction === "UNDER") body.direction = direction;
+
+    const response = await fetch("/api/analyze-all", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json();
+    if (data.error) throw new Error(`${playerName}: ${data.error}`);
+    if (!response.ok) throw new Error(data.error || "Request failed");
+
+    if (data.lines_fetched_at) {
+      const key = buildKey(playerName, data.lines_fetched_at, selectedStats, direction);
+      writeCached(key, data);
+      clearStaleForPlayer(key, playerName);
+    }
+    return { data, cacheStatus: response.headers.get("X-Cache") || "MISS" };
+  }, [selectedStats, direction, league]);
+
   const analyzeAll = useCallback(async () => {
-    if (!player) {
-      setError("Select a player.");
+    if (players.length === 0) {
+      setError("Select at least one player.");
       return;
     }
     if (selectedStats.length === 0) {
@@ -123,55 +167,82 @@ export default function App() {
     setError(null);
     setResults(null);
     setCacheStatus(null);
-
-    // Browser-side cache check. Same (player, statTypes, direction) within
-    // the current lines snapshot → return instantly, no server round-trip,
-    // no LLM tokens, no external API hits. Key is keyed on fetched_at so
-    // a cron-driven refresh invalidates everything automatically.
-    const cached = readNewestCached(player, selectedStats, direction);
-    if (cached) {
-      setResults(cached.data);
-      setCacheStatus("HIT");
-      return;
-    }
-
+    setProgress({ completed: 0, total: players.length });
     setAnalyzing(true);
 
     try {
-      const body = { player, statTypes: selectedStats, league };
-      if (direction === "OVER" || direction === "UNDER") body.direction = direction;
+      // Fan out per-player in parallel. Each request is one engine batch
+      // server-side; merging happens client-side so the existing /api/
+      // analyze-all signature stays unchanged.
+      const settled = await Promise.all(
+        players.map((p) =>
+          analyzeOne(p)
+            .then((r) => {
+              setProgress((cur) => cur && { ...cur, completed: cur.completed + 1 });
+              return { player: p, ok: true, ...r };
+            })
+            .catch((err) => {
+              setProgress((cur) => cur && { ...cur, completed: cur.completed + 1 });
+              return { player: p, ok: false, error: err.message };
+            })
+        )
+      );
 
-      const response = await fetch("/api/analyze-all", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      const successes = settled.filter((s) => s.ok);
+      const failures = settled.filter((s) => !s.ok);
 
-      const data = await response.json();
-
-      if (data.error) throw new Error(data.error);
-      if (!response.ok) throw new Error(data.error || "Request failed");
-
-      setResults(data);
-      // Reflect server-side cache status. A fresh tab can still hit the
-      // server's in-memory cache if another user already analyzed this
-      // (player, fetched_at, …) combo on the same warm instance.
-      setCacheStatus(response.headers.get("X-Cache") || "MISS");
-
-      // Persist for repeat clicks in this tab. Skip if the response is
-      // missing lines_fetched_at (defensive — shouldn't happen after
-      // server-side rollout).
-      if (data.lines_fetched_at) {
-        const key = buildKey(player, data.lines_fetched_at, selectedStats, direction);
-        writeCached(key, data);
-        clearStaleForPlayer(key, player);
+      if (successes.length === 0) {
+        throw new Error(failures.map((f) => f.error).join(" | "));
       }
+
+      // Merge each player's response into one combined view. tier_counts
+      // sums; top_10 concatenates then re-sorts (tier rank, then conf desc)
+      // and slices to 10. errors/skipped concatenate.
+      const merged = {
+        total_analyzed: 0,
+        total_s_a: 0,
+        tier_counts: { S: 0, A: 0, B: 0, SKIP: 0, UNKNOWN: 0 },
+        top_10: [],
+        skipped: [],
+        errors: [],
+        lines_fetched_at: successes[0].data.lines_fetched_at ?? null,
+      };
+      for (const s of successes) {
+        const d = s.data;
+        merged.total_analyzed += d.total_analyzed || 0;
+        merged.total_s_a += d.total_s_a || 0;
+        if (d.tier_counts) {
+          for (const k of Object.keys(merged.tier_counts)) {
+            merged.tier_counts[k] += d.tier_counts[k] || 0;
+          }
+        }
+        if (Array.isArray(d.top_10)) merged.top_10.push(...d.top_10);
+        if (Array.isArray(d.skipped)) merged.skipped.push(...d.skipped.map((x) => ({ ...x, _player: s.player })));
+        if (Array.isArray(d.errors)) merged.errors.push(...d.errors);
+      }
+      // Network-level failures show up alongside the server's per-task errors.
+      for (const f of failures) merged.errors.push({ task: f.player, error: f.error });
+
+      // Re-rank the combined top picks across all players.
+      merged.top_10.sort((a, b) => {
+        const ta = TIER_ORDER[a.tier] ?? 9;
+        const tb = TIER_ORDER[b.tier] ?? 9;
+        if (ta !== tb) return ta - tb;
+        return (b.confidence || 0) - (a.confidence || 0);
+      });
+      merged.top_10 = merged.top_10.slice(0, 10);
+
+      setResults(merged);
+      // If ALL players hit cache we report HIT; any miss → MISS.
+      const anyMiss = successes.some((s) => s.cacheStatus !== "HIT");
+      setCacheStatus(anyMiss ? "MISS" : "HIT");
     } catch (e) {
       setError(`Error: ${e.message}`);
     } finally {
       setAnalyzing(false);
+      setProgress(null);
     }
-  }, [player, selectedStats, direction, league]);
+  }, [players, selectedStats, analyzeOne]);
 
   return (
     <div style={{
@@ -229,9 +300,55 @@ export default function App() {
             })}
           </div>
 
-          {/* Player Select */}
+          {/* Player Multi-Select — chips above, search below */}
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <div style={{ position: "relative", flex: 1, minWidth: 180 }}>
+              {players.length > 0 && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 6,
+                    marginBottom: 8,
+                  }}
+                >
+                  {players.map((p) => (
+                    <span
+                      key={p}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        background: "#0066cc",
+                        color: "#ffffff",
+                        padding: "4px 8px",
+                        fontSize: 11,
+                        letterSpacing: 0.5,
+                        border: "1px solid #0088ff",
+                      }}
+                    >
+                      {p}
+                      <button
+                        type="button"
+                        onClick={() => removePlayer(p)}
+                        aria-label={`Remove ${p}`}
+                        style={{
+                          background: "transparent",
+                          color: "#ffffff",
+                          border: "none",
+                          padding: 0,
+                          margin: 0,
+                          cursor: "pointer",
+                          fontSize: 14,
+                          lineHeight: 1,
+                        }}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
               <input
                 type="text"
                 value={playerQuery}
@@ -240,16 +357,14 @@ export default function App() {
                   setPlayerOpen(true);
                   setPlayerHighlight(0);
                 }}
-                onFocus={(e) => {
+                onFocus={() => {
                   setPlayerOpen(true);
-                  e.target.select();
                 }}
                 onBlur={() => {
                   setPlayerOpen(false);
-                  if (playerQuery !== player) setPlayerQuery(player);
                 }}
                 onKeyDown={handlePlayerKeyDown}
-                placeholder="— SEARCH PLAYER —"
+                placeholder={players.length > 0 ? "— ADD ANOTHER PLAYER —" : "— SEARCH PLAYER —"}
                 role="combobox"
                 aria-expanded={playerOpen}
                 aria-controls="player-listbox"
@@ -428,7 +543,13 @@ export default function App() {
               transition: "all 0.15s",
             }}
           >
-            {analyzing ? "ANALYZING..." : "ANALYZE ALL LINES"}
+            {analyzing
+              ? progress
+                ? `ANALYZING... (${progress.completed}/${progress.total})`
+                : "ANALYZING..."
+              : players.length > 1
+                ? `ANALYZE ${players.length} PLAYERS`
+                : "ANALYZE ALL LINES"}
           </button>
         </div>
 
@@ -454,10 +575,12 @@ export default function App() {
             textAlign: "center",
           }}>
             <div style={{ color: "#4488aa", fontSize: 11, letterSpacing: 3, marginBottom: 8 }}>
-              RUNNING BATCH MODEL
+              RUNNING ENGINE
             </div>
             <div style={{ color: "#446688", fontSize: 11 }}>
-              Analyzing PrizePicks lines... This may take up to 30 seconds.
+              {progress
+                ? `${progress.completed} of ${progress.total} player${progress.total === 1 ? "" : "s"} analyzed`
+                : "Analyzing PrizePicks lines..."}
             </div>
           </div>
         )}
