@@ -1,9 +1,19 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import playersData from "../data/players.json";
 import { STATS } from "../api/lib/prop-types.js";
 import { readNewestCached, writeCached, clearStaleForPlayer, buildKey } from "./lib/result-cache.js";
 
 const TIER_ORDER = { S: 0, A: 1, B: 2, SKIP: 3 };
+
+// Tier visual style is derived in one place so the table cell, justification
+// block, and tier_counts row stay in lockstep when colors are tweaked.
+const TIER_STYLE = {
+  S: { color: "#FFD700", bg: "#2a2200", border: "#FFD70044" },
+  A: { color: "#00FF88", bg: "#002218", border: "#00FF8844" },
+  B: { color: "#4488FF", bg: "#001a33", border: "#4488FF44" },
+};
+
+const ODDS_TYPES = ["goblin", "standard", "demon"];
 
 const selectStyle = {
   background: "#0a1420",
@@ -45,8 +55,20 @@ export default function App() {
   const [playerOpen, setPlayerOpen] = useState(false);
   const [playerHighlight, setPlayerHighlight] = useState(0);
   const [selectedStats, setSelectedStats] = useState([...STATS]);
-  const [direction, setDirection] = useState("OVER");
+  // Direction is hard-coded to OVER. UNDER analysis was removed from the
+  // UI — the operator only takes OVER picks.
   const [analyzing, setAnalyzing] = useState(false);
+  // Slate metadata fetched from /api/lines on mount + league change. Drives
+  // the Game filter dropdown and constrains the player picker to the roster
+  // of players who actually have lines published in the selected games.
+  const [linesData, setLinesData] = useState(null);
+  // Canonical game keys (alpha-sorted abbr pair, e.g. "BOS|LAL"). Empty
+  // selection = no filter (all players visible).
+  const [selectedGames, setSelectedGames] = useState([]);
+  const [gamesOpen, setGamesOpen] = useState(false);
+  // Odds-type filter for the displayed top picks. Default: all three.
+  const [selectedOdds, setSelectedOdds] = useState([...ODDS_TYPES]);
+  const [oddsOpen, setOddsOpen] = useState(false);
   // {completed, total} during a multi-player run so the user can see
   // progress as each per-player request lands. null when idle.
   const [progress, setProgress] = useState(null);
@@ -60,8 +82,68 @@ export default function App() {
   const [cacheStatus, setCacheStatus] = useState(null);
 
   const allStatsSelected = selectedStats.length === STATS.length;
+  const allOddsSelected = selectedOdds.length === ODDS_TYPES.length;
 
-  const leaguePlayers = PLAYERS_BY_LEAGUE[league] ?? [];
+  // Fetch the PrizePicks slate so we can populate the Game filter and
+  // constrain the player picker to players who actually have lines tonight.
+  // Re-run on league change to refresh the game list. The endpoint reads
+  // from blob (or bundled fallback) — cheap; no need to debounce.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/lines")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled) setLinesData(d || null);
+      })
+      .catch(() => {
+        if (!cancelled) setLinesData(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Derive the unique games list for the active league. The scraper writes
+  // two game entries per matchup (one per team perspective: "BOS@LAL" and
+  // "LAL@BOS"). Collapse to one canonical entry per pair using an alpha-sort
+  // key, then preserve the raw gameKeys + player set so filters can fan out.
+  const availableGames = useMemo(() => {
+    const games = linesData?.data?.games || {};
+    const byCanonical = new Map();
+    for (const [gameKey, info] of Object.entries(games)) {
+      if (!info || info.league !== league) continue;
+      const cleanKey = gameKey.replace(/^WNBA:/, "");
+      const parts = cleanKey.split("@");
+      if (parts.length !== 2) continue;
+      const [a, b] = parts;
+      const canonical = [a, b].sort().join("|");
+      let entry = byCanonical.get(canonical);
+      if (!entry) {
+        entry = { canonical, label: `${a} @ ${b}`, gameKeys: [], players: new Set() };
+        byCanonical.set(canonical, entry);
+      }
+      entry.gameKeys.push(gameKey);
+      for (const prop of info.props || []) {
+        const name = prop.player_key || prop.player;
+        if (name) entry.players.add(name);
+      }
+    }
+    return [...byCanonical.values()].sort((a, b) => a.label.localeCompare(b.label));
+  }, [linesData, league]);
+
+  // Players visible in the picker — narrowed to selected games when at
+  // least one game is picked. Empty selection means "no game filter".
+  const leaguePlayers = useMemo(() => {
+    const all = PLAYERS_BY_LEAGUE[league] ?? [];
+    if (selectedGames.length === 0) return all;
+    const allowed = new Set();
+    for (const g of availableGames) {
+      if (selectedGames.includes(g.canonical)) {
+        for (const p of g.players) allowed.add(p);
+      }
+    }
+    return all.filter((name) => allowed.has(name));
+  }, [league, selectedGames, availableGames]);
 
   const filteredPlayers = useMemo(() => {
     const q = playerQuery.trim().toLowerCase();
@@ -71,6 +153,17 @@ export default function App() {
     return available.filter((p) => p.toLowerCase().includes(q));
   }, [playerQuery, leaguePlayers, players]);
 
+  // top_10 narrowed by the Odds filter. Display-only — tier_counts above
+  // still reflects the full analyzed pool so the operator can see the
+  // distribution they're filtering against.
+  const displayedTop10 = useMemo(() => {
+    const list = results?.top_10 ?? [];
+    if (list.length === 0) return [];
+    if (allOddsSelected) return list;
+    const allowed = new Set(selectedOdds);
+    return list.filter((r) => allowed.has(r.odds_type));
+  }, [results, selectedOdds, allOddsSelected]);
+
   const handleLeagueChange = (next) => {
     if (next === league) return;
     setLeague(next);
@@ -78,9 +171,44 @@ export default function App() {
     setPlayerQuery("");
     setPlayerOpen(false);
     setPlayerHighlight(0);
+    setSelectedGames([]);
     setResults(null);
     setError(null);
     setCacheStatus(null);
+  };
+
+  const toggleGame = (canonical) => {
+    setSelectedGames((cur) =>
+      cur.includes(canonical) ? cur.filter((g) => g !== canonical) : [...cur, canonical]
+    );
+    // Clear the chip row when narrowing — the user is reshuffling the
+    // available pool, and stale selections from games they're now hiding
+    // would silently survive into the request body.
+    setPlayers((cur) => {
+      if (cur.length === 0) return cur;
+      const next = canonical;
+      const stillSelected = selectedGames.includes(next)
+        ? selectedGames.filter((g) => g !== next)
+        : [...selectedGames, next];
+      if (stillSelected.length === 0) return cur;
+      const allowed = new Set();
+      for (const g of availableGames) {
+        if (stillSelected.includes(g.canonical)) {
+          for (const p of g.players) allowed.add(p);
+        }
+      }
+      return cur.filter((p) => allowed.has(p));
+    });
+  };
+
+  const toggleOdds = (odds) => {
+    setSelectedOdds((cur) =>
+      cur.includes(odds) ? cur.filter((o) => o !== odds) : [...cur, odds]
+    );
+  };
+
+  const toggleAllOdds = () => {
+    setSelectedOdds(allOddsSelected ? [] : [...ODDS_TYPES]);
   };
 
   const selectPlayer = (name) => {
@@ -129,13 +257,15 @@ export default function App() {
 
   // Fetch (or load from cache) a single player's analyze-all response.
   // Returns { data, cacheStatus } or throws on hard error.
+  //
+  // Direction is fixed to "OVER" — the UNDER UI path was removed. The
+  // backend still accepts UNDER, but every UI-initiated request is OVER.
   const analyzeOne = useCallback(async (playerName) => {
-    const cached = readNewestCached(playerName, selectedStats, direction);
+    const cached = readNewestCached(playerName, selectedStats, "OVER");
     if (cached) {
       return { data: cached.data, cacheStatus: "HIT" };
     }
-    const body = { player: playerName, statTypes: selectedStats, league };
-    if (direction === "OVER" || direction === "UNDER") body.direction = direction;
+    const body = { player: playerName, statTypes: selectedStats, league, direction: "OVER" };
 
     const response = await fetch("/api/analyze-all", {
       method: "POST",
@@ -147,12 +277,12 @@ export default function App() {
     if (!response.ok) throw new Error(data.error || "Request failed");
 
     if (data.lines_fetched_at) {
-      const key = buildKey(playerName, data.lines_fetched_at, selectedStats, direction);
+      const key = buildKey(playerName, data.lines_fetched_at, selectedStats, "OVER");
       writeCached(key, data);
       clearStaleForPlayer(key, playerName);
     }
     return { data, cacheStatus: response.headers.get("X-Cache") || "MISS" };
-  }, [selectedStats, direction, league]);
+  }, [selectedStats, league]);
 
   const analyzeAll = useCallback(async () => {
     if (players.length === 0) {
@@ -421,16 +551,169 @@ export default function App() {
             </div>
           </div>
 
-          {/* Direction */}
-          <select
-            value={direction}
-            onChange={(e) => setDirection(e.target.value)}
-            style={{ ...selectStyle, flex: undefined, width: "100%", boxSizing: "border-box" }}
-          >
-            <option value="OVER">OVER ONLY</option>
-            <option value="UNDER">UNDER ONLY</option>
-            <option value="BOTH">BOTH DIRECTIONS</option>
-          </select>
+          {/* Game Multi-Select — pulled from /api/lines on mount. Filters
+              the player picker to players who have lines in the selected
+              games. Empty selection = no filter (all players visible). */}
+          <div style={{ position: "relative" }}>
+            <div
+              onClick={() => setGamesOpen(!gamesOpen)}
+              style={{
+                ...selectStyle,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                cursor: "pointer",
+              }}
+            >
+              <span style={{ fontSize: 12 }}>
+                {availableGames.length === 0
+                  ? "— NO GAMES AVAILABLE —"
+                  : selectedGames.length === 0
+                  ? "ALL GAMES"
+                  : selectedGames.length === 1
+                  ? availableGames.find((g) => g.canonical === selectedGames[0])?.label || "1 GAME"
+                  : `${selectedGames.length} GAMES SELECTED`}
+              </span>
+              <span style={{ fontSize: 10, color: "#446688" }}>
+                {gamesOpen ? "▲" : "▼"}
+              </span>
+            </div>
+            {gamesOpen && availableGames.length > 0 && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 2px)",
+                  left: 0,
+                  right: 0,
+                  background: "#0a1420",
+                  border: "1px solid #1e3040",
+                  padding: "8px 0",
+                  zIndex: 10,
+                  maxHeight: 300,
+                  overflowY: "auto",
+                }}
+              >
+                {availableGames.map((g) => (
+                  <label
+                    key={g.canonical}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "6px 12px",
+                      fontSize: 12,
+                      cursor: "pointer",
+                      background: selectedGames.includes(g.canonical) ? "#0066cc22" : "transparent",
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      toggleGame(g.canonical);
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedGames.includes(g.canonical)}
+                      readOnly
+                      style={{ cursor: "pointer" }}
+                    />
+                    {g.label}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Odds Multi-Select — display filter on the result rows. Default
+              all three selected (goblin + standard + demon). Empty
+              selection = hide all results (same as unchecking everything
+              on the stats picker). tier_counts ignores this filter. */}
+          <div style={{ position: "relative" }}>
+            <div
+              onClick={() => setOddsOpen(!oddsOpen)}
+              style={{
+                ...selectStyle,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                cursor: "pointer",
+              }}
+            >
+              <span style={{ fontSize: 12 }}>
+                {selectedOdds.length === 0
+                  ? "— SELECT ODDS —"
+                  : allOddsSelected
+                  ? "ALL ODDS"
+                  : selectedOdds.map((o) => o.toUpperCase()).join(", ")}
+              </span>
+              <span style={{ fontSize: 10, color: "#446688" }}>
+                {oddsOpen ? "▲" : "▼"}
+              </span>
+            </div>
+            {oddsOpen && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 2px)",
+                  left: 0,
+                  right: 0,
+                  background: "#0a1420",
+                  border: "1px solid #1e3040",
+                  padding: "8px 0",
+                  zIndex: 10,
+                }}
+              >
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "6px 12px",
+                    fontSize: 12,
+                    cursor: "pointer",
+                    background: allOddsSelected ? "#0066cc22" : "transparent",
+                  }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    toggleAllOdds();
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={allOddsSelected}
+                    readOnly
+                    style={{ cursor: "pointer" }}
+                  />
+                  <strong>SELECT ALL</strong>
+                </label>
+                {ODDS_TYPES.map((o) => (
+                  <label
+                    key={o}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "6px 12px",
+                      fontSize: 12,
+                      cursor: "pointer",
+                      background: selectedOdds.includes(o) ? "#0066cc22" : "transparent",
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      toggleOdds(o);
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedOdds.includes(o)}
+                      readOnly
+                      style={{ cursor: "pointer" }}
+                    />
+                    {o.toUpperCase()}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Stat Multi-Select */}
           <div style={{ position: "relative" }}>
@@ -601,7 +884,7 @@ export default function App() {
             }}>
               <span>Analyzed: {results.total_analyzed} lines</span>
               <span>S/A/B Tier: {results.total_s_a} picks</span>
-              <span>Showing: {Math.min(results.top_10?.length || 0, 10)} results</span>
+              <span>Showing: {displayedTop10.length} results</span>
               {cacheStatus && (
                 <span style={{ color: cacheStatus === "HIT" ? "#00FF88" : "#446688" }}>
                   Cache: {cacheStatus}
@@ -688,7 +971,7 @@ export default function App() {
             )}
 
             {/* Table */}
-            {results.top_10 && results.top_10.length > 0 ? (
+            {displayedTop10.length > 0 ? (
               <div style={{ overflowX: "auto" }}>
                 <table style={{
                   width: "100%",
@@ -708,16 +991,15 @@ export default function App() {
                     </tr>
                   </thead>
                   <tbody>
-                    {results.top_10.map((r, i) => {
-                      const tierColor = r.tier === "S" ? "#FFD700" : r.tier === "A" ? "#00FF88" : "#4488FF";
+                    {displayedTop10.map((r, i) => {
+                      const style = TIER_STYLE[r.tier] ?? { color: "#4488FF", bg: "#001a33", border: "#4488FF44" };
                       const oddsColor =
                         r.odds_type === "demon" ? "#FF6644" :
                         r.odds_type === "goblin" ? "#00FF88" :
                         r.odds_type === "standard" ? "#c8d8e8" : "#446688";
                       const oddsLabel = r.odds_type ? r.odds_type.toUpperCase() : "—";
-                      const bgColor = r.tier === "S" ? "#2a2200" : r.tier === "A" ? "#002218" : "#001133";
                       return (
-                        <tr key={i} style={{ background: i % 2 === 0 ? "#0a1420" : bgColor, borderBottom: "1px solid #1e3040" }}>
+                        <tr key={i} style={{ background: i % 2 === 0 ? "#0a1420" : style.bg, borderBottom: "1px solid #1e3040" }}>
                           <td style={{ padding: "8px 10px", color: "#446688" }}>{i + 1}</td>
                           <td style={{ padding: "8px 10px", fontWeight: "bold" }}>{r.player}</td>
                           <td style={{ padding: "8px 10px", fontSize: 11 }}>{r.game}</td>
@@ -726,10 +1008,10 @@ export default function App() {
                           <td style={{ padding: "8px 10px", textAlign: "center", color: oddsColor, fontWeight: "bold" }}>
                             {oddsLabel}
                           </td>
-                          <td style={{ padding: "8px 10px", textAlign: "center", color: tierColor, fontWeight: "bold" }}>
-                            {r.tier === "S" ? "S-TIER" : "A-TIER"}
+                          <td style={{ padding: "8px 10px", textAlign: "center", color: style.color, fontWeight: "bold" }}>
+                            {r.tier ? `${r.tier}-TIER` : "—"}
                           </td>
-                          <td style={{ padding: "8px 10px", textAlign: "right", color: tierColor, fontWeight: "bold" }}>
+                          <td style={{ padding: "8px 10px", textAlign: "right", color: style.color, fontWeight: "bold" }}>
                             {r.confidence}%
                           </td>
                         </tr>
@@ -740,25 +1022,28 @@ export default function App() {
 
                 {/* Justifications (expandable) */}
                 <div style={{ marginTop: 16 }}>
-                  {results.top_10.map((r, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        background: r.tier === "S" ? "#2a2200" : "#002218",
-                        border: `1px solid ${r.tier === "S" ? "#FFD70044" : "#00FF8844"}`,
-                        marginBottom: 8,
-                        padding: "10px 14px",
-                        fontSize: 11,
-                        lineHeight: 1.6,
-                        color: "#c8d8e8",
-                      }}
-                    >
-                      <div style={{ marginBottom: 4, fontWeight: "bold", color: r.tier === "S" ? "#FFD700" : "#00FF88" }}>
-                        #{i + 1} {r.player} - {r.prop_type} {r.verdict} ({r.line}) - {r.tier === "S" ? "S-TIER" : "A-TIER"} {r.confidence}%
+                  {displayedTop10.map((r, i) => {
+                    const style = TIER_STYLE[r.tier] ?? { color: "#4488FF", bg: "#001a33", border: "#4488FF44" };
+                    return (
+                      <div
+                        key={i}
+                        style={{
+                          background: style.bg,
+                          border: `1px solid ${style.border}`,
+                          marginBottom: 8,
+                          padding: "10px 14px",
+                          fontSize: 11,
+                          lineHeight: 1.6,
+                          color: "#c8d8e8",
+                        }}
+                      >
+                        <div style={{ marginBottom: 4, fontWeight: "bold", color: style.color }}>
+                          #{i + 1} {r.player} - {r.prop_type} {r.verdict} ({r.line}) - {r.tier ? `${r.tier}-TIER` : "—"} {r.confidence}%
+                        </div>
+                        <div style={{ color: "#8ab0cc" }}>{r.justification}</div>
                       </div>
-                      <div style={{ color: "#8ab0cc" }}>{r.justification}</div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ) : (
@@ -770,7 +1055,11 @@ export default function App() {
                 fontSize: 12,
                 color: "#446688",
               }}>
-                <div>No S-Tier or A-Tier picks found for the selected filters.</div>
+                <div>
+                  {(results.top_10?.length || 0) > 0 && displayedTop10.length === 0
+                    ? "No picks match the selected Odds filter."
+                    : "No S-Tier, A-Tier, or B-Tier picks found for the selected filters."}
+                </div>
                 {results.tier_counts && (() => {
                   const tc = results.tier_counts;
                   const nonZero = Object.entries(tc).filter(([, n]) => n > 0);
