@@ -118,6 +118,13 @@ export function logVerdict({
     current_series_n: groundTruth?.l5?.weighted?.current_series_n ?? 0,
     current_series_avg: pickAvg(groundTruth?.l5?.weighted?.current_series_averages, input?.propType),
     l5_mode: groundTruth?.l5?.weighted?.mode ?? null,
+    // Outlier-dampener provenance. `outlier_present` was previously only
+    // consulted internally to widen the OVER buffer (and now to demote
+    // UNDER tiers); surfacing it + the reference type lets calibration
+    // queries correlate hit rate against L5 volatility and verify the
+    // playoff-reference fix didn't over-trigger.
+    outlier_present: !!groundTruth?.l5?.weighted?.outlier_present,
+    outlier_ref_type: groundTruth?.l5?.weighted?.outlier_ref_type ?? null,
     // Move 3 — regular-season H2H baseline. n=0 when playoff path or no
     // matchup history; non-zero only when current-season gamelog had
     // games against tonight's opponent. h2h_avg is null when the gate

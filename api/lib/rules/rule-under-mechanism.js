@@ -20,6 +20,48 @@
 
 import { computeFtFloorCheck, FT_FLOOR_PROPS } from "./_helpers.js";
 
+// Symmetric one-tier demote when the L5 sample has an outlier vs the
+// player's relevant points reference. The OVER buffer already widens
+// when outlier_present fires; UNDER previously had no parallel
+// adjustment. Tighten the gate one step:
+//   tier_cap === null (S possible) → "A"
+//   "A" → "B"
+//   "B" → SKIP (hard_skip)
+// SKIP unchanged. The demote rationale is that a recent points outlier
+// signals usage/role volatility, which makes mechanism-only UNDER calls
+// less reliable in either direction (a hot game can repeat; a cold one
+// can reverse).
+function demoteForOutlier(result) {
+  if (!result.fired) return result;
+  const append = " Outlier present in L5 → demoted one tier.";
+  if (result.tier_cap == null) {
+    return {
+      ...result,
+      tier_cap: "A",
+      flag: (result.flag ? result.flag + " " : "") + "⚠️ L5 outlier — S→A",
+      justification_part: (result.justification_part ?? "") + append,
+    };
+  }
+  if (result.tier_cap === "A") {
+    return {
+      ...result,
+      tier_cap: "B",
+      flag: (result.flag ? result.flag + " " : "") + "⚠️ L5 outlier — A→B",
+      justification_part: (result.justification_part ?? "") + append,
+    };
+  }
+  if (result.tier_cap === "B") {
+    return {
+      ...result,
+      tier_cap: "SKIP",
+      hard_skip: true,
+      flag: (result.flag ? result.flag + " " : "") + "⚠️ L5 outlier + low-tier mechanism — SKIP",
+      justification_part: (result.justification_part ?? "") + " Outlier present + single low-tier mechanism → SKIP.",
+    };
+  }
+  return result;
+}
+
 export function apply(ctx) {
   const { groundTruth, statType, direction, line } = ctx;
   if (direction !== "UNDER") return { fired: false, rule_id: "under-mechanism" };
@@ -29,6 +71,7 @@ export function apply(ctx) {
   const m2 = !!mechs.mech2?.confirmed;
   const m3 = !!mechs.mech3?.confirmed;
   const count = (m1 ? 1 : 0) + (m2 ? 1 : 0) + (m3 ? 1 : 0);
+  const outlierPresent = !!groundTruth?.l5?.weighted?.outlier_present;
 
   // Special case: Points/PRA UNDER with a comfortable FT-floor margin
   // gives the verdict a numeric foundation that the framework treats
@@ -61,8 +104,9 @@ export function apply(ctx) {
   if (m3) fragments.push("Mech 3 (matchup)");
   if (ftFloorClears && fragments.length === 0) fragments.push("5i FT-floor clear");
 
+  let result;
   if (count >= 3) {
-    return {
+    result = {
       fired: true,
       rule_id: "under-mechanism",
       tier_cap: null,            // allow S consideration
@@ -70,9 +114,8 @@ export function apply(ctx) {
       flag: null,
       justification_part: `UNDER mechanism gate — 3 mechanisms confirmed (${fragments.join(", ")}); S possible.`,
     };
-  }
-  if (count === 2) {
-    return {
+  } else if (count === 2) {
+    result = {
       fired: true,
       rule_id: "under-mechanism",
       tier_cap: "A",
@@ -80,10 +123,9 @@ export function apply(ctx) {
       flag: null,
       justification_part: `UNDER mechanism gate — 2 mechanisms confirmed (${fragments.join(", ")}); A-tier max.`,
     };
-  }
-  // Single-mechanism cases.
-  if (m1 || ftFloorClears) {
-    return {
+  } else if (m1 || ftFloorClears) {
+    // Single-mechanism Mech 1, or FT-floor clearance for Points/PRA.
+    result = {
       fired: true,
       rule_id: "under-mechanism",
       tier_cap: "A",
@@ -91,14 +133,17 @@ export function apply(ctx) {
       flag: null,
       justification_part: `UNDER mechanism gate — ${ftFloorClears ? "5i FT-floor clears comfortably" : "Mech 1 (minutes) confirmed"}; A-tier max.`,
     };
+  } else {
+    // Mech 2 alone or Mech 3 alone → B-tier max with SKIP advisory.
+    result = {
+      fired: true,
+      rule_id: "under-mechanism",
+      tier_cap: "B",
+      confidence_delta: -ctx.weights.suppressor_penalty,
+      flag: `⚠️ UNDER mechanism single-signal (${m2 ? "Mech 2" : "Mech 3"} only) — B-tier max, SKIP advisory`,
+      justification_part: `UNDER mechanism gate — only ${m2 ? "Mech 2 (role)" : "Mech 3 (matchup)"} confirmed; B-tier max with SKIP advisory.`,
+    };
   }
-  // Mech 2 alone or Mech 3 alone → B-tier max with SKIP advisory.
-  return {
-    fired: true,
-    rule_id: "under-mechanism",
-    tier_cap: "B",
-    confidence_delta: -ctx.weights.suppressor_penalty,
-    flag: `⚠️ UNDER mechanism single-signal (${m2 ? "Mech 2" : "Mech 3"} only) — B-tier max, SKIP advisory`,
-    justification_part: `UNDER mechanism gate — only ${m2 ? "Mech 2 (role)" : "Mech 3 (matchup)"} confirmed; B-tier max with SKIP advisory.`,
-  };
+
+  return outlierPresent ? demoteForOutlier(result) : result;
 }

@@ -157,8 +157,15 @@ function assignSeriesNumbers(games, opponentAbbr, ownAbbr) {
  * @param {Array<Object>} params.games  L5 games (newest-first). Each game
  *   should carry per-game stats {pts, reb, ast, fgm, fga, ftm, fta, blk,
  *   stl, tov, minutes, pra, matchup}.
- * @param {number|null} params.seasonPpg  Season points-per-game (drives the
- *   outlier dampener). Null disables outlier dampening.
+ * @param {number|null} params.seasonPpg  Regular-season points-per-game.
+ *   Used as the outlier reference outside playoff mode, and as the playoff
+ *   fallback when no playoffPpg is supplied. Null disables outlier dampening.
+ * @param {number|null} params.playoffPpg  Current playoff PPG (typically
+ *   the raw mean of l5.games when l5.season_type === "Playoffs" and
+ *   l5.n >= 5). When non-null AND `series` is present, this becomes the
+ *   outlier reference instead of `seasonPpg` — a player whose playoff
+ *   usage shifts shouldn't be flagged as "anomalous" for performing at
+ *   their playoff norm. Null = fall back to seasonPpg.
  * @param {string|null} params.ownAbbr  Player's own team abbreviation
  *   (used to parse opponent out of matchup strings).
  * @param {Object|null} params.series  Playoff series context, if any
@@ -168,13 +175,20 @@ function assignSeriesNumbers(games, opponentAbbr, ownAbbr) {
  *   from the current-season snapshot. Used for the regular-season opponent
  *   quality multiplier. Per-game lookups are a deliberate v3.5 limitation
  *   (uses current-season as a proxy).
- * @returns {{averages: Object, raw_vs_weighted_delta: Object, outlier_present: boolean, mode: string}|null}
+ * @returns {{averages: Object, raw_vs_weighted_delta: Object, outlier_present: boolean, outlier_ref_type: string, mode: string}|null}
  *   Null when `games` is empty.
  */
-export function computeWeightedL5({ games, seasonPpg, ownAbbr, series, defRankByAbbr }) {
+export function computeWeightedL5({ games, seasonPpg, playoffPpg, ownAbbr, series, defRankByAbbr }) {
   if (!Array.isArray(games) || games.length === 0) return null;
 
   const isPlayoff = !!series;
+  // Outlier reference: in playoff mode prefer the player's current playoff
+  // PPG so an anomaly is judged against the player's playoff norm, not
+  // their regular-season norm (which may diverge materially for stars
+  // whose usage spikes in postseason). Falls back to seasonPpg when no
+  // playoffPpg is provided.
+  const outlierRef = (isPlayoff && playoffPpg != null) ? playoffPpg : seasonPpg;
+  const outlierRefType = (isPlayoff && playoffPpg != null) ? "playoff_l5" : "regular_season";
 
   // Decide mode + per-game opponent multipliers up front so callers can
   // emit the correct diagnostic flag without re-deriving.
@@ -212,7 +226,8 @@ export function computeWeightedL5({ games, seasonPpg, ownAbbr, series, defRankBy
     return {
       averages: raw,
       raw_vs_weighted_delta: zeroDelta(raw),
-      outlier_present: hasOutlier(games, seasonPpg),
+      outlier_present: hasOutlier(games, outlierRef),
+      outlier_ref_type: outlierRefType,
       mode,
     };
   }
@@ -231,7 +246,7 @@ export function computeWeightedL5({ games, seasonPpg, ownAbbr, series, defRankBy
   const rawWeights = games.map((g, i) => {
     const recency = RECENCY_RAMP[i] ?? 0;
     const groupMul = perGameMultipliers[i] ?? 1.0;
-    const outMul = outlierMultiplier(g?.pts ?? null, seasonPpg);
+    const outMul = outlierMultiplier(g?.pts ?? null, outlierRef);
     const matchMul = perOpponentMatch[i] ?? 1.0;
     return recency * groupMul * outMul * matchMul;
   });
@@ -303,7 +318,8 @@ export function computeWeightedL5({ games, seasonPpg, ownAbbr, series, defRankBy
   return {
     averages,
     raw_vs_weighted_delta: delta,
-    outlier_present: hasOutlier(games, seasonPpg),
+    outlier_present: hasOutlier(games, outlierRef),
+    outlier_ref_type: outlierRefType,
     mode,
     // null when not playoff_series or sample too small. Rule 5a only
     // blends when present.

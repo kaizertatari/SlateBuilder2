@@ -527,5 +527,120 @@ console.log("\n[s] H2H blend — never fires in playoff_L5 context");
     `got ${buf.governing}`);
 }
 
+// (t) Playoff outlier reference — when l5.weighted.outlier_ref_type is
+// "playoff_l5", outlier_present judges games against the playoff norm,
+// not the regular-season norm. Verifies directly via computeWeightedL5
+// rather than through applyEngine so the threshold math is exposed.
+console.log("\n[t] Playoff outlier reference vs regular-season");
+{
+  const { computeWeightedL5 } = await import("../api/lib/weighted-l5.js");
+  const playoffGames = [
+    { pts: 30, reb: 10, ast: 5, fgm: 11, fga: 22, fg3a: 4, ftm: 8, fta: 10, blk: 1, stl: 1, tov: 3, minutes: 36, matchup: "OKC @ SAS" },
+    { pts: 32, reb: 12, ast: 4, fgm: 12, fga: 24, fg3a: 4, ftm: 8, fta: 10, blk: 2, stl: 1, tov: 3, minutes: 36, matchup: "OKC vs SAS" },
+    { pts: 28, reb: 9, ast: 6, fgm: 10, fga: 20, fg3a: 3, ftm: 8, fta: 10, blk: 1, stl: 1, tov: 3, minutes: 35, matchup: "OKC @ SAS" },
+    { pts: 31, reb: 11, ast: 5, fgm: 11, fga: 22, fg3a: 4, ftm: 9, fta: 11, blk: 2, stl: 2, tov: 3, minutes: 36, matchup: "OKC vs SAS" },
+    { pts: 29, reb: 10, ast: 5, fgm: 11, fga: 22, fg3a: 3, ftm: 7, fta: 9, blk: 1, stl: 1, tov: 3, minutes: 35, matchup: "OKC @ SAS" },
+  ];
+  // Regular-season ppg=22, playoff raw mean=30 → at reg-season ref every
+  // game crosses 1.5×22=33 only on the 32 case... so let's verify against
+  // both: with playoff ref (~30), nothing is >1.5×30=45 or <0.5×30=15 →
+  // outlier_present=false. With regular ref alone (no playoffPpg) the
+  // same games are below 1.5×22=33 except 33 which is not present, so
+  // still false. Use a sharper case below to verify the SHIFT.
+  const reg = computeWeightedL5({
+    games: playoffGames, seasonPpg: 18, playoffPpg: null, ownAbbr: "OKC",
+    series: { opponent_abbr: "SAS", next_game_number: 4 },
+  });
+  // Reg-season ref=18 → 1.5×18=27. All games 28-32 > 27 → ALL are hot outliers
+  assert("[t1] reg-season ref alone flags playoff games as outliers", reg.outlier_present === true);
+  assert("[t1] outlier_ref_type === regular_season", reg.outlier_ref_type === "regular_season");
+
+  const playoff = computeWeightedL5({
+    games: playoffGames, seasonPpg: 18, playoffPpg: 30, ownAbbr: "OKC",
+    series: { opponent_abbr: "SAS", next_game_number: 4 },
+  });
+  // Playoff ref=30 → 1.5×30=45, 0.5×30=15. None of 28-32 cross → no outlier.
+  assert("[t2] playoff ref calms the false positive", playoff.outlier_present === false);
+  assert("[t2] outlier_ref_type === playoff_l5", playoff.outlier_ref_type === "playoff_l5");
+}
+
+// (u) playoffPpg fallback — when playoffPpg is null (e.g., l5.n < 5 in
+// the caller), the function falls back to seasonPpg even in playoff mode.
+console.log("\n[u] Playoff outlier ref falls back to seasonPpg when playoffPpg null");
+{
+  const { computeWeightedL5 } = await import("../api/lib/weighted-l5.js");
+  const games = [
+    { pts: 20, reb: 5, ast: 5, fgm: 8, fga: 18, fg3a: 3, ftm: 4, fta: 5, blk: 1, stl: 1, tov: 2, minutes: 32, matchup: "OKC @ SAS" },
+    { pts: 22, reb: 6, ast: 4, fgm: 9, fga: 19, fg3a: 3, ftm: 4, fta: 5, blk: 1, stl: 1, tov: 2, minutes: 33, matchup: "OKC vs SAS" },
+    { pts: 19, reb: 5, ast: 5, fgm: 8, fga: 18, fg3a: 2, ftm: 3, fta: 4, blk: 1, stl: 1, tov: 2, minutes: 32, matchup: "OKC @ SAS" },
+  ];
+  const w = computeWeightedL5({
+    games, seasonPpg: 20, playoffPpg: null, ownAbbr: "OKC",
+    series: { opponent_abbr: "SAS", next_game_number: 4 },
+  });
+  // Reaches playoff_raw_fallback (vsCurrentOpp < 3 since opponent parsing
+  // sees 'OKC' as own, 'SAS' or '@'/'vs' get filtered, so opp is 'SAS' on
+  // all 3 games... actually OKC@SAS parses SAS as opponent for OKC's perspective.
+  // Three games vs SAS = vsCurrentOpp=3 = playoff_series mode. With games.length=3
+  // mode is playoff_series. outlier_ref_type should be regular_season.
+  assert("[u] outlier_ref_type falls back to regular_season when playoffPpg null", w.outlier_ref_type === "regular_season");
+}
+
+// (v) UNDER outlier demote — A→B when outlier_present + mechanism stack
+// that would normally yield A-tier (2 mechanisms).
+console.log("\n[v] UNDER outlier demote — A→B");
+{
+  const v = applyEngine({
+    groundTruth: gt({
+      home_away: "home",
+      season: { averages: { ppg: 16, rpg: 8, apg: 3, pa: 19, pra: 27, fta: 3, ft_pct: 0.7 } },
+      l5: {
+        type: "Regular Season", n: 5,
+        averages: { ppg: 16, rpg: 8, apg: 3 },
+        weighted: { averages: { ppg: 16 }, outlier_present: true, outlier_ref_type: "regular_season" },
+        games: [],
+      },
+      opponent_defense: { def_rank: 8 },
+      mechanisms: {
+        mech1: { confirmed: true, restriction: 24 },  // minutes restriction
+        mech2: { confirmed: true, teammate: "X", teammate_ppg: 18, status: "OUT" },
+        mech3: { confirmed: false },
+        opponent_starters_out: 0,
+      },
+    }),
+    statType: "Rebounds", direction: "UNDER", line: 7.5,
+  });
+  // 2 mechanisms → A-tier, demoted to B by outlier_present.
+  assert("[v] outlier+2mech demotes to B", v.tier === "B", `got ${v.tier}`);
+  assert("[v] L5 outlier flag present", v.flags.some(f => /L5 outlier/.test(f)));
+}
+
+// (w) UNDER outlier demote — B→SKIP when outlier_present + Mech 3 alone
+// (single low-tier mechanism that would normally yield B-advisory).
+console.log("\n[w] UNDER outlier demote — Mech 3 alone + outlier → SKIP");
+{
+  const v = applyEngine({
+    groundTruth: gt({
+      home_away: "home",
+      season: { averages: { ppg: 16, rpg: 8, apg: 3, pa: 19, pra: 27, fta: 3, ft_pct: 0.7 } },
+      l5: {
+        type: "Regular Season", n: 5,
+        averages: { ppg: 16, rpg: 8, apg: 3 },
+        weighted: { averages: { ppg: 16 }, outlier_present: true, outlier_ref_type: "regular_season" },
+        games: [],
+      },
+      opponent_defense: { def_rank: 2 },
+      mechanisms: {
+        mech1: { confirmed: false },
+        mech2: { confirmed: false },
+        mech3: { confirmed: true, def_rank: 2, top_tier: 5 },
+        opponent_starters_out: 0,
+      },
+    }),
+    statType: "Rebounds", direction: "UNDER", line: 10.5,
+  });
+  assert("[w] outlier+Mech3-alone → SKIP", v.verdict === "SKIP", `got ${v.verdict}/${v.tier}`);
+}
+
 console.log(`\n=== smoke-engine: ${passed} pass, ${failed} fail ===`);
 process.exit(failed > 0 ? 1 : 0);

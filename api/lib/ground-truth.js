@@ -107,9 +107,18 @@ export function composeGroundTruth(params) {
       // v3.5 weighted baseline (recency × opponent/series × outlier). Null
       // when l5.games is empty; otherwise consumed by Rule 5a/5f/S-tier
       // baseline checks and the LLM via groundTruth.l5.weighted.
+      //
+      // Outlier reference: in playoff mode with a full 5-game playoff L5
+      // sample, derive the outlier reference from the player's playoff
+      // points directly (raw mean of l5.games). Below n=5 we fall back to
+      // seasonPpg — a 1-4 game playoff sample is too noisy to anchor the
+      // dampener against. See weighted-l5.js docstring for the rationale.
       weighted: computeWeightedL5({
         games: l5.games ?? [],
         seasonPpg: seasonAvg?.ppg ?? null,
+        playoffPpg: (l5.season_type === "Playoffs" && (l5.n ?? 0) >= 5)
+          ? playoffL5MeanPts(l5.games)
+          : null,
         ownAbbr: playerAbbr,
         series: seriesWithOpponent,
         defRankByAbbr: defRankByAbbr ?? null,
@@ -188,6 +197,24 @@ export function composeGroundTruth(params) {
   if (needsWinProb(propType) && !groundTruth.win_prob) missing.push("win_prob");
 
   return { groundTruth, missing };
+}
+
+// Raw mean of pts across L5 games. Used as the playoff outlier reference
+// when l5.season_type === "Playoffs" and n >= 5 — so the dampener judges
+// playoff games against the player's playoff norm rather than their
+// (often lower) regular-season norm. Returns null when no games carry a
+// pts value, in which case the caller falls back to seasonPpg.
+function playoffL5MeanPts(games) {
+  if (!Array.isArray(games) || games.length === 0) return null;
+  let sum = 0;
+  let n = 0;
+  for (const g of games) {
+    const p = g?.pts;
+    if (p == null) continue;
+    sum += p;
+    n++;
+  }
+  return n === 0 ? null : sum / n;
 }
 
 // FanDuel-style fantasy score per the user direction. Returns null when
