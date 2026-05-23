@@ -253,7 +253,7 @@
     "league": "WNBA"
   },
   "Ashten Prechtel": {
-    "nba": null,
+    "nba": 1641695,
     "espn": 4433634,
     "bbref": "prechas01w",
     "team_abbr": "PHX",
@@ -926,7 +926,7 @@
     "league": "WNBA"
   },
   "Grace VanSlooten": {
-    "nba": null,
+    "nba": 1643453,
     "espn": 5105731,
     "bbref": "vanslgr01w",
     "team_abbr": "SEA",
@@ -1322,7 +1322,7 @@
     "league": "NBA"
   },
   "Jordan Harrison": {
-    "nba": null,
+    "nba": 1643527,
     "espn": 5108051,
     "bbref": "harrijo05w",
     "team_abbr": "POR",
@@ -1907,7 +1907,7 @@
     "nba": 1630108,
     "espn": 3904479,
     "bbref": "fasouma01w",
-    "team_abbr": "GS",
+    "team_abbr": "TOR",
     "league": "WNBA"
   },
   "Marina Mabrey": {
@@ -2459,6 +2459,13 @@
     "espn": 4703794,
     "bbref": "barkesa01w",
     "team_abbr": "POR",
+    "league": "WNBA"
+  },
+  "Satou Sabally": {
+    "nba": 1630149,
+    "espn": 4281929,
+    "bbref": null,
+    "team_abbr": "NY",
     "league": "WNBA"
   },
   "Saylor Poffenbarger": {
