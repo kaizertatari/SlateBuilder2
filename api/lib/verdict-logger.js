@@ -182,7 +182,7 @@ export function logEvent({ level, source, message, errorName, errorStatus, conte
 // --- internals ------------------------------------------------------------
 
 function ingest(token, event) {
-  const dataset = process.env.AXIOM_DATASET || "props-verdicts";
+  const dataset = process.env.AXIOM_DATASET || "props_verdict";
   // Dangling promise on purpose — do NOT await. Catch network errors so
   // they never escape as unhandled rejections; surface non-2xx responses
   // (bad token, missing dataset) as warnings so misconfiguration doesn't
