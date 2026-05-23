@@ -26,3 +26,4 @@ dist-ssr
 .vercel
 .env*.local
 .claude/
+CLAUDE.local.md
