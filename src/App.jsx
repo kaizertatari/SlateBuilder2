@@ -15,6 +15,7 @@ const TIER_STYLE = {
 };
 
 const ODDS_TYPES = ["goblin", "standard", "demon"];
+const DIRECTIONS = ["OVER", "UNDER"];
 
 const selectStyle = {
   background: "#0a1420",
@@ -56,8 +57,11 @@ export default function App() {
   const [playerOpen, setPlayerOpen] = useState(false);
   const [playerHighlight, setPlayerHighlight] = useState(0);
   const [selectedStats, setSelectedStats] = useState([...STATS]);
-  // Direction is hard-coded to OVER. UNDER analysis was removed from the
-  // UI — the operator only takes OVER picks.
+  // Direction filter — pre-analysis. Both selected = backend fans out to
+  // OVER + UNDER (omits the direction field in the body); single selected
+  // pins the request to one side. Empty = blocked at submit time.
+  const [selectedDirections, setSelectedDirections] = useState([...DIRECTIONS]);
+  const [directionsOpen, setDirectionsOpen] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   // Slate metadata fetched from /api/lines on mount + league change. Drives
   // the Game filter dropdown and constrains the player picker to the roster
@@ -78,6 +82,7 @@ export default function App() {
   const playerRef = useRef(null);
   const gamesRef = useRef(null);
   const oddsRef = useRef(null);
+  const directionsRef = useRef(null);
   const statsRef = useRef(null);
   // {completed, total} during a multi-player run so the user can see
   // progress as each per-player request lands. null when idle.
@@ -93,6 +98,7 @@ export default function App() {
 
   const allStatsSelected = selectedStats.length === STATS.length;
   const allOddsSelected = selectedOdds.length === ODDS_TYPES.length;
+  const allDirectionsSelected = selectedDirections.length === DIRECTIONS.length;
 
   // Close any open dropdown when the user clicks outside its container.
   // The `playerOpen` state is also closed by the input's onBlur, which is
@@ -104,6 +110,7 @@ export default function App() {
         [playerOpen, playerRef, setPlayerOpen],
         [gamesOpen, gamesRef, setGamesOpen],
         [oddsOpen, oddsRef, setOddsOpen],
+        [directionsOpen, directionsRef, setDirectionsOpen],
         [statsOpen, statsRef, setStatsOpen],
       ];
       for (const [isOpen, ref, close] of tuples) {
@@ -114,7 +121,7 @@ export default function App() {
     }
     document.addEventListener("mousedown", handleMouseDown);
     return () => document.removeEventListener("mousedown", handleMouseDown);
-  }, [playerOpen, gamesOpen, oddsOpen, statsOpen]);
+  }, [playerOpen, gamesOpen, oddsOpen, directionsOpen, statsOpen]);
 
   // Fetch the PrizePicks slate so we can populate the Game filter and
   // constrain the player picker to players who actually have lines tonight.
@@ -216,9 +223,18 @@ export default function App() {
         arr.push(prop);
       }
       for (const [, propsForStat] of buckets) {
-        const chosen = selectLinesForStat(propsForStat, "OVER", selectedOdds);
-        if (chosen.length > 0) {
-          propBuckets += 1;
+        // Each selected direction may pick a different subset of lines
+        // from the same bucket (UNDER strips demon, OVER doesn't, etc.).
+        // Count a bucket once if ANY direction yields lines; sum lines
+        // across all selected directions for the engine task estimate.
+        let bucketCounted = false;
+        for (const dir of selectedDirections) {
+          const chosen = selectLinesForStat(propsForStat, dir, selectedOdds);
+          if (chosen.length === 0) continue;
+          if (!bucketCounted) {
+            propBuckets += 1;
+            bucketCounted = true;
+          }
           linesToAnalyze += chosen.length;
         }
       }
@@ -231,10 +247,12 @@ export default function App() {
       statsTotal: STATS.length,
       odds: selectedOdds.length,
       oddsTotal: ODDS_TYPES.length,
+      directions: selectedDirections.length,
+      directionsTotal: DIRECTIONS.length,
       propBuckets,
       linesToAnalyze,
     };
-  }, [linesData, players, selectedStats, selectedOdds, selectedGames, availableGames]);
+  }, [linesData, players, selectedStats, selectedOdds, selectedDirections, selectedGames, availableGames]);
 
   // top_10 narrowed by the Odds filter. Display-only — tier_counts above
   // still reflects the full analyzed pool so the operator can see the
@@ -292,6 +310,16 @@ export default function App() {
 
   const toggleAllOdds = () => {
     setSelectedOdds(allOddsSelected ? [] : [...ODDS_TYPES]);
+  };
+
+  const toggleDirection = (dir) => {
+    setSelectedDirections((cur) =>
+      cur.includes(dir) ? cur.filter((d) => d !== dir) : [...cur, dir]
+    );
+  };
+
+  const toggleAllDirections = () => {
+    setSelectedDirections(allDirectionsSelected ? [] : [...DIRECTIONS]);
   };
 
   const removePlayer = (name) => {
@@ -366,17 +394,15 @@ export default function App() {
   // Fetch (or load from cache) a single player's analyze-all response.
   // Returns { data, cacheStatus } or throws on hard error.
   //
-  // Direction is fixed to "OVER" — the UNDER UI path was removed. The
-  // backend still accepts UNDER, but every UI-initiated request is OVER.
-  //
-  // selectedOdds is sent to the backend so the analysis pool actually
-  // shrinks when the user narrows the filter — fewer engine tasks per
-  // player. The client-side displayedTop10 filter remains as a no-op
-  // for fresh analyses + a courtesy for mid-session filter changes
-  // (changing Odds without re-clicking Analyze re-filters what was
-  // already fetched, but can't broaden it without a new request).
+  // Direction handling: backend treats the `direction` field as optional
+  // and fans out to OVER+UNDER when absent. When the user has both
+  // directions selected we omit the field; when exactly one is selected
+  // we pin the request. The cache key encodes the resolved direction
+  // (single value or "BOTH" via normalizeDirection) so cache hits stay
+  // scoped to the filter that produced them.
   const analyzeOne = useCallback(async (playerName) => {
-    const cached = readNewestCached(playerName, selectedStats, "OVER", selectedOdds);
+    const directionParam = selectedDirections.length === 1 ? selectedDirections[0] : undefined;
+    const cached = readNewestCached(playerName, selectedStats, directionParam, selectedOdds);
     if (cached) {
       return { data: cached.data, cacheStatus: "HIT" };
     }
@@ -384,9 +410,9 @@ export default function App() {
       player: playerName,
       statTypes: selectedStats,
       league,
-      direction: "OVER",
       oddsTypes: selectedOdds,
     };
+    if (directionParam) body.direction = directionParam;
 
     const response = await fetch("/api/analyze-all", {
       method: "POST",
@@ -398,12 +424,12 @@ export default function App() {
     if (!response.ok) throw new Error(data.error || "Request failed");
 
     if (data.lines_fetched_at) {
-      const key = buildKey(playerName, data.lines_fetched_at, selectedStats, "OVER", selectedOdds);
+      const key = buildKey(playerName, data.lines_fetched_at, selectedStats, directionParam, selectedOdds);
       writeCached(key, data);
       clearStaleForPlayer(key, playerName);
     }
     return { data, cacheStatus: response.headers.get("X-Cache") || "MISS" };
-  }, [selectedStats, selectedOdds, league]);
+  }, [selectedStats, selectedOdds, selectedDirections, league]);
 
   const analyzeAll = useCallback(async () => {
     if (players.length === 0) {
@@ -416,6 +442,10 @@ export default function App() {
     }
     if (selectedOdds.length === 0) {
       setError("Select at least one odds type (Goblin/Standard/Demon).");
+      return;
+    }
+    if (selectedDirections.length === 0) {
+      setError("Select at least one direction (OVER/UNDER).");
       return;
     }
 
@@ -497,7 +527,7 @@ export default function App() {
       setAnalyzing(false);
       setProgress(null);
     }
-  }, [players, selectedStats, selectedOdds, analyzeOne]);
+  }, [players, selectedStats, selectedOdds, selectedDirections, analyzeOne]);
 
   return (
     <div style={{
@@ -911,6 +941,98 @@ export default function App() {
             )}
           </div>
 
+          {/* Direction Multi-Select — pre-analysis. Default: both selected.
+              Empty selection blocks Analyze. Single selection pins the
+              request to one direction; both selected omits `direction`
+              from the body so the backend fans out to OVER + UNDER. */}
+          <div ref={directionsRef} style={{ position: "relative" }}>
+            <div
+              onClick={() => setDirectionsOpen(!directionsOpen)}
+              style={{
+                ...selectStyle,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                cursor: "pointer",
+              }}
+            >
+              <span style={{ fontSize: 12 }}>
+                {selectedDirections.length === 0
+                  ? "— SELECT DIRECTION —"
+                  : allDirectionsSelected
+                  ? "OVER + UNDER"
+                  : selectedDirections.join(", ")}
+              </span>
+              <span style={{ fontSize: 10, color: "#446688" }}>
+                {directionsOpen ? "▲" : "▼"}
+              </span>
+            </div>
+            {directionsOpen && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 2px)",
+                  left: 0,
+                  right: 0,
+                  background: "#0a1420",
+                  border: "1px solid #1e3040",
+                  padding: "8px 0",
+                  zIndex: 10,
+                }}
+              >
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "6px 12px",
+                    fontSize: 12,
+                    cursor: "pointer",
+                    background: allDirectionsSelected ? "#0066cc22" : "transparent",
+                  }}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    toggleAllDirections();
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={allDirectionsSelected}
+                    readOnly
+                    style={{ cursor: "pointer" }}
+                  />
+                  <strong>SELECT ALL</strong>
+                </label>
+                {DIRECTIONS.map((d) => (
+                  <label
+                    key={d}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "6px 12px",
+                      fontSize: 12,
+                      cursor: "pointer",
+                      background: selectedDirections.includes(d) ? "#0066cc22" : "transparent",
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      toggleDirection(d);
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedDirections.includes(d)}
+                      readOnly
+                      style={{ cursor: "pointer" }}
+                    />
+                    {d}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Stat Multi-Select */}
           <div ref={statsRef} style={{ position: "relative" }}>
             <div
@@ -1044,6 +1166,12 @@ export default function App() {
               <span style={{ color: "#446688" }}>ODDS </span>
               <strong style={{ color: "#c8d8e8" }}>
                 {filterStats.odds} / {filterStats.oddsTotal}
+              </strong>
+            </span>
+            <span style={{ color: "#8ab0cc" }}>
+              <span style={{ color: "#446688" }}>DIR </span>
+              <strong style={{ color: "#c8d8e8" }}>
+                {filterStats.directions} / {filterStats.directionsTotal}
               </strong>
             </span>
             <span style={{ color: "#8ab0cc" }}>
