@@ -71,7 +71,7 @@ const STAT_TO_ACTUAL = {
 
 async function main() {
   const token = process.env.AXIOM_TOKEN;
-  const dataset = process.env.AXIOM_DATASET || "props-verdicts";
+  const dataset = process.env.AXIOM_DATASET || "props_verdict";
   if (!token) {
     console.error("AXIOM_TOKEN not set in .env.local — nothing to query.");
     process.exit(1);

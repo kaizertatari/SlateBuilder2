@@ -35,18 +35,18 @@ function sleep(ms) {
 // BR season end year: NBA seasons end the calendar year after they start
 // (2025-26 → 2026). WNBA seasons run within one calendar year — pass that
 // year directly.
-function defaultSeasonEndYear(date = new Date(), league = "NBA") {
+export function defaultSeasonEndYear(date = new Date(), league = "NBA") {
   const y = date.getUTCFullYear();
   const m = date.getUTCMonth() + 1;
   if (league === "WNBA") return m >= 5 ? y : y - 1;
   return m >= 9 ? y + 1 : y;
 }
 
-function nbaSeasonLabel(endYear) {
+export function nbaSeasonLabel(endYear) {
   return `${endYear - 1}-${String(endYear % 100).padStart(2, "0")}`;
 }
 
-function seasonLabel(endYear, league) {
+export function seasonLabel(endYear, league) {
   return league === "WNBA" ? String(endYear) : nbaSeasonLabel(endYear);
 }
 
