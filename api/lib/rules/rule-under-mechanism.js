@@ -1,36 +1,32 @@
-// UNDER mechanism gate (framework lines 198-213).
+// UNDER mechanism gate.
 //
-// UNDER props are NOT issued by default. The framework requires at
-// least one named mechanism (Mech 1 / 2 / 3) to be confirmed; without
-// one, the verdict is SKIP. With one or more, the tier ceiling is
-// fixed by the confidence table:
+// Mechanisms (Mech 1 / 2 / 3) are additive evidence for UNDER. They are
+// REQUIRED only when the baseline does NOT corroborate UNDER. Rule 5j
+// (UNDER baseline gate) hard-SKIPs when baseline > line + buffer and
+// issues UNDER when baseline < line - buffer. This gate covers the
+// remaining marginal band (within ±buffer of line) plus contributes
+// signal/confidence when the baseline already issues.
 //
-//   3 mechanisms confirmed       = S possible
-//   2 mechanisms                 = A max
-//   Mech 1 alone (minutes)       = A max
-//   Mech 2 alone (role)          = B max, SKIP advisory
-//   Mech 3 alone (matchup)       = B max, SKIP advisory
-//   No mechanism                 = SKIP
+// Tier caps by mechanism count + baseline corroboration:
 //
-// Rule 5i has its own UNDER path for Points/PRA (FT-floor with
-// Mechanism-1 override). When 5i clears (totalFloor well below line),
-// the prop already has a numeric reason to issue UNDER and this
-// mechanism gate can pass with a single mechanism. When 5i fires SKIP,
-// this rule never sees the verdict (5a hard-skips first).
+//                            baseline supports    baseline neutral
+//   3 mechanisms             no cap, +3 sig       no cap, +3 sig
+//   2 mechanisms             no cap, +2 sig       A max, +2 sig
+//   Mech 1 alone             no cap, +1 sig       A max, +1 sig
+//   Mech 2 or 3 alone        A max,  +1 sig       B max, +1 sig (SKIP advisory)
+//   zero mechanisms          fire:false (5j fires)  hard-SKIP
+//
+// Outlier demote (L5 weighted.outlier_present) still applies on top.
+// The framework spec's "Mech 2/3 alone → SKIP advisory" stays only on
+// the baseline-neutral path; with baseline corroboration the advisory
+// is relaxed because the numeric foundation removes the single-signal
+// risk that motivated the advisory.
 
-import { computeFtFloorCheck, FT_FLOOR_PROPS } from "./_helpers.js";
+import { computeOverBufferCheck, getBaselines, scaleFor } from "./_helpers.js";
 
 // Symmetric one-tier demote when the L5 sample has an outlier vs the
-// player's relevant points reference. The OVER buffer already widens
-// when outlier_present fires; UNDER previously had no parallel
-// adjustment. Tighten the gate one step:
-//   tier_cap === null (S possible) → "A"
-//   "A" → "B"
-//   "B" → SKIP (hard_skip)
-// SKIP unchanged. The demote rationale is that a recent points outlier
-// signals usage/role volatility, which makes mechanism-only UNDER calls
-// less reliable in either direction (a hot game can repeat; a cold one
-// can reverse).
+// player's relevant points reference. Preserved from the prior rule —
+// outlier signals usage/role volatility and is direction-agnostic.
 function demoteForOutlier(result) {
   if (!result.fired) return result;
   const append = " Outlier present in L5 → demoted one tier.";
@@ -62,8 +58,19 @@ function demoteForOutlier(result) {
   return result;
 }
 
+function baselineSupports(ctx) {
+  const { groundTruth, statType, line } = ctx;
+  const { seasonAvg, l5Avg, l5WeightedUsed } = getBaselines({ groundTruth, statType });
+  if (seasonAvg == null && l5Avg == null) return false;
+  const buf = computeOverBufferCheck({ groundTruth, statType, line, seasonAvg, l5Avg, l5WeightedUsed });
+  if (!buf) return false;
+  const scale = scaleFor(groundTruth);
+  const underBuffer = scale.over_buffer_by_stat?.[statType] ?? scale.over_buffer_base;
+  return (line - buf.adjusted) >= underBuffer;
+}
+
 export function apply(ctx) {
-  const { groundTruth, statType, direction, line } = ctx;
+  const { groundTruth, direction, weights } = ctx;
   if (direction !== "UNDER") return { fired: false, rule_id: "under-mechanism" };
 
   const mechs = groundTruth?.mechanisms ?? {};
@@ -72,77 +79,88 @@ export function apply(ctx) {
   const m3 = !!mechs.mech3?.confirmed;
   const count = (m1 ? 1 : 0) + (m2 ? 1 : 0) + (m3 ? 1 : 0);
   const outlierPresent = !!groundTruth?.l5?.weighted?.outlier_present;
+  const baselineOk = baselineSupports(ctx);
 
-  // Special case: Points/PRA UNDER with a comfortable FT-floor margin
-  // gives the verdict a numeric foundation that the framework treats
-  // as functionally equivalent to a confirmed mechanism. If the floor
-  // clears by >2 pts, allow A-tier with no other mechanism required.
-  let ftFloorClears = false;
-  if (FT_FLOOR_PROPS.has(statType)) {
-    const ft = computeFtFloorCheck({ groundTruth, line });
-    if (ft && !ft.invalid && (line - ft.totalFloor) >= 2) {
-      ftFloorClears = true;
+  // Zero mechanisms: defer to 5j entirely. If baseline supports, 5j
+  // already fired with its own justification; if baseline is neutral,
+  // hard-SKIP (no evidence for UNDER from either source).
+  if (count === 0) {
+    if (baselineOk) {
+      // 5j carries the verdict — emit no flag, no cap, no signal.
+      return { fired: false, rule_id: "under-mechanism" };
     }
-  }
-
-  if (count === 0 && !ftFloorClears) {
     return {
       fired: true,
       rule_id: "under-mechanism",
       tier_cap: "SKIP",
       confidence_delta: 0,
-      flag: "⚠️ no named UNDER mechanism (Mech 1/2/3 all unconfirmed)",
-      justification_part: "UNDER mechanism gate — no Mechanism 1, 2, or 3 confirmed; SKIP.",
+      flag: "⚠️ no named UNDER mechanism (Mech 1/2/3 all unconfirmed) and baseline doesn't support UNDER",
+      justification_part: "UNDER mechanism gate — no Mechanism 1, 2, or 3 confirmed and baseline doesn't carry UNDER; SKIP.",
       hard_skip: true,
     };
   }
 
-  // Map confirmed mechanisms to the framework's confidence table.
   const fragments = [];
   if (m1) fragments.push("Mech 1 (minutes)");
   if (m2) fragments.push("Mech 2 (role)");
   if (m3) fragments.push("Mech 3 (matchup)");
-  if (ftFloorClears && fragments.length === 0) fragments.push("5i FT-floor clear");
 
+  const baselineNote = baselineOk ? " (baseline-corroborated)" : "";
   let result;
   if (count >= 3) {
     result = {
       fired: true,
       rule_id: "under-mechanism",
-      tier_cap: null,            // allow S consideration
-      confidence_delta: ctx.weights.signal_bonus,
+      tier_cap: null,
+      confidence_delta: weights.signal_bonus * 3,
+      signals_added: 3,
       flag: null,
-      justification_part: `UNDER mechanism gate — 3 mechanisms confirmed (${fragments.join(", ")}); S possible.`,
+      justification_part: `UNDER mechanism gate — 3 mechanisms confirmed (${fragments.join(", ")})${baselineNote}; S possible.`,
     };
   } else if (count === 2) {
     result = {
       fired: true,
       rule_id: "under-mechanism",
-      tier_cap: "A",
-      confidence_delta: 0,
+      tier_cap: baselineOk ? null : "A",
+      confidence_delta: weights.signal_bonus * 2,
+      signals_added: 2,
       flag: null,
-      justification_part: `UNDER mechanism gate — 2 mechanisms confirmed (${fragments.join(", ")}); A-tier max.`,
+      justification_part: `UNDER mechanism gate — 2 mechanisms confirmed (${fragments.join(", ")})${baselineNote}; ${baselineOk ? "S possible" : "A-tier max"}.`,
     };
-  } else if (m1 || ftFloorClears) {
-    // Single-mechanism Mech 1, or FT-floor clearance for Points/PRA.
+  } else if (m1) {
     result = {
       fired: true,
       rule_id: "under-mechanism",
-      tier_cap: "A",
-      confidence_delta: 0,
+      tier_cap: baselineOk ? null : "A",
+      confidence_delta: weights.signal_bonus,
+      signals_added: 1,
       flag: null,
-      justification_part: `UNDER mechanism gate — ${ftFloorClears ? "5i FT-floor clears comfortably" : "Mech 1 (minutes) confirmed"}; A-tier max.`,
+      justification_part: `UNDER mechanism gate — Mech 1 (minutes) confirmed${baselineNote}; ${baselineOk ? "S possible" : "A-tier max"}.`,
     };
   } else {
-    // Mech 2 alone or Mech 3 alone → B-tier max with SKIP advisory.
-    result = {
-      fired: true,
-      rule_id: "under-mechanism",
-      tier_cap: "B",
-      confidence_delta: -ctx.weights.suppressor_penalty,
-      flag: `⚠️ UNDER mechanism single-signal (${m2 ? "Mech 2" : "Mech 3"} only) — B-tier max, SKIP advisory`,
-      justification_part: `UNDER mechanism gate — only ${m2 ? "Mech 2 (role)" : "Mech 3 (matchup)"} confirmed; B-tier max with SKIP advisory.`,
-    };
+    // Mech 2 alone or Mech 3 alone.
+    const which = m2 ? "Mech 2 (role)" : "Mech 3 (matchup)";
+    if (baselineOk) {
+      result = {
+        fired: true,
+        rule_id: "under-mechanism",
+        tier_cap: "A",
+        confidence_delta: weights.signal_bonus,
+        signals_added: 1,
+        flag: null,
+        justification_part: `UNDER mechanism gate — ${which} confirmed (baseline-corroborated); A-tier max.`,
+      };
+    } else {
+      result = {
+        fired: true,
+        rule_id: "under-mechanism",
+        tier_cap: "B",
+        confidence_delta: -weights.suppressor_penalty,
+        signals_added: 0,
+        flag: `⚠️ UNDER mechanism single-signal (${m2 ? "Mech 2" : "Mech 3"} only) — B-tier max, SKIP advisory`,
+        justification_part: `UNDER mechanism gate — only ${which} confirmed; B-tier max with SKIP advisory.`,
+      };
+    }
   }
 
   return outlierPresent ? demoteForOutlier(result) : result;

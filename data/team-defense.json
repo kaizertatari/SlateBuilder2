@@ -1,6 +1,6 @@
 {
   "season": "2025-26",
-  "fetched_at": "2026-04-30T06:05:18.785Z",
+  "fetched_at": "2026-05-23T21:41:36.804Z",
   "seasons": {
     "Regular Season": {
       "OKC": {
@@ -185,76 +185,76 @@
       }
     },
     "Playoffs": {
-      "SAS": {
-        "team_id": 1610612759,
-        "team_name": "San Antonio Spurs",
-        "def_rating": 102.2,
-        "def_rank": 1
-      },
-      "DET": {
-        "team_id": 1610612765,
-        "team_name": "Detroit Pistons",
-        "def_rating": 104.1,
-        "def_rank": 2
-      },
-      "ORL": {
-        "team_id": 1610612753,
-        "team_name": "Orlando Magic",
-        "def_rating": 104.3,
-        "def_rank": 3
-      },
       "NYK": {
         "team_id": 1610612752,
         "team_name": "New York Knicks",
-        "def_rating": 106.9,
-        "def_rank": 4
+        "def_rating": 104,
+        "def_rank": 1
+      },
+      "SAS": {
+        "team_id": 1610612759,
+        "team_name": "San Antonio Spurs",
+        "def_rating": 105.3,
+        "def_rank": 2
       },
       "HOU": {
         "team_id": 1610612745,
         "team_name": "Houston Rockets",
-        "def_rating": 107.6,
-        "def_rank": 5
+        "def_rating": 107.4,
+        "def_rank": 3
       },
-      "MIN": {
-        "team_id": 1610612750,
-        "team_name": "Minnesota Timberwolves",
-        "def_rating": 108.7,
-        "def_rank": 6
+      "ORL": {
+        "team_id": 1610612753,
+        "team_name": "Orlando Magic",
+        "def_rating": 107.5,
+        "def_rank": 4
+      },
+      "DET": {
+        "team_id": 1610612765,
+        "team_name": "Detroit Pistons",
+        "def_rating": 108,
+        "def_rank": 5
       },
       "OKC": {
         "team_id": 1610612760,
         "team_name": "Oklahoma City Thunder",
-        "def_rating": 109,
-        "def_rank": 7
-      },
-      "LAL": {
-        "team_id": 1610612747,
-        "team_name": "Los Angeles Lakers",
-        "def_rating": 109.4,
-        "def_rank": 8
+        "def_rating": 109.8,
+        "def_rank": 6
       },
       "BOS": {
         "team_id": 1610612738,
         "team_name": "Boston Celtics",
-        "def_rating": 110.6,
-        "def_rank": 9
-      },
-      "DEN": {
-        "team_id": 1610612743,
-        "team_name": "Denver Nuggets",
-        "def_rating": 111.7,
-        "def_rank": 10
-      },
-      "TOR": {
-        "team_id": 1610612761,
-        "team_name": "Toronto Raptors",
-        "def_rating": 113.4,
-        "def_rank": 11
+        "def_rating": 110.8,
+        "def_rank": 7
       },
       "CLE": {
         "team_id": 1610612739,
         "team_name": "Cleveland Cavaliers",
-        "def_rating": 113.7,
+        "def_rating": 112.6,
+        "def_rank": 8
+      },
+      "DEN": {
+        "team_id": 1610612743,
+        "team_name": "Denver Nuggets",
+        "def_rating": 112.8,
+        "def_rank": 9
+      },
+      "TOR": {
+        "team_id": 1610612761,
+        "team_name": "Toronto Raptors",
+        "def_rating": 113,
+        "def_rank": 10
+      },
+      "MIN": {
+        "team_id": 1610612750,
+        "team_name": "Minnesota Timberwolves",
+        "def_rating": 113.1,
+        "def_rank": 11
+      },
+      "LAL": {
+        "team_id": 1610612747,
+        "team_name": "Los Angeles Lakers",
+        "def_rating": 113.3,
         "def_rank": 12
       },
       "POR": {
@@ -263,22 +263,22 @@
         "def_rating": 116.6,
         "def_rank": 13
       },
-      "ATL": {
-        "team_id": 1610612737,
-        "team_name": "Atlanta Hawks",
-        "def_rating": 117.9,
-        "def_rank": 14
-      },
       "PHI": {
         "team_id": 1610612755,
         "team_name": "Philadelphia 76ers",
-        "def_rating": 119.7,
+        "def_rating": 119.3,
+        "def_rank": 14
+      },
+      "ATL": {
+        "team_id": 1610612737,
+        "team_name": "Atlanta Hawks",
+        "def_rating": 121.9,
         "def_rank": 15
       },
       "PHX": {
         "team_id": 1610612756,
         "team_name": "Phoenix Suns",
-        "def_rating": 126.9,
+        "def_rating": 127.2,
         "def_rank": 16
       }
     }

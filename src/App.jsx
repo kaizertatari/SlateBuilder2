@@ -48,6 +48,20 @@ const PLAYERS_BY_LEAGUE = (() => {
 
 const LEAGUES = ["NBA", "WNBA"];
 
+const REFRESH_STATUS_COLORS = {
+  success: { fg: "#00FF88", bg: "#002218", border: "#00FF8844" },
+  "no-data": { fg: "#FFC107", bg: "#221a00", border: "#FFC10744" },
+  error: { fg: "#FF6666", bg: "#220000", border: "#FF666644" },
+};
+
+function formatLinesFetchedAt(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}Z`;
+}
+
 export default function App() {
   const [league, setLeague] = useState("NBA");
   // Multi-player selection. Order preserved so the chip row is stable;
@@ -95,6 +109,12 @@ export default function App() {
   // For multi-player runs this reflects the worst case — if any player
   // missed, we report MISS.
   const [cacheStatus, setCacheStatus] = useState(null);
+  // Slate freshness — ISO string from /api/lines, /api/refresh-lines, or
+  // the first analyze response (whichever populates last wins).
+  const [linesFetchedAt, setLinesFetchedAt] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  // { kind: "success" | "no-data" | "error", message: string } | null
+  const [refreshStatus, setRefreshStatus] = useState(null);
 
   const allStatsSelected = selectedStats.length === STATS.length;
   const allOddsSelected = selectedOdds.length === ODDS_TYPES.length;
@@ -132,7 +152,9 @@ export default function App() {
     fetch("/api/lines")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (!cancelled) setLinesData(d || null);
+        if (cancelled) return;
+        setLinesData(d || null);
+        if (d?.fetched_at) setLinesFetchedAt(d.fetched_at);
       })
       .catch(() => {
         if (!cancelled) setLinesData(null);
@@ -518,6 +540,7 @@ export default function App() {
       merged.top_10 = merged.top_10.slice(0, 10);
 
       setResults(merged);
+      if (merged.lines_fetched_at) setLinesFetchedAt(merged.lines_fetched_at);
       // If ALL players hit cache we report HIT; any miss → MISS.
       const anyMiss = successes.some((s) => s.cacheStatus !== "HIT");
       setCacheStatus(anyMiss ? "MISS" : "HIT");
@@ -528,6 +551,54 @@ export default function App() {
       setProgress(null);
     }
   }, [players, selectedStats, selectedOdds, selectedDirections, analyzeOne]);
+
+  // Trigger a live PrizePicks refresh via the existing /api/refresh-lines
+  // endpoint. Locally (residential IP) this scrapes + writes the blob; on
+  // deployed Vercel (cloud IP) the endpoint returns 502 because the scrape
+  // would return 0 props — surfaced as "no-data" so the UI doesn't pretend
+  // a refresh happened. The result cache (result-cache.js) keys on
+  // fetched_at, so a new timestamp invalidates prior entries automatically.
+  const refreshLines = useCallback(async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    setRefreshStatus(null);
+    try {
+      const token = import.meta.env.VITE_REFRESH_TOKEN ?? "";
+      const response = await fetch("/api/refresh-lines", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const body = await response.json().catch(() => ({}));
+      if (response.ok) {
+        if (body.fetched_at) setLinesFetchedAt(body.fetched_at);
+        setRefreshStatus({
+          kind: "success",
+          message: `Refreshed — ${body.total_props ?? "?"} props across ${body.total_players ?? "?"} players.`,
+        });
+      } else if (response.status === 502) {
+        setRefreshStatus({
+          kind: "no-data",
+          message: "No fresh data available (PrizePicks likely IP-blocked this host).",
+        });
+      } else {
+        setRefreshStatus({
+          kind: "error",
+          message: body.error || `Refresh failed (HTTP ${response.status}).`,
+        });
+      }
+    } catch (err) {
+      setRefreshStatus({ kind: "error", message: `Refresh failed: ${err.message}` });
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refreshing]);
+
+  // Auto-clear the refresh status banner so it doesn't linger.
+  useEffect(() => {
+    if (!refreshStatus) return undefined;
+    const t = setTimeout(() => setRefreshStatus(null), 4000);
+    return () => clearTimeout(t);
+  }, [refreshStatus]);
 
   return (
     <div style={{
@@ -541,15 +612,60 @@ export default function App() {
 
         {/* Header */}
         <div style={{ marginBottom: 32, borderBottom: "1px solid #1e3040", paddingBottom: 16 }}>
-          <div style={{ fontSize: 11, letterSpacing: 4, color: "#4488aa", marginBottom: 4 }}>
-            {league} PRIZEPICKS
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontSize: 11, letterSpacing: 4, color: "#4488aa", marginBottom: 4 }}>
+                {league} PRIZEPICKS
+              </div>
+              <div style={{ fontSize: 22, fontWeight: "bold", color: "#ffffff", letterSpacing: 1 }}>
+                BATCH ANALYZER
+              </div>
+              <div style={{ fontSize: 11, color: "#446688", marginTop: 4 }}>
+                S-TIER & A-TIER PICKS · PRIZEPICKS LINES
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+              <div style={{ fontSize: 10, letterSpacing: 1, color: "#446688", whiteSpace: "nowrap" }}>
+                LINES{" "}
+                <span style={{ color: linesFetchedAt ? "#88aacc" : "#664444" }}>
+                  {formatLinesFetchedAt(linesFetchedAt) || "—"}
+                </span>
+              </div>
+              <button
+                onClick={refreshLines}
+                disabled={refreshing}
+                style={{
+                  background: refreshing ? "#1a2a3a" : "#0066cc",
+                  color: refreshing ? "#446688" : "#ffffff",
+                  border: `1px solid ${refreshing ? "#1e3040" : "#0088ff"}`,
+                  padding: "6px 14px",
+                  fontFamily: "'Courier New', monospace",
+                  fontSize: 10,
+                  fontWeight: "bold",
+                  letterSpacing: 2,
+                  cursor: refreshing ? "not-allowed" : "pointer",
+                  transition: "all 0.15s",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {refreshing ? "REFRESHING..." : "REFRESH LINES"}
+              </button>
+            </div>
           </div>
-          <div style={{ fontSize: 22, fontWeight: "bold", color: "#ffffff", letterSpacing: 1 }}>
-            BATCH ANALYZER
-          </div>
-          <div style={{ fontSize: 11, color: "#446688", marginTop: 4 }}>
-            S-TIER & A-TIER PICKS · PRIZEPICKS LINES
-          </div>
+          {refreshStatus && (
+            <div
+              style={{
+                marginTop: 10,
+                padding: "6px 10px",
+                fontSize: 11,
+                border: `1px solid ${REFRESH_STATUS_COLORS[refreshStatus.kind].border}`,
+                background: REFRESH_STATUS_COLORS[refreshStatus.kind].bg,
+                color: REFRESH_STATUS_COLORS[refreshStatus.kind].fg,
+              }}
+            >
+              {refreshStatus.message}
+            </div>
+          )}
         </div>
 
         {/* Inputs */}

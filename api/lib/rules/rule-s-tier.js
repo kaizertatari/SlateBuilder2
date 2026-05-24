@@ -1,10 +1,12 @@
 // S-Tier Promotion Gate (framework lines 241-247).
 //
 // ALL of the following must pass to qualify for S-tier:
-//   1. Line clears the OVER buffer (already enforced by rule5a).
+//   1. Line clears the OVER buffer (rule5a) OR the UNDER baseline gate
+//      (rule5j) — direction-appropriate.
 //   2. 3+ independent signals align.
 //   3. No active suppressor flag.
-//   4. Confidence beats BOTH season avg AND L5 avg (weighted L5 if present).
+//   4. Confidence beats BOTH season avg AND L5 avg in the direction's
+//      favor (OVER: line below both; UNDER: line above both).
 //   5. Playoff: confidence ≥ 85%.
 //   6. Playoff: Game 3+ in series.
 //
@@ -17,7 +19,7 @@ import { isPlayoffGame, getBaselines } from "./_helpers.js";
 
 export function apply(ctx) {
   const { groundTruth, statType, direction, line, _state } = ctx;
-  if (direction !== "OVER") return { fired: false, rule_id: "s-tier" };
+  if (direction !== "OVER" && direction !== "UNDER") return { fired: false, rule_id: "s-tier" };
 
   // _state is provided by the engine when this rule runs last —
   // contains the accumulated suppressor count + buf result from
@@ -37,13 +39,19 @@ export function apply(ctx) {
   if (independentSignals < 3) failures.push(`only ${independentSignals} independent signal${independentSignals === 1 ? "" : "s"}`);
   if (playoff && playoffGN != null && playoffGN < 3) failures.push("playoff Game <3");
 
-  // Item 4: line must beat both season and L5 baselines.
+  // Item 4: line must beat both season and L5 baselines in the
+  // direction's favor. OVER wants line below baselines; UNDER wants
+  // line above.
   const { seasonAvg, l5Avg } = getBaselines({ groundTruth, statType });
-  if (seasonAvg != null && line >= seasonAvg) failures.push(`line ${line} not below season ${seasonAvg.toFixed(2)}`);
-  if (l5Avg != null && line >= l5Avg) failures.push(`line ${line} not below L5 ${l5Avg.toFixed(2)}`);
+  if (direction === "OVER") {
+    if (seasonAvg != null && line >= seasonAvg) failures.push(`line ${line} not below season ${seasonAvg.toFixed(2)}`);
+    if (l5Avg != null && line >= l5Avg) failures.push(`line ${line} not below L5 ${l5Avg.toFixed(2)}`);
+  } else {
+    if (seasonAvg != null && line <= seasonAvg) failures.push(`line ${line} not above season ${seasonAvg.toFixed(2)}`);
+    if (l5Avg != null && line <= l5Avg) failures.push(`line ${line} not above L5 ${l5Avg.toFixed(2)}`);
+  }
 
   if (failures.length > 0) {
-    // Cap to A so the engine's tier resolver doesn't promote to S.
     return {
       fired: true,
       rule_id: "s-tier",
@@ -54,14 +62,13 @@ export function apply(ctx) {
     };
   }
 
-  // All items pass — allow the tier resolver to consider S.
   return {
     fired: true,
     rule_id: "s-tier",
     tier_cap: null,
     confidence_delta: ctx.weights.signal_bonus,
     flag: null,
-    justification_part: "S-tier gate satisfied — 3+ independent signals, no suppressors, line clears both baselines.",
+    justification_part: `S-tier gate satisfied — 3+ independent signals, no suppressors, line clears both baselines.`,
     s_eligible: true,
   };
 }
