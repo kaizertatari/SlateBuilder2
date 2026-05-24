@@ -175,9 +175,9 @@ console.log("\n[h] UNDER mechanism gate");
   assert("Rebounds UNDER w/ no mechanism → SKIP", v.verdict === "SKIP", `got ${v.verdict}/${v.tier}`);
   assert("under-mechanism rule in rules_fired", v.rules_fired.includes("under-mechanism"));
 
-  // Mech 3 alone (matchup ceiling) → B-tier max with SKIP advisory.
-  // Use a non-alpha season ppg so Rule 4b doesn't short-circuit to SKIP
-  // (sole-alpha boost makes UNDER invalid).
+  // Mech 3 alone (matchup ceiling), baseline NEUTRAL → B-tier max with
+  // SKIP advisory. Line 8.5 vs rpg 8 → edge 0.5 < buffer 1.0 → 5j
+  // defers, mechanism gate carries the verdict alone.
   const v2 = applyEngine({
     groundTruth: gt({
       season: { averages: { ppg: 16, rpg: 8, apg: 3, pa: 19, pra: 27 } },
@@ -190,9 +190,9 @@ console.log("\n[h] UNDER mechanism gate");
         opponent_starters_out: 0,
       },
     }),
-    statType: "Rebounds", direction: "UNDER", line: 11.5,
+    statType: "Rebounds", direction: "UNDER", line: 8.5,
   });
-  assert("Mech 3 alone → B-tier", v2.tier === "B", `got ${v2.tier}`);
+  assert("Mech 3 alone (baseline neutral) → B-tier", v2.tier === "B", `got ${v2.tier}`);
   assert("Mech 3 alone → SKIP advisory in flags", v2.flags.some((f) => /SKIP advisory/.test(f)));
 
   // 3 mechanisms confirmed → S possible
@@ -617,6 +617,8 @@ console.log("\n[v] UNDER outlier demote — A→B");
 
 // (w) UNDER outlier demote — B→SKIP when outlier_present + Mech 3 alone
 // (single low-tier mechanism that would normally yield B-advisory).
+// Line 8.5 keeps baseline neutral (edge 0.5 < buffer 1.0) so the
+// mechanism-only path triggers, then outlier demotes B→SKIP.
 console.log("\n[w] UNDER outlier demote — Mech 3 alone + outlier → SKIP");
 {
   const v = applyEngine({
@@ -637,9 +639,144 @@ console.log("\n[w] UNDER outlier demote — Mech 3 alone + outlier → SKIP");
         opponent_starters_out: 0,
       },
     }),
-    statType: "Rebounds", direction: "UNDER", line: 10.5,
+    statType: "Rebounds", direction: "UNDER", line: 8.5,
   });
   assert("[w] outlier+Mech3-alone → SKIP", v.verdict === "SKIP", `got ${v.verdict}/${v.tier}`);
+}
+
+// (x) Rule 5j — UNDER baseline gate (two-way).
+console.log("\n[x] Rule 5j — UNDER baseline gate");
+{
+  // x.1 — Stewart-style: PRA baseline 33.60, line 30.5, home so no road
+  // deduction. adjusted 33.60 > line 30.5 + buffer 1.5 → 5j hard-SKIPs.
+  const v1 = applyEngine({
+    groundTruth: gt({
+      home_away: "home",
+      season: { averages: { ppg: 22.5, rpg: 8, apg: 3.1, pa: 25.6, pra: 33.60 } },
+      l5: {
+        type: "Regular Season", n: 5,
+        averages: { ppg: 22.5, pra: 33.60 },
+        weighted: { averages: { pra: 33.60 } },
+        games: [],
+      },
+    }),
+    statType: "PRA", direction: "UNDER", line: 30.5,
+  });
+  assert("[x.1] baseline >> line → 5j hard-SKIPs UNDER", v1.verdict === "SKIP", `got ${v1.verdict}/${v1.tier}`);
+  assert("[x.1] rule5j in rules_fired", v1.rules_fired.includes("5j"));
+
+  // x.2 — 5j hard-SKIP overrides confirmed mechanism. Same player + line,
+  // now with Mech 1 (minutes restriction) confirmed. 5j SKIP wins.
+  const v2 = applyEngine({
+    groundTruth: gt({
+      home_away: "home",
+      season: { averages: { ppg: 22.5, rpg: 8, apg: 3.1, pa: 25.6, pra: 33.60 } },
+      l5: {
+        type: "Regular Season", n: 5,
+        averages: { ppg: 22.5, pra: 33.60 },
+        weighted: { averages: { pra: 33.60 } },
+        games: [],
+      },
+      mechanisms: {
+        mech1: { confirmed: true, restriction: 28 },
+        mech2: { confirmed: false },
+        mech3: { confirmed: false },
+        opponent_starters_out: 0,
+      },
+    }),
+    statType: "PRA", direction: "UNDER", line: 30.5,
+  });
+  assert("[x.2] 5j SKIP beats confirmed Mech 1", v2.verdict === "SKIP", `got ${v2.verdict}/${v2.tier}`);
+
+  // x.3 — Large-edge UNDER, no mechanism. PRA baseline 22, line 32 →
+  // edge 10. 5j ISSUE no cap; with edge ≥3 bonus signal + L5≥5 + WP
+  // in band = 3+ signals → S-tier gate satisfied. Confidence stacks
+  // edge × edge_unit_bonus = 10 × 1.5 = 15 + base 70 + sig bonuses.
+  // Lands in S band.
+  const v3 = applyEngine({
+    groundTruth: gt({
+      home_away: "home",
+      win_prob: { player_team_pct: 0.50 },
+      season: { averages: { ppg: 14, rpg: 3, apg: 5, pa: 19, pra: 22 } },
+      l5: {
+        type: "Regular Season", n: 5,
+        averages: { ppg: 14, pra: 22 },
+        weighted: { averages: { pra: 22 } },
+        games: [],
+      },
+    }),
+    statType: "PRA", direction: "UNDER", line: 32,
+  });
+  assert("[x.3] large-edge UNDER no mech → issued", v3.verdict === "UNDER", `got ${v3.verdict}/${v3.tier}`);
+  assert("[x.3] large-edge UNDER reaches S-tier", v3.tier === "S", `got ${v3.tier} (confidence ${v3.confidence})`);
+
+  // x.4 — Moderate edge + Mech 1. PRA baseline 27, line 30 (edge 3),
+  // Mech 1 confirmed. 5j ISSUE no cap (edge ≥3); mechanism adds 1
+  // signal. Combined with WP in band + L5≥5 = 4+ signals → S.
+  const v4 = applyEngine({
+    groundTruth: gt({
+      home_away: "home",
+      win_prob: { player_team_pct: 0.50 },
+      season: { averages: { ppg: 18, rpg: 3, apg: 6, pa: 24, pra: 27 } },
+      l5: {
+        type: "Regular Season", n: 5,
+        averages: { ppg: 18, pra: 27 },
+        weighted: { averages: { pra: 27 } },
+        games: [],
+      },
+      mechanisms: {
+        mech1: { confirmed: true, restriction: 28 },
+        mech2: { confirmed: false },
+        mech3: { confirmed: false },
+        opponent_starters_out: 0,
+      },
+    }),
+    statType: "PRA", direction: "UNDER", line: 30,
+  });
+  assert("[x.4] moderate-edge UNDER + Mech 1 → issued", v4.verdict === "UNDER", `got ${v4.verdict}/${v4.tier}`);
+  assert("[x.4] moderate-edge UNDER + Mech 1 → S-tier", v4.tier === "S", `got ${v4.tier} (confidence ${v4.confidence})`);
+
+  // x.5 — Marginal baseline (edge < buffer), no mechanism → SKIP via
+  // mechanism gate. Baseline 28, line 29 (edge 1.0, PRA buffer 1.5) →
+  // 5j defers, mechanism gate finds zero mechanisms → SKIP.
+  const v5 = applyEngine({
+    groundTruth: gt({
+      home_away: "home",
+      season: { averages: { ppg: 18, rpg: 4, apg: 6, pa: 24, pra: 28 } },
+      l5: {
+        type: "Regular Season", n: 5,
+        averages: { ppg: 18, pra: 28 },
+        weighted: { averages: { pra: 28 } },
+        games: [],
+      },
+    }),
+    statType: "PRA", direction: "UNDER", line: 29,
+  });
+  assert("[x.5] marginal edge, no mech → SKIP", v5.verdict === "SKIP", `got ${v5.verdict}/${v5.tier}`);
+  assert("[x.5] under-mechanism rule SKIPs", v5.rules_fired.includes("under-mechanism"));
+
+  // x.6 — Marginal baseline + Mech 1 alone, no baseline corroboration →
+  // A max (mechanism path).
+  const v6 = applyEngine({
+    groundTruth: gt({
+      home_away: "home",
+      season: { averages: { ppg: 18, rpg: 4, apg: 6, pa: 24, pra: 28 } },
+      l5: {
+        type: "Regular Season", n: 5,
+        averages: { ppg: 18, pra: 28 },
+        weighted: { averages: { pra: 28 } },
+        games: [],
+      },
+      mechanisms: {
+        mech1: { confirmed: true, restriction: 28 },
+        mech2: { confirmed: false },
+        mech3: { confirmed: false },
+        opponent_starters_out: 0,
+      },
+    }),
+    statType: "PRA", direction: "UNDER", line: 29,
+  });
+  assert("[x.6] marginal + Mech 1 alone → A max", v6.tier === "A" || v6.tier === "B", `got ${v6.tier}`);
 }
 
 console.log(`\n=== smoke-engine: ${passed} pass, ${failed} fail ===`);

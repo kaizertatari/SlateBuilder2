@@ -18,6 +18,7 @@ import * as rule5b from "./rules/rule5b.js";
 import * as rule5f from "./rules/rule5f.js";
 import * as rule5h from "./rules/rule5h.js";
 import * as rule5i from "./rules/rule5i.js";
+import * as rule5j from "./rules/rule5j.js";
 import * as rule4 from "./rules/rule4.js";
 import * as rule4i from "./rules/rule4i.js";
 import * as rule6 from "./rules/rule6.js";
@@ -39,6 +40,7 @@ import { RULE_WEIGHTS, TIER_RANK, tierMin, snapToBand, TIER_BAND } from "./rule-
 // accumulated state to decide whether S is reachable.
 const RULES_PRE_S = [
   ["5a", rule5a],
+  ["5j", rule5j],
   ["5i", rule5i],
   ["R9", ruleR9],
   ["6", rule6],
@@ -89,9 +91,10 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
   const justParts = [];
   const rulesFired = [];
 
-  // Track rule5a's buffer result so we can compute the edge bonus once
+  // Track rule5a/5j buffer results so we can compute edge bonuses once
   // after the loop (avoids each rule independently re-deriving margin).
   let rule5aBuf = null;
+  let rule5jBuf = null;
 
   for (const [id, mod] of RULES_PRE_S) {
     const out = mod.apply(ctx);
@@ -108,10 +111,16 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
     if (out.tier_cap) tierCap = tierMin(tierCap, out.tier_cap);
     if (out.hard_skip || out.tier_cap === "SKIP") hardSkip = true;
     if (out.suppressor) suppressorCount += 1;
+    if (typeof out.signals_added === "number") signalCount += out.signals_added;
     if (id === "5a") {
       rule5aBuf = out._buf ?? null;
       // Clean OVER buffer pass counts as one independent signal.
       if (out._buf && out._buf.passes) signalCount += 1;
+    }
+    if (id === "5j") {
+      rule5jBuf = out._buf_under ?? null;
+      // UNDER baseline gate ISSUE branch counts as one signal.
+      if (out._buf_under) signalCount += 1;
     }
   }
 
@@ -121,6 +130,12 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
     if (edge > 0) score += edge * weights.edge_unit_bonus;
     // Additional signal: large edge (>3pts) counts as a bonus signal.
     if (edge >= 3) signalCount += 1;
+  }
+
+  // Mirror for UNDER — rule5j ISSUE branch sets _buf_under with the edge.
+  if (direction === "UNDER" && rule5jBuf && rule5jBuf.edge > 0) {
+    score += rule5jBuf.edge * weights.edge_unit_bonus;
+    if (rule5jBuf.edge >= 3) signalCount += 1;
   }
 
   // Win-prob in healthy band (non-suppressor case) counts as a signal.
