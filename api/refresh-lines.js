@@ -75,10 +75,37 @@ async function handleRefresh(req, reqId, method) {
   try {
     const data = await scrapePrizePicksForToday({ write: false });
     // PrizePicks blocks cloud-provider IPs, so a scrape from Vercel silently
-    // yields total_props=0. Writing that would clobber the good blob pushed
-    // from a residential IP. Refuse the write and surface the per-league
-    // errors so the caller can see why.
+    // yields total_props=0. If a home bridge is configured, forward the
+    // refresh there — it runs on a residential IP via Cloudflare Tunnel
+    // (see scripts/refresh-bridge.mjs). Otherwise refuse the write so a
+    // bad scrape can't clobber the good blob a prior local refresh pushed.
     if (!data.total_props) {
+      const bridgeUrl = process.env.HOME_REFRESH_URL;
+      const bridgeSecret = process.env.HOME_BRIDGE_SECRET;
+      if (bridgeUrl && bridgeSecret) {
+        try {
+          const target = `${bridgeUrl.replace(/\/$/, "")}/refresh`;
+          const bridgeResp = await fetch(target, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${bridgeSecret}` },
+            signal: AbortSignal.timeout(90_000),
+          });
+          const bridgeBody = await bridgeResp.json().catch(() => ({}));
+          return Response.json(
+            { request_id: reqId, forwarded_to_bridge: true, ...bridgeBody },
+            { status: bridgeResp.status }
+          );
+        } catch (err) {
+          return Response.json(
+            {
+              request_id: reqId,
+              error: `Home bridge unreachable: ${err.message}`,
+              fetched_at: data.fetched_at,
+            },
+            { status: 502 }
+          );
+        }
+      }
       return Response.json(
         {
           request_id: reqId,
