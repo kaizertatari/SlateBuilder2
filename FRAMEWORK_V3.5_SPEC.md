@@ -277,12 +277,16 @@ Weights are normalized to sum to 1.0; weighted averages computed across `ppg, rp
 ### Modes
 - `regular`: regular season; opponent_quality multiplier used.
 - `playoff_series`: playoff; series-game multiplier used. Identify which L5 games are vs current opponent (oldest-first ordinal numbering), assign series-game numbers; non-series leftovers get series multiplier 1.00.
-- `playoff_raw_fallback`: playoff but <3 of L5 games vs current opponent. Return raw averages; framework treats as raw L5 and emits a small-sample flag.
+- `playoff_raw_fallback`: playoff but <3 of L5 games vs current opponent. The series multiplier is neutralized (no usable series signal), but recency + outlier dampening still apply — those axes are orthogonal to series sampling. Earlier versions of v3.5 returned raw averages here; current impl computes the weighted mean with `perGameMultipliers = 1.0`. Mode name preserved for Axiom continuity.
+
+### Trimmed averages (drop-max)
+`l5.weighted.trimmed_averages` carries the same headline-stat shape as `averages` but with the single highest game (per field) dropped before computing the weighted mean. Used by Rule 5a as a sanity check on OVER: if the full baseline clears the line but the trimmed baseline doesn't clear it by `buffer`, one game is doing the heavy lifting and S-tier is capped at A. Drop-max keys off the *target field* rather than `pts`, so Fantasy-Score-style anomalies (where reb/ast/stl carry the composite while pts stays normal) are caught even when `outlier_present` doesn't fire.
 
 ### Diagnostic flags (mandatory when triggers fire)
 - If `|l5.weighted.averages.ppg − l5.averages.ppg| ≥ 2`: `⚠️ weighted L5 diverges from raw L5 by Xpts — outlier distortion detected` (X = abs delta, 1 dp).
 - If `l5.weighted.outlier_present === true`: OVER buffer in Rule 5a widens from 1.5 to 2.5 pts on this pick, and add `⚠️ post-outlier window — buffer widened to 2.5 pts`.
-- If `l5.weighted.mode === "playoff_raw_fallback"`: emit `⚠️ small playoff sample — weighted L5 deferred to raw L5`, proceed with raw L5 baselines unchanged.
+- If `l5.weighted.mode === "playoff_raw_fallback"`: emit `⚠️ small playoff sample — weighted L5 deferred to raw L5`, proceed with weighted L5 (recency + outlier multipliers applied, series multiplier neutralized).
+- If Rule 5a sees `trimmedAdjusted - line < buffer`: emit `⚠️ Rule 5a — trimmed L5 (X) doesn't clear line by buffer; S-tier capped at A` and set `tier_cap = "A"`.
 
 Both divergence and outlier flags are independent and can fire on the same pick.
 

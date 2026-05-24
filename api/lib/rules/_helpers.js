@@ -149,6 +149,15 @@ export function computeOverBufferCheck({ groundTruth, statType, line, seasonAvg,
   const buffer = baseBuffer + (poorFt ? 2 : 0);
   const required = adjusted - buffer;
 
+  // Trimmed-baseline sanity check. When weighted-L5 exposes a drop-max
+  // trimmed mean for this field, surface the road-adjusted version so
+  // Rule 5a can detect cases where one game is doing the heavy lifting
+  // (full baseline clears the line, trimmed baseline doesn't).
+  const trimmedAvg = field
+    ? (groundTruth?.l5?.weighted?.trimmed_averages?.[field] ?? null)
+    : null;
+  const trimmedAdjusted = trimmedAvg != null ? trimmedAvg - roadDed : null;
+
   return {
     governing,
     baseline,
@@ -158,6 +167,8 @@ export function computeOverBufferCheck({ groundTruth, statType, line, seasonAvg,
     passes: line <= required,
     outlierActive,
     poorFt,
+    trimmedBaseline: trimmedAvg,
+    trimmedAdjusted,
   };
 }
 

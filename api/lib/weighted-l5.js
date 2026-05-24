@@ -15,7 +15,8 @@ const RECENCY_RAMP = [0.30, 0.25, 0.20, 0.15, 0.10];
 
 // Move 1 (current-series accuracy hybrid) — per-game weight modifier based
 // on which opponent the game was against. Applies in playoff_series mode
-// only; regular mode + playoff_raw_fallback keep their existing weighting.
+// only; regular mode uses opponent-quality, playoff_raw_fallback gets a
+// neutral 1.0 (no series signal available yet).
 //
 // CURRENT_OPP: 1.5 — game vs the team in tonight's series. The matchup-
 //   specific signal (scheme, primary defender, pace) is most predictive
@@ -196,6 +197,12 @@ export function computeWeightedL5({ games, seasonPpg, playoffPpg, ownAbbr, serie
   // `seriesNumbers` is hoisted so Move 1 (opponent_match weighting) and
   // Move 2 (current_series_averages) can both read which L5 games are
   // vs the current playoff opponent without re-parsing matchup strings.
+  //
+  // playoff_raw_fallback used to short-circuit to raw averages here. It
+  // now flows through the standard weighted path with the series
+  // multiplier neutralized — outlier dampening + recency still apply
+  // because they're orthogonal to having a usable series sample. The
+  // mode name is preserved so Axiom queries on l5_mode keep working.
   let mode;
   let perGameMultipliers;
   let seriesNumbers = null;
@@ -206,10 +213,11 @@ export function computeWeightedL5({ games, seasonPpg, playoffPpg, ownAbbr, serie
     vsCurrentOpp = seriesNumbers.filter((x) => x != null).length;
     if (vsCurrentOpp < CURRENT_SERIES_MIN_GAMES) {
       mode = "playoff_raw_fallback";
+      perGameMultipliers = games.map(() => 1.0);
     } else {
       mode = "playoff_series";
+      perGameMultipliers = seriesNumbers.map((num) => seriesMultiplier(num));
     }
-    perGameMultipliers = seriesNumbers.map((num) => seriesMultiplier(num));
   } else {
     mode = "regular";
     perGameMultipliers = games.map((g) => {
@@ -219,24 +227,11 @@ export function computeWeightedL5({ games, seasonPpg, playoffPpg, ownAbbr, serie
     });
   }
 
-  // Raw fallback: spec requires returning raw averages — caller treats
-  // l5.weighted.averages as raw and emits the small-sample flag.
-  if (mode === "playoff_raw_fallback") {
-    const raw = rawAverages(games);
-    return {
-      averages: raw,
-      raw_vs_weighted_delta: zeroDelta(raw),
-      outlier_present: hasOutlier(games, outlierRef),
-      outlier_ref_type: outlierRefType,
-      mode,
-    };
-  }
-
-  // perOpponentMatch — Move 1's per-game weight modifier. In playoff_series
-  // mode, games vs the current opponent (seriesNumbers[i] != null) get a
-  // CURRENT_OPP boost; other playoff games get OTHER_PLAYOFF (1.0, no-op).
-  // In regular mode the modifier is a no-op for every game.
-  const perOpponentMatch = (isPlayoff && seriesNumbers)
+  // perOpponentMatch — Move 1's per-game weight modifier. Only applies
+  // in playoff_series mode (current-vs-other opponent signal is what it
+  // captures). playoff_raw_fallback and regular mode get a neutral 1.0
+  // because they don't have the series-vs-other distinction.
+  const perOpponentMatch = (mode === "playoff_series" && seriesNumbers)
     ? seriesNumbers.map((num) =>
         num != null ? OPPONENT_MATCH_WEIGHTS.CURRENT_OPP : OPPONENT_MATCH_WEIGHTS.OTHER_PLAYOFF
       )
@@ -315,6 +310,14 @@ export function computeWeightedL5({ games, seasonPpg, playoffPpg, ownAbbr, serie
     }
   }
 
+  // Trimmed weighted averages — drop the single highest game (by target
+  // field) and recompute the weighted mean. Rule 5a consults this on
+  // OVER when the full baseline depends on one anomalous game; the pts-
+  // based outlier_present flag misses Fantasy-Score-style anomalies
+  // (game where reb+ast+stl carry the composite while pts stay normal),
+  // so the drop-max trim works directly off each headline field instead.
+  const trimmed_averages = computeTrimmedAverages(games, weights);
+
   return {
     averages,
     raw_vs_weighted_delta: delta,
@@ -325,6 +328,68 @@ export function computeWeightedL5({ games, seasonPpg, playoffPpg, ownAbbr, serie
     // blends when present.
     current_series_averages,
     current_series_n,
+    // Drop-max trimmed weighted means per headline stat. Used by Rule 5a
+    // to gate S-tier when one anomalous game is doing the heavy lifting.
+    trimmed_averages,
+  };
+}
+
+// Drop the single highest game by value(g) and compute the weighted
+// mean of the rest. Returns null when fewer than 2 games carry a value
+// (a single sample can't be meaningfully trimmed).
+function trimmedWeightedMean(games, weights, valueFn) {
+  const values = games.map((g) => valueFn(g));
+  const withValue = values.filter((v) => v != null);
+  if (withValue.length < 2) return null;
+  let maxIdx = -1;
+  let maxVal = -Infinity;
+  for (let i = 0; i < values.length; i++) {
+    if (values[i] != null && values[i] > maxVal) {
+      maxVal = values[i];
+      maxIdx = i;
+    }
+  }
+  let sum = 0;
+  let totalWeight = 0;
+  for (let i = 0; i < games.length; i++) {
+    if (i === maxIdx) continue;
+    const v = values[i];
+    if (v == null) continue;
+    sum += v * weights[i];
+    totalWeight += weights[i];
+  }
+  if (totalWeight === 0) return null;
+  return Number((sum / totalWeight).toFixed(2));
+}
+
+function computeTrimmedAverages(games, weights) {
+  const round1 = (v) => v == null ? null : Number(v.toFixed(1));
+  const pts = (g) => g?.pts ?? null;
+  const reb = (g) => g?.reb ?? null;
+  const ast = (g) => g?.ast ?? null;
+  const stl = (g) => g?.stl ?? null;
+  const blk = (g) => g?.blk ?? null;
+  const pra = (g) => (g?.pts != null && g?.reb != null && g?.ast != null) ? g.pts + g.reb + g.ast : null;
+  const pr  = (g) => (g?.pts != null && g?.reb != null) ? g.pts + g.reb : null;
+  const pa  = (g) => (g?.pts != null && g?.ast != null) ? g.pts + g.ast : null;
+  const ra  = (g) => (g?.reb != null && g?.ast != null) ? g.reb + g.ast : null;
+  const bs  = (g) => (g?.blk != null || g?.stl != null) ? (g.blk ?? 0) + (g.stl ?? 0) : null;
+  const fs  = (g) => {
+    if (g?.pts == null || g?.reb == null || g?.ast == null || g?.tov == null) return null;
+    return g.pts + 1.2 * g.reb + 1.5 * g.ast + 3 * (g.stl ?? 0) + 3 * (g.blk ?? 0) - g.tov;
+  };
+  return {
+    ppg: round1(trimmedWeightedMean(games, weights, pts)),
+    rpg: round1(trimmedWeightedMean(games, weights, reb)),
+    apg: round1(trimmedWeightedMean(games, weights, ast)),
+    pra: round1(trimmedWeightedMean(games, weights, pra)),
+    pr:  round1(trimmedWeightedMean(games, weights, pr)),
+    pa:  round1(trimmedWeightedMean(games, weights, pa)),
+    ra:  round1(trimmedWeightedMean(games, weights, ra)),
+    bs:  round1(trimmedWeightedMean(games, weights, bs)),
+    fs:  round1(trimmedWeightedMean(games, weights, fs)),
+    blk: trimmedWeightedMean(games, weights, blk),
+    stl: trimmedWeightedMean(games, weights, stl),
   };
 }
 
@@ -381,10 +446,6 @@ function rawAverages(games) {
     ft_pct: round1(ft_pct),
     minutes: round1(minutes),
   };
-}
-
-function zeroDelta() {
-  return { ppg: 0, rpg: 0, apg: 0, pra: 0 };
 }
 
 /**

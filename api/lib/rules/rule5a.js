@@ -49,12 +49,30 @@ export function apply(ctx) {
   if (buf.outlierActive) parts.push("post-outlier widening active");
   if (buf.poorFt) parts.push("poor FT shooter +2 buffer");
 
+  // Trimmed-baseline sanity check. When the full baseline clears the
+  // line but the drop-max trimmed baseline doesn't clear it by the
+  // configured buffer, one game is doing the heavy lifting. Cap S-tier
+  // off (A-tier max) and flag the asymmetry so operators can see why.
+  // Mirrors the symmetric protection efbe467 added on UNDER via
+  // demoteForOutlier — different shape, same intent: don't let a single
+  // game manufacture an S-tier verdict.
+  let tier_cap = null;
+  let flag = null;
+  if (buf.trimmedAdjusted != null) {
+    const trimmedEdge = buf.trimmedAdjusted - line;
+    if (trimmedEdge < buf.buffer) {
+      tier_cap = "A";
+      flag = `⚠️ Rule 5a — trimmed L5 (${buf.trimmedBaseline.toFixed(2)}) doesn't clear line by buffer; S-tier capped at A`;
+      parts.push(`trimmed-baseline=${buf.trimmedBaseline.toFixed(2)} edge=${trimmedEdge.toFixed(2)} — single-game-dependent, capping at A`);
+    }
+  }
+
   return {
     fired: true,
     rule_id: "5a",
-    tier_cap: null,
+    tier_cap,
     confidence_delta: 0, // engine handles edge bonus globally
-    flag: null,
+    flag,
     justification_part: parts.join("; "),
     // Surface buf so engine can compute edge_unit_bonus once at the
     // top level instead of every rule redoing the math.
