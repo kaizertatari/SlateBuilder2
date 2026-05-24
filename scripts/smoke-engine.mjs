@@ -779,5 +779,59 @@ console.log("\n[x] Rule 5j — UNDER baseline gate");
   assert("[x.6] marginal + Mech 1 alone → A max", v6.tier === "A" || v6.tier === "B", `got ${v6.tier}`);
 }
 
+// (y) Rule 5a trimmed-baseline cap — one anomalous game inflates the
+// full L5 baseline above the line, but the drop-max trimmed baseline
+// doesn't clear it by buffer. Mirrors the Dylan Harper Fantasy Score
+// case: 1 huge game (~68 FS) + 4 modest games (~22 FS avg). Full
+// weighted baseline clears OVER 21 by a wide margin → would normally
+// hit S-tier, but trimmed view shows the line is single-game-dependent
+// → cap at A.
+console.log("\n[y] Rule 5a trimmed-baseline cap — single-game dependent OVER");
+{
+  const games = [
+    { matchup: "SA vs OKC", pts: 6,  reb: 3,  ast: 2, stl: 0, blk: 0, tov: 2, minutes: 17 },
+    { matchup: "SA @ OKC",  pts: 12, reb: 2,  ast: 3, stl: 0, blk: 0, tov: 1, minutes: 25 },
+    { matchup: "SA @ OKC",  pts: 24, reb: 11, ast: 6, stl: 7, blk: 0, tov: 1, minutes: 47 }, // anomaly
+    { matchup: "SA @ MIN",  pts: 15, reb: 5,  ast: 2, stl: 0, blk: 1, tov: 3, minutes: 26 },
+    { matchup: "SA vs MIN", pts: 12, reb: 10, ast: 2, stl: 1, blk: 1, tov: 2, minutes: 25 },
+  ];
+  const { computeWeightedL5 } = await import("../api/lib/weighted-l5.js");
+  const w = computeWeightedL5({
+    games, seasonPpg: 11.9, playoffPpg: 13.8, ownAbbr: "SA",
+    series: { opponent_abbr: "OKC", next_game_number: 5 },
+  });
+  assert("[y] trimmed_averages.fs computed", typeof w?.trimmed_averages?.fs === "number", `got ${w?.trimmed_averages?.fs}`);
+  assert("[y] trimmed fs < full fs (anomaly removed)",
+    w.trimmed_averages.fs < w.averages.fs - 3,
+    `trimmed=${w?.trimmed_averages?.fs} full=${w?.averages?.fs}`);
+
+  const v = applyEngine({
+    groundTruth: gt({
+      league: "NBA",
+      home_away: "home",
+      season: { averages: { ppg: 11.91, rpg: 3.44, apg: 3.8, fs: 23.7, fta: 1.73, ft_pct: 0.48 } },
+      l5: {
+        type: "Playoffs", n: 5,
+        averages: { ppg: 13.8, rpg: 6.2, apg: 3, fs: 29.9 },
+        weighted: w,
+        games,
+      },
+      opponent_defense: { def_rank: 8 },
+      series: { opponent_abbr: "OKC", next_game_number: 5, leading_team_abbr: null, round: "1", series_record: "2-2" },
+      mechanisms: {
+        mech1: { confirmed: false },
+        mech2: { confirmed: false },
+        mech3: { confirmed: false },
+        opponent_starters_out: 0,
+      },
+    }),
+    statType: "Fantasy Score", direction: "OVER", line: 21,
+  });
+  assert("[y] OVER verdict (still viable)", v.verdict === "OVER", `got ${v.verdict}/${v.tier}`);
+  assert("[y] tier capped at A (or B), not S", v.tier === "A" || v.tier === "B", `got ${v.tier}`);
+  assert("[y] trimmed-baseline flag surfaced",
+    v.flags.some((f) => /trimmed/i.test(f)), `flags=${JSON.stringify(v.flags)}`);
+}
+
 console.log(`\n=== smoke-engine: ${passed} pass, ${failed} fail ===`);
 process.exit(failed > 0 ? 1 : 0);

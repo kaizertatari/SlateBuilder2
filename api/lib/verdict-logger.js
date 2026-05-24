@@ -125,6 +125,10 @@ export function logVerdict({
     // playoff-reference fix didn't over-trigger.
     outlier_present: !!groundTruth?.l5?.weighted?.outlier_present,
     outlier_ref_type: groundTruth?.l5?.weighted?.outlier_ref_type ?? null,
+    // Drop-max trimmed baseline for the target field. Lets calibration
+    // queries correlate hit rate against single-game-dependent picks
+    // (where the trimmed mean diverges from the full weighted mean).
+    trimmed_l5_avg: pickAvg(groundTruth?.l5?.weighted?.trimmed_averages, input?.propType),
     // Move 3 — regular-season H2H baseline. n=0 when playoff path or no
     // matchup history; non-zero only when current-season gamelog had
     // games against tonight's opponent. h2h_avg is null when the gate

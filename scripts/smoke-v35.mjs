@@ -102,8 +102,11 @@ header("3. Weighted L5: playoff raw fallback when <3 vs current opp");
     games, seasonPpg: 22, ownAbbr: "BOS", series, defRankByAbbr: {},
   });
   check("fallback mode detected", out?.mode === "playoff_raw_fallback");
-  // Raw mean ppg = (22+28+24+20+30)/5 = 24.8
-  check("returns raw mean ppg≈24.8", approx(out?.averages?.ppg, 24.8, 0.1), `got ${out?.averages?.ppg}`);
+  // Recency-weighted ppg using ramp [0.30, 0.25, 0.20, 0.15, 0.10]:
+  // 22×0.30 + 28×0.25 + 24×0.20 + 20×0.15 + 30×0.10 = 6.6+7.0+4.8+3.0+3.0 = 24.4
+  // Series multiplier is neutralized in fallback, but recency + outlier
+  // dampening still apply — that's what makes the path meaningful.
+  check("returns recency-weighted ppg≈24.4", approx(out?.averages?.ppg, 24.4, 0.2), `got ${out?.averages?.ppg}`);
 }
 
 // ─── 4. Verifier — variance-adjusted OVER buffer ─────────────────────────
