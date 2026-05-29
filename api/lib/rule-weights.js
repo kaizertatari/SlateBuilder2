@@ -76,3 +76,23 @@ export function snapToBand(score, tier) {
   const rounded = Math.max(0, Math.min(100, Math.round(score)));
   return Math.max(band.lo, Math.min(band.hi, rounded));
 }
+
+// The tier a cap-resolved pick WOULD land in if the raw (pre-snap) score
+// were allowed to drive demotion + SKIP — i.e., the intended behavior the
+// live finalizer doesn't yet apply, because snapToBand floors confidence at
+// the band minimum and makes the score-based demote/SKIP unreachable.
+//
+// Pure function of (cap-resolved tier, raw score). Used today only for
+// SHADOW telemetry (engine.shadow_tier) so the calibration report can size
+// the blast radius before the snapToBand fix is flipped on. When the fix
+// lands, the finalizer adopts this logic directly and the shadow field +
+// this note go away.
+export function shadowTierFor(tier, score) {
+  if (tier == null || tier === "SKIP") return "SKIP";
+  const raw = Math.max(0, Math.min(100, Math.round(score)));
+  let t = tier;
+  while (t !== "B" && raw < (TIER_BAND[t]?.lo ?? 0)) {
+    t = t === "S" ? "A" : "B";
+  }
+  return raw < TIER_BAND.B.lo ? "SKIP" : t;
+}

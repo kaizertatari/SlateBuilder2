@@ -16,6 +16,7 @@
 // them, not point estimates, when n is small.
 
 import { loadEnvLocal } from "./_env.mjs";
+import { shadowTierFor } from "../api/lib/rule-weights.js";
 loadEnvLocal();
 
 const QUERY_URL = "https://api.axiom.co/v1/datasets/_apl?format=tabular";
@@ -149,6 +150,28 @@ function ruleLift(title, picks) {
   }
 }
 
+// Shadow comparison for the pending snapToBand fix: how the live tiers
+// would migrate if the raw score drove demote/SKIP, and — the money
+// question — whether the picks it would SKIP are actually net-losing.
+function shadowSection(picks) {
+  const have = picks.filter((p) => p.shadow != null);
+  console.log(`\n— snapToBand-fix shadow (would-be tier if raw score drove demote/SKIP) —`);
+  console.log(`  coverage: ${have.length}/${picks.length} graded picks carry raw_score/shadow`);
+  if (!have.length) { console.log("  (populates as verdicts log raw_score/shadow_tier going forward)"); return; }
+  for (const lt of ["S", "A", "B"]) {
+    const row = have.filter((p) => p.tier === lt);
+    if (!row.length) continue;
+    const to = {};
+    for (const p of row) to[p.shadow] = (to[p.shadow] ?? 0) + 1;
+    const moves = Object.entries(to).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k}:${n}`).join("  ");
+    console.log(`  live ${lt} (n=${row.length}) → ${moves}`);
+  }
+  const wouldSkip = have.filter((p) => p.tier !== "SKIP" && p.shadow === "SKIP");
+  const survivors = have.filter((p) => p.shadow !== "SKIP");
+  console.log(`  would-be SKIP'd (issued today): ${fmtRate(stat(wouldSkip))}`);
+  console.log(`  survivors (still issued):       ${fmtRate(stat(survivors))}`);
+}
+
 async function main() {
   const token = process.env.AXIOM_TOKEN;
   if (!token) { console.error("AXIOM_TOKEN not set in .env.local"); process.exit(1); }
@@ -181,6 +204,7 @@ async function main() {
     graded.push({
       tier: v.tier ?? "?", direction: v.direction ?? "?", odds: v.odds_type ?? "none",
       stat: canonicalStat(v.prop_type), conf: v.confidence, raw: v.raw_score ?? null,
+      shadow: v.shadow_tier ?? (v.raw_score != null ? shadowTierFor(v.tier ?? "?", v.raw_score) : null),
       hm: o.hit_or_miss, rules: normRules(v.rules_fired),
     });
   }
@@ -209,6 +233,7 @@ async function main() {
 
   ruleLift("all issued", graded);
   ruleLift("A+B only", graded.filter((p) => p.tier === "A" || p.tier === "B"));
+  shadowSection(graded);
 
   console.log(`\n* small-n: a side has <8 decided picks — treat as noise.`);
   console.log(`This report proposes nothing. Weight changes go through rule-weights.js`);

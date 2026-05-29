@@ -29,7 +29,7 @@ import * as ruleUnderMechanism from "./rules/rule-under-mechanism.js";
 import * as ruleSTier from "./rules/rule-s-tier.js";
 
 import { scaleFor } from "./rules/_helpers.js";
-import { RULE_WEIGHTS, TIER_RANK, tierMin, snapToBand, TIER_BAND } from "./rule-weights.js";
+import { RULE_WEIGHTS, TIER_RANK, tierMin, snapToBand, TIER_BAND, shadowTierFor } from "./rule-weights.js";
 
 // Pre-S-tier rules in canonical order. Suppressor priority from
 // framework line 237: Rule 6 → 4c → 4i → 5f → 5c (R9). 5a/5i are
@@ -203,6 +203,13 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
     }
   }
 
+  // SHADOW telemetry (TEMPORARY — retire when the snapToBand fix flips on).
+  // The tier the raw pre-snap score WOULD resolve to once score-driven
+  // demote/SKIP is enabled (currently dead code — see the snap block below).
+  // Does NOT affect the live verdict/tier/confidence; logged so
+  // calibration-report can size that change before we ship it.
+  const shadow_tier = shadowTierFor(tier, score);
+
   // Snap confidence into the tier's band.
   let confidence;
   if (tier === "SKIP") {
@@ -241,6 +248,8 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
     // preserves the underlying spread for a finer reliability curve.
     // See scripts/calibration-report.mjs.
     raw_score: Math.round(score * 10) / 10,
+    // SHADOW (telemetry only; see above) — retire with the snapToBand flip.
+    shadow_tier,
     flags,
     justification,
     rules_fired: rulesFired,

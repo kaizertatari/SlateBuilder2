@@ -91,6 +91,9 @@ export function logVerdict({
     // LLM branches (which don't compute it). Calibration uses it for a
     // finer reliability curve than the three post-snap tier bands.
     raw_score: result?.raw_score ?? null,
+    // SHADOW (temporary) — the would-be tier under the score-driven
+    // demote/SKIP fix; lets calibration-report size that change pre-ship.
+    shadow_tier: result?.shadow_tier ?? null,
     flags: result?.flags ?? null,
     pre_filtered: !!result?.pre_filtered,
     // Engine: which rule modules contributed to the verdict. Empty array
