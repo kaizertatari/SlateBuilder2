@@ -19,6 +19,12 @@ export const RULE_WEIGHTS = {
   // 4c multi-star compression). Engine decrements by this amount.
   suppressor_penalty: 8,
 
+  // Strong-suppressor (5b/5h) thin-edge SKIP multiplier. A suppressor-
+  // flagged OVER must clear the line by ≥ this × its Rule 5a buffer to
+  // still issue; thinner edges SKIP (these hit ~38-40% when issued —
+  // calibration 2026-05). Starting value — tune via calibration-report.
+  suppressor_thin_edge_mult: 1.5,
+
   // Per point of margin between the road-adjusted baseline and the
   // line, on the favorable side. Bigger edge → more confidence.
   // Multiplier is applied to abs(adjusted - line).

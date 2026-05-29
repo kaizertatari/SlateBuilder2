@@ -19,17 +19,14 @@
     "build-bbref-ids": "node scripts/build-bbref-ids.mjs",
     "refresh-bbref-splits": "node scripts/refresh-bbref-splits.mjs",
     "refresh-bbref-splits:guarded": "node scripts/refresh-bbref-splits.mjs && node scripts/validate-bbref-splits-snapshot.mjs data/bbref-splits.json && node scripts/validate-bbref-splits-snapshot.mjs data/bbref-splits-wnba.json || (git checkout -- data/bbref-splits.json data/bbref-splits-wnba.json && exit 1)",
-    "check-models": "node scripts/check-models.mjs",
     "smoke:app": "node scripts/smoke-app.mjs",
     "smoke:balldontlie": "node scripts/smoke-balldontlie.mjs",
     "smoke:bbref": "node scripts/smoke-bbref.mjs",
     "smoke:data": "node scripts/smoke-data.mjs",
     "smoke:defender": "node scripts/smoke-defender.mjs",
     "smoke:extras": "node scripts/smoke-extras.mjs",
-    "smoke:gemini": "node scripts/smoke-gemini.mjs",
     "smoke:gt": "node scripts/smoke-orchestrator.mjs",
     "smoke:picks": "node scripts/smoke-find-picks.mjs",
-    "smoke:prompt": "node scripts/smoke-prompt.mjs",
     "smoke:prop": "node scripts/smoke-prop.mjs"
   },
   "dependencies": {

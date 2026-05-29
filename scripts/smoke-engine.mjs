@@ -833,5 +833,38 @@ console.log("\n[y] Rule 5a trimmed-baseline cap — single-game dependent OVER")
     v.flags.some((f) => /trimmed/i.test(f)), `flags=${JSON.stringify(v.flags)}`);
 }
 
+// (z) Strong-suppressor (5b/5h) thin-edge gate — Phase-2 calibration change.
+// A 5h-flagged scoring OVER that clears the line by < 1.5× its buffer SKIPs;
+// the same setup with a large edge still issues (capped at A by 5h).
+console.log("\n[z] 5b/5h thin-edge SKIP gate");
+{
+  // 5h tier-2 fires: scoring prop, fta ≥ gate (WNBA 4), def_rank ≤ tier2 (1).
+  // home → no road deduction; ft_pct ≥ 0.70 and no variance/outlier → buffer
+  // stays at the Points base of 1.5, so minEdge = 1.5 × 1.5 = 2.25.
+  const base5h = {
+    home_away: "home",
+    season: { averages: { ppg: 25, rpg: 5, apg: 4, fta: 6, ft_pct: 0.80, spg: 1, bpg: 0.5, topg: 2, fs: 45 } },
+    l5: {
+      type: "Regular Season", n: 5,
+      averages: { ppg: 25, fta: 6, ft_pct: 0.80 },
+      weighted: { averages: { ppg: 25 } },
+      games: [],
+    },
+    opponent_defense: { def_rank: 1, primary_defender: null },
+  };
+
+  // Thin edge: baseline 25, line 23.5 → edge 1.5 < 2.25 → SKIP via the gate.
+  const thin = applyEngine({ groundTruth: gt(base5h), statType: "Points", direction: "OVER", line: 23.5 });
+  assert("[z] 5h fires on thin-edge OVER", thin.rules_fired.includes("5h"), `fired=${JSON.stringify(thin.rules_fired)}`);
+  assert("[z] thin-edge 5h OVER → SKIP", thin.verdict === "SKIP", `got ${thin.verdict}/${thin.tier}`);
+  assert("[z] thin-edge SKIP flag surfaced", thin.flags.some((f) => /thin edge/i.test(f)), `flags=${JSON.stringify(thin.flags)}`);
+
+  // Large edge: same setup, line 20 → edge 5 ≥ 2.25 → still issues (5h caps A).
+  const wide = applyEngine({ groundTruth: gt(base5h), statType: "Points", direction: "OVER", line: 20 });
+  assert("[z] large-edge 5h OVER still issues", wide.verdict === "OVER", `got ${wide.verdict}/${wide.tier}`);
+  assert("[z] large-edge 5h OVER capped ≤ A", wide.tier === "A" || wide.tier === "B", `got ${wide.tier}`);
+  assert("[z] large-edge OVER keeps no thin-edge flag", !wide.flags.some((f) => /thin edge/i.test(f)));
+}
+
 console.log(`\n=== smoke-engine: ${passed} pass, ${failed} fail ===`);
 process.exit(failed > 0 ? 1 : 0);

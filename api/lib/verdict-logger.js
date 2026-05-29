@@ -38,8 +38,6 @@ const TIMEOUT_MS = 5000;
  * @param {Object} [args.errorInfo]    { message, name, status } when an error path emitted instead of a verdict
  * @param {string} [args.source]       "analyze" | "analyze-all" — discriminator for cross-endpoint queries
  * @param {number} [args.durationMs]   wall-clock ms from request start to emit
- * @param {string} [args.llmProvider]  "groq" | "gemini" | null (null for pre-filtered SKIPs)
- * @param {string} [args.llmModel]     concrete model id (e.g. "llama-3.3-70b-versatile") | null
  */
 export function logVerdict({
   input,
@@ -89,6 +87,10 @@ export function logVerdict({
     verdict: result?.verdict ?? null,
     tier: result?.tier ?? null,
     confidence: result?.confidence ?? null,
+    // Raw pre-snap engine score — null on pre-filtered SKIPs and on the
+    // LLM branches (which don't compute it). Calibration uses it for a
+    // finer reliability curve than the three post-snap tier bands.
+    raw_score: result?.raw_score ?? null,
     flags: result?.flags ?? null,
     pre_filtered: !!result?.pre_filtered,
     // Engine: which rule modules contributed to the verdict. Empty array
