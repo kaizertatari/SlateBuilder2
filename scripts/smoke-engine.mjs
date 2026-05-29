@@ -13,6 +13,7 @@
 
 import { applyEngine } from "../api/lib/engine.js";
 import { computeOverBufferCheck } from "../api/lib/rules/_helpers.js";
+import { shadowTierFor, TIER_RANK } from "../api/lib/rule-weights.js";
 
 let passed = 0, failed = 0;
 function assert(name, cond, detail) {
@@ -831,6 +832,58 @@ console.log("\n[y] Rule 5a trimmed-baseline cap — single-game dependent OVER")
   assert("[y] tier capped at A (or B), not S", v.tier === "A" || v.tier === "B", `got ${v.tier}`);
   assert("[y] trimmed-baseline flag surfaced",
     v.flags.some((f) => /trimmed/i.test(f)), `flags=${JSON.stringify(v.flags)}`);
+}
+
+// (z) Strong-suppressor (5b/5h) thin-edge gate — Phase-2 calibration change.
+// A 5h-flagged scoring OVER that clears the line by < 1.5× its buffer SKIPs;
+// the same setup with a large edge still issues (capped at A by 5h).
+console.log("\n[z] 5b/5h thin-edge SKIP gate");
+{
+  // 5h tier-2 fires: scoring prop, fta ≥ gate (WNBA 4), def_rank ≤ tier2 (1).
+  // home → no road deduction; ft_pct ≥ 0.70 and no variance/outlier → buffer
+  // stays at the Points base of 1.5, so minEdge = 1.5 × 1.5 = 2.25.
+  const base5h = {
+    home_away: "home",
+    season: { averages: { ppg: 25, rpg: 5, apg: 4, fta: 6, ft_pct: 0.80, spg: 1, bpg: 0.5, topg: 2, fs: 45 } },
+    l5: {
+      type: "Regular Season", n: 5,
+      averages: { ppg: 25, fta: 6, ft_pct: 0.80 },
+      weighted: { averages: { ppg: 25 } },
+      games: [],
+    },
+    opponent_defense: { def_rank: 1, primary_defender: null },
+  };
+
+  // Thin edge: baseline 25, line 23.5 → edge 1.5 < 2.25 → SKIP via the gate.
+  const thin = applyEngine({ groundTruth: gt(base5h), statType: "Points", direction: "OVER", line: 23.5 });
+  assert("[z] 5h fires on thin-edge OVER", thin.rules_fired.includes("5h"), `fired=${JSON.stringify(thin.rules_fired)}`);
+  assert("[z] thin-edge 5h OVER → SKIP", thin.verdict === "SKIP", `got ${thin.verdict}/${thin.tier}`);
+  assert("[z] thin-edge SKIP flag surfaced", thin.flags.some((f) => /thin edge/i.test(f)), `flags=${JSON.stringify(thin.flags)}`);
+
+  // Large edge: same setup, line 20 → edge 5 ≥ 2.25 → still issues (5h caps A).
+  const wide = applyEngine({ groundTruth: gt(base5h), statType: "Points", direction: "OVER", line: 20 });
+  assert("[z] large-edge 5h OVER still issues", wide.verdict === "OVER", `got ${wide.verdict}/${wide.tier}`);
+  assert("[z] large-edge 5h OVER capped ≤ A", wide.tier === "A" || wide.tier === "B", `got ${wide.tier}`);
+  assert("[z] large-edge OVER keeps no thin-edge flag", !wide.flags.some((f) => /thin edge/i.test(f)));
+}
+
+// (z2) snapToBand-fix shadow — pure shadowTierFor logic + engine wiring.
+// shadow_tier is telemetry only (live verdict unchanged); it can only
+// demote/SKIP relative to the cap-resolved tier, never promote.
+console.log("\n[z2] snapToBand-fix shadow");
+{
+  assert("[z2] A + raw 64 → B", shadowTierFor("A", 64) === "B", shadowTierFor("A", 64));
+  assert("[z2] A + raw 55 → SKIP", shadowTierFor("A", 55) === "SKIP", shadowTierFor("A", 55));
+  assert("[z2] S + raw 70 → A", shadowTierFor("S", 70) === "A", shadowTierFor("S", 70));
+  assert("[z2] S + raw 60 → SKIP", shadowTierFor("S", 60) === "SKIP", shadowTierFor("S", 60));
+  assert("[z2] A + raw 75 → A (fits)", shadowTierFor("A", 75) === "A", shadowTierFor("A", 75));
+  assert("[z2] B + raw 90 → B (no promote)", shadowTierFor("B", 90) === "B", shadowTierFor("B", 90));
+  assert("[z2] SKIP stays SKIP", shadowTierFor("SKIP", 88) === "SKIP", shadowTierFor("SKIP", 88));
+
+  // Engine wiring: shadow_tier present and never out-ranks the live tier.
+  const pv = applyEngine({ groundTruth: gt(), statType: "Points", direction: "OVER", line: 19.5 });
+  assert("[z2] engine sets shadow_tier", typeof pv.shadow_tier === "string", `got ${pv.shadow_tier}`);
+  assert("[z2] shadow never out-ranks live", TIER_RANK[pv.shadow_tier] <= TIER_RANK[pv.tier], `${pv.shadow_tier} vs ${pv.tier}`);
 }
 
 console.log(`\n=== smoke-engine: ${passed} pass, ${failed} fail ===`);

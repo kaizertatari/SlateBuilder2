@@ -19,6 +19,12 @@ export const RULE_WEIGHTS = {
   // 4c multi-star compression). Engine decrements by this amount.
   suppressor_penalty: 8,
 
+  // Strong-suppressor (5b/5h) thin-edge SKIP multiplier. A suppressor-
+  // flagged OVER must clear the line by ≥ this × its Rule 5a buffer to
+  // still issue; thinner edges SKIP (these hit ~38-40% when issued —
+  // calibration 2026-05). Starting value — tune via calibration-report.
+  suppressor_thin_edge_mult: 1.5,
+
   // Per point of margin between the road-adjusted baseline and the
   // line, on the favorable side. Bigger edge → more confidence.
   // Multiplier is applied to abs(adjusted - line).
@@ -69,4 +75,24 @@ export function snapToBand(score, tier) {
   if (!band) return Math.max(0, Math.min(100, Math.round(score)));
   const rounded = Math.max(0, Math.min(100, Math.round(score)));
   return Math.max(band.lo, Math.min(band.hi, rounded));
+}
+
+// The tier a cap-resolved pick WOULD land in if the raw (pre-snap) score
+// were allowed to drive demotion + SKIP — i.e., the intended behavior the
+// live finalizer doesn't yet apply, because snapToBand floors confidence at
+// the band minimum and makes the score-based demote/SKIP unreachable.
+//
+// Pure function of (cap-resolved tier, raw score). Used today only for
+// SHADOW telemetry (engine.shadow_tier) so the calibration report can size
+// the blast radius before the snapToBand fix is flipped on. When the fix
+// lands, the finalizer adopts this logic directly and the shadow field +
+// this note go away.
+export function shadowTierFor(tier, score) {
+  if (tier == null || tier === "SKIP") return "SKIP";
+  const raw = Math.max(0, Math.min(100, Math.round(score)));
+  let t = tier;
+  while (t !== "B" && raw < (TIER_BAND[t]?.lo ?? 0)) {
+    t = t === "S" ? "A" : "B";
+  }
+  return raw < TIER_BAND.B.lo ? "SKIP" : t;
 }

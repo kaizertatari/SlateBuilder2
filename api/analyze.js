@@ -358,13 +358,13 @@ export async function gatherGroundTruthWithRetry(
 /**
  * Handles POST requests to the analyze endpoint.
  * Validates input, applies rate limiting, gathers ground truth data,
- * and invokes the Groq AI model for prop analysis.
+ * and applies the deterministic v3.5 engine for prop analysis.
  * @param {Request} req - The HTTP request object
  * @returns {Promise<Response>} JSON response with analysis results or error
  */
 async function handlePost(req) {
   // duration_ms in verdict events is measured from here so it covers
-  // ground-truth fetch + LLM round-trip + verifier — i.e., what the user
+  // ground-truth fetch + pre-filter + engine — i.e., what the user
   // actually waited for.
   const startedAt = Date.now();
   const elapsed = () => Date.now() - startedAt;
@@ -421,9 +421,10 @@ async function handlePost(req) {
       return createMissingDataResponse(missing, trace);
     }
 
-    // Pre-LLM mechanical filter. Skips the LLM call when the framework's
-    // arithmetic gates would already force SKIP. Same checks as the
-    // post-LLM verifier — pre and post can never disagree.
+    // Pre-engine mechanical filter. Short-circuits to SKIP when the
+    // framework's arithmetic hard-gates already force it — saves engine
+    // setup. Shares the same helpers as the engine, so the fast-path and
+    // the engine can never disagree.
     const direction = /OVER/i.test(propType) ? "OVER" : "UNDER";
     const statType = String(propType).replace(/\s+(OVER|UNDER)\s*$/i, "").trim();
     const preSkip = preFilterMechanical({
