@@ -17,6 +17,7 @@
     "backtest-slates": "node scripts/backtest-slates.mjs",
     "smoke:slate": "node scripts/smoke-slate.mjs",
     "smoke:market": "node scripts/smoke-market-edge.mjs",
+    "smoke:build-slate": "node scripts/smoke-build-slate.mjs",
     "refresh-bridge": "node scripts/refresh-bridge.mjs",
     "refresh-prizepicks:guarded": "node scripts/refresh-prizepicks.mjs && node scripts/validate-prizepicks-snapshot.mjs || (git checkout -- data/prizepicks-lines.json && exit 1)",
     "refresh-team-defense": "node scripts/refresh-team-defense.mjs",

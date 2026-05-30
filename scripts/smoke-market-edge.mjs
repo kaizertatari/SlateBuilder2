@@ -30,10 +30,10 @@ setOne({ fair_over: 0.35 });
 r = apply(ctx("Test Player", "Points", "UNDER", 16.5));
 ok(r.fired && r.signals_added === 2 && !r.hard_skip, "D under supported when over-fair low");
 
-// E) line shift: PP line 2pts below book → fair P(over) rises
-setOne({ stat: "Points", line: 17.5, fair_over: 0.50 });
+// E) line shift: PP line 1pt below book → fair P(over) rises (within reliability cap)
+setOne({ stat: "Points", line: 16.5, fair_over: 0.50 });
 r = apply(ctx("Test Player", "Points", "OVER", 15.5));
-ok(r.fired && r._market.fair_at_line > 0.60 && r._market.line_delta === -2, `E shift raises fair (got ${r._market?.fair_at_line})`);
+ok(r.fired && r._market.fair_at_line > 0.54 && r._market.line_delta === -1, `E shift raises fair (got ${r._market?.fair_at_line})`);
 
 // F) no matching market → no-op (NBA today / unmatched names)
 setOdds({ source: "draftkings", by_player: {}, games: {} });

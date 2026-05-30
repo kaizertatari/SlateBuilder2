@@ -137,23 +137,36 @@ export function lookupMarket({ player, stat, line }) {
         : []);
   if (!sources.length) return null;
 
-  // Shift EACH book's fair P(over) to the requested PrizePicks line, then
-  // average → a no-vig CONSENSUS at the line. (Returning fair-at-line here
-  // keeps the consumer simple: no second shift needed downstream.)
-  const repLine = sources.reduce((a, s) => a + (s.line ?? 0), 0) / sources.length;
-  const target = typeof line === "number" ? line : (entry.line ?? repLine);
-  const shifted = sources
-    .map((s) => fairProbAtLine({ fairOver: s.fair_over, bookLine: s.line, targetLine: target, stat }))
-    .filter((x) => typeof x === "number");
-  if (!shifted.length) return null;
-  const consensus = shifted.reduce((a, b) => a + b, 0) / shifted.length;
+  // Shift EACH book's fair P(over) to the requested line, then average → a
+  // no-vig CONSENSUS at the line. (Returning fair-at-line keeps consumers
+  // simple: no second shift downstream.)
+  //
+  // RELIABILITY GUARD: the linear line-shift only holds for small moves. If a
+  // PrizePicks line sits far from a book's main line (a demon/goblin line, e.g.
+  // a 24.5 points line vs a 16.5 book line), extrapolating the de-vig that far
+  // yields garbage (→ a fake 98% UNDER). Only use a book's quote when the shift
+  // moves probability ≤ MAX_PROB_SHIFT; if no book is close enough, return null
+  // (we can't price this line without alternate-line ladders — Stage 3).
+  const MAX_PROB_SHIFT = 0.08; // ~1pt on points; bigger PP-vs-book gaps are likely stale/mismatched, not edge (need alt-line ladders to price — Stage 3)
+  const target = typeof line === "number" ? line : entry.line;
+  const usable = [];
+  for (const s of sources) {
+    if (typeof s.fair_over !== "number" || typeof s.line !== "number") continue;
+    const shifted = fairProbAtLine({ fairOver: s.fair_over, bookLine: s.line, targetLine: typeof target === "number" ? target : s.line, stat });
+    if (shifted == null) continue;
+    if (typeof target === "number" && Math.abs(shifted - s.fair_over) > MAX_PROB_SHIFT) continue;
+    usable.push({ s, shifted });
+  }
+  if (!usable.length) return null;
+  const consensus = usable.reduce((a, u) => a + u.shifted, 0) / usable.length;
+  const repLine = usable.reduce((a, u) => a + u.s.line, 0) / usable.length;
 
   return {
     fair_over: Number(consensus.toFixed(4)), // consensus, already AT the requested line
     book_line: Number(repLine.toFixed(2)),
     line_delta: typeof line === "number" ? Number((line - repLine).toFixed(2)) : null,
-    books: sources.length,
-    sources,
-    source: sources.map((s) => s.book).join("+"),
+    books: usable.length,
+    sources: usable.map((u) => u.s),
+    source: usable.map((u) => u.s.book).join("+"),
   };
 }
