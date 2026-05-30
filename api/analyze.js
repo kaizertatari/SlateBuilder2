@@ -215,7 +215,7 @@ export async function gatherGroundTruth({ player, propType, line, teamAbbrHint =
   // filter has the deepest sample possible. Skipped on playoff games —
   // that path uses the current-series blend instead.
   const needsH2H = !isPlayoff && espnId && opponentSide;
-  const [espnSeasonAvg, statsSplits, winProb, opponentDefense, primaryDefender, defRankByAbbr, h2hGamelog] = await Promise.all([
+  const [espnSeasonAvg, statsSplits, winProb, opponentDefense, primaryDefender, defRankByAbbr, h2hGamelog, playoffExtended] = await Promise.all([
     espnId ? espnStats.getSeasonAverages(espnId, { season, league }) : null,
     bbrefSplits ? null : getHomeAwaySplits(playerId, { seasonType: "Regular Season", league }),
     getWinProbability(game.game_id, game.competition_id, { league }),
@@ -228,6 +228,12 @@ export async function gatherGroundTruth({ player, propType, line, teamAbbrHint =
     getDefRankByAbbr({ seasonType: "Regular Season", league }).catch(() => null),
     needsH2H
       ? espnStats.getLastNGames(espnId, 50, { season, postseason: false, league }).catch(() => null)
+      : null,
+    // Stage 4 — extended postseason window for the variance block (real σ).
+    // Regular-season picks reuse the 50-game H2H pull above; playoff games
+    // fetch their own postseason window (H2H isn't fetched there).
+    (isPlayoff && espnId)
+      ? espnStats.getLastNGames(espnId, 20, { season, postseason: true, league }).catch(() => null)
       : null,
   ]);
   const splits = bbrefSplits ?? statsSplits;
@@ -271,12 +277,21 @@ export async function gatherGroundTruth({ player, propType, line, teamAbbrHint =
     : null;
   trace.h2h = (h2h && h2h.n > 0) ? `espn_gamelog(n=${h2h.n})` : (needsH2H ? "no_matches" : "n/a_playoff");
 
+  // Stage 4 — longest gamelog available for this pick: the 50-game H2H pull
+  // (regular season) or the 20-game postseason pull. Feeds the variance block
+  // (real σ → projection + Rule 5a) and the rest/B2B block in composeGroundTruth.
+  const extendedGames = h2hGamelog?.games?.length ? h2hGamelog.games
+    : playoffExtended?.games?.length ? playoffExtended.games
+    : null;
+  trace.extended_games = extendedGames?.length ?? 0;
+
   const { groundTruth, missing } = composeGroundTruth({
     player, propType, line, league,
     info, game, daysOut, seasonType,
     seasonAvg, l5, splits, winProb, allInjuries, opponentDefense, primaryDefender,
     defRankByAbbr,
     h2h,
+    extendedGames,
   });
 
    return { groundTruth, missing, trace, playerInfo };

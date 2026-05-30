@@ -30,6 +30,10 @@ export function composeGroundTruth(params) {
     // Move 3 — regular-season H2H baseline; null on playoff games or
     // when the gamelog fetch returned no current-opponent matches.
     h2h = null,
+    // Stage 4 — longer gamelog window (each game carries date + pts + minutes)
+    // for the variance block (real σ) and the rest/B2B block. Null when the
+    // extended pull was unavailable; the blocks then degrade to null.
+    extendedGames = null,
   } = params || {};
 
   const playerAbbr = info?.team_abbr ?? null;
@@ -156,7 +160,10 @@ export function composeGroundTruth(params) {
     // — null when fewer than 8 game-level points are available (per spec).
     // l5.games carries per-game pts; once we wire a longer season window
     // upstream this populates without a ground-truth.js code change.
-    variance: computeVarianceBlock(l5),
+    variance: computeVarianceBlock(extendedGames ?? l5?.games),
+    // Stage 4 — rest / schedule density from gamelog dates vs the upcoming
+    // game date (rule-rest fatigue suppressor). Null when dates are missing.
+    rest: computeRestBlock(game, extendedGames ?? l5?.games),
     // v3.5 Rule 5i — per-position FT floor lookup. info.position is filled
     // by nba-stats getCommonPlayerInfo when available; falls back to F.
     derived: {
@@ -311,14 +318,39 @@ function positionFromInfo(info) {
 // only L5 we punt to null. Once a longer per-game series is plumbed in,
 // drop it into l5.games (or a sibling) and this returns the live σ
 // without other code changes.
-function computeVarianceBlock(l5) {
-  const games = l5?.games ?? [];
-  if (games.length < 8) return { ppg_stddev: null };
-  const pts = games.map((g) => g?.pts).filter((p) => p != null);
-  if (pts.length < 8) return { ppg_stddev: null };
+function computeVarianceBlock(games) {
+  // Accepts a games array (Stage 4 extended window) or, defensively, an l5-ish
+  // object. σ needs ≥8 game-level points; with fewer we punt to null (the
+  // projection model then falls back to the slope-implied per-league σ).
+  const arr = Array.isArray(games) ? games : (games?.games ?? []);
+  const pts = arr.map((g) => g?.pts).filter((p) => p != null);
+  if (pts.length < 8) return { ppg_stddev: null, n: pts.length };
   const mean = pts.reduce((a, b) => a + b, 0) / pts.length;
   const variance = pts.reduce((a, p) => a + (p - mean) ** 2, 0) / pts.length;
-  return { ppg_stddev: Number(Math.sqrt(variance).toFixed(2)) };
+  return { ppg_stddev: Number(Math.sqrt(variance).toFixed(2)), n: pts.length };
+}
+
+// Rest / schedule-density from gamelog dates relative to the upcoming game.
+// rest_days = days since the most recent played game; back_to_back when the
+// player played the day before; three_in_four when ≥2 prior games fall within
+// the 3 days before tip (2 prior + tonight = 3 games in 4 nights).
+function computeRestBlock(game, gamelogGames) {
+  const gd = game?.date ? new Date(game.date) : null;
+  const arr = Array.isArray(gamelogGames) ? gamelogGames : [];
+  if (!gd || Number.isNaN(gd.getTime()) || !arr.length) return null;
+  const DAY = 86400000;
+  const priorDays = arr
+    .map((g) => (g?.date ? new Date(g.date) : null))
+    .filter((d) => d && !Number.isNaN(d.getTime()))
+    .map((d) => (gd.getTime() - d.getTime()) / DAY)
+    .filter((diff) => diff > 0.25) // strictly before tip (guards same-day rows)
+    .sort((a, b) => a - b);
+  if (!priorDays.length) return null;
+  return {
+    rest_days: Math.round(priorDays[0]),
+    back_to_back: priorDays[0] <= 1.25,
+    three_in_four: priorDays.filter((diff) => diff <= 3).length >= 2,
+  };
 }
 
 function needsWinProb(propType) {

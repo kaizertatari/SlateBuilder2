@@ -29,6 +29,7 @@ import * as ruleUnderMechanism from "./rules/rule-under-mechanism.js";
 import * as ruleMarketEdge from "./rules/rule-market-edge.js";
 import * as ruleGameScript from "./rules/rule-game-script.js";
 import * as ruleProjection from "./rules/rule-projection.js";
+import * as ruleRest from "./rules/rule-rest.js";
 import * as ruleSTier from "./rules/rule-s-tier.js";
 
 import { scaleFor } from "./rules/_helpers.js";
@@ -64,6 +65,9 @@ const RULES_PRE_S = [
   // Additive; never SKIPs (market-edge owns the hard skip). No-ops without a
   // baseline to project from.
   ["projection", ruleProjection],
+  // Rest/schedule density — B2B / 3-in-4 fatigue suppressor (Stage 4).
+  // Counting stats only; no-ops without gamelog dates.
+  ["rest", ruleRest],
   ["provenance", ruleProvenance],
   ["game-cap", ruleGameCap],
   // UNDER mechanism gate runs late so it sees the fully-populated
@@ -113,6 +117,7 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
   let marketInfo = null;
   let vegasInfo = null;
   let projectionInfo = null;
+  let restInfo = null;
 
   for (const [id, mod] of RULES_PRE_S) {
     const out = mod.apply(ctx);
@@ -124,6 +129,7 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
       // so calibration sees the game-script inputs on every covered pick.
       if (id === "game-script" && out?._vegas) vegasInfo = out._vegas;
       if (id === "projection" && out?._projection) projectionInfo = out._projection;
+      if (id === "rest" && out?._rest) restInfo = out._rest;
       continue;
     }
     rulesFired.push(out.rule_id);
@@ -147,6 +153,7 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
     if (id === "market-edge") marketInfo = out._market ?? null;
     if (id === "game-script") vegasInfo = out._vegas ?? vegasInfo;
     if (id === "projection") projectionInfo = out._projection ?? projectionInfo;
+    if (id === "rest") restInfo = out._rest ?? restInfo;
   }
 
   // Edge bonus — applied once based on rule5a's road-adjusted margin.
@@ -284,6 +291,8 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
     // Native model P(over) + market agreement (Stage 3). Logged for
     // calibration; the market stays the spine until the model grades out.
     projection: projectionInfo,
+    // Rest / schedule-density context (Stage 4). Null without gamelog dates.
+    rest: restInfo,
     flags,
     justification,
     rules_fired: rulesFired,

@@ -120,6 +120,10 @@ export function logVerdict({
     model_mean: result?.projection?.mean ?? null,
     model_sigma: result?.projection?.sigma ?? null,
     model_market_agree: result?.projection?.market_agree ?? null,
+    // Stage-4 rest / schedule density (rule-rest). Null without gamelog dates.
+    rest_days: result?.rest?.rest_days ?? null,
+    back_to_back: result?.rest?.back_to_back ?? null,
+    three_in_four: result?.rest?.three_in_four ?? null,
     flags: result?.flags ?? null,
     pre_filtered: !!result?.pre_filtered,
     // Engine: which rule modules contributed to the verdict. Empty array
