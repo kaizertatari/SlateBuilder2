@@ -123,7 +123,19 @@ then the model is confirm/telemetry-only and the market stays the spine.
   weights against outcomes. Blend model-P with market no-vig-P; bet when they
   agree against PrizePicks (or when one flags clear staleness).
 
-### Stage 4 — Minutes & usage projection
+### Stage 4 — Minutes & usage projection  ✅ SHIPPED (1a1c83a, 4a; 3c554fe, 4b)
+Done on the EXISTING ESPN gamelog — no nba-stats/lineup dependency: the gamelog
+endpoint already returns the full season + per-game dates/minutes, and own-team
+injuries are enriched with season ppg on the fly.
+- **4a** — extended window → real `variance.ppg_stddev` (feeds the projection σ
+  + Rule 5a's dormant variance buffer) + a `rest` block → `rule-rest` (B2B /
+  3-in-4 fatigue suppressor).
+- **4b** — injury ppg enrichment revives `mech2` → `rule-usage-shift`
+  (star-teammate-out usage redistribution + own minutes restriction, OVER side;
+  UNDER stays with `rule-under-mechanism`).
+Still deferred: per-minute-rate projection scaling and pace (need a pace source);
+folding minutes/game-script INTO the projection mean; and — the gate on all of
+it — forward measurement before any signal is trusted or fed into bet EV.
 - Forward minutes (injury-adjusted, blowout-adjusted) + usage redistribution
   when a teammate is OUT (the role-shift staleness edge). Add L10–L20 windows +
   per-minute rates (fixes the perpetually-null `variance` block) and rest/B2B.
