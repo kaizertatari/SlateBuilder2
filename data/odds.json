@@ -1,1119 +1,45 @@
 {
-  "fetched_at": "2026-05-30T01:28:56.515Z",
+  "fetched_at": "2026-05-30T08:12:25.141Z",
   "league": "WNBA",
   "sources": [
     "draftkings",
     "fanduel"
   ],
   "games": {
-    "PHO@NY": {
-      "home": "NY",
-      "away": "PHO",
-      "start_time": "2026-05-29T23:33:22.0000000Z",
-      "game_total": 147.5,
-      "home_spread": -5.5,
-      "away_spread": 5.5
-    },
-    "LA@WAS": {
-      "home": "WAS",
-      "away": "LA",
-      "start_time": "2026-05-29T23:33:04.0000000Z",
-      "game_total": 168.5,
-      "home_spread": 4.5,
-      "away_spread": -4.5
-    },
-    "ATL@POR": {
-      "home": "POR",
-      "away": "ATL",
-      "start_time": "2026-05-30T02:00:00.0000000Z",
-      "game_total": 163.5,
-      "home_spread": 9.5,
-      "away_spread": -9.5
-    },
     "SEA@TOR": {
       "home": "TOR",
       "away": "SEA",
       "start_time": "2026-05-30T17:00:00.0000000Z",
-      "game_total": 168.5,
+      "game_total": 170.5,
       "home_spread": -5.5,
       "away_spread": 5.5
+    },
+    "LA@CON": {
+      "home": "CON",
+      "away": "LA",
+      "start_time": "2026-05-30T22:00:00.0000000Z",
+      "game_total": 167.5,
+      "home_spread": 5.5,
+      "away_spread": -5.5
+    },
+    "IND@POR": {
+      "home": "POR",
+      "away": "IND",
+      "start_time": "2026-05-31T00:00:00.0000000Z",
+      "game_total": 173.5,
+      "home_spread": 10.5,
+      "away_spread": -10.5
+    },
+    "LV@GS": {
+      "home": "GS",
+      "away": "LV",
+      "start_time": "2026-05-31T19:30:00.0000000Z",
+      "game_total": 167.5,
+      "home_spread": 1.5,
+      "away_spread": -1.5
     }
   },
   "by_player": {
-    "Allisha Gray": [
-      {
-        "stat": "Points",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 19.5,
-        "fair_over": 0.5218,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 19.5,
-            "over_american": -127,
-            "under_american": -105,
-            "fair_over": 0.5221
-          },
-          {
-            "book": "fanduel",
-            "line": 19.5,
-            "over_american": -125,
-            "under_american": -104,
-            "fair_over": 0.5215
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 4.5,
-        "fair_over": 0.4389,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 4.5,
-            "over_american": 117,
-            "under_american": -159,
-            "fair_over": 0.4288
-          },
-          {
-            "book": "fanduel",
-            "line": 4.5,
-            "over_american": 108,
-            "under_american": -144,
-            "fair_over": 0.4489
-          }
-        ]
-      },
-      {
-        "stat": "3-Pointers Made",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 1.5,
-        "fair_over": 0.6079,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 1.5,
-            "over_american": -186,
-            "under_american": 136,
-            "fair_over": 0.6055
-          },
-          {
-            "book": "fanduel",
-            "line": 1.5,
-            "over_american": -188,
-            "under_american": 140,
-            "fair_over": 0.6104
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 24.5,
-        "fair_over": 0.4882,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 24.5,
-            "over_american": -111,
-            "under_american": -123,
-            "fair_over": 0.4882
-          }
-        ]
-      }
-    ],
-    "Rhyne Howard": [
-      {
-        "stat": "Points",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 16.5,
-        "fair_over": 0.5096,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 16.5,
-            "over_american": -121,
-            "under_american": -110,
-            "fair_over": 0.5111
-          },
-          {
-            "book": "fanduel",
-            "line": 16.5,
-            "over_american": -118,
-            "under_american": -110,
-            "fair_over": 0.5082
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 4.5,
-        "fair_over": 0.4105,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 4.5,
-            "over_american": 122,
-            "under_american": -167,
-            "fair_over": 0.4187
-          },
-          {
-            "book": "fanduel",
-            "line": 4.5,
-            "over_american": 132,
-            "under_american": -178,
-            "fair_over": 0.4023
-          }
-        ]
-      },
-      {
-        "stat": "Assists",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 4.5,
-        "fair_over": 0.4318,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 4.5,
-            "over_american": 118,
-            "under_american": -160,
-            "fair_over": 0.4271
-          },
-          {
-            "book": "fanduel",
-            "line": 4.5,
-            "over_american": 114,
-            "under_american": -152,
-            "fair_over": 0.4365
-          }
-        ]
-      },
-      {
-        "stat": "3-Pointers Made",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 2.5,
-        "fair_over": 0.5309,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 2.5,
-            "over_american": -120,
-            "under_american": -113,
-            "fair_over": 0.5069
-          },
-          {
-            "book": "fanduel",
-            "line": 2.5,
-            "over_american": -146,
-            "under_american": 110,
-            "fair_over": 0.5548
-          }
-        ]
-      },
-      {
-        "stat": "PRA",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 25.5,
-        "fair_over": 0.4911,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 25.5,
-            "over_american": -112,
-            "under_american": -121,
-            "fair_over": 0.4911
-          }
-        ]
-      },
-      {
-        "stat": "PA",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 21.5,
-        "fair_over": 0.4762,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 21.5,
-            "over_american": -105,
-            "under_american": -129,
-            "fair_over": 0.4762
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 20.5,
-        "fair_over": 0.5238,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 20.5,
-            "over_american": -129,
-            "under_american": -105,
-            "fair_over": 0.5238
-          }
-        ]
-      },
-      {
-        "stat": "RA",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 8.5,
-        "fair_over": 0.4734,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 8.5,
-            "over_american": -104,
-            "under_american": -131,
-            "fair_over": 0.4734
-          }
-        ]
-      }
-    ],
-    "Carla Leite": [
-      {
-        "stat": "Points",
-        "team": "POR",
-        "opponent": "ATL",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 16.5,
-        "fair_over": 0.5071,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 16.5,
-            "over_american": -118,
-            "under_american": -112,
-            "fair_over": 0.5061
-          },
-          {
-            "book": "fanduel",
-            "line": 16.5,
-            "over_american": -118,
-            "under_american": -110,
-            "fair_over": 0.5082
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "team": "POR",
-        "opponent": "ATL",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 2.5,
-        "fair_over": 0.4225,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 2.5,
-            "over_american": 120,
-            "under_american": -164,
-            "fair_over": 0.4225
-          }
-        ]
-      },
-      {
-        "stat": "Assists",
-        "team": "POR",
-        "opponent": "ATL",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 4.5,
-        "fair_over": 0.4525,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 4.5,
-            "over_american": 108,
-            "under_american": -147,
-            "fair_over": 0.4468
-          },
-          {
-            "book": "fanduel",
-            "line": 4.5,
-            "over_american": 104,
-            "under_american": -138,
-            "fair_over": 0.4581
-          }
-        ]
-      },
-      {
-        "stat": "3-Pointers Made",
-        "team": "POR",
-        "opponent": "ATL",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 0.5,
-        "fair_over": 0.626,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 0.5,
-            "over_american": -205,
-            "under_american": 149,
-            "fair_over": 0.626
-          }
-        ]
-      },
-      {
-        "stat": "PRA",
-        "team": "POR",
-        "opponent": "ATL",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 23.5,
-        "fair_over": 0.4901,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 23.5,
-            "over_american": -112,
-            "under_american": -122,
-            "fair_over": 0.4901
-          }
-        ]
-      },
-      {
-        "stat": "PA",
-        "team": "POR",
-        "opponent": "ATL",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 21.5,
-        "fair_over": 0.4762,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 21.5,
-            "over_american": -105,
-            "under_american": -129,
-            "fair_over": 0.4762
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "team": "POR",
-        "opponent": "ATL",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 19.5,
-        "fair_over": 0.4774,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 19.5,
-            "over_american": -106,
-            "under_american": -129,
-            "fair_over": 0.4774
-          }
-        ]
-      }
-    ],
-    "Angel Reese": [
-      {
-        "stat": "Points",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 13.5,
-        "fair_over": 0.5218,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 13.5,
-            "over_american": -124,
-            "under_american": -107,
-            "fair_over": 0.5171
-          },
-          {
-            "book": "fanduel",
-            "line": 13.5,
-            "over_american": -128,
-            "under_american": -102,
-            "fair_over": 0.5265
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 12.5,
-        "fair_over": 0.4539,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 12.5,
-            "over_american": 101,
-            "under_american": -137,
-            "fair_over": 0.4626
-          },
-          {
-            "book": "fanduel",
-            "line": 12.5,
-            "over_american": 110,
-            "under_american": -146,
-            "fair_over": 0.4452
-          }
-        ]
-      },
-      {
-        "stat": "Assists",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 2.5,
-        "fair_over": 0.5561,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 2.5,
-            "over_american": -150,
-            "under_american": 110,
-            "fair_over": 0.5575
-          },
-          {
-            "book": "fanduel",
-            "line": 2.5,
-            "over_american": -146,
-            "under_american": 110,
-            "fair_over": 0.5548
-          }
-        ]
-      },
-      {
-        "stat": "PRA",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 29.5,
-        "fair_over": 0.4802,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 29.5,
-            "over_american": -107,
-            "under_american": -127,
-            "fair_over": 0.4802
-          }
-        ]
-      },
-      {
-        "stat": "PA",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 16.5,
-        "fair_over": 0.5178,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 16.5,
-            "over_american": -126,
-            "under_american": -108,
-            "fair_over": 0.5178
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 26.5,
-        "fair_over": 0.4802,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 26.5,
-            "over_american": -107,
-            "under_american": -127,
-            "fair_over": 0.4802
-          }
-        ]
-      },
-      {
-        "stat": "RA",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 15.5,
-        "fair_over": 0.4666,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 15.5,
-            "over_american": -101,
-            "under_american": -135,
-            "fair_over": 0.4666
-          }
-        ]
-      }
-    ],
-    "Jordin Canada": [
-      {
-        "stat": "Points",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 10.5,
-        "fair_over": 0.494,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 10.5,
-            "over_american": -110,
-            "under_american": -120,
-            "fair_over": 0.4899
-          },
-          {
-            "book": "fanduel",
-            "line": 10.5,
-            "over_american": -113,
-            "under_american": -115,
-            "fair_over": 0.498
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 3.5,
-        "fair_over": 0.4652,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 3.5,
-            "over_american": 101,
-            "under_american": -137,
-            "fair_over": 0.4626
-          },
-          {
-            "book": "fanduel",
-            "line": 3.5,
-            "over_american": 100,
-            "under_american": -132,
-            "fair_over": 0.4677
-          }
-        ]
-      },
-      {
-        "stat": "Assists",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 6.5,
-        "fair_over": 0.4409,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 6.5,
-            "over_american": 115,
-            "under_american": -156,
-            "fair_over": 0.4329
-          },
-          {
-            "book": "fanduel",
-            "line": 6.5,
-            "over_american": 108,
-            "under_american": -144,
-            "fair_over": 0.4489
-          }
-        ]
-      },
-      {
-        "stat": "PRA",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 20.5,
-        "fair_over": 0.4871,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 20.5,
-            "over_american": -110,
-            "under_american": -123,
-            "fair_over": 0.4871
-          }
-        ]
-      },
-      {
-        "stat": "PA",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 16.5,
-        "fair_over": 0.5138,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 16.5,
-            "over_american": -124,
-            "under_american": -110,
-            "fair_over": 0.5138
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 13.5,
-        "fair_over": 0.5306,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 13.5,
-            "over_american": -133,
-            "under_american": -102,
-            "fair_over": 0.5306
-          }
-        ]
-      },
-      {
-        "stat": "RA",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 9.5,
-        "fair_over": 0.498,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 9.5,
-            "over_american": -116,
-            "under_american": -118,
-            "fair_over": 0.498
-          }
-        ]
-      }
-    ],
-    "Sarah Barker": [
-      {
-        "stat": "Points",
-        "team": "POR",
-        "opponent": "ATL",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 9.5,
-        "fair_over": 0.4838,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 9.5,
-            "over_american": -107,
-            "under_american": -123,
-            "fair_over": 0.4838
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "team": "POR",
-        "opponent": "ATL",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 4.5,
-        "fair_over": 0.4578,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 4.5,
-            "over_american": 103,
-            "under_american": -140,
-            "fair_over": 0.4578
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "team": "POR",
-        "opponent": "ATL",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 13.5,
-        "fair_over": 0.5158,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 13.5,
-            "over_american": -125,
-            "under_american": -109,
-            "fair_over": 0.5158
-          }
-        ]
-      }
-    ],
-    "Megan Gustafson": [
-      {
-        "stat": "Points",
-        "team": "POR",
-        "opponent": "ATL",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 9.5,
-        "fair_over": 0.4672,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 9.5,
-            "over_american": -105,
-            "under_american": -126,
-            "fair_over": 0.4788
-          },
-          {
-            "book": "fanduel",
-            "line": 9.5,
-            "over_american": 106,
-            "under_american": -138,
-            "fair_over": 0.4557
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "team": "POR",
-        "opponent": "ATL",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 2.5,
-        "fair_over": 0.5758,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 2.5,
-            "over_american": -169,
-            "under_american": 124,
-            "fair_over": 0.5846
-          },
-          {
-            "book": "fanduel",
-            "line": 2.5,
-            "over_american": -154,
-            "under_american": 116,
-            "fair_over": 0.567
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "team": "POR",
-        "opponent": "ATL",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 12.5,
-        "fair_over": 0.4822,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 12.5,
-            "over_american": -108,
-            "under_american": -126,
-            "fair_over": 0.4822
-          }
-        ]
-      }
-    ],
-    "Naz Hillmon": [
-      {
-        "stat": "Points",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 8.5,
-        "fair_over": 0.5269,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 8.5,
-            "over_american": -127,
-            "under_american": -104,
-            "fair_over": 0.5232
-          },
-          {
-            "book": "fanduel",
-            "line": 8.5,
-            "over_american": -130,
-            "under_american": 100,
-            "fair_over": 0.5306
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 4.5,
-        "fair_over": 0.5513,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 4.5,
-            "over_american": -165,
-            "under_american": 121,
-            "fair_over": 0.5791
-          },
-          {
-            "book": "fanduel",
-            "line": 5.5,
-            "over_american": 128,
-            "under_american": -172,
-            "fair_over": 0.4095
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "team": "ATL",
-        "opponent": "POR",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 13.5,
-        "fair_over": 0.5354,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 13.5,
-            "over_american": -136,
-            "under_american": 100,
-            "fair_over": 0.5354
-          }
-        ]
-      }
-    ],
-    "Emily Engstler": [
-      {
-        "stat": "Points",
-        "team": "POR",
-        "opponent": "ATL",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 7.5,
-        "fair_over": 0.5257,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 7.5,
-            "over_american": -136,
-            "under_american": 103,
-            "fair_over": 0.5391
-          },
-          {
-            "book": "fanduel",
-            "line": 7.5,
-            "over_american": -120,
-            "under_american": -108,
-            "fair_over": 0.5123
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "team": "POR",
-        "opponent": "ATL",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 4.5,
-        "fair_over": 0.4097,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 4.5,
-            "over_american": 120,
-            "under_american": -163,
-            "fair_over": 0.4231
-          },
-          {
-            "book": "fanduel",
-            "line": 4.5,
-            "over_american": 136,
-            "under_american": -182,
-            "fair_over": 0.3963
-          }
-        ]
-      },
-      {
-        "stat": "3-Pointers Made",
-        "team": "POR",
-        "opponent": "ATL",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 1.5,
-        "fair_over": 0.3623,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 1.5,
-            "over_american": 151,
-            "under_american": -208,
-            "fair_over": 0.371
-          },
-          {
-            "book": "fanduel",
-            "line": 1.5,
-            "over_american": 164,
-            "under_american": -225,
-            "fair_over": 0.3536
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "team": "POR",
-        "opponent": "ATL",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 12.5,
-        "fair_over": 0.4822,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 12.5,
-            "over_american": -108,
-            "under_american": -126,
-            "fair_over": 0.4822
-          }
-        ]
-      }
-    ],
-    "Luisa Geiselsoder": [
-      {
-        "stat": "Points",
-        "team": "POR",
-        "opponent": "ATL",
-        "game": "ATL@POR",
-        "start_time": "2026-05-30T02:00:00.0000000Z",
-        "line": 5.5,
-        "fair_over": 0.5051,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 5.5,
-            "over_american": -121,
-            "under_american": -109,
-            "fair_over": 0.5122
-          },
-          {
-            "book": "fanduel",
-            "line": 5.5,
-            "over_american": -113,
-            "under_american": -115,
-            "fair_over": 0.498
-          }
-        ]
-      }
-    ],
     "Brittney Sykes": [
       {
         "stat": "Points",
@@ -1121,16 +47,16 @@
         "opponent": "SEA",
         "game": "SEA@TOR",
         "start_time": "2026-05-30T17:00:00.0000000Z",
-        "line": 18.5,
-        "fair_over": 0.5232,
+        "line": 19.5,
+        "fair_over": 0.4912,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
-            "line": 18.5,
-            "over_american": -126,
-            "under_american": -106,
-            "fair_over": 0.52
+            "line": 19.5,
+            "over_american": -122,
+            "under_american": -109,
+            "fair_over": 0.5131
           },
           {
             "book": "fanduel",
@@ -1174,22 +100,22 @@
         "game": "SEA@TOR",
         "start_time": "2026-05-30T17:00:00.0000000Z",
         "line": 4.5,
-        "fair_over": 0.4404,
+        "fair_over": 0.4398,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 4.5,
-            "over_american": 109,
-            "under_american": -149,
-            "fair_over": 0.4443
+            "over_american": 106,
+            "under_american": -144,
+            "fair_over": 0.4513
           },
           {
             "book": "fanduel",
             "line": 4.5,
-            "over_american": 114,
-            "under_american": -152,
-            "fair_over": 0.4365
+            "over_american": 118,
+            "under_american": -158,
+            "fair_over": 0.4283
           }
         ]
       },
@@ -1200,22 +126,22 @@
         "game": "SEA@TOR",
         "start_time": "2026-05-30T17:00:00.0000000Z",
         "line": 1.5,
-        "fair_over": 0.4356,
+        "fair_over": 0.4377,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 1.5,
-            "over_american": 111,
-            "under_american": -151,
-            "fair_over": 0.4407
+            "over_american": 110,
+            "under_american": -150,
+            "fair_over": 0.4425
           },
           {
             "book": "fanduel",
             "line": 1.5,
             "over_american": 116,
-            "under_american": -158,
-            "fair_over": 0.4305
+            "under_american": -154,
+            "fair_over": 0.433
           }
         ]
       },
@@ -1225,16 +151,16 @@
         "opponent": "SEA",
         "game": "SEA@TOR",
         "start_time": "2026-05-30T17:00:00.0000000Z",
-        "line": 27.5,
-        "fair_over": 0.505,
+        "line": 28.5,
+        "fair_over": 0.495,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
-            "line": 27.5,
-            "over_american": -119,
-            "under_american": -114,
-            "fair_over": 0.505
+            "line": 28.5,
+            "over_american": -114,
+            "under_american": -119,
+            "fair_over": 0.495
           }
         ]
       },
@@ -1244,16 +170,16 @@
         "opponent": "SEA",
         "game": "SEA@TOR",
         "start_time": "2026-05-30T17:00:00.0000000Z",
-        "line": 23.5,
-        "fair_over": 0.4911,
+        "line": 24.5,
+        "fair_over": 0.4871,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
-            "line": 23.5,
-            "over_american": -112,
-            "under_american": -121,
-            "fair_over": 0.4911
+            "line": 24.5,
+            "over_american": -110,
+            "under_american": -123,
+            "fair_over": 0.4871
           }
         ]
       },
@@ -1264,15 +190,15 @@
         "game": "SEA@TOR",
         "start_time": "2026-05-30T17:00:00.0000000Z",
         "line": 23.5,
-        "fair_over": 0.4802,
+        "fair_over": 0.5198,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
             "line": 23.5,
-            "over_american": -107,
-            "under_american": -127,
-            "fair_over": 0.4802
+            "over_american": -127,
+            "under_american": -107,
+            "fair_over": 0.5198
           }
         ]
       },
@@ -1283,15 +209,15 @@
         "game": "SEA@TOR",
         "start_time": "2026-05-30T17:00:00.0000000Z",
         "line": 8.5,
-        "fair_over": 0.4754,
+        "fair_over": 0.4742,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
             "line": 8.5,
-            "over_american": -105,
+            "over_american": -104,
             "under_american": -130,
-            "fair_over": 0.4754
+            "fair_over": 0.4742
           }
         ]
       }
@@ -1303,16 +229,16 @@
         "opponent": "SEA",
         "game": "SEA@TOR",
         "start_time": "2026-05-30T17:00:00.0000000Z",
-        "line": 17.5,
-        "fair_over": 0.5273,
+        "line": 18.5,
+        "fair_over": 0.4832,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
-            "line": 17.5,
-            "over_american": -128,
-            "under_american": -104,
-            "fair_over": 0.5241
+            "line": 18.5,
+            "over_american": -112,
+            "under_american": -119,
+            "fair_over": 0.493
           },
           {
             "book": "fanduel",
@@ -1330,15 +256,15 @@
         "game": "SEA@TOR",
         "start_time": "2026-05-30T17:00:00.0000000Z",
         "line": 4.5,
-        "fair_over": 0.4352,
+        "fair_over": 0.4325,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 4.5,
-            "over_american": 121,
-            "under_american": -165,
-            "fair_over": 0.4209
+            "over_american": 124,
+            "under_american": -169,
+            "fair_over": 0.4154
           },
           {
             "book": "fanduel",
@@ -1356,15 +282,15 @@
         "game": "SEA@TOR",
         "start_time": "2026-05-30T17:00:00.0000000Z",
         "line": 3.5,
-        "fair_over": 0.4604,
+        "fair_over": 0.4642,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 3.5,
-            "over_american": -101,
-            "under_american": -135,
-            "fair_over": 0.4666
+            "over_american": -104,
+            "under_american": -130,
+            "fair_over": 0.4742
           },
           {
             "book": "fanduel",
@@ -1382,15 +308,15 @@
         "game": "SEA@TOR",
         "start_time": "2026-05-30T17:00:00.0000000Z",
         "line": 2.5,
-        "fair_over": 0.5536,
+        "fair_over": 0.5499,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 2.5,
-            "over_american": -144,
-            "under_american": 106,
-            "fair_over": 0.5487
+            "over_american": -139,
+            "under_american": 103,
+            "fair_over": 0.5414
           },
           {
             "book": "fanduel",
@@ -1407,16 +333,16 @@
         "opponent": "SEA",
         "game": "SEA@TOR",
         "start_time": "2026-05-30T17:00:00.0000000Z",
-        "line": 25.5,
-        "fair_over": 0.5129,
+        "line": 26.5,
+        "fair_over": 0.4862,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
-            "line": 25.5,
-            "over_american": -123,
-            "under_american": -110,
-            "fair_over": 0.5129
+            "line": 26.5,
+            "over_american": -110,
+            "under_american": -124,
+            "fair_over": 0.4862
           }
         ]
       },
@@ -1427,15 +353,15 @@
         "game": "SEA@TOR",
         "start_time": "2026-05-30T17:00:00.0000000Z",
         "line": 21.5,
-        "fair_over": 0.501,
+        "fair_over": 0.5218,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
             "line": 21.5,
-            "over_american": -117,
-            "under_american": -116,
-            "fair_over": 0.501
+            "over_american": -128,
+            "under_american": -106,
+            "fair_over": 0.5218
           }
         ]
       },
@@ -1446,15 +372,15 @@
         "game": "SEA@TOR",
         "start_time": "2026-05-30T17:00:00.0000000Z",
         "line": 22.5,
-        "fair_over": 0.4862,
+        "fair_over": 0.505,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
             "line": 22.5,
-            "over_american": -110,
-            "under_american": -124,
-            "fair_over": 0.4862
+            "over_american": -119,
+            "under_american": -114,
+            "fair_over": 0.505
           }
         ]
       },
@@ -1478,13 +404,123 @@
         ]
       }
     ],
-    "Pauline Astier": [
+    "Flau'jae Johnson": [
       {
         "stat": "Points",
-        "line": 13.5,
-        "fair_over": 0.5265,
+        "team": "SEA",
+        "opponent": "TOR",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 14.5,
+        "fair_over": 0.4807,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 14.5,
+            "over_american": -107,
+            "under_american": -124,
+            "fair_over": 0.4829
+          },
+          {
+            "book": "fanduel",
+            "line": 14.5,
+            "over_american": -104,
+            "under_american": -125,
+            "fair_over": 0.4785
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "team": "SEA",
+        "opponent": "TOR",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 5.5,
+        "fair_over": 0.4347,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 5.5,
+            "over_american": 115,
+            "under_american": -156,
+            "fair_over": 0.4329
+          },
+          {
+            "book": "fanduel",
+            "line": 5.5,
+            "over_american": 114,
+            "under_american": -152,
+            "fair_over": 0.4365
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "team": "SEA",
+        "opponent": "TOR",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.4544,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": 102,
+            "under_american": -139,
+            "fair_over": 0.4598
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": 108,
+            "under_american": -144,
+            "fair_over": 0.4489
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "team": "SEA",
+        "opponent": "TOR",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 19.5,
+        "fair_over": 0.499,
         "books": 1,
         "sources": [
+          {
+            "book": "draftkings",
+            "line": 19.5,
+            "over_american": -116,
+            "under_american": -117,
+            "fair_over": 0.499
+          }
+        ]
+      }
+    ],
+    "Natisha Hiedeman": [
+      {
+        "stat": "Points",
+        "team": "SEA",
+        "opponent": "TOR",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 13.5,
+        "fair_over": 0.5259,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 13.5,
+            "over_american": -128,
+            "under_american": -103,
+            "fair_over": 0.5253
+          },
           {
             "book": "fanduel",
             "line": 13.5,
@@ -1493,175 +529,118 @@
             "fair_over": 0.5265
           }
         ]
-      }
-    ],
-    "Natasha Mack": [
-      {
-        "stat": "Points",
-        "line": 6.5,
-        "fair_over": 0.4154,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 6.5,
-            "over_american": 126,
-            "under_american": -165,
-            "fair_over": 0.4154
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "line": 10.5,
-        "fair_over": 0.3536,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 10.5,
-            "over_american": 164,
-            "under_american": -225,
-            "fair_over": 0.3536
-          }
-        ]
-      }
-    ],
-    "Breanna Stewart": [
-      {
-        "stat": "Points",
-        "line": 12.5,
-        "fair_over": 0.4877,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 12.5,
-            "over_american": -108,
-            "under_american": -120,
-            "fair_over": 0.4877
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "line": 8.5,
-        "fair_over": 0.3318,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 8.5,
-            "over_american": 182,
-            "under_american": -250,
-            "fair_over": 0.3318
-          }
-        ]
-      }
-    ],
-    "Alyssa Thomas": [
-      {
-        "stat": "Points",
-        "line": 17.5,
-        "fair_over": 0.4342,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 17.5,
-            "over_american": 116,
-            "under_american": -152,
-            "fair_over": 0.4342
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "line": 2.5,
-        "fair_over": 0.6075,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 2.5,
-            "over_american": -186,
-            "under_american": 138,
-            "fair_over": 0.6075
-          }
-        ]
       },
       {
         "stat": "Assists",
-        "line": 8.5,
-        "fair_over": 0.6007,
-        "books": 1,
+        "team": "SEA",
+        "opponent": "TOR",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.4025,
+        "books": 2,
         "sources": [
           {
-            "book": "fanduel",
-            "line": 8.5,
-            "over_american": -180,
-            "under_american": 134,
-            "fair_over": 0.6007
-          }
-        ]
-      }
-    ],
-    "Jonquel Jones": [
-      {
-        "stat": "Points",
-        "line": 8.5,
-        "fair_over": 0.5608,
-        "books": 1,
-        "sources": [
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": 124,
+            "under_american": -169,
+            "fair_over": 0.4154
+          },
           {
             "book": "fanduel",
-            "line": 8.5,
-            "over_american": -148,
-            "under_american": 114,
-            "fair_over": 0.5608
+            "line": 4.5,
+            "over_american": 140,
+            "under_american": -188,
+            "fair_over": 0.3896
           }
         ]
       },
       {
-        "stat": "Rebounds",
-        "line": 8.5,
-        "fair_over": 0.3362,
-        "books": 1,
+        "stat": "3-Pointers Made",
+        "team": "SEA",
+        "opponent": "TOR",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.4998,
+        "books": 2,
         "sources": [
           {
-            "book": "fanduel",
-            "line": 8.5,
-            "over_american": 178,
-            "under_american": -245,
-            "fair_over": 0.3362
-          }
-        ]
-      }
-    ],
-    "Kahleah Copper": [
-      {
-        "stat": "3-Pointers Made",
-        "line": 1.5,
-        "fair_over": 0.2457,
-        "books": 1,
-        "sources": [
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": -103,
+            "under_american": -132,
+            "fair_over": 0.4714
+          },
           {
             "book": "fanduel",
             "line": 1.5,
-            "over_american": 280,
-            "under_american": -420,
-            "fair_over": 0.2457
+            "over_american": -130,
+            "under_american": -102,
+            "fair_over": 0.5282
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "team": "SEA",
+        "opponent": "TOR",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 18.5,
+        "fair_over": 0.4822,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 18.5,
+            "over_american": -108,
+            "under_american": -126,
+            "fair_over": 0.4822
           }
         ]
       }
     ],
-    "Sarah Ashlee Barker": [
+    "Kiki Rice": [
       {
         "stat": "Points",
-        "line": 9.5,
-        "fair_over": 0.5,
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 12.5,
+        "fair_over": 0.5122,
         "books": 1,
         "sources": [
+          {
+            "book": "draftkings",
+            "line": 12.5,
+            "over_american": -121,
+            "under_american": -109,
+            "fair_over": 0.5122
+          }
+        ]
+      }
+    ],
+    "Nyara Sabally": [
+      {
+        "stat": "Points",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 9.5,
+        "fair_over": 0.501,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 9.5,
+            "over_american": -116,
+            "under_american": -114,
+            "fair_over": 0.502
+          },
           {
             "book": "fanduel",
             "line": 9.5,
@@ -1673,47 +652,1039 @@
       },
       {
         "stat": "Rebounds",
-        "line": 4.5,
-        "fair_over": 0.4365,
+        "line": 5.5,
+        "fair_over": 0.4452,
         "books": 1,
         "sources": [
           {
             "book": "fanduel",
-            "line": 4.5,
-            "over_american": 114,
-            "under_american": -152,
-            "fair_over": 0.4365
+            "line": 5.5,
+            "over_american": 110,
+            "under_american": -146,
+            "fair_over": 0.4452
           }
         ]
       }
     ],
-    "Shakira Austin": [
+    "Jade Melbourne": [
       {
         "stat": "Points",
+        "team": "SEA",
+        "opponent": "TOR",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 8.5,
+        "fair_over": 0.4969,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 8.5,
+            "over_american": -116,
+            "under_american": -114,
+            "fair_over": 0.502
+          },
+          {
+            "book": "fanduel",
+            "line": 8.5,
+            "over_american": -110,
+            "under_american": -118,
+            "fair_over": 0.4918
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "line": 3.5,
+        "fair_over": 0.512,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -122,
+            "under_american": -110,
+            "fair_over": 0.512
+          }
+        ]
+      }
+    ],
+    "Caitlin Clark": [
+      {
+        "stat": "Points",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 21.5,
+        "fair_over": 0.4904,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 21.5,
+            "over_american": -106,
+            "under_american": -125,
+            "fair_over": 0.4808
+          },
+          {
+            "book": "fanduel",
+            "line": 21.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 5.5,
+        "fair_over": 0.4311,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 5.5,
+            "over_american": 111,
+            "under_american": -151,
+            "fair_over": 0.4407
+          },
+          {
+            "book": "fanduel",
+            "line": 5.5,
+            "over_american": 122,
+            "under_american": -162,
+            "fair_over": 0.4215
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 8.5,
+        "fair_over": 0.547,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 8.5,
+            "over_american": -136,
+            "under_american": 100,
+            "fair_over": 0.5354
+          },
+          {
+            "book": "fanduel",
+            "line": 8.5,
+            "over_american": -148,
+            "under_american": 112,
+            "fair_over": 0.5585
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.5831,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": -155,
+            "under_american": 114,
+            "fair_over": 0.5654
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": -180,
+            "under_american": 134,
+            "fair_over": 0.6007
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 35.5,
+        "fair_over": 0.5039,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 35.5,
+            "over_american": -119,
+            "under_american": -115,
+            "fair_over": 0.5039
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 30.5,
+        "fair_over": 0.4882,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 30.5,
+            "over_american": -111,
+            "under_american": -123,
+            "fair_over": 0.4882
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 26.5,
+        "fair_over": 0.497,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 26.5,
+            "over_american": -115,
+            "under_american": -118,
+            "fair_over": 0.497
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 14.5,
+        "fair_over": 0.4598,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 14.5,
+            "over_american": 102,
+            "under_american": -139,
+            "fair_over": 0.4598
+          }
+        ]
+      }
+    ],
+    "Kelsey Mitchell": [
+      {
+        "stat": "Points",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
         "line": 20.5,
-        "fair_over": 0.4392,
-        "books": 1,
+        "fair_over": 0.5523,
+        "books": 2,
         "sources": [
           {
-            "book": "fanduel",
+            "book": "draftkings",
             "line": 20.5,
-            "over_american": 114,
-            "under_american": -148,
-            "fair_over": 0.4392
+            "over_american": -126,
+            "under_american": -105,
+            "fair_over": 0.5212
+          },
+          {
+            "book": "fanduel",
+            "line": 22.5,
+            "over_american": 100,
+            "under_american": -130,
+            "fair_over": 0.4694
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.4311,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": 123,
+            "under_american": -168,
+            "fair_over": 0.417
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": 110,
+            "under_american": -146,
+            "fair_over": 0.4452
           }
         ]
       }
     ],
-    "Sonia Citron": [
+    "Aliyah Boston": [
       {
         "stat": "Points",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 16.5,
+        "fair_over": 0.4818,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 16.5,
+            "over_american": -104,
+            "under_american": -128,
+            "fair_over": 0.4759
+          },
+          {
+            "book": "fanduel",
+            "line": 16.5,
+            "over_american": -108,
+            "under_american": -120,
+            "fair_over": 0.4877
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 8.5,
+        "fair_over": 0.4498,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 8.5,
+            "over_american": -103,
+            "under_american": -132,
+            "fair_over": 0.4714
+          },
+          {
+            "book": "fanduel",
+            "line": 8.5,
+            "over_american": 118,
+            "under_american": -158,
+            "fair_over": 0.4283
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.5407,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": -136,
+            "under_american": 100,
+            "fair_over": 0.5354
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": 142,
+            "under_american": -192,
+            "fair_over": 0.3859
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 27.5,
+        "fair_over": 0.501,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 27.5,
+            "over_american": -117,
+            "under_american": -116,
+            "fair_over": 0.501
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
         "line": 19.5,
+        "fair_over": 0.4734,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 19.5,
+            "over_american": -104,
+            "under_american": -131,
+            "fair_over": 0.4734
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 24.5,
+        "fair_over": 0.505,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 24.5,
+            "over_american": -119,
+            "under_american": -114,
+            "fair_over": 0.505
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 11.5,
+        "fair_over": 0.4559,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 11.5,
+            "over_american": 104,
+            "under_american": -141,
+            "fair_over": 0.4559
+          }
+        ]
+      }
+    ],
+    "Lexie Hull": [
+      {
+        "stat": "Points",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 7.5,
+        "fair_over": 0.5379,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 7.5,
+            "over_american": -136,
+            "under_american": 102,
+            "fair_over": 0.5379
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.4242,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": 119,
+            "under_american": -163,
+            "fair_over": 0.4242
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 12.5,
+        "fair_over": 0.4782,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 12.5,
+            "over_american": -106,
+            "under_american": -128,
+            "fair_over": 0.4782
+          }
+        ]
+      }
+    ],
+    "A'ja Wilson": [
+      {
+        "stat": "Points",
+        "line": 23.5,
+        "fair_over": 0.5123,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 23.5,
+            "over_american": -120,
+            "under_american": -108,
+            "fair_over": 0.5123
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "line": 8.5,
+        "fair_over": 0.5323,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 8.5,
+            "over_american": -132,
+            "under_american": 100,
+            "fair_over": 0.5323
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "line": 2.5,
+        "fair_over": 0.5323,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": -132,
+            "under_american": 100,
+            "fair_over": 0.5323
+          }
+        ]
+      }
+    ],
+    "Veronica Burton": [
+      {
+        "stat": "Points",
+        "line": 14.5,
+        "fair_over": 0.4653,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 14.5,
+            "over_american": 102,
+            "under_american": -132,
+            "fair_over": 0.4653
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "line": 3.5,
+        "fair_over": 0.3859,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": 142,
+            "under_american": -192,
+            "fair_over": 0.3859
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "line": 5.5,
+        "fair_over": 0.5419,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 5.5,
+            "over_american": -138,
+            "under_american": 104,
+            "fair_over": 0.5419
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "line": 1.5,
+        "fair_over": 0.4489,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": 108,
+            "under_american": -144,
+            "fair_over": 0.4489
+          }
+        ]
+      }
+    ],
+    "Chelsea Gray": [
+      {
+        "stat": "Points",
+        "line": 10.5,
+        "fair_over": 0.5306,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 10.5,
+            "over_american": -130,
+            "under_american": 100,
+            "fair_over": 0.5306
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "line": 3.5,
+        "fair_over": 0.5,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "line": 5.5,
+        "fair_over": 0.5379,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 5.5,
+            "over_american": -136,
+            "under_american": 102,
+            "fair_over": 0.5379
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "line": 1.5,
+        "fair_over": 0.5419,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": -138,
+            "under_american": 104,
+            "fair_over": 0.5419
+          }
+        ]
+      }
+    ],
+    "Gabby Williams": [
+      {
+        "stat": "Points",
+        "line": 13.5,
+        "fair_over": 0.4694,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 13.5,
+            "over_american": 100,
+            "under_american": -130,
+            "fair_over": 0.4694
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "line": 3.5,
+        "fair_over": 0.5717,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -158,
+            "under_american": 118,
+            "fair_over": 0.5717
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "line": 2.5,
+        "fair_over": 0.5241,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": -128,
+            "under_american": -104,
+            "fair_over": 0.5241
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "line": 1.5,
+        "fair_over": 0.583,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": -166,
+            "under_american": 124,
+            "fair_over": 0.583
+          }
+        ]
+      }
+    ],
+    "Jackie Young": [
+      {
+        "stat": "Points",
+        "line": 15.5,
         "fair_over": 0.4785,
         "books": 1,
         "sources": [
           {
             "book": "fanduel",
-            "line": 19.5,
+            "line": 15.5,
+            "over_american": -104,
+            "under_american": -125,
+            "fair_over": 0.4785
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "line": 4.5,
+        "fair_over": 0.5,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 4.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "line": 5.5,
+        "fair_over": 0.417,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 5.5,
+            "over_american": 124,
+            "under_american": -166,
+            "fair_over": 0.417
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "line": 1.5,
+        "fair_over": 0.5,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      }
+    ],
+    "Bridget Carleton": [
+      {
+        "stat": "Points",
+        "line": 14.5,
+        "fair_over": 0.4653,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 14.5,
+            "over_american": 102,
+            "under_american": -132,
+            "fair_over": 0.4653
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "line": 3.5,
+        "fair_over": 0.5,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "line": 2.5,
+        "fair_over": 0.4064,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": 130,
+            "under_american": -174,
+            "fair_over": 0.4064
+          }
+        ]
+      }
+    ],
+    "Carla Leite": [
+      {
+        "stat": "Points",
+        "line": 15.5,
+        "fair_over": 0.5,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 15.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "line": 4.5,
+        "fair_over": 0.4064,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 4.5,
+            "over_american": 130,
+            "under_american": -174,
+            "fair_over": 0.4064
+          }
+        ]
+      }
+    ],
+    "Dearica Hamby": [
+      {
+        "stat": "Points",
+        "line": 18.5,
+        "fair_over": 0.4694,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 18.5,
+            "over_american": 100,
+            "under_american": -130,
+            "fair_over": 0.4694
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "line": 7.5,
+        "fair_over": 0.5379,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 7.5,
+            "over_american": -136,
+            "under_american": 102,
+            "fair_over": 0.5379
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "line": 4.5,
+        "fair_over": 0.417,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 4.5,
+            "over_american": 124,
+            "under_american": -166,
+            "fair_over": 0.417
+          }
+        ]
+      }
+    ],
+    "Erica Wheeler": [
+      {
+        "stat": "Points",
+        "line": 11.5,
+        "fair_over": 0.498,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 11.5,
+            "over_american": -113,
+            "under_american": -115,
+            "fair_over": 0.498
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "line": 5.5,
+        "fair_over": 0.567,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 5.5,
+            "over_american": -154,
+            "under_american": 116,
+            "fair_over": 0.567
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "line": 1.5,
+        "fair_over": 0.3925,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": 138,
+            "under_american": -186,
+            "fair_over": 0.3925
+          }
+        ]
+      }
+    ],
+    "Brittney Griner": [
+      {
+        "stat": "Points",
+        "line": 13.5,
+        "fair_over": 0.4694,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 13.5,
+            "over_american": 100,
+            "under_american": -130,
+            "fair_over": 0.4694
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "line": 5.5,
+        "fair_over": 0.4718,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 5.5,
+            "over_american": -102,
+            "under_american": -130,
+            "fair_over": 0.4718
+          }
+        ]
+      }
+    ],
+    "Aneesah Morrow": [
+      {
+        "stat": "Points",
+        "line": 12.5,
+        "fair_over": 0.4735,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 12.5,
+            "over_american": -102,
+            "under_american": -128,
+            "fair_over": 0.4735
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "line": 9.5,
+        "fair_over": 0.4785,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 9.5,
             "over_american": -104,
             "under_american": -125,
             "fair_over": 0.4785
@@ -1721,62 +1692,73 @@
         ]
       }
     ],
-    "Kiki Iriafen": [
-      {
-        "stat": "Points",
-        "line": 15.5,
-        "fair_over": 0.4085,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 15.5,
-            "over_american": 130,
-            "under_american": -170,
-            "fair_over": 0.4085
-          }
-        ]
-      }
-    ],
     "Nneka Ogwumike": [
       {
         "stat": "Points",
-        "line": 17.5,
-        "fair_over": 0.4013,
+        "line": 16.5,
+        "fair_over": 0.5265,
         "books": 1,
         "sources": [
           {
             "book": "fanduel",
-            "line": 17.5,
-            "over_american": 134,
-            "under_american": -176,
-            "fair_over": 0.4013
+            "line": 16.5,
+            "over_american": -128,
+            "under_american": -102,
+            "fair_over": 0.5265
           }
         ]
-      }
-    ],
-    "Cameron Brink": [
+      },
       {
-        "stat": "Points",
-        "line": 17.5,
-        "fair_over": 0.4877,
+        "stat": "Rebounds",
+        "line": 7.5,
+        "fair_over": 0.4248,
         "books": 1,
         "sources": [
           {
             "book": "fanduel",
-            "line": 17.5,
-            "over_american": -108,
-            "under_american": -120,
-            "fair_over": 0.4877
+            "line": 7.5,
+            "over_american": 120,
+            "under_american": -160,
+            "fair_over": 0.4248
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "line": 2.5,
+        "fair_over": 0.3622,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": 158,
+            "under_american": -215,
+            "fair_over": 0.3622
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "line": 1.5,
+        "fair_over": 0.3179,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": 194,
+            "under_american": -270,
+            "fair_over": 0.3179
           }
         ]
       }
     ]
   },
-  "total_props": 81,
-  "total_players": 24,
+  "total_props": 87,
+  "total_players": 23,
   "books_coverage": {
-    "1": 50,
-    "2": 31
+    "1": 62,
+    "2": 25
   }
 }
