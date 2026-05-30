@@ -28,6 +28,7 @@ import * as ruleProvenance from "./rules/rule-provenance.js";
 import * as ruleUnderMechanism from "./rules/rule-under-mechanism.js";
 import * as ruleMarketEdge from "./rules/rule-market-edge.js";
 import * as ruleGameScript from "./rules/rule-game-script.js";
+import * as ruleProjection from "./rules/rule-projection.js";
 import * as ruleSTier from "./rules/rule-s-tier.js";
 
 import { scaleFor } from "./rules/_helpers.js";
@@ -59,6 +60,10 @@ const RULES_PRE_S = [
   // Game-script — Vegas total/spread tailwind/headwind on counting stats
   // (Stage 2). Secondary to market-edge; no-ops without odds coverage.
   ["game-script", ruleGameScript],
+  // Projection — native model P(over) confirm/deny vs the market (Stage 3).
+  // Additive; never SKIPs (market-edge owns the hard skip). No-ops without a
+  // baseline to project from.
+  ["projection", ruleProjection],
   ["provenance", ruleProvenance],
   ["game-cap", ruleGameCap],
   // UNDER mechanism gate runs late so it sees the fully-populated
@@ -107,6 +112,7 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
   let rule5jBuf = null;
   let marketInfo = null;
   let vegasInfo = null;
+  let projectionInfo = null;
 
   for (const [id, mod] of RULES_PRE_S) {
     const out = mod.apply(ctx);
@@ -117,6 +123,7 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
       // Capture the neutral Vegas context even when game-script doesn't fire,
       // so calibration sees the game-script inputs on every covered pick.
       if (id === "game-script" && out?._vegas) vegasInfo = out._vegas;
+      if (id === "projection" && out?._projection) projectionInfo = out._projection;
       continue;
     }
     rulesFired.push(out.rule_id);
@@ -139,6 +146,7 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
     }
     if (id === "market-edge") marketInfo = out._market ?? null;
     if (id === "game-script") vegasInfo = out._vegas ?? vegasInfo;
+    if (id === "projection") projectionInfo = out._projection ?? projectionInfo;
   }
 
   // Edge bonus — applied once based on rule5a's road-adjusted margin.
@@ -273,6 +281,9 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
     // Vegas game-script context (Stage 2) when odds covered the player's game;
     // null otherwise. Logged for calibration slicing.
     vegas: vegasInfo,
+    // Native model P(over) + market agreement (Stage 3). Logged for
+    // calibration; the market stays the spine until the model grades out.
+    projection: projectionInfo,
     flags,
     justification,
     rules_fired: rulesFired,

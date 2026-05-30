@@ -111,6 +111,15 @@ export function logVerdict({
     team_total: result?.vegas?.team_total ?? null,
     team_spread: result?.vegas?.team_spread ?? null,
     vegas_blowout: result?.vegas?.blowout ?? null,
+    // Stage-3 native model probability (rule-projection). Null without a
+    // baseline. Lets calibration test the model standalone and whether
+    // model+market agreement beats the market alone. Log-only — keep out of
+    // the _axiom.mjs query projection until ingested.
+    model_prob: result?.projection?.model_prob ?? null,
+    model_dir_prob: result?.projection?.dir_prob ?? null,
+    model_mean: result?.projection?.mean ?? null,
+    model_sigma: result?.projection?.sigma ?? null,
+    model_market_agree: result?.projection?.market_agree ?? null,
     flags: result?.flags ?? null,
     pre_filtered: !!result?.pre_filtered,
     // Engine: which rule modules contributed to the verdict. Empty array
