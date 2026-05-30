@@ -30,6 +30,7 @@ import * as ruleMarketEdge from "./rules/rule-market-edge.js";
 import * as ruleGameScript from "./rules/rule-game-script.js";
 import * as ruleProjection from "./rules/rule-projection.js";
 import * as ruleRest from "./rules/rule-rest.js";
+import * as ruleUsageShift from "./rules/rule-usage-shift.js";
 import * as ruleSTier from "./rules/rule-s-tier.js";
 
 import { scaleFor } from "./rules/_helpers.js";
@@ -68,6 +69,10 @@ const RULES_PRE_S = [
   // Rest/schedule density — B2B / 3-in-4 fatigue suppressor (Stage 4).
   // Counting stats only; no-ops without gamelog dates.
   ["rest", ruleRest],
+  // Usage shift — star-teammate-out usage redistribution (mech2) + own
+  // minutes restriction (mech1) on the OVER side (Stage 4). UNDER is owned by
+  // under-mechanism. No-ops without a confirmed mechanism.
+  ["usage-shift", ruleUsageShift],
   ["provenance", ruleProvenance],
   ["game-cap", ruleGameCap],
   // UNDER mechanism gate runs late so it sees the fully-populated
@@ -118,6 +123,7 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
   let vegasInfo = null;
   let projectionInfo = null;
   let restInfo = null;
+  let usageInfo = null;
 
   for (const [id, mod] of RULES_PRE_S) {
     const out = mod.apply(ctx);
@@ -130,6 +136,7 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
       if (id === "game-script" && out?._vegas) vegasInfo = out._vegas;
       if (id === "projection" && out?._projection) projectionInfo = out._projection;
       if (id === "rest" && out?._rest) restInfo = out._rest;
+      if (id === "usage-shift" && out?._usage) usageInfo = out._usage;
       continue;
     }
     rulesFired.push(out.rule_id);
@@ -154,6 +161,7 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
     if (id === "game-script") vegasInfo = out._vegas ?? vegasInfo;
     if (id === "projection") projectionInfo = out._projection ?? projectionInfo;
     if (id === "rest") restInfo = out._rest ?? restInfo;
+    if (id === "usage-shift") usageInfo = out._usage ?? usageInfo;
   }
 
   // Edge bonus — applied once based on rule5a's road-adjusted margin.
@@ -293,6 +301,8 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
     projection: projectionInfo,
     // Rest / schedule-density context (Stage 4). Null without gamelog dates.
     rest: restInfo,
+    // Usage-shift context (Stage 4b) — teammate-out + minutes restriction.
+    usage: usageInfo,
     flags,
     justification,
     rules_fired: rulesFired,

@@ -56,6 +56,29 @@ export const runtime = "nodejs";
 // (parallel 6-player UI fan-outs occasionally see both 8s-timeout out at
 // once). analyze-all passes the player_team from the PrizePicks scrape,
 // which is the same data we already have on hand and never times out.
+// Stage 4b — enrich own-team OUT/DOUBTFUL injuries with the injured player's
+// season ppg so mechanism 2 (teammate role compression / usage redistribution)
+// can fire. ESPN's injury feed carries no scoring data, so mech2 never
+// triggered in production. Best-effort, capped, parallel; mutates entries in
+// place (composeGroundTruth slices the same objects). A failed/unknown lookup
+// leaves season_ppg unset → that teammate just isn't counted, as before.
+async function enrichInjuriesWithPpg(injuries, league, season) {
+  if (!Array.isArray(injuries) || !injuries.length) return;
+  const targets = injuries.filter((e) => {
+    if (!e?.player || e.season_ppg != null || e.ppg != null) return false;
+    const s = String(e.status || "").toUpperCase();
+    return s.includes("OUT") || s.includes("DOUBTFUL");
+  }).slice(0, 6);
+  await Promise.all(targets.map(async (e) => {
+    try {
+      const espnId = resolvePlayer(e.player)?.espn;
+      if (!espnId) return;
+      const avg = await espnStats.getSeasonAverages(espnId, { season, league });
+      if (avg?.ppg != null) e.season_ppg = avg.ppg;
+    } catch { /* best-effort enrichment */ }
+  }));
+}
+
 export async function gatherGroundTruth({ player, propType, line, teamAbbrHint = null }) {
   const playerInfo = resolvePlayer(player);
   if (!playerInfo) {
@@ -202,6 +225,14 @@ export async function gatherGroundTruth({ player, propType, line, teamAbbrHint =
   // Splits and opponent defense use regular season — playoff samples are too
   // small to be a stable baseline. Same logic as Rule 5a road deduction.
   const opponentSide = opponentFor(game, info.team_abbr, { league });
+  // Stage 4b — the player's own game side (whichever isn't the opponent), used
+  // to locate own-team injuries for ppg enrichment (revives mechanism 2).
+  const playerSide = (opponentSide && game.home && game.away)
+    ? (String(game.home.team_id) === String(opponentSide.team_id) ? game.away : game.home)
+    : null;
+  const ownInjuryList = playerSide?.team_id != null
+    ? (allInjuries?.find((g) => String(g.team_id) === String(playerSide.team_id))?.injuries ?? [])
+    : [];
   // BR snapshot primary for splits (Vercel egress is throttled by stats edge,
   // and the BR file is on disk so it never times out). Stats edge stays on
   // the critical path only when the player isn't in the snapshot.
@@ -235,6 +266,9 @@ export async function gatherGroundTruth({ player, propType, line, teamAbbrHint =
     (isPlayoff && espnId)
       ? espnStats.getLastNGames(espnId, 20, { season, postseason: true, league }).catch(() => null)
       : null,
+    // Stage 4b — enrich own-team injuries with season ppg in parallel (mutates
+    // ownInjuryList entries in place; result slot intentionally unused).
+    enrichInjuriesWithPpg(ownInjuryList, league, season),
   ]);
   const splits = bbrefSplits ?? statsSplits;
   trace.splits = bbrefSplits ? "bbref_snapshot" : (statsSplits ? "stats_edge" : "missing");

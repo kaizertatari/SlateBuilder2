@@ -124,6 +124,12 @@ export function logVerdict({
     rest_days: result?.rest?.rest_days ?? null,
     back_to_back: result?.rest?.back_to_back ?? null,
     three_in_four: result?.rest?.three_in_four ?? null,
+    // Stage-4b usage shift (rule-usage-shift). teammate_out = a star own-team
+    // teammate OUT (mech2, now fed by injury-ppg enrichment); minutes_restriction
+    // = confirmed own restriction (mech1). Log-only.
+    usage_teammate_out: result?.usage?.teammate_out ?? null,
+    usage_teammate_ppg: result?.usage?.teammate_ppg ?? null,
+    usage_minutes_restriction: result?.usage?.minutes_restriction ?? null,
     flags: result?.flags ?? null,
     pre_filtered: !!result?.pre_filtered,
     // Engine: which rule modules contributed to the verdict. Empty array
