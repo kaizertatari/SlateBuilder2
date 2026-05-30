@@ -43,31 +43,53 @@ export function devigTwoWay(overAmerican, underAmerican) {
 }
 
 // Per-stat ΔP(over) per 1.0 of line, from a normal approximation
-// (dP/dx ≈ φ(0)/σ ≈ 0.4/σ) with rough WNBA per-game σ. Used to translate the
-// book's fair P(over) — posted at the BOOK's line — to the PrizePicks line
-// when they differ (~41% of props). APPROXIMATE and WNBA-tuned: NBA σ is
-// larger (slopes smaller); refine per-league, or scrape DK alternate lines for
-// an exact ladder (Stage-3 upgrade). Reliable only for small shifts (≤~3).
-const PER_STAT_SLOPE = {
-  Points: 0.057,
-  Rebounds: 0.114,
-  Assists: 0.16,
-  "3-Pointers Made": 0.30,
-  PRA: 0.04,
-  PR: 0.05,
-  PA: 0.05,
-  RA: 0.089,
+// (dP/dx ≈ φ(0)/σ ≈ 0.4/σ) with rough per-game σ PER LEAGUE. Used to translate
+// a book's fair P(over) — posted at the BOOK's line — to the PrizePicks line
+// when they differ (~41% of props). APPROXIMATE: NBA σ runs larger than WNBA's
+// (more possessions, higher lines), so NBA slopes are ~15-20% smaller. Refine
+// per-league, or scrape DK alternate lines for an exact ladder (Stage-3).
+// Reliable only for small shifts (the MAX_PROB_SHIFT guard discards the rest).
+const PER_LEAGUE_STAT_SLOPE = {
+  WNBA: {
+    Points: 0.057,
+    Rebounds: 0.114,
+    Assists: 0.16,
+    "3-Pointers Made": 0.30,
+    PRA: 0.04,
+    PR: 0.05,
+    PA: 0.05,
+    RA: 0.089,
+  },
+  NBA: {
+    Points: 0.047,
+    Rebounds: 0.105,
+    Assists: 0.143,
+    "3-Pointers Made": 0.267,
+    PRA: 0.035,
+    PR: 0.044,
+    PA: 0.044,
+    RA: 0.08,
+  },
 };
+const DEFAULT_SLOPE = 0.05;
+
+// Resolve the line-shift slope for a stat in a league. Unknown/absent league →
+// WNBA (the v1 default; keeps league-less test/legacy odds entries stable).
+export function slopeFor(stat, league) {
+  const table = PER_LEAGUE_STAT_SLOPE[String(league || "WNBA").toUpperCase()] ?? PER_LEAGUE_STAT_SLOPE.WNBA;
+  return table[stat] ?? DEFAULT_SLOPE;
+}
 
 /**
  * Shift a book's fair P(over) from its posted line to a target line.
  * Lowering the line raises P(over): shifted = fair + slope·(bookLine − target).
  * Clamped to [0.02, 0.98]. Returns fairOver unchanged when lines match.
+ * `league` selects the per-league σ; absent → WNBA (back-compat).
  */
-export function fairProbAtLine({ fairOver, bookLine, targetLine, stat }) {
+export function fairProbAtLine({ fairOver, bookLine, targetLine, stat, league }) {
   if (typeof fairOver !== "number") return null;
   if (typeof targetLine !== "number" || typeof bookLine !== "number") return fairOver;
-  const slope = PER_STAT_SLOPE[stat] ?? 0.05;
+  const slope = slopeFor(stat, league);
   const shifted = fairOver + slope * (bookLine - targetLine);
   return Math.max(0.02, Math.min(0.98, shifted));
 }
@@ -121,11 +143,16 @@ export function loadOdds() {
  *   over_american: number, under_american: number, books: number, source: string
  * }}
  */
-export function lookupMarket({ player, stat, line }) {
+export function lookupMarket({ player, stat, line, league = null }) {
   if (!_odds) loadOdds();
   const hit = _normIndex?.[normalizeName(player)];
   if (!hit) return null;
-  const entry = (hit.props || []).find((p) => p.stat === stat);
+  // When a league is supplied, prefer a league-consistent entry: NBA & WNBA
+  // share one odds.json keyed by player name, so an exact cross-league name
+  // collision is otherwise possible. Fall back to any stat match (league-less
+  // legacy/test odds, or when the caller doesn't know the league).
+  const entry = (hit.props || []).find((p) => p.stat === stat && (league == null || p.league == null || p.league === league))
+    || (hit.props || []).find((p) => p.stat === stat);
   if (!entry) return null;
 
   // Per-book sources. Back-compat: a flat entry (older schema / injected test
@@ -152,7 +179,7 @@ export function lookupMarket({ player, stat, line }) {
   const usable = [];
   for (const s of sources) {
     if (typeof s.fair_over !== "number" || typeof s.line !== "number") continue;
-    const shifted = fairProbAtLine({ fairOver: s.fair_over, bookLine: s.line, targetLine: typeof target === "number" ? target : s.line, stat });
+    const shifted = fairProbAtLine({ fairOver: s.fair_over, bookLine: s.line, targetLine: typeof target === "number" ? target : s.line, stat, league: entry.league ?? league });
     if (shifted == null) continue;
     if (typeof target === "number" && Math.abs(shifted - s.fair_over) > MAX_PROB_SHIFT) continue;
     usable.push({ s, shifted });
@@ -168,5 +195,6 @@ export function lookupMarket({ player, stat, line }) {
     books: usable.length,
     sources: usable.map((u) => u.s),
     source: usable.map((u) => u.s.book).join("+"),
+    league: entry.league ?? league ?? null,
   };
 }

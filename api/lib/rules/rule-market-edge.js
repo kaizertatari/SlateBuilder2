@@ -11,8 +11,8 @@
 //   • market agrees / supports                      → confidence + signal(s)
 //
 // Self-contained: it looks the market up directly (no ground-truth plumbing).
-// No-ops (fired:false) when there's no matching market — so NBA props (no odds
-// coverage yet) and the existing smokes are unaffected.
+// No-ops (fired:false) when there's no matching market — so props the books
+// don't cover, and the existing smokes, are unaffected.
 
 import { lookupMarket } from "../odds.js";
 

@@ -2,7 +2,7 @@
 //   node scripts/smoke-build-slate.mjs
 import { collectMarketCandidates } from "../api/build-slate.js";
 import { buildSlate } from "../api/lib/slate-builder.js";
-import { setOdds } from "../api/lib/odds.js";
+import { setOdds, lookupMarket, slopeFor } from "../api/lib/odds.js";
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) pass++; else { fail++; console.error("  FAIL: " + m); } };
@@ -56,6 +56,25 @@ function scenario(fairs) {
   lines.by_player.NBAGuy = [{ stat_type: "Points", line: 15.5, odds_type: "standard", league: "NBA", player_team: "ZZZ", opponent: "YYY" }];
   const { considered } = collectMarketCandidates(lines, { league: "WNBA", allowedStats: new Set(["Points"]) });
   ok(considered === 1, `D: NBA prop excluded by league filter (got ${considered})`);
+}
+
+// E) NBA: league-aware slope is smaller than WNBA, and the league param both
+// disambiguates a name collision and selects the per-league slope.
+{
+  ok(slopeFor("Points", "NBA") < slopeFor("Points", "WNBA"), "E: NBA Points slope < WNBA Points slope");
+  setOdds({
+    fetched_at: "t", leagues: ["WNBA", "NBA"], games: {},
+    by_player: {
+      Twin: [
+        { stat: "Points", league: "WNBA", line: 20.5, fair_over: 0.50, sources: [{ book: "dk", line: 20.5, fair_over: 0.50 }] },
+        { stat: "Points", league: "NBA", line: 20.5, fair_over: 0.50, sources: [{ book: "dk", line: 20.5, fair_over: 0.50 }] },
+      ],
+    },
+  });
+  const w = lookupMarket({ player: "Twin", stat: "Points", line: 19.5, league: "WNBA" });
+  const n = lookupMarket({ player: "Twin", stat: "Points", line: 19.5, league: "NBA" });
+  ok(n && n.league === "NBA", "E: league param selects the NBA entry on a name collision");
+  ok(w && n && w.fair_over > n.fair_over, `E: a +1.0 shift moves WNBA more than NBA (w=${w?.fair_over}, n=${n?.fair_over})`);
 }
 
 setOdds(null);

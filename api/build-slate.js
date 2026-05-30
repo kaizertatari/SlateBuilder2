@@ -54,7 +54,7 @@ export function collectMarketCandidates(linesData, { league = null, allowedStats
       const game = `${p.opponent || "?"}@${p.player_team || "?"}`;
       if (gameSet && !gameSet.has(game)) continue;
       considered++;
-      const m = lookupMarket({ player, stat, line: p.line });
+      const m = lookupMarket({ player, stat, line: p.line, league: p.league ?? league });
       if (!m) continue; // market-driven: only bet what the market prices
       matchedMarket++;
       const overP = m.fair_over; // consensus at this PrizePicks line

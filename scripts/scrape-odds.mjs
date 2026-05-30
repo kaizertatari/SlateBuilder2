@@ -1,13 +1,15 @@
 // Scrape DraftKings + FanDuel player-prop O/U markets, de-vig each book, and
-// merge into a no-vig CONSENSUS in data/odds.json. v1: WNBA. Runs from a
-// residential IP (cloud IPs get bot-blocked; the JSON APIs both work from home).
+// merge into a no-vig CONSENSUS in data/odds.json. Covers WNBA + NBA (both
+// leagues merged into one file; each entry tagged with its league for the
+// correct line-shift slope). Runs from a residential IP (cloud IPs get
+// bot-blocked; the JSON APIs both work from home).
 //
 // Usage: node scripts/scrape-odds.mjs   |   npm run refresh-odds
 //
 // Output (data/odds.json):
-//   { fetched_at, league, sources:[...], games:{...},
-//     by_player:{ "<name>": [ { stat, line, fair_over (consensus), books,
-//                               sources:[ {book, line, over_american,
+//   { fetched_at, leagues:[...], sources:[...], games:{...},
+//     by_player:{ "<name>": [ { stat, league, line, fair_over (consensus),
+//                               books, sources:[ {book, line, over_american,
 //                               under_american, fair_over} ], team, opponent,
 //                               game, start_time } ] } }
 
@@ -160,7 +162,7 @@ async function scrapeFanDuel(league) {
 
 // ─── Merge books → consensus ──────────────────────────────────────────────────
 
-function mergeBooks(dk, fd) {
+function mergeBooks(dk, fd, league) {
   const map = new Map(); // `${norm}|${stat}` -> { display, stat, meta, sources[] }
   const add = (book, player, e) => {
     const key = `${normalizeName(player)}|${e.stat}`;
@@ -184,8 +186,8 @@ function mergeBooks(dk, fd) {
   const coverage = {};
   for (const m of map.values()) {
     const repLine = m.sources[0].line; // DK added first when present
-    const consensus = avg(m.sources.map((s) => fairProbAtLine({ fairOver: s.fair_over, bookLine: s.line, targetLine: repLine, stat: m.stat })).filter((x) => typeof x === "number"));
-    (byPlayer[m.display] ??= []).push({ stat: m.stat, ...m.meta, line: repLine, fair_over: consensus != null ? Number(consensus.toFixed(4)) : null, books: m.sources.length, sources: m.sources });
+    const consensus = avg(m.sources.map((s) => fairProbAtLine({ fairOver: s.fair_over, bookLine: s.line, targetLine: repLine, stat: m.stat, league })).filter((x) => typeof x === "number"));
+    (byPlayer[m.display] ??= []).push({ stat: m.stat, league, ...m.meta, line: repLine, fair_over: consensus != null ? Number(consensus.toFixed(4)) : null, books: m.sources.length, sources: m.sources });
     coverage[m.sources.length] = (coverage[m.sources.length] || 0) + 1;
   }
   return { byPlayer, coverage };
@@ -200,7 +202,7 @@ export async function scrapeOdds({ write = true, outputPath = OUTPUT, league = "
   try { fd = await scrapeFanDuel(league); } catch (e) { console.error(`    FD failed (${e.message}) — DK-only this run`); }
   console.log(`    ${Object.keys(fd.byPlayer).length} players`);
 
-  const { byPlayer, coverage } = mergeBooks(dk, fd);
+  const { byPlayer, coverage } = mergeBooks(dk, fd, league);
   const total = Object.values(byPlayer).reduce((n, arr) => n + arr.length, 0);
   const result = {
     fetched_at: new Date().toISOString(), league, sources: ["draftkings", "fanduel"],
@@ -210,11 +212,45 @@ export async function scrapeOdds({ write = true, outputPath = OUTPUT, league = "
   return result;
 }
 
+// Scrape every league and merge into ONE odds.json. Players are keyed by name
+// (no NBA/WNBA collision in practice), so the slate builder reads a single
+// blob; each entry carries its `league` so lookupMarket applies the right
+// line-shift slope. A league that fails to scrape is skipped — the rest still
+// publish (better a partial refresh than clobbering both books with nothing).
+export async function scrapeAllOdds({ leagues = ["WNBA", "NBA"], write = true, outputPath = OUTPUT } = {}) {
+  const per = [];
+  for (const lg of leagues) {
+    try { per.push(await scrapeOdds({ league: lg, write: false })); }
+    catch (e) { console.error(`  ${lg} scrape failed (${e.message}) — skipping league`); }
+  }
+  const by_player = {};
+  const games = {};
+  const books_coverage = {};
+  for (const r of per) {
+    for (const [p, arr] of Object.entries(r.by_player)) (by_player[p] ??= []).push(...arr);
+    Object.assign(games, r.games);
+    for (const [k, v] of Object.entries(r.books_coverage || {})) books_coverage[k] = (books_coverage[k] || 0) + v;
+  }
+  const combined = {
+    fetched_at: new Date().toISOString(),
+    leagues: per.map((r) => r.league),
+    sources: ["draftkings", "fanduel"],
+    games,
+    by_player,
+    total_props: Object.values(by_player).reduce((n, a) => n + a.length, 0),
+    total_players: Object.keys(by_player).length,
+    books_coverage,
+    per_league: Object.fromEntries(per.map((r) => [r.league, { total_props: r.total_props, total_players: r.total_players }])),
+  };
+  if (write) { await fs.writeFile(outputPath, JSON.stringify(combined, null, 2) + "\n"); console.log(`  Written to ${path.relative(ROOT, outputPath)}`); }
+  return combined;
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   loadEnvLocal();
-  scrapeOdds()
+  scrapeAllOdds()
     .then(async (r) => {
-      console.log(`\nDone: ${r.total_props} props / ${r.total_players} players. Book coverage: ${JSON.stringify(r.books_coverage)}`);
+      console.log(`\nDone: ${r.total_props} props / ${r.total_players} players across ${r.leagues.join("+")}. Per-league: ${JSON.stringify(r.per_league)}. Book coverage: ${JSON.stringify(r.books_coverage)}`);
       // Push to the blob so the deployed slate builder sees fresh odds (same
       // pattern as refresh-prizepicks → writeLines). File-only without a token.
       if (process.env.BLOB_READ_WRITE_TOKEN) {
