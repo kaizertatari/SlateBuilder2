@@ -21,7 +21,8 @@ import { runWithRequestContext } from "./lib/request-context.js";
 import { readLines } from "./lib/lines-store.js";
 import { STATS, mapPrizePicksStatType } from "./lib/prop-types.js";
 import { ALL_ODDS_TYPES } from "./lib/select-lines.js";
-import { lookupMarket, loadOdds } from "./lib/odds.js";
+import { lookupMarket, setOdds } from "./lib/odds.js";
+import { readOdds } from "./lib/odds-store.js";
 import { buildSlate } from "./lib/slate-builder.js";
 import { randomUUID } from "node:crypto";
 
@@ -119,7 +120,10 @@ async function handlePost(req, reqId) {
     try { linesData = await readLines(); }
     catch { return Response.json({ error: "No lines data. Run: npm run refresh-prizepicks." }, { status: 404 }); }
 
-    const odds = loadOdds();
+    // Fresh odds from the blob (falls back to bundled data/odds.json), warmed
+    // into the sync lookupMarket cache before pricing.
+    const odds = await readOdds();
+    setOdds(odds);
     const { candidates, matchedMarket, considered } = collectMarketCandidates(linesData, { league, allowedStats, oddsTypes, games, direction });
 
     const result = buildSlate(candidates, { targetMultiplier, mode, size, maxPerGame });

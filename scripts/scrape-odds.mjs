@@ -16,6 +16,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { devigTwoWay, parseAmerican, fairProbAtLine } from "../api/lib/odds.js";
 import { normalizeName } from "../api/lib/string-utils.js";
+import { loadEnvLocal } from "./_env.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUTPUT = path.join(ROOT, "data/odds.json");
@@ -210,7 +211,18 @@ export async function scrapeOdds({ write = true, outputPath = OUTPUT, league = "
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  loadEnvLocal();
   scrapeOdds()
-    .then((r) => console.log(`\nDone: ${r.total_props} props / ${r.total_players} players. Book coverage: ${JSON.stringify(r.books_coverage)}`))
+    .then(async (r) => {
+      console.log(`\nDone: ${r.total_props} props / ${r.total_players} players. Book coverage: ${JSON.stringify(r.books_coverage)}`);
+      // Push to the blob so the deployed slate builder sees fresh odds (same
+      // pattern as refresh-prizepicks → writeLines). File-only without a token.
+      if (process.env.BLOB_READ_WRITE_TOKEN) {
+        const { writeOdds } = await import("../api/lib/odds-store.js");
+        console.log(`  Pushed to blob: ${await writeOdds(r)}`);
+      } else {
+        console.log("  (BLOB_READ_WRITE_TOKEN not set — wrote file only; deployed app keeps its bundled odds)");
+      }
+    })
     .catch((e) => { console.error("Fatal:", e.message); process.exit(1); });
 }
