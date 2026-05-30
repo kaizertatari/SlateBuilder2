@@ -26,6 +26,7 @@ import * as ruleR9 from "./rules/ruleR9.js";
 import * as ruleGameCap from "./rules/rule-game-cap.js";
 import * as ruleProvenance from "./rules/rule-provenance.js";
 import * as ruleUnderMechanism from "./rules/rule-under-mechanism.js";
+import * as ruleMarketEdge from "./rules/rule-market-edge.js";
 import * as ruleSTier from "./rules/rule-s-tier.js";
 
 import { scaleFor } from "./rules/_helpers.js";
@@ -49,6 +50,11 @@ const RULES_PRE_S = [
   ["5f", rule5f],
   ["5h", rule5h],
   ["5b", rule5b],
+  // Market-edge — the sharp-line signal (Stage 1). Runs after the box-score
+  // rules so its suppressor/SKIP reflects the market's view of THIS pick.
+  // No-ops when there's no matching odds (e.g. NBA today), so behavior is
+  // unchanged where odds aren't covered.
+  ["market-edge", ruleMarketEdge],
   ["provenance", ruleProvenance],
   ["game-cap", ruleGameCap],
   // UNDER mechanism gate runs late so it sees the fully-populated
@@ -95,6 +101,7 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
   // after the loop (avoids each rule independently re-deriving margin).
   let rule5aBuf = null;
   let rule5jBuf = null;
+  let marketInfo = null;
 
   for (const [id, mod] of RULES_PRE_S) {
     const out = mod.apply(ctx);
@@ -122,6 +129,7 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
       // UNDER baseline gate ISSUE branch counts as one signal.
       if (out._buf_under) signalCount += 1;
     }
+    if (id === "market-edge") marketInfo = out._market ?? null;
   }
 
   // Edge bonus — applied once based on rule5a's road-adjusted margin.
@@ -250,6 +258,9 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
     raw_score: Math.round(score * 10) / 10,
     // SHADOW (telemetry only; see above) — retire with the snapToBand flip.
     shadow_tier,
+    // Sharp-market signal (Stage 1) when odds covered this pick; null otherwise.
+    // Consumed by verdict-logger (calibration) and the slate builder (EV).
+    market: marketInfo,
     flags,
     justification,
     rules_fired: rulesFired,

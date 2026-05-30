@@ -1,0 +1,139 @@
+# Engine Accuracy Plan — Standard-Line Edge (Path B)
+
+## Context
+
+The slate-builder pivot is +EV-or-abstain, and the calibration audit
+(2026-05-29) showed it must abstain ~always at ≥3× because **the engine has no
+edge where the payout is**: standard-line hit rate ~47–48% and engine
+confidence is *non-predictive* on standard lines (flat across confidence
+buckets). Goblins (the only place the engine shows signal, ~67%) are
+house-priced to lose and can't reach ≥3×. So profit requires one thing:
+**make the engine accurate on standard/demon lines.** This doc researches how
+that's actually done and lays out a staged plan, measured by the existing
+calibration/backtest loop.
+
+## Why the current engine can't beat standard lines
+
+`api/lib/engine.js` + `api/lib/rules/_helpers.js` (`computeOverBufferCheck`)
+implement a **box-score projection vs the line**:
+
+> baseline = weighted-L5 / season / H2H blend → road deduction → per-stat
+> buffer (+ outlier/variance/poor-FT widening) → `passes = line ≤ baseline −
+> buffer`. Confidence = Σ hand-tuned `RULE_WEIGHTS`, snapped to an S/A/B band.
+
+This asks "is the line below the player's own adjusted average?" — **not "is
+the line mispriced?"** Standard PrizePicks lines are ~the efficient market, so
+out-projecting them from box scores alone tops out at a coin flip. That is
+precisely the observed result.
+
+## How quants actually find value (research synthesis)
+
+1. **Beat the *market*, not the box score.** The proven way to beat PrizePicks
+   pick'em is to compare each line to a **sharp sportsbook no-vig consensus**
+   (Pinnacle/Circa/FanDuel/DK; the "Unabated line"). Bet only props whose
+   no-vig fair probability clears the payout breakeven (~54.25% for the −119
+   on 5–6 leg standard entries; ~58.5% for a 3-pick Power). Edge comes from
+   *line discrepancy*, not from a better season-average model.
+2. **Start from a game-script thesis: Vegas total + spread.** Game total →
+   pace → possessions → counting stats. Spread → blowout/garbage-time → minutes
+   (bench overs on the winner, starter unders on the loser). Pros pick props
+   that align with the projected game, then check the matchup.
+3. **Minutes and pace are the two biggest drivers.** A player can't accumulate
+   if he's not on the floor; +5 possessions vs his normal environment is
+   material for PRA/reb/ast/3PA. Prop lines are **slow to move on role
+   shifts** — when a teammate is out, usage/minutes jump immediately but the
+   line lags. That lag is the edge.
+4. **Model the distribution, not the mean.** A prop is P(stat > line); pros
+   project a mean *and* a variance and compute the crossing probability, then
+   compare to the market's implied probability.
+5. **WNBA is a soft market.** Lines are posted off basic averages, move 3+ pts
+   when sharps hit them, and books disagree wildly (e.g., one book O18.5, another
+   21.5). Information edges (beat-reporter injury/rest news) and no-vig
+   comparison pay *more* in the WNBA than the NBA.
+
+## Gap analysis — what the framework is missing
+
+| Signal pros use | In the engine today? | Leverage |
+|---|---|---|
+| **Sharp no-vig consensus line for the same prop** | **No** | ★★★★★ |
+| **Vegas game total / team total / spread** | No (only a weak ESPN win-prob proxy) | ★★★★★ |
+| Forward **minutes projection** + injury **usage redistribution** | Partial — mechanisms *react* but don't quantify the minutes/usage delta or compare to a stale line | ★★★★ |
+| Explicit **P(over) from mean+variance** | No — heuristic tier/buffer; `variance` block is usually null (needs ≥8 games, only L5 is plumbed) | ★★★★ |
+| **Pace** (possessions) + **defense-vs-position** by stat | Partial — `def_rank` only, no pace, no positional DvP | ★★★ |
+| Larger windows (L10–L20) + **per-minute rates** + trend | No — only L5 + season | ★★★ |
+| **Rest / B2B / 3-in-4** | No — only `days_out` until the game | ★★ |
+
+Have today (for reference): weighted/trimmed/raw L5, season, H2H, current-series,
+home/road splits, ESPN win-prob, injuries + body regions, opponent def rank +
+primary defender, road deduction, FT-floor by position, UNDER mechanisms,
+playoff series state.
+
+## The reframe
+
+Stop trying to out-project an efficient market. Make the engine a
+**market-anchored hybrid**: the sharp **no-vig fair probability is the spine**;
+the engine's projection + game-script + role-change signals (a) confirm/deny it
+and (b) catch *staleness* the market hasn't priced yet. "Increase standard-line
+accuracy" = "detect mispriced/stale PrizePicks lines," which is achievable,
+versus "out-project Vegas," which is not.
+
+## Staged plan (each stage measured against standard-line hit rate)
+
+### Stage 1 — Sharp odds + no-vig edge  ★ the edge  (needs a data-source decision)
+- New `api/lib/odds.js` + `scripts/refresh-odds.mjs` → `data/odds.json`: pull
+  player props + game totals/spreads for NBA **and WNBA** from an odds API,
+  compute **no-vig fair probability** per (player, stat, line, direction).
+- Match PrizePicks lines ↔ market; expose a `market` block in ground truth:
+  `{ no_vig_prob, consensus_line, line_delta, books_n }`.
+- New `rule-market-edge.js`: the dominant feature — confidence/EV driven by
+  `no_vig_prob` vs the PrizePicks line. Standard lines with a real no-vig edge
+  become bettable; the rest abstain.
+- Log `no_vig_prob` + `line_delta` in `verdict-logger.js` so calibration can
+  slice "had market edge vs not" and we can *prove* the standard-line lift.
+- **Decision required: odds provider + budget.** Recommend **The Odds API**
+  (documented, affordable, NBA+WNBA player props + totals) for v1; OddsJam/
+  Unabated are richer but pricier. Keyed API → can run from the residential
+  bridge or a Vercel cron (not IP-blocked like PrizePicks).
+
+### Stage 2 — Vegas game-script features
+- From the Stage-1 feed: `vegas` block `{ game_total, team_total, spread,
+  implied_pace }`. Feed pace into the baseline (possession scaling) and
+  spread/blowout into a minutes/garbage-time adjustment (bench overs on
+  favorites, starter unders on big dogs). Refines `computeOverBufferCheck`.
+
+### Stage 3 — Probability model (native P(over))
+- `api/lib/projection.js`: projected mean (baseline + game-script + minutes) +
+  variance → `P(over)` via a normal/negative-binomial crossing. Engine emits a
+  **probability**, not just a tier — makes calibration native and lets us learn
+  weights against outcomes. Blend model-P with market no-vig-P; bet when they
+  agree against PrizePicks (or when one flags clear staleness).
+
+### Stage 4 — Minutes & usage projection
+- Forward minutes (injury-adjusted, blowout-adjusted) + usage redistribution
+  when a teammate is OUT (the role-shift staleness edge). Add L10–L20 windows +
+  per-minute rates (fixes the perpetually-null `variance` block) and rest/B2B.
+  Needs nba-stats usage + lineup data; verify whether `team-defense.json`
+  already carries pace (add if not).
+
+### Stage 5 — WNBA tuning
+- WNBA is the softest market → biggest edge per effort. Prioritize WNBA odds
+  coverage and looser staleness thresholds; expect Stage 1 alone to surface
+  more standard-line edge here than in the NBA.
+
+## Measurement (non-negotiable)
+
+Every stage is judged by one metric: **standard-line hit rate and the +EV
+qualifying-slate yield**, via `scripts/build-calibration.mjs` →
+`scripts/backtest-slates.mjs`. Ship a stage only if the backtest shows the
+standard-line bucket moving toward/over breakeven on a held-out split. Keep the
+daily grader running so the sample grows; treat all early numbers as provisional.
+
+## Risks / honesty
+
+- Even with sharp lines, standard NBA props are ~efficient — edges are
+  intermittent (specific stale spots), so the builder will still bet
+  *selectively*, not daily. That's correct, not a failure.
+- A no-vig data source is a recurring cost and an external dependency.
+- WNBA edge is real but lower-limit and seasonal.
+- This makes the engine partly market-derivative; the original "pure
+  deterministic from box scores" property changes — by design.

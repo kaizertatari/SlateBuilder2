@@ -94,6 +94,14 @@ export function logVerdict({
     // SHADOW (temporary) — the would-be tier under the score-driven
     // demote/SKIP fix; lets calibration-report size that change pre-ship.
     shadow_tier: result?.shadow_tier ?? null,
+    // Stage-1 sharp-market signal (rule-market-edge). Null when odds didn't
+    // cover this pick. Lets calibration slice hit rate by market agreement and
+    // prove the standard-line lift. no_vig_prob is at the book line;
+    // market_fair_at_line is shifted to the PrizePicks line for the bet side.
+    no_vig_prob: result?.market?.no_vig_prob ?? null,
+    market_fair_at_line: result?.market?.fair_at_line ?? null,
+    market_line_delta: result?.market?.line_delta ?? null,
+    market_edge: result?.market?.edge ?? null,
     flags: result?.flags ?? null,
     pre_filtered: !!result?.pre_filtered,
     // Engine: which rule modules contributed to the verdict. Empty array
