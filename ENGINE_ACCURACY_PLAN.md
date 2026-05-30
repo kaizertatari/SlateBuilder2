@@ -1,5 +1,12 @@
 # Engine Accuracy Plan — Standard-Line Edge (Path B)
 
+> **Status (2026-05-30): all five stages SHIPPED** on `experiment/suppressor-thin-edge`.
+> Every signal family is wired + logged for calibration — sharp market (1),
+> Vegas game-script (2), native P(over) (3), minutes/usage/rest (4), WNBA tuning
+> (5). **Nothing is validated yet.** The one remaining gate is forward
+> measurement: let the verdict telemetry accrue + grade, prove/kill the
+> standard-line lift, then (only then) turn on the slate-builder EV blend.
+
 ## Context
 
 The slate-builder pivot is +EV-or-abstain, and the calibration audit
@@ -142,7 +149,12 @@ it — forward measurement before any signal is trusted or fed into bet EV.
   Needs nba-stats usage + lineup data; verify whether `team-defense.json`
   already carries pace (add if not).
 
-### Stage 5 — WNBA tuning
+### Stage 5 — WNBA tuning  ✅ SHIPPED (1b7b74e)
+WNBA odds coverage shipped in Stage 1. The market signal is now league-aware
+(`MARKET_TUNING` + league-aware `MAX_PROB_SHIFT`): WNBA acts on smaller edges
+and tolerates larger line gaps (real staleness there) while NBA stays tight,
+and dog-protection (skip/cap) stays league-agnostic. Per-league σ (projection)
+and game-script reference totals were already league-aware from earlier stages.
 - WNBA is the softest market → biggest edge per effort. Prioritize WNBA odds
   coverage and looser staleness thresholds; expect Stage 1 alone to surface
   more standard-line edge here than in the NBA.
