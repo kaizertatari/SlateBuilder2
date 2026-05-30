@@ -79,7 +79,8 @@ versus "out-project Vegas," which is not.
 
 ## Staged plan (each stage measured against standard-line hit rate)
 
-### Stage 1 — Sharp odds + no-vig edge  ★ the edge  (needs a data-source decision)
+### Stage 1 — Sharp odds + no-vig edge  ★ the edge  ✅ SHIPPED
+Built with **direct DK + FanDuel scraping** (no paid odds API): `scripts/scrape-odds.mjs` → `data/odds.json`/blob, `api/lib/odds.js` (de-vig + per-league line-shift), `rule-market-edge.js`, market fields logged. Covers **WNBA + NBA**. Forward measurement of the standard-line lift is pending settled games.
 - New `api/lib/odds.js` + `scripts/refresh-odds.mjs` → `data/odds.json`: pull
   player props + game totals/spreads for NBA **and WNBA** from an odds API,
   compute **no-vig fair probability** per (player, stat, line, direction).
@@ -95,7 +96,13 @@ versus "out-project Vegas," which is not.
   Unabated are richer but pricier. Keyed API → can run from the residential
   bridge or a Vercel cron (not IP-blocked like PrizePicks).
 
-### Stage 2 — Vegas game-script features
+### Stage 2 — Vegas game-script features  ✅ SHIPPED (c6c119f)
+Built as `rule-game-script.js` (one module per signal family, not a
+`computeOverBufferCheck` mutation). `lookupVegas` derives the team implied
+total + spread from the scraped `games` block; the rule emits a scoring-env
+tailwind/headwind + a blowout minutes adjustment, logged via the engine's
+`vegas` block for calibration. Per-league refs/bands are approximate — tune
+via calibration (same status as the line-shift slopes).
 - From the Stage-1 feed: `vegas` block `{ game_total, team_total, spread,
   implied_pace }`. Feed pace into the baseline (possession scaling) and
   spread/blowout into a minutes/garbage-time adjustment (bench overs on
