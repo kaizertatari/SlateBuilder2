@@ -14,7 +14,7 @@
 // No-ops (fired:false) when there's no matching market — so NBA props (no odds
 // coverage yet) and the existing smokes are unaffected.
 
-import { lookupMarket, fairProbAtLine } from "../odds.js";
+import { lookupMarket } from "../odds.js";
 
 export function apply(ctx) {
   const { groundTruth, statType, direction, line } = ctx;
@@ -24,8 +24,9 @@ export function apply(ctx) {
   const m = lookupMarket({ player, stat: statType, line });
   if (!m) return { fired: false, rule_id: "market-edge" };
 
-  const fairAtLine = fairProbAtLine({ fairOver: m.fair_over, bookLine: m.book_line, targetLine: line, stat: statType });
-  if (fairAtLine == null) return { fired: false, rule_id: "market-edge" };
+  // lookupMarket returns the no-vig CONSENSUS fair P(over), already shifted to
+  // this PrizePicks line and averaged across whichever books cover it (DK, FD).
+  const fairAtLine = m.fair_over;
 
   // Market-implied fair probability for the SIDE we'd bet.
   const pDir = direction === "OVER" ? fairAtLine : 1 - fairAtLine;
@@ -58,11 +59,12 @@ export function apply(ctx) {
   }
 
   const pct = (pDir * 100).toFixed(0);
-  const deltaNote = m.line_delta ? `, Δ${m.line_delta} from book ${m.book_line}` : "";
+  const bookTag = `${m.books}-book`;
+  const deltaNote = m.line_delta ? `, Δ${m.line_delta} vs book ${m.book_line}` : "";
   const flag = pDir < 0.43
-    ? `⚠️ Market disagrees — DK no-vig ${pct}% for ${direction}${deltaNote}`
+    ? `⚠️ Market disagrees — ${bookTag} no-vig ${pct}% for ${direction}${deltaNote}`
     : pDir >= 0.58
-      ? `✅ Market edge — DK no-vig ${pct}% for ${direction}${deltaNote}`
+      ? `✅ Market edge — ${bookTag} no-vig ${pct}% for ${direction}${deltaNote}`
       : null;
 
   return {
@@ -74,7 +76,7 @@ export function apply(ctx) {
     suppressor,
     signals_added,
     flag,
-    justification_part: `Market(DK) — no-vig ${pct}% for ${direction} at ${line}${bigShift ? " (large line gap, low trust)" : ""}; edge ${(edge * 100).toFixed(0)}%.`,
+    justification_part: `Market(${m.source}) — no-vig ${pct}% for ${direction} at ${line}${bigShift ? " (large line gap, low trust)" : ""}; edge ${(edge * 100).toFixed(0)}%.`,
     // Surfaced for telemetry (verdict-logger) + the slate builder's EV.
     _market: {
       no_vig_prob: m.fair_over,
@@ -82,6 +84,7 @@ export function apply(ctx) {
       line_delta: m.line_delta,
       edge: Number(edge.toFixed(4)),
       book_line: m.book_line,
+      books: m.books,
       source: m.source,
     },
   };

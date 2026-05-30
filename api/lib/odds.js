@@ -126,14 +126,34 @@ export function lookupMarket({ player, stat, line }) {
   const hit = _normIndex?.[normalizeName(player)];
   if (!hit) return null;
   const entry = (hit.props || []).find((p) => p.stat === stat);
-  if (!entry || typeof entry.fair_over !== "number") return null;
+  if (!entry) return null;
+
+  // Per-book sources. Back-compat: a flat entry (older schema / injected test
+  // odds) counts as a single source.
+  const sources = Array.isArray(entry.sources) && entry.sources.length
+    ? entry.sources
+    : (typeof entry.fair_over === "number"
+        ? [{ book: entry.book ?? _odds.source ?? "book", line: entry.line, over_american: entry.over_american, under_american: entry.under_american, fair_over: entry.fair_over }]
+        : []);
+  if (!sources.length) return null;
+
+  // Shift EACH book's fair P(over) to the requested PrizePicks line, then
+  // average → a no-vig CONSENSUS at the line. (Returning fair-at-line here
+  // keeps the consumer simple: no second shift needed downstream.)
+  const repLine = sources.reduce((a, s) => a + (s.line ?? 0), 0) / sources.length;
+  const target = typeof line === "number" ? line : (entry.line ?? repLine);
+  const shifted = sources
+    .map((s) => fairProbAtLine({ fairOver: s.fair_over, bookLine: s.line, targetLine: target, stat }))
+    .filter((x) => typeof x === "number");
+  if (!shifted.length) return null;
+  const consensus = shifted.reduce((a, b) => a + b, 0) / shifted.length;
+
   return {
-    fair_over: entry.fair_over,
-    book_line: entry.line,
-    line_delta: typeof line === "number" ? Number((line - entry.line).toFixed(2)) : null,
-    over_american: entry.over_american,
-    under_american: entry.under_american,
-    books: entry.books ?? 1,
-    source: _odds.source ?? "draftkings",
+    fair_over: Number(consensus.toFixed(4)), // consensus, already AT the requested line
+    book_line: Number(repLine.toFixed(2)),
+    line_delta: typeof line === "number" ? Number((line - repLine).toFixed(2)) : null,
+    books: sources.length,
+    sources,
+    source: sources.map((s) => s.book).join("+"),
   };
 }
