@@ -174,7 +174,11 @@ export function lookupMarket({ player, stat, line, league = null }) {
   // yields garbage (→ a fake 98% UNDER). Only use a book's quote when the shift
   // moves probability ≤ MAX_PROB_SHIFT; if no book is close enough, return null
   // (we can't price this line without alternate-line ladders — Stage 3).
-  const MAX_PROB_SHIFT = 0.08; // ~1pt on points; bigger PP-vs-book gaps are likely stale/mismatched, not edge (need alt-line ladders to price — Stage 3)
+  // Stage 5 — WNBA is a softer market: a larger PP-vs-book gap is more often
+  // real staleness edge than the noise it'd be in the efficient NBA market, so
+  // tolerate a bigger shift there before discarding a quote. Tunable.
+  const lg = String(entry.league ?? league ?? "").toUpperCase();
+  const MAX_PROB_SHIFT = lg === "WNBA" ? 0.12 : 0.08; // ~1.5pt vs ~1pt on points
   const target = typeof line === "number" ? line : entry.line;
   const usable = [];
   for (const s of sources) {

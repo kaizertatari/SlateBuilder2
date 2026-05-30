@@ -5,7 +5,7 @@ import { setOdds } from "../api/lib/odds.js";
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) pass++; else { fail++; console.error("  FAIL: " + m); } };
-const ctx = (player, stat, direction, line) => ({ groundTruth: { player, info: { full_name: player } }, statType: stat, direction, line });
+const ctx = (player, stat, direction, line, league) => ({ groundTruth: { player, info: { full_name: player }, league }, statType: stat, direction, line });
 const setOne = ({ player = "Test Player", stat = "Points", line = 16.5, fair_over }) =>
   setOdds({ source: "draftkings", league: "WNBA", by_player: { [player]: [{ stat, line, over_american: -110, under_american: -110, fair_over }] }, games: {} });
 
@@ -39,6 +39,25 @@ ok(r.fired && r._market.fair_at_line > 0.54 && r._market.line_delta === -1, `E s
 setOdds({ source: "draftkings", by_player: {}, games: {} });
 r = apply(ctx("Nobody", "Points", "OVER", 16.5));
 ok(r.fired === false, "F no market → fired:false");
+
+// Stage 5 — per-league market tuning. Set a league-tagged single-book entry.
+const setLeagueOne = (league, fair_over, line = 16.5) =>
+  setOdds({ source: "dk", league, by_player: { "Test Player": [{ stat: "Points", league, line, over_american: -110, under_american: -110, fair_over, sources: [{ book: "dk", line, over_american: -110, under_american: -110, fair_over }] }] }, games: {} });
+
+// G) looser WNBA signal threshold: pDir 0.55 signals in WNBA (sig1 0.54), not NBA (0.56)
+setLeagueOne("WNBA", 0.55);
+const wSig = apply(ctx("Test Player", "Points", "OVER", 16.5, "WNBA")).signals_added;
+setLeagueOne("NBA", 0.55);
+const nSig = apply(ctx("Test Player", "Points", "OVER", 16.5, "NBA")).signals_added;
+ok(wSig >= 1 && nSig === 0, `G WNBA acts on a 0.55 edge (WNBA ${wSig} sig, NBA ${nSig})`);
+
+// H) WNBA tolerates a larger line gap: a 2pt shift off an 18.5 book line is
+// priced in WNBA (shift ≈0.114 ≤ 0.12 cap) but discarded in NBA (≈0.094 > 0.08)
+setLeagueOne("WNBA", 0.50, 18.5);
+const wPriced = apply(ctx("Test Player", "Points", "OVER", 16.5, "WNBA")).fired;
+setLeagueOne("NBA", 0.50, 18.5);
+const nPriced = apply(ctx("Test Player", "Points", "OVER", 16.5, "NBA")).fired;
+ok(wPriced && !nPriced, `H WNBA prices a 2pt gap, NBA discards it (WNBA ${wPriced}, NBA ${nPriced})`);
 
 setOdds(null);
 console.log(`\nsmoke-market-edge: ${pass} passed, ${fail} failed`);

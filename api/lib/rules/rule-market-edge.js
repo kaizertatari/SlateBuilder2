@@ -16,13 +16,28 @@
 
 import { lookupMarket } from "../odds.js";
 
+// Stage 5 — WNBA is a softer market: PrizePicks lines lag the sharp consensus
+// more, books disagree more, and a 3-pt line gap is real edge (vs noise in the
+// efficient NBA market). So WNBA acts on smaller market edges (looser signal
+// thresholds) and tolerates a larger line gap before down-trusting it. The
+// dog-protection thresholds (skip/cap below) stay league-agnostic — they ride
+// the SHARP market, which is trustworthy in both leagues. Tunable; forward-measured.
+const MARKET_TUNING = {
+  NBA: { sig1: 0.56, sig2: 0.62, bigShiftPts: 3 },
+  WNBA: { sig1: 0.54, sig2: 0.60, bigShiftPts: 4 },
+};
+
 export function apply(ctx) {
   const { groundTruth, statType, direction, line } = ctx;
   const player = groundTruth?.info?.full_name ?? groundTruth?.player;
   if (!player) return { fired: false, rule_id: "market-edge" };
 
-  const m = lookupMarket({ player, stat: statType, line });
+  const m = lookupMarket({ player, stat: statType, line, league: groundTruth?.league });
   if (!m) return { fired: false, rule_id: "market-edge" };
+
+  // Stage 5 — per-league market tuning (WNBA looser; see MARKET_TUNING).
+  const league = String(groundTruth?.league ?? m.league ?? "NBA").toUpperCase();
+  const tune = MARKET_TUNING[league] ?? MARKET_TUNING.NBA;
 
   // lookupMarket returns the no-vig CONSENSUS fair P(over), already shifted to
   // this PrizePicks line and averaged across whichever books cover it (DK, FD).
@@ -33,7 +48,7 @@ export function apply(ctx) {
   const edge = pDir - 0.5;
 
   // Large line shifts make the linear approximation unreliable — trust less.
-  const bigShift = Math.abs(m.line_delta ?? 0) > 3;
+  const bigShift = Math.abs(m.line_delta ?? 0) > tune.bigShiftPts;
   const trust = bigShift ? 0.5 : 1;
   let confidence_delta = Math.max(-15, Math.min(12, Math.round(edge * 80 * trust)));
 
@@ -52,9 +67,9 @@ export function apply(ctx) {
   } else if (pDir < 0.47) {
     suppressor = true;
     tier_cap = "A";
-  } else if (pDir >= 0.62) {
+  } else if (pDir >= tune.sig2) {
     signals_added = 2;
-  } else if (pDir >= 0.56) {
+  } else if (pDir >= tune.sig1) {
     signals_added = 1;
   }
 
