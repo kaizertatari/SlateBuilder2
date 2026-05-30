@@ -102,6 +102,15 @@ export function logVerdict({
     market_fair_at_line: result?.market?.fair_at_line ?? null,
     market_line_delta: result?.market?.line_delta ?? null,
     market_edge: result?.market?.edge ?? null,
+    // Stage-2 game-script context (rule-game-script). Null when odds didn't
+    // cover the player's game. Lets calibration slice by scoring environment /
+    // blowout. Log-only — do NOT add these to the _axiom.mjs query projection
+    // until they've been ingested (Axiom's data-driven schema rejects unseen
+    // fields), same caveat as the market_* fields above.
+    game_total: result?.vegas?.game_total ?? null,
+    team_total: result?.vegas?.team_total ?? null,
+    team_spread: result?.vegas?.team_spread ?? null,
+    vegas_blowout: result?.vegas?.blowout ?? null,
     flags: result?.flags ?? null,
     pre_filtered: !!result?.pre_filtered,
     // Engine: which rule modules contributed to the verdict. Empty array

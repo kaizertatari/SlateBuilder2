@@ -198,3 +198,44 @@ export function lookupMarket({ player, stat, line, league = null }) {
     league: entry.league ?? league ?? null,
   };
 }
+
+/**
+ * Game-script (Vegas) lookup for a player — the Stage-2 feed. Finds the
+ * player's game via their scraped odds entry (DK tags each entry with its
+ * `team` + `game` key, in DK's own abbreviations, so no ESPN↔DK abbr mapping
+ * is needed), then reads that game's total + spread from the `games` block.
+ *
+ * Returns the player's TEAM implied total and spread:
+ *   team_total = (game_total − team_spread) / 2   (team_spread < 0 ⇒ favored)
+ *
+ * Null when no odds are loaded, the player isn't covered, or only FanDuel
+ * covered them (FD-only entries carry no game/team meta) — so the game-script
+ * rule no-ops cleanly, exactly like rule-market-edge does without a market.
+ *
+ * @returns {null | { game_total, team_total, opp_total, team_spread, league, game }}
+ */
+export function lookupVegas({ player, league = null } = {}) {
+  if (!_odds) loadOdds();
+  const hit = _normIndex?.[normalizeName(player)];
+  if (!hit) return null;
+  const games = _odds?.games || {};
+  // Prefer a league-consistent entry that carries DK game/team meta.
+  const tagged = (hit.props || []).find((p) => p.game && p.team && (league == null || p.league == null || p.league === league))
+    || (hit.props || []).find((p) => p.game && p.team);
+  if (!tagged) return null;
+  const g = games[tagged.game];
+  if (!g || typeof g.game_total !== "number") return null;
+  const teamSpread = tagged.team === g.home ? g.home_spread
+    : tagged.team === g.away ? g.away_spread
+    : null;
+  if (typeof teamSpread !== "number") return null;
+  const teamTotal = (g.game_total - teamSpread) / 2;
+  return {
+    game_total: g.game_total,
+    team_total: Number(teamTotal.toFixed(1)),
+    opp_total: Number((g.game_total - teamTotal).toFixed(1)),
+    team_spread: teamSpread,
+    league: tagged.league ?? league ?? null,
+    game: tagged.game,
+  };
+}

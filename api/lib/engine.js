@@ -27,6 +27,7 @@ import * as ruleGameCap from "./rules/rule-game-cap.js";
 import * as ruleProvenance from "./rules/rule-provenance.js";
 import * as ruleUnderMechanism from "./rules/rule-under-mechanism.js";
 import * as ruleMarketEdge from "./rules/rule-market-edge.js";
+import * as ruleGameScript from "./rules/rule-game-script.js";
 import * as ruleSTier from "./rules/rule-s-tier.js";
 
 import { scaleFor } from "./rules/_helpers.js";
@@ -52,9 +53,12 @@ const RULES_PRE_S = [
   ["5b", rule5b],
   // Market-edge — the sharp-line signal (Stage 1). Runs after the box-score
   // rules so its suppressor/SKIP reflects the market's view of THIS pick.
-  // No-ops when there's no matching odds (e.g. NBA today), so behavior is
-  // unchanged where odds aren't covered.
+  // No-ops when there's no matching odds (a player the books don't price), so
+  // behavior is unchanged where odds aren't covered.
   ["market-edge", ruleMarketEdge],
+  // Game-script — Vegas total/spread tailwind/headwind on counting stats
+  // (Stage 2). Secondary to market-edge; no-ops without odds coverage.
+  ["game-script", ruleGameScript],
   ["provenance", ruleProvenance],
   ["game-cap", ruleGameCap],
   // UNDER mechanism gate runs late so it sees the fully-populated
@@ -102,6 +106,7 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
   let rule5aBuf = null;
   let rule5jBuf = null;
   let marketInfo = null;
+  let vegasInfo = null;
 
   for (const [id, mod] of RULES_PRE_S) {
     const out = mod.apply(ctx);
@@ -109,6 +114,9 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
       // Still surface a justification fragment if the rule cared enough
       // to emit one (e.g., "rule disabled, suppressor off" notes from 5f).
       if (out?.justification_part) justParts.push(out.justification_part);
+      // Capture the neutral Vegas context even when game-script doesn't fire,
+      // so calibration sees the game-script inputs on every covered pick.
+      if (id === "game-script" && out?._vegas) vegasInfo = out._vegas;
       continue;
     }
     rulesFired.push(out.rule_id);
@@ -130,6 +138,7 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
       if (out._buf_under) signalCount += 1;
     }
     if (id === "market-edge") marketInfo = out._market ?? null;
+    if (id === "game-script") vegasInfo = out._vegas ?? vegasInfo;
   }
 
   // Edge bonus — applied once based on rule5a's road-adjusted margin.
@@ -261,6 +270,9 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
     // Sharp-market signal (Stage 1) when odds covered this pick; null otherwise.
     // Consumed by verdict-logger (calibration) and the slate builder (EV).
     market: marketInfo,
+    // Vegas game-script context (Stage 2) when odds covered the player's game;
+    // null otherwise. Logged for calibration slicing.
+    vegas: vegasInfo,
     flags,
     justification,
     rules_fired: rulesFired,
