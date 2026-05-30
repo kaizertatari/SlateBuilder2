@@ -127,6 +127,15 @@ export default function App() {
   // { kind: "success" | "no-data" | "error", message: string } | null
   const [refreshStatus, setRefreshStatus] = useState(null);
 
+  // ── Slate builder state ──
+  // targetMultiplier = minimum win multiplier the slate must reach (the
+  // dashboard "what to aim for" knob). mode = Power (all hit) / Flex (partial).
+  const [targetMultiplier, setTargetMultiplier] = useState(3);
+  const [slateMode, setSlateMode] = useState("power");
+  const [slate, setSlate] = useState(null); // /api/build-slate response
+  const [buildingSlate, setBuildingSlate] = useState(false);
+  const [slateError, setSlateError] = useState(null);
+
   const allStatsSelected = selectedStats.length === STATS.length;
   const allOddsSelected = selectedOdds.length === ODDS_TYPES.length;
   const allDirectionsSelected = selectedDirections.length === DIRECTIONS.length;
@@ -309,6 +318,8 @@ export default function App() {
     setResults(null);
     setError(null);
     setCacheStatus(null);
+    setSlate(null);
+    setSlateError(null);
   };
 
   const toggleGame = (canonical) => {
@@ -563,6 +574,41 @@ export default function App() {
     }
   }, [players, selectedStats, selectedOdds, selectedDirections, analyzeOne]);
 
+  // Build the best +EV slate from the filtered board via /api/build-slate.
+  // Board-level (not per-player): the market consensus prices every prop, so
+  // this is one fast request. v1 uses STANDARD lines (exact 5× payout) — we
+  // don't pass oddsTypes, so the endpoint defaults to standard; goblin/demon
+  // payouts are approximate and would fabricate EV. The Games filter carries
+  // over (mapped from canonical "A|B" back to the scrape's away@home keys).
+  const buildSlateNow = useCallback(async () => {
+    setSlateError(null);
+    setSlate(null);
+    setBuildingSlate(true);
+    try {
+      const gameKeys = selectedGames.length
+        ? availableGames
+            .filter((g) => selectedGames.includes(g.canonical))
+            .flatMap((g) => g.gameKeys.map((k) => k.replace(/^WNBA:/, "")))
+        : null;
+      const body = { league, statTypes: selectedStats, targetMultiplier, mode: slateMode, size: 3 };
+      if (gameKeys && gameKeys.length) body.games = gameKeys;
+
+      const res = await fetch("/api/build-slate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "Request failed");
+      setSlate(data);
+      if (data.lines_fetched_at) setLinesFetchedAt(data.lines_fetched_at);
+    } catch (e) {
+      setSlateError(`Error: ${e.message}`);
+    } finally {
+      setBuildingSlate(false);
+    }
+  }, [league, selectedStats, selectedGames, availableGames, targetMultiplier, slateMode]);
+
   // Trigger a live PrizePicks refresh via the existing /api/refresh-lines
   // endpoint. Locally (residential IP) this scrapes + writes the blob; on
   // deployed Vercel (cloud IP) the endpoint returns 502 because the scrape
@@ -629,10 +675,10 @@ export default function App() {
                 {league} PRIZEPICKS
               </div>
               <div style={{ fontSize: 22, fontWeight: "bold", color: "#ffffff", letterSpacing: 1 }}>
-                BATCH ANALYZER
+                SLATE BUILDER
               </div>
               <div style={{ fontSize: 11, color: "#446688", marginTop: 4 }}>
-                S-TIER & A-TIER PICKS · PRIZEPICKS LINES
+                BEST 3-LEG +EV SLATE · DK/FD NO-VIG CONSENSUS
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
@@ -1311,7 +1357,58 @@ export default function App() {
             </span>
           </div>
 
-          {/* Analyze Button */}
+          {/* Slate Builder — primary action: target multiplier + Power/Flex */}
+          <div style={{ display: "flex", gap: 12, alignItems: "stretch", flexWrap: "wrap" }}>
+            <div style={{ ...selectStyle, display: "flex", alignItems: "center", gap: 8, flex: 1, cursor: "default" }}>
+              <span style={{ color: "#446688", fontSize: 11, letterSpacing: 1 }}>TARGET</span>
+              <select
+                value={targetMultiplier}
+                onChange={(e) => setTargetMultiplier(Number(e.target.value))}
+                style={{ background: "transparent", color: "#c8d8e8", border: "none", fontFamily: "'Courier New', monospace", fontSize: 12, cursor: "pointer", outline: "none", flex: 1 }}
+              >
+                {[2, 3, 5, 10].map((m) => (
+                  <option key={m} value={m} style={{ background: "#0a1420" }}>{m}×+</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ display: "flex", border: "1px solid #1e3040", flex: 1 }}>
+              {["power", "flex"].map((m) => {
+                const active = slateMode === m;
+                return (
+                  <button
+                    key={m}
+                    onClick={() => setSlateMode(m)}
+                    style={{ flex: 1, background: active ? "#0066cc" : "#0a1420", color: active ? "#fff" : "#446688", border: "none", padding: "10px 12px", fontFamily: "'Courier New', monospace", fontSize: 12, letterSpacing: 2, fontWeight: active ? "bold" : "normal", cursor: "pointer" }}
+                  >
+                    {m.toUpperCase()}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <button
+            onClick={buildSlateNow}
+            disabled={buildingSlate}
+            style={{
+              background: buildingSlate ? "#1a2a3a" : "#00aa55",
+              color: buildingSlate ? "#446688" : "#ffffff",
+              border: `1px solid ${buildingSlate ? "#1e3040" : "#00cc66"}`,
+              padding: "12px 28px",
+              fontFamily: "'Courier New', monospace",
+              fontSize: 13,
+              fontWeight: "bold",
+              letterSpacing: 2,
+              cursor: buildingSlate ? "not-allowed" : "pointer",
+              transition: "all 0.15s",
+            }}
+          >
+            {buildingSlate ? "BUILDING SLATE..." : `BUILD ${slateMode.toUpperCase()} SLATE (≥${targetMultiplier}×)`}
+          </button>
+          <div style={{ fontSize: 10, color: "#446688", letterSpacing: 1, marginTop: -4 }}>
+            Board-level · standard lines · DK/FD no-vig consensus · +EV-or-abstain
+          </div>
+
+          {/* Analyze Button — secondary: per-player engine tier analysis */}
           <button
             onClick={analyzeAll}
             disabled={analyzing}
@@ -1337,6 +1434,71 @@ export default function App() {
                 : "ANALYZE ALL LINES"}
           </button>
         </div>
+
+        {/* Slate Builder result */}
+        {slateError && (
+          <div style={{ background: "#220000", border: "1px solid #440000", padding: "10px 14px", fontSize: 12, color: "#ff6666", marginBottom: 16 }}>
+            {slateError}
+          </div>
+        )}
+        {buildingSlate && (
+          <div style={{ border: "1px solid #1e3040", padding: 24, textAlign: "center", marginBottom: 16 }}>
+            <div style={{ color: "#00cc66", fontSize: 11, letterSpacing: 3 }}>BUILDING SLATE…</div>
+            <div style={{ color: "#446688", fontSize: 11, marginTop: 6 }}>Pricing the board against DK/FD consensus</div>
+          </div>
+        )}
+        {slate && !buildingSlate && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <div style={{ fontSize: 12, letterSpacing: 2, color: "#00cc66", fontWeight: "bold" }}>RECOMMENDED SLATE</div>
+              <div style={{ fontSize: 10, color: "#446688" }}>
+                {(slate.odds_sources?.join("+")) || "market"} · {slate.props_priced ?? 0}/{slate.props_examined ?? 0} priced
+              </div>
+            </div>
+            {slate.abstained ? (
+              <div style={{ background: "#1a1200", border: "1px solid #664400", padding: 16, color: "#cc9944", fontSize: 12, lineHeight: 1.6 }}>
+                <div style={{ fontWeight: "bold", letterSpacing: 1, marginBottom: 6 }}>NO +EV SLATE — ABSTAIN</div>
+                <div style={{ color: "#aa8855" }}>{slate.reason}</div>
+                {slate.best_rejected && (
+                  <div style={{ marginTop: 8, color: "#886644" }}>
+                    Closest near-miss: EV {(slate.best_rejected.ev * 100).toFixed(1)}% at {slate.best_rejected.win_multiplier}×
+                  </div>
+                )}
+                <div style={{ marginTop: 8, fontSize: 10, color: "#665533" }}>
+                  Not betting is the correct call when nothing clears +EV at ≥{slate.params?.targetMultiplier ?? targetMultiplier}×.
+                </div>
+              </div>
+            ) : slate.slate ? (
+              <div>
+                <div style={{ display: "flex", gap: 14, flexWrap: "wrap", background: "#002218", border: "1px solid #00FF8844", padding: "10px 14px", fontSize: 12, marginBottom: 12 }}>
+                  <span style={{ color: "#8ab0cc" }}><span style={{ color: "#446688" }}>EV </span><strong style={{ color: slate.slate.ev >= 0 ? "#00FF88" : "#ff6666" }}>{(slate.slate.ev * 100).toFixed(1)}%</strong></span>
+                  <span style={{ color: "#8ab0cc" }}><span style={{ color: "#446688" }}>PAYOUT </span><strong style={{ color: "#c8d8e8" }}>{slate.slate.win_multiplier}×</strong></span>
+                  <span style={{ color: "#8ab0cc" }}><span style={{ color: "#446688" }}>P(ALL) </span><strong style={{ color: "#c8d8e8" }}>{(slate.slate.p_all * 100).toFixed(1)}%</strong></span>
+                  <span style={{ color: "#8ab0cc" }}><span style={{ color: "#446688" }}>MODE </span><strong style={{ color: "#c8d8e8" }}>{slate.slate.mode.toUpperCase()}</strong></span>
+                </div>
+                {slate.slate.legs.map((l, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: i % 2 ? "#0a1420" : "#0c1a14", border: "1px solid #1e3040", padding: "10px 14px", marginBottom: 6, fontSize: 12 }}>
+                    <div>
+                      <div style={{ fontWeight: "bold", color: "#ffffff" }}>{l.player}</div>
+                      <div style={{ color: "#8ab0cc", fontSize: 11 }}>
+                        {l.stat_type}{" "}
+                        <span style={{ color: l.direction === "OVER" ? "#00FF88" : "#FF8844" }}>{l.direction === "OVER" ? "▲" : "▼"} {l.line}</span>{" "}
+                        <span style={{ color: "#446688" }}>· {l.game}</span>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontWeight: "bold", color: "#00FF88" }}>{(l.prob * 100).toFixed(1)}%</div>
+                      <div style={{ color: "#446688", fontSize: 10 }}>{l.prob_source}{l.market_line_delta ? ` · Δ${l.market_line_delta}` : ""}</div>
+                    </div>
+                  </div>
+                ))}
+                <div style={{ fontSize: 10, color: "#446688", marginTop: 6 }}>
+                  Stake 1u → returns {slate.slate.expected_return?.toFixed(2)}u on average. Probabilities are DK/FD no-vig consensus at the PrizePicks line.
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )}
 
         {/* Error */}
         {error && (

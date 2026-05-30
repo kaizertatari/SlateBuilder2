@@ -54,6 +54,10 @@ async function queryAxiom(token, apl, startTime, endTime) {
 
 const joinKey = (e) => [e.player, e.prop_type, Number(e.line), e.direction, e.game_start_time].map((x) => String(x ?? "")).join("|");
 const canonicalStat = (pt) => (pt ? String(pt).replace(/\s+(OVER|UNDER)\s*$/i, "").trim() : null);
+// Coerce Axiom values: numeric-or-null, and tri-state boolean (true/false/null)
+// — signal fields are missing on pre-Stage verdicts, so default to null.
+const num = (x) => { if (x == null || x === "") return null; const n = Number(x); return Number.isFinite(n) ? n : null; };
+const tri = (x) => (x === true || x === "true" ? true : x === false || x === "false" ? false : null);
 
 function normRules(v) {
   if (Array.isArray(v)) return v.map(String);
@@ -172,6 +176,32 @@ function shadowSection(picks) {
   console.log(`  survivors (still issued):       ${fmtRate(stat(survivors))}`);
 }
 
+// Stage 1–5 signal calibration — the money question: do the new signals
+// actually predict outcomes on STANDARD lines (where the ≥3× payout lives and
+// the engine was previously a coin flip)? Reliability curves want the realized
+// hit rate to track the predicted probability (gap → 0). Each slice degrades to
+// "(no data yet)" until graded signal-bearing verdicts accrue — this is the rig.
+function signalCalibration(graded) {
+  const standard = graded.filter((p) => p.odds === "standard");
+  console.log(`\n=== SIGNAL CALIBRATION (Stage 1–5) — the standard-line edge question ===`);
+  console.log(`Standard-line graded: ${fmtRate(stat(standard))}`);
+  const anySignal = standard.some((p) =>
+    p.marketFair != null || p.modelP != null || p.agree != null || p.blowout != null || p.b2b != null || p.teammateOut);
+  if (!standard.length || !anySignal) {
+    console.log("  (no graded standard-line signal data yet — populates as market-aware");
+    console.log("   verdicts settle and the daily grader runs. The rig is wired + ready.)");
+    return;
+  }
+  const pctBins = [[40, 46], [47, 52], [53, 57], [58, 62], [63, 80]];
+  reliability("Market no-vig P(bet side) → realized [standard]", standard, (p) => (p.marketFair != null ? p.marketFair * 100 : null), pctBins);
+  reliability("Model P(bet side) → realized [standard]", standard, (p) => (p.modelP != null ? p.modelP * 100 : null), pctBins);
+  section("Market edge bucket [standard]", standard, (p) => (p.edge == null ? null : p.edge < 0 ? "edge<0" : p.edge < 0.05 ? "0-5%" : p.edge < 0.1 ? "5-10%" : "10%+"), { sortKey: true });
+  section("Model × Market [standard]", standard, (p) => (p.agree == null ? null : p.agree ? "agree" : "conflict"), { sortKey: true });
+  section("Vegas blowout [standard]", standard, (p) => (p.blowout == null ? null : p.blowout ? "blowout" : "normal"), { sortKey: true });
+  section("Rest [standard]", standard, (p) => (p.t34 ? "3-in-4" : p.b2b === true ? "b2b" : p.b2b === false ? "rested" : null), { sortKey: true });
+  section("Usage star-teammate-out [standard]", standard, (p) => (p.teammateOut ? "star-out" : null));
+}
+
 async function main() {
   const token = process.env.AXIOM_TOKEN;
   if (!token) { console.error("AXIOM_TOKEN not set in .env.local"); process.exit(1); }
@@ -206,6 +236,11 @@ async function main() {
       stat: canonicalStat(v.prop_type), conf: v.confidence, raw: v.raw_score ?? null,
       shadow: v.shadow_tier ?? (v.raw_score != null ? shadowTierFor(v.tier ?? "?", v.raw_score) : null),
       hm: o.hit_or_miss, rules: normRules(v.rules_fired),
+      // Stage 1–5 signal telemetry (null on verdicts logged before each stage).
+      marketFair: num(v.market_fair_at_line), edge: num(v.market_edge),
+      modelP: num(v.model_dir_prob), agree: tri(v.model_market_agree),
+      blowout: tri(v.vegas_blowout), b2b: tri(v.back_to_back), t34: tri(v.three_in_four),
+      teammateOut: v.usage_teammate_out ?? null,
     });
   }
   const rawCoverage = graded.filter((p) => p.raw != null).length;
@@ -234,6 +269,7 @@ async function main() {
   ruleLift("all issued", graded);
   ruleLift("A+B only", graded.filter((p) => p.tier === "A" || p.tier === "B"));
   shadowSection(graded);
+  signalCalibration(graded);
 
   console.log(`\n* small-n: a side has <8 decided picks — treat as noise.`);
   console.log(`This report proposes nothing. Weight changes go through rule-weights.js`);

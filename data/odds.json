@@ -1,0 +1,5708 @@
+{
+  "fetched_at": "2026-05-30T15:52:10.150Z",
+  "leagues": [
+    "WNBA",
+    "NBA"
+  ],
+  "sources": [
+    "draftkings",
+    "fanduel"
+  ],
+  "games": {
+    "SEA@TOR": {
+      "home": "TOR",
+      "away": "SEA",
+      "start_time": "2026-05-30T17:00:00.0000000Z",
+      "game_total": 170.5,
+      "home_spread": -5.5,
+      "away_spread": 5.5
+    },
+    "LA@CON": {
+      "home": "CON",
+      "away": "LA",
+      "start_time": "2026-05-30T22:00:00.0000000Z",
+      "game_total": 167.5,
+      "home_spread": 3.5,
+      "away_spread": -3.5
+    },
+    "IND@POR": {
+      "home": "POR",
+      "away": "IND",
+      "start_time": "2026-05-31T00:00:00.0000000Z",
+      "game_total": 173.5,
+      "home_spread": 11.5,
+      "away_spread": -11.5
+    },
+    "LV@GS": {
+      "home": "GS",
+      "away": "LV",
+      "start_time": "2026-05-31T19:30:00.0000000Z",
+      "game_total": 168.5,
+      "home_spread": 1.5,
+      "away_spread": -1.5
+    },
+    "SA@OKC": {
+      "home": "OKC",
+      "away": "SA",
+      "start_time": "2026-05-31T00:10:00.0000000Z",
+      "game_total": 213.5,
+      "home_spread": -3.5,
+      "away_spread": 3.5
+    },
+    "NY@OKC": {
+      "home": "OKC",
+      "away": "NY",
+      "start_time": "2026-06-04T00:40:00.0000000Z",
+      "game_total": 216.5,
+      "home_spread": -6.5,
+      "away_spread": 6.5
+    },
+    "NY@SA": {
+      "home": "SA",
+      "away": "NY",
+      "start_time": "2026-06-04T00:40:00.0000000Z",
+      "game_total": 217.5,
+      "home_spread": -4.5,
+      "away_spread": 4.5
+    }
+  },
+  "by_player": {
+    "Brittney Sykes": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 19.5,
+        "fair_over": 0.5066,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 19.5,
+            "over_american": -122,
+            "under_american": -109,
+            "fair_over": 0.5131
+          },
+          {
+            "book": "fanduel",
+            "line": 19.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.5676,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -154,
+            "under_american": 113,
+            "fair_over": 0.5636
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -158,
+            "under_american": 118,
+            "fair_over": 0.5717
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.4141,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": 117,
+            "under_american": -159,
+            "fair_over": 0.4288
+          },
+          {
+            "book": "fanduel",
+            "line": 4.5,
+            "over_american": 134,
+            "under_american": -180,
+            "fair_over": 0.3993
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.421,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": 107,
+            "under_american": -145,
+            "fair_over": 0.4494
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": 138,
+            "under_american": -186,
+            "fair_over": 0.3925
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 28.5,
+        "fair_over": 0.4882,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 28.5,
+            "over_american": -111,
+            "under_american": -123,
+            "fair_over": 0.4882
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 24.5,
+        "fair_over": 0.4871,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 24.5,
+            "over_american": -110,
+            "under_american": -123,
+            "fair_over": 0.4871
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 23.5,
+        "fair_over": 0.5198,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 23.5,
+            "over_american": -127,
+            "under_american": -107,
+            "fair_over": 0.5198
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 8.5,
+        "fair_over": 0.4539,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 8.5,
+            "over_american": 105,
+            "under_american": -142,
+            "fair_over": 0.4539
+          }
+        ]
+      }
+    ],
+    "Marina Mabrey": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 18.5,
+        "fair_over": 0.4872,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 18.5,
+            "over_american": -116,
+            "under_american": -115,
+            "fair_over": 0.501
+          },
+          {
+            "book": "fanduel",
+            "line": 18.5,
+            "over_american": -102,
+            "under_american": -128,
+            "fair_over": 0.4735
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.4314,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": 125,
+            "under_american": -171,
+            "fair_over": 0.4133
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -152,
+            "under_american": 114,
+            "fair_over": 0.5635
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.426,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": 110,
+            "under_american": -150,
+            "fair_over": 0.4425
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": 128,
+            "under_american": -172,
+            "fair_over": 0.4095
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.5401,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": -140,
+            "under_american": 103,
+            "fair_over": 0.5422
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": -136,
+            "under_american": 102,
+            "fair_over": 0.5379
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 25.5,
+        "fair_over": 0.5218,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 25.5,
+            "over_american": -128,
+            "under_american": -106,
+            "fair_over": 0.5218
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 21.5,
+        "fair_over": 0.5169,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 21.5,
+            "over_american": -125,
+            "under_american": -108,
+            "fair_over": 0.5169
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 22.5,
+        "fair_over": 0.505,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 22.5,
+            "over_american": -119,
+            "under_american": -114,
+            "fair_over": 0.505
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 7.5,
+        "fair_over": 0.4842,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 7.5,
+            "over_american": -109,
+            "under_american": -125,
+            "fair_over": 0.4842
+          }
+        ]
+      }
+    ],
+    "Flau'jae Johnson": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "SEA",
+        "opponent": "TOR",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 13.5,
+        "fair_over": 0.5323,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 13.5,
+            "over_american": -131,
+            "under_american": -102,
+            "fair_over": 0.529
+          },
+          {
+            "book": "fanduel",
+            "line": 14.5,
+            "over_american": -104,
+            "under_american": -125,
+            "fair_over": 0.4785
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "SEA",
+        "opponent": "TOR",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 5.5,
+        "fair_over": 0.4347,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 5.5,
+            "over_american": 115,
+            "under_american": -156,
+            "fair_over": 0.4329
+          },
+          {
+            "book": "fanduel",
+            "line": 5.5,
+            "over_american": 114,
+            "under_american": -152,
+            "fair_over": 0.4365
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "SEA",
+        "opponent": "TOR",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.4368,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": 102,
+            "under_american": -139,
+            "fair_over": 0.4598
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": 126,
+            "under_american": -168,
+            "fair_over": 0.4138
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "SEA",
+        "opponent": "TOR",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 19.5,
+        "fair_over": 0.4822,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 19.5,
+            "over_american": -108,
+            "under_american": -126,
+            "fair_over": 0.4822
+          }
+        ]
+      }
+    ],
+    "Natisha Hiedeman": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "SEA",
+        "opponent": "TOR",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 13.5,
+        "fair_over": 0.5092,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 13.5,
+            "over_american": -118,
+            "under_american": -112,
+            "fair_over": 0.5061
+          },
+          {
+            "book": "fanduel",
+            "line": 13.5,
+            "over_american": -120,
+            "under_american": -108,
+            "fair_over": 0.5123
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "SEA",
+        "opponent": "TOR",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.4097,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": 120,
+            "under_american": -163,
+            "fair_over": 0.4231
+          },
+          {
+            "book": "fanduel",
+            "line": 4.5,
+            "over_american": 136,
+            "under_american": -182,
+            "fair_over": 0.3963
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "SEA",
+        "opponent": "TOR",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.4696,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": -103,
+            "under_american": -132,
+            "fair_over": 0.4714
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": 100,
+            "under_american": -132,
+            "fair_over": 0.4677
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "SEA",
+        "opponent": "TOR",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 17.5,
+        "fair_over": 0.5258,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 17.5,
+            "over_american": -130,
+            "under_american": -104,
+            "fair_over": 0.5258
+          }
+        ]
+      }
+    ],
+    "Kiki Rice": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 12.5,
+        "fair_over": 0.4771,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 12.5,
+            "over_american": -108,
+            "under_american": -123,
+            "fair_over": 0.4849
+          },
+          {
+            "book": "fanduel",
+            "line": 12.5,
+            "over_american": 100,
+            "under_american": -130,
+            "fair_over": 0.4694
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.5444,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": -155,
+            "under_american": 114,
+            "fair_over": 0.5654
+          },
+          {
+            "book": "fanduel",
+            "line": 5.5,
+            "over_american": 128,
+            "under_american": -172,
+            "fair_over": 0.4095
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 17.5,
+        "fair_over": 0.495,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 17.5,
+            "over_american": -114,
+            "under_american": -119,
+            "fair_over": 0.495
+          }
+        ]
+      }
+    ],
+    "Nyara Sabally": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 9.5,
+        "fair_over": 0.5071,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 9.5,
+            "over_american": -122,
+            "under_american": -108,
+            "fair_over": 0.5142
+          },
+          {
+            "book": "fanduel",
+            "line": 9.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 5.5,
+        "fair_over": 0.4682,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 5.5,
+            "over_american": -104,
+            "under_american": -130,
+            "fair_over": 0.4742
+          },
+          {
+            "book": "fanduel",
+            "line": 5.5,
+            "over_american": 102,
+            "under_american": -136,
+            "fair_over": 0.4621
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "TOR",
+        "opponent": "SEA",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 15.5,
+        "fair_over": 0.4754,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 15.5,
+            "over_american": -105,
+            "under_american": -130,
+            "fair_over": 0.4754
+          }
+        ]
+      }
+    ],
+    "Jade Melbourne": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "SEA",
+        "opponent": "TOR",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 8.5,
+        "fair_over": 0.4888,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 8.5,
+            "over_american": -108,
+            "under_american": -122,
+            "fair_over": 0.4858
+          },
+          {
+            "book": "fanduel",
+            "line": 8.5,
+            "over_american": -110,
+            "under_american": -118,
+            "fair_over": 0.4918
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "SEA",
+        "opponent": "TOR",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.5115,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -123,
+            "under_american": -110,
+            "fair_over": 0.5129
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -120,
+            "under_american": -110,
+            "fair_over": 0.5101
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "SEA",
+        "opponent": "TOR",
+        "game": "SEA@TOR",
+        "start_time": "2026-05-30T17:00:00.0000000Z",
+        "line": 12.5,
+        "fair_over": 0.4762,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 12.5,
+            "over_american": -105,
+            "under_american": -129,
+            "fair_over": 0.4762
+          }
+        ]
+      }
+    ],
+    "Dearica Hamby": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "LA",
+        "opponent": "CON",
+        "game": "LA@CON",
+        "start_time": "2026-05-30T22:00:00.0000000Z",
+        "line": 17.5,
+        "fair_over": 0.5173,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 17.5,
+            "over_american": -119,
+            "under_american": -111,
+            "fair_over": 0.5081
+          },
+          {
+            "book": "fanduel",
+            "line": 17.5,
+            "over_american": -128,
+            "under_american": -102,
+            "fair_over": 0.5265
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "LA",
+        "opponent": "CON",
+        "game": "LA@CON",
+        "start_time": "2026-05-30T22:00:00.0000000Z",
+        "line": 7.5,
+        "fair_over": 0.5455,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 7.5,
+            "over_american": -147,
+            "under_american": 108,
+            "fair_over": 0.5532
+          },
+          {
+            "book": "fanduel",
+            "line": 7.5,
+            "over_american": -136,
+            "under_american": 102,
+            "fair_over": 0.5379
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "LA",
+        "opponent": "CON",
+        "game": "LA@CON",
+        "start_time": "2026-05-30T22:00:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.4212,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": 123,
+            "under_american": -167,
+            "fair_over": 0.4176
+          },
+          {
+            "book": "fanduel",
+            "line": 4.5,
+            "over_american": 120,
+            "under_american": -160,
+            "fair_over": 0.4248
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "LA",
+        "opponent": "CON",
+        "game": "LA@CON",
+        "start_time": "2026-05-30T22:00:00.0000000Z",
+        "line": 30.5,
+        "fair_over": 0.4871,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 30.5,
+            "over_american": -110,
+            "under_american": -123,
+            "fair_over": 0.4871
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "LA",
+        "opponent": "CON",
+        "game": "LA@CON",
+        "start_time": "2026-05-30T22:00:00.0000000Z",
+        "line": 21.5,
+        "fair_over": 0.5218,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 21.5,
+            "over_american": -128,
+            "under_american": -106,
+            "fair_over": 0.5218
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "LA",
+        "opponent": "CON",
+        "game": "LA@CON",
+        "start_time": "2026-05-30T22:00:00.0000000Z",
+        "line": 25.5,
+        "fair_over": 0.5198,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 25.5,
+            "over_american": -127,
+            "under_american": -107,
+            "fair_over": 0.5198
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "WNBA",
+        "team": "LA",
+        "opponent": "CON",
+        "game": "LA@CON",
+        "start_time": "2026-05-30T22:00:00.0000000Z",
+        "line": 12.5,
+        "fair_over": 0.4706,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 12.5,
+            "over_american": -103,
+            "under_american": -133,
+            "fair_over": 0.4706
+          }
+        ]
+      }
+    ],
+    "Nneka Ogwumike": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "LA",
+        "opponent": "CON",
+        "game": "LA@CON",
+        "start_time": "2026-05-30T22:00:00.0000000Z",
+        "line": 16.5,
+        "fair_over": 0.5051,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 16.5,
+            "over_american": -114,
+            "under_american": -116,
+            "fair_over": 0.498
+          },
+          {
+            "book": "fanduel",
+            "line": 16.5,
+            "over_american": -120,
+            "under_american": -108,
+            "fair_over": 0.5123
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "LA",
+        "opponent": "CON",
+        "game": "LA@CON",
+        "start_time": "2026-05-30T22:00:00.0000000Z",
+        "line": 7.5,
+        "fair_over": 0.4358,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 7.5,
+            "over_american": 108,
+            "under_american": -147,
+            "fair_over": 0.4468
+          },
+          {
+            "book": "fanduel",
+            "line": 7.5,
+            "over_american": 120,
+            "under_american": -160,
+            "fair_over": 0.4248
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "LA",
+        "opponent": "CON",
+        "game": "LA@CON",
+        "start_time": "2026-05-30T22:00:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.3438,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": 152,
+            "under_american": -209,
+            "fair_over": 0.3698
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": 194,
+            "under_american": -270,
+            "fair_over": 0.3179
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "LA",
+        "opponent": "CON",
+        "game": "LA@CON",
+        "start_time": "2026-05-30T22:00:00.0000000Z",
+        "line": 23.5,
+        "fair_over": 0.5158,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 23.5,
+            "over_american": -125,
+            "under_american": -109,
+            "fair_over": 0.5158
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "line": 2.5,
+        "fair_over": 0.3622,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": 158,
+            "under_american": -215,
+            "fair_over": 0.3622
+          }
+        ]
+      }
+    ],
+    "Brittney Griner": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "CON",
+        "opponent": "LA",
+        "game": "LA@CON",
+        "start_time": "2026-05-30T22:00:00.0000000Z",
+        "line": 13.5,
+        "fair_over": 0.465,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 13.5,
+            "over_american": -105,
+            "under_american": -126,
+            "fair_over": 0.4788
+          },
+          {
+            "book": "fanduel",
+            "line": 12.5,
+            "over_american": -118,
+            "under_american": -110,
+            "fair_over": 0.5082
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "CON",
+        "opponent": "LA",
+        "game": "LA@CON",
+        "start_time": "2026-05-30T22:00:00.0000000Z",
+        "line": 5.5,
+        "fair_over": 0.4519,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 5.5,
+            "over_american": -101,
+            "under_american": -134,
+            "fair_over": 0.4674
+          },
+          {
+            "book": "fanduel",
+            "line": 5.5,
+            "over_american": 114,
+            "under_american": -152,
+            "fair_over": 0.4365
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "CON",
+        "opponent": "LA",
+        "game": "LA@CON",
+        "start_time": "2026-05-30T22:00:00.0000000Z",
+        "line": 18.5,
+        "fair_over": 0.5079,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 18.5,
+            "over_american": -121,
+            "under_american": -113,
+            "fair_over": 0.5079
+          }
+        ]
+      }
+    ],
+    "Aneesah Morrow": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "CON",
+        "opponent": "LA",
+        "game": "LA@CON",
+        "start_time": "2026-05-30T22:00:00.0000000Z",
+        "line": 12.5,
+        "fair_over": 0.4797,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 12.5,
+            "over_american": -108,
+            "under_american": -122,
+            "fair_over": 0.4858
+          },
+          {
+            "book": "fanduel",
+            "line": 12.5,
+            "over_american": -102,
+            "under_american": -128,
+            "fair_over": 0.4735
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "CON",
+        "opponent": "LA",
+        "game": "LA@CON",
+        "start_time": "2026-05-30T22:00:00.0000000Z",
+        "line": 9.5,
+        "fair_over": 0.4785,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 9.5,
+            "over_american": -105,
+            "under_american": -129,
+            "fair_over": 0.4762
+          },
+          {
+            "book": "fanduel",
+            "line": 9.5,
+            "over_american": -106,
+            "under_american": -125,
+            "fair_over": 0.4808
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "CON",
+        "opponent": "LA",
+        "game": "LA@CON",
+        "start_time": "2026-05-30T22:00:00.0000000Z",
+        "line": 21.5,
+        "fair_over": 0.5059,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 21.5,
+            "over_american": -120,
+            "under_american": -114,
+            "fair_over": 0.5059
+          }
+        ]
+      }
+    ],
+    "Erica Wheeler": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "LA",
+        "opponent": "CON",
+        "game": "LA@CON",
+        "start_time": "2026-05-30T22:00:00.0000000Z",
+        "line": 11.5,
+        "fair_over": 0.5208,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 11.5,
+            "over_american": -128,
+            "under_american": -104,
+            "fair_over": 0.5241
+          },
+          {
+            "book": "fanduel",
+            "line": 12.5,
+            "over_american": 104,
+            "under_american": -135,
+            "fair_over": 0.4604
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "LA",
+        "opponent": "CON",
+        "game": "LA@CON",
+        "start_time": "2026-05-30T22:00:00.0000000Z",
+        "line": 6.5,
+        "fair_over": 0.4647,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 6.5,
+            "over_american": -101,
+            "under_american": -134,
+            "fair_over": 0.4674
+          },
+          {
+            "book": "fanduel",
+            "line": 6.5,
+            "over_american": 102,
+            "under_american": -136,
+            "fair_over": 0.4621
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "LA",
+        "opponent": "CON",
+        "game": "LA@CON",
+        "start_time": "2026-05-30T22:00:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.42,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": 126,
+            "under_american": -172,
+            "fair_over": 0.4117
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": 118,
+            "under_american": -158,
+            "fair_over": 0.4283
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "LA",
+        "opponent": "CON",
+        "game": "LA@CON",
+        "start_time": "2026-05-30T22:00:00.0000000Z",
+        "line": 18.5,
+        "fair_over": 0.4911,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 18.5,
+            "over_american": -112,
+            "under_american": -121,
+            "fair_over": 0.4911
+          }
+        ]
+      }
+    ],
+    "Caitlin Clark": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 21.5,
+        "fair_over": 0.4934,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 21.5,
+            "over_american": -109,
+            "under_american": -122,
+            "fair_over": 0.4869
+          },
+          {
+            "book": "fanduel",
+            "line": 21.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 5.5,
+        "fair_over": 0.4311,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 5.5,
+            "over_american": 111,
+            "under_american": -151,
+            "fair_over": 0.4407
+          },
+          {
+            "book": "fanduel",
+            "line": 5.5,
+            "over_american": 122,
+            "under_american": -162,
+            "fair_over": 0.4215
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 8.5,
+        "fair_over": 0.5426,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 8.5,
+            "over_american": -138,
+            "under_american": 102,
+            "fair_over": 0.5394
+          },
+          {
+            "book": "fanduel",
+            "line": 8.5,
+            "over_american": -140,
+            "under_american": 106,
+            "fair_over": 0.5458
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.5672,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": -163,
+            "under_american": 119,
+            "fair_over": 0.5758
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": -148,
+            "under_american": 112,
+            "fair_over": 0.5585
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 35.5,
+        "fair_over": 0.5099,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 35.5,
+            "over_american": -122,
+            "under_american": -112,
+            "fair_over": 0.5099
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 30.5,
+        "fair_over": 0.4931,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 30.5,
+            "over_american": -113,
+            "under_american": -120,
+            "fair_over": 0.4931
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 26.5,
+        "fair_over": 0.505,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 26.5,
+            "over_american": -119,
+            "under_american": -114,
+            "fair_over": 0.505
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "WNBA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 14.5,
+        "fair_over": 0.4674,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 14.5,
+            "over_american": -101,
+            "under_american": -134,
+            "fair_over": 0.4674
+          }
+        ]
+      }
+    ],
+    "Kelsey Mitchell": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 21.5,
+        "fair_over": 0.4692,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 21.5,
+            "over_american": -106,
+            "under_american": -125,
+            "fair_over": 0.4808
+          },
+          {
+            "book": "fanduel",
+            "line": 20.5,
+            "over_american": -120,
+            "under_american": -106,
+            "fair_over": 0.5146
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.4232,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": 119,
+            "under_american": -162,
+            "fair_over": 0.4248
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": 122,
+            "under_american": -162,
+            "fair_over": 0.4215
+          }
+        ]
+      }
+    ],
+    "Aliyah Boston": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 16.5,
+        "fair_over": 0.4748,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 16.5,
+            "over_american": -106,
+            "under_american": -126,
+            "fair_over": 0.48
+          },
+          {
+            "book": "fanduel",
+            "line": 15.5,
+            "over_american": -128,
+            "under_american": -102,
+            "fair_over": 0.5265
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 8.5,
+        "fair_over": 0.479,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 8.5,
+            "over_american": -103,
+            "under_american": -131,
+            "fair_over": 0.4722
+          },
+          {
+            "book": "fanduel",
+            "line": 8.5,
+            "over_american": -108,
+            "under_american": -122,
+            "fair_over": 0.4858
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.5928,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": -175,
+            "under_american": 128,
+            "fair_over": 0.592
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": -174,
+            "under_american": 130,
+            "fair_over": 0.5936
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 27.5,
+        "fair_over": 0.5069,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 27.5,
+            "over_american": -120,
+            "under_american": -113,
+            "fair_over": 0.5069
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 19.5,
+        "fair_over": 0.4862,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 19.5,
+            "over_american": -110,
+            "under_american": -124,
+            "fair_over": 0.4862
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 24.5,
+        "fair_over": 0.497,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 24.5,
+            "over_american": -115,
+            "under_american": -118,
+            "fair_over": 0.497
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "WNBA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 11.5,
+        "fair_over": 0.4931,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 11.5,
+            "over_american": -113,
+            "under_american": -120,
+            "fair_over": 0.4931
+          }
+        ]
+      }
+    ],
+    "Carla Leite": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "POR",
+        "opponent": "IND",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 15.5,
+        "fair_over": 0.5086,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 15.5,
+            "over_american": -124,
+            "under_american": -107,
+            "fair_over": 0.5171
+          },
+          {
+            "book": "fanduel",
+            "line": 15.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "POR",
+        "opponent": "IND",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.4147,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": 120,
+            "under_american": -163,
+            "fair_over": 0.4231
+          },
+          {
+            "book": "fanduel",
+            "line": 4.5,
+            "over_american": 130,
+            "under_american": -174,
+            "fair_over": 0.4064
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "POR",
+        "opponent": "IND",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 20.5,
+        "fair_over": 0.4762,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 20.5,
+            "over_american": -105,
+            "under_american": -129,
+            "fair_over": 0.4762
+          }
+        ]
+      }
+    ],
+    "Bridget Carleton": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "POR",
+        "opponent": "IND",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 14.5,
+        "fair_over": 0.4781,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 14.5,
+            "over_american": -111,
+            "under_american": -120,
+            "fair_over": 0.491
+          },
+          {
+            "book": "fanduel",
+            "line": 14.5,
+            "over_american": 102,
+            "under_american": -132,
+            "fair_over": 0.4653
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "POR",
+        "opponent": "IND",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.4935,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -110,
+            "under_american": -123,
+            "fair_over": 0.4871
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "POR",
+        "opponent": "IND",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.4083,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": 127,
+            "under_american": -173,
+            "fair_over": 0.4101
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": 130,
+            "under_american": -174,
+            "fair_over": 0.4064
+          }
+        ]
+      }
+    ],
+    "Lexie Hull": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 7.5,
+        "fair_over": 0.5282,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 7.5,
+            "over_american": -130,
+            "under_american": -102,
+            "fair_over": 0.5282
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.417,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": 123,
+            "under_american": -168,
+            "fair_over": 0.417
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "IND",
+        "opponent": "POR",
+        "game": "IND@POR",
+        "start_time": "2026-05-31T00:00:00.0000000Z",
+        "line": 12.5,
+        "fair_over": 0.4714,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 12.5,
+            "over_american": -103,
+            "under_american": -132,
+            "fair_over": 0.4714
+          }
+        ]
+      }
+    ],
+    "A'ja Wilson": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "line": 23.5,
+        "fair_over": 0.5123,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 23.5,
+            "over_american": -120,
+            "under_american": -108,
+            "fair_over": 0.5123
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "line": 8.5,
+        "fair_over": 0.5323,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 8.5,
+            "over_american": -132,
+            "under_american": 100,
+            "fair_over": 0.5323
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "line": 3.5,
+        "fair_over": 0.3896,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": 140,
+            "under_american": -188,
+            "fair_over": 0.3896
+          }
+        ]
+      }
+    ],
+    "Veronica Burton": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "line": 14.5,
+        "fair_over": 0.4653,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 14.5,
+            "over_american": 102,
+            "under_american": -132,
+            "fair_over": 0.4653
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "line": 3.5,
+        "fair_over": 0.3859,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": 142,
+            "under_american": -192,
+            "fair_over": 0.3859
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "line": 5.5,
+        "fair_over": 0.5511,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 5.5,
+            "over_american": -144,
+            "under_american": 108,
+            "fair_over": 0.5511
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "line": 1.5,
+        "fair_over": 0.4489,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": 108,
+            "under_american": -144,
+            "fair_over": 0.4489
+          }
+        ]
+      }
+    ],
+    "Chelsea Gray": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "line": 10.5,
+        "fair_over": 0.5306,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 10.5,
+            "over_american": -130,
+            "under_american": 100,
+            "fair_over": 0.5306
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "line": 3.5,
+        "fair_over": 0.5,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "line": 6.5,
+        "fair_over": 0.433,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 6.5,
+            "over_american": 116,
+            "under_american": -154,
+            "fair_over": 0.433
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "line": 1.5,
+        "fair_over": 0.5419,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": -138,
+            "under_american": 104,
+            "fair_over": 0.5419
+          }
+        ]
+      }
+    ],
+    "Gabby Williams": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "line": 13.5,
+        "fair_over": 0.4653,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 13.5,
+            "over_american": 102,
+            "under_american": -132,
+            "fair_over": 0.4653
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "line": 3.5,
+        "fair_over": 0.5379,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -136,
+            "under_american": 102,
+            "fair_over": 0.5379
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "line": 2.5,
+        "fair_over": 0.5,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "line": 1.5,
+        "fair_over": 0.583,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": -166,
+            "under_american": 124,
+            "fair_over": 0.583
+          }
+        ]
+      }
+    ],
+    "Jackie Young": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "line": 15.5,
+        "fair_over": 0.4785,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 15.5,
+            "over_american": -104,
+            "under_american": -125,
+            "fair_over": 0.4785
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "line": 4.5,
+        "fair_over": 0.5,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 4.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "line": 5.5,
+        "fair_over": 0.4215,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 5.5,
+            "over_american": 122,
+            "under_american": -162,
+            "fair_over": 0.4215
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "line": 1.5,
+        "fair_over": 0.5,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      }
+    ],
+    "Cameron Brink": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "line": 9.5,
+        "fair_over": 0.4735,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 9.5,
+            "over_american": -102,
+            "under_american": -128,
+            "fair_over": 0.4735
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "line": 4.5,
+        "fair_over": 0.5785,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 4.5,
+            "over_american": -162,
+            "under_american": 122,
+            "fair_over": 0.5785
+          }
+        ]
+      }
+    ],
+    "Ariel Atkins": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "line": 12.5,
+        "fair_over": 0.5123,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 12.5,
+            "over_american": -120,
+            "under_american": -108,
+            "fair_over": 0.5123
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "line": 3.5,
+        "fair_over": 0.4095,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": 128,
+            "under_american": -172,
+            "fair_over": 0.4095
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "line": 3.5,
+        "fair_over": 0.5419,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -138,
+            "under_american": 104,
+            "fair_over": 0.5419
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "line": 1.5,
+        "fair_over": 0.5061,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": -118,
+            "under_american": -112,
+            "fair_over": 0.5061
+          }
+        ]
+      }
+    ],
+    "Rae Burrell": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "line": 9.5,
+        "fair_over": 0.4557,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 9.5,
+            "over_american": 106,
+            "under_american": -138,
+            "fair_over": 0.4557
+          }
+        ]
+      }
+    ],
+    "Shai Gilgeous-Alexander": [
+      {
+        "stat": "Points",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 30.5,
+        "fair_over": 0.5099,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 30.5,
+            "over_american": -123,
+            "under_american": -104,
+            "fair_over": 0.5197
+          },
+          {
+            "book": "fanduel",
+            "line": 30.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.5288,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -135,
+            "under_american": 103,
+            "fair_over": 0.5384
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -125,
+            "under_american": -106,
+            "fair_over": 0.5192
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 7.5,
+        "fair_over": 0.5141,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 7.5,
+            "over_american": -115,
+            "under_american": -115,
+            "fair_over": 0.5
+          },
+          {
+            "book": "fanduel",
+            "line": 7.5,
+            "over_american": -130,
+            "under_american": -102,
+            "fair_over": 0.5282
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.4493,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": 108,
+            "under_american": -143,
+            "fair_over": 0.4496
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": 108,
+            "under_american": -144,
+            "fair_over": 0.4489
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 42.5,
+        "fair_over": 0.5101,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 42.5,
+            "over_american": -120,
+            "under_american": -110,
+            "fair_over": 0.5101
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 38.5,
+        "fair_over": 0.5101,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 38.5,
+            "over_american": -120,
+            "under_american": -110,
+            "fair_over": 0.5101
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 34.5,
+        "fair_over": 0.5183,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 34.5,
+            "over_american": -124,
+            "under_american": -106,
+            "fair_over": 0.5183
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 11.5,
+        "fair_over": 0.4888,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 11.5,
+            "over_american": -109,
+            "under_american": -120,
+            "fair_over": 0.4888
+          }
+        ]
+      }
+    ],
+    "Victor Wembanyama": [
+      {
+        "stat": "Points",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 25.5,
+        "fair_over": 0.5052,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 25.5,
+            "over_american": -111,
+            "under_american": -115,
+            "fair_over": 0.4958
+          },
+          {
+            "book": "fanduel",
+            "line": 26.5,
+            "over_american": 100,
+            "under_american": -132,
+            "fair_over": 0.4677
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 12.5,
+        "fair_over": 0.4945,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 12.5,
+            "over_american": -105,
+            "under_american": -126,
+            "fair_over": 0.4788
+          },
+          {
+            "book": "fanduel",
+            "line": 12.5,
+            "over_american": -120,
+            "under_american": -110,
+            "fair_over": 0.5101
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.4153,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": 129,
+            "under_american": -171,
+            "fair_over": 0.409
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": 122,
+            "under_american": -162,
+            "fair_over": 0.4215
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.5941,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": -194,
+            "under_american": 146,
+            "fair_over": 0.6188
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": -158,
+            "under_american": 116,
+            "fair_over": 0.5695
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 41.5,
+        "fair_over": 0.4939,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 41.5,
+            "over_american": -112,
+            "under_american": -118,
+            "fair_over": 0.4939
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 28.5,
+        "fair_over": 0.5142,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 28.5,
+            "over_american": -122,
+            "under_american": -108,
+            "fair_over": 0.5142
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 38.5,
+        "fair_over": 0.4838,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 38.5,
+            "over_american": -107,
+            "under_american": -123,
+            "fair_over": 0.4838
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 15.5,
+        "fair_over": 0.5051,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 15.5,
+            "over_american": -117,
+            "under_american": -112,
+            "fair_over": 0.5051
+          }
+        ]
+      }
+    ],
+    "Stephon Castle": [
+      {
+        "stat": "Points",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 16.5,
+        "fair_over": 0.5229,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 16.5,
+            "over_american": -122,
+            "under_american": -105,
+            "fair_over": 0.5176
+          },
+          {
+            "book": "fanduel",
+            "line": 16.5,
+            "over_american": -130,
+            "under_american": -102,
+            "fair_over": 0.5282
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.5641,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": -161,
+            "under_american": 122,
+            "fair_over": 0.578
+          },
+          {
+            "book": "fanduel",
+            "line": 5.5,
+            "over_american": 110,
+            "under_american": -146,
+            "fair_over": 0.4452
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 6.5,
+        "fair_over": 0.5574,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 6.5,
+            "over_american": -141,
+            "under_american": 107,
+            "fair_over": 0.5477
+          },
+          {
+            "book": "fanduel",
+            "line": 6.5,
+            "over_american": -154,
+            "under_american": 116,
+            "fair_over": 0.567
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.4449,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": 119,
+            "under_american": -157,
+            "fair_over": 0.4277
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": 102,
+            "under_american": -136,
+            "fair_over": 0.4621
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 29.5,
+        "fair_over": 0.4888,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 29.5,
+            "over_american": -109,
+            "under_american": -120,
+            "fair_over": 0.4888
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 23.5,
+        "fair_over": 0.5232,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 23.5,
+            "over_american": -127,
+            "under_american": -104,
+            "fair_over": 0.5232
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 22.5,
+        "fair_over": 0.4797,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 22.5,
+            "over_american": -105,
+            "under_american": -125,
+            "fair_over": 0.4797
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 11.5,
+        "fair_over": 0.5458,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 11.5,
+            "over_american": -140,
+            "under_american": 106,
+            "fair_over": 0.5458
+          }
+        ]
+      }
+    ],
+    "De'Aaron Fox": [
+      {
+        "stat": "Points",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 13.5,
+        "fair_over": 0.5128,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 13.5,
+            "over_american": -121,
+            "under_american": -106,
+            "fair_over": 0.5155
+          },
+          {
+            "book": "fanduel",
+            "line": 13.5,
+            "over_american": -120,
+            "under_american": -110,
+            "fair_over": 0.5101
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.4237,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": 120,
+            "under_american": -158,
+            "fair_over": 0.426
+          },
+          {
+            "book": "fanduel",
+            "line": 4.5,
+            "over_american": 122,
+            "under_american": -162,
+            "fair_over": 0.4215
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 5.5,
+        "fair_over": 0.5461,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 5.5,
+            "over_american": -137,
+            "under_american": 104,
+            "fair_over": 0.5411
+          },
+          {
+            "book": "fanduel",
+            "line": 5.5,
+            "over_american": -144,
+            "under_american": 108,
+            "fair_over": 0.5511
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.4175,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": 124,
+            "under_american": -164,
+            "fair_over": 0.4181
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": 124,
+            "under_american": -166,
+            "fair_over": 0.417
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 24.5,
+        "fair_over": 0.4776,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 24.5,
+            "over_american": -104,
+            "under_american": -126,
+            "fair_over": 0.4776
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 19.5,
+        "fair_over": 0.5203,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 19.5,
+            "over_american": -125,
+            "under_american": -105,
+            "fair_over": 0.5203
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 17.5,
+        "fair_over": 0.5294,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 17.5,
+            "over_american": -130,
+            "under_american": -101,
+            "fair_over": 0.5294
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 10.5,
+        "fair_over": 0.4503,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 10.5,
+            "over_american": 108,
+            "under_american": -142,
+            "fair_over": 0.4503
+          }
+        ]
+      }
+    ],
+    "Jared McCain": [
+      {
+        "stat": "Points",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 13.5,
+        "fair_over": 0.4739,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 13.5,
+            "over_american": -102,
+            "under_american": -125,
+            "fair_over": 0.4761
+          },
+          {
+            "book": "fanduel",
+            "line": 13.5,
+            "over_american": -102,
+            "under_american": -130,
+            "fair_over": 0.4718
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.5747,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": -171,
+            "under_american": 129,
+            "fair_over": 0.591
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": -148,
+            "under_american": 112,
+            "fair_over": 0.5585
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.5678,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": -151,
+            "under_american": 115,
+            "fair_over": 0.564
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": -158,
+            "under_american": 118,
+            "fair_over": 0.5717
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.3859,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": 129,
+            "under_american": -170,
+            "fair_over": 0.4095
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": 158,
+            "under_american": -215,
+            "fair_over": 0.3622
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 18.5,
+        "fair_over": 0.496,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 18.5,
+            "over_american": -113,
+            "under_american": -117,
+            "fair_over": 0.496
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 15.5,
+        "fair_over": 0.4756,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 15.5,
+            "over_american": -103,
+            "under_american": -127,
+            "fair_over": 0.4756
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 16.5,
+        "fair_over": 0.4867,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 16.5,
+            "over_american": -108,
+            "under_american": -121,
+            "fair_over": 0.4867
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.5664,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": -153,
+            "under_american": 116,
+            "fair_over": 0.5664
+          }
+        ]
+      }
+    ],
+    "Chet Holmgren": [
+      {
+        "stat": "Points",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 13.5,
+        "fair_over": 0.4698,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 13.5,
+            "over_american": 100,
+            "under_american": -127,
+            "fair_over": 0.4719
+          },
+          {
+            "book": "fanduel",
+            "line": 13.5,
+            "over_american": 100,
+            "under_american": -132,
+            "fair_over": 0.4677
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 8.5,
+        "fair_over": 0.4486,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 8.5,
+            "over_american": 109,
+            "under_american": -143,
+            "fair_over": 0.4484
+          },
+          {
+            "book": "fanduel",
+            "line": 8.5,
+            "over_american": 108,
+            "under_american": -144,
+            "fair_over": 0.4489
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.3804,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": 132,
+            "under_american": -175,
+            "fair_over": 0.4038
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": 162,
+            "under_american": -220,
+            "fair_over": 0.357
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 0.5,
+        "fair_over": 0.65,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 0.5,
+            "over_american": -229,
+            "under_american": 171,
+            "fair_over": 0.6535
+          },
+          {
+            "book": "fanduel",
+            "line": 0.5,
+            "over_american": -225,
+            "under_american": 164,
+            "fair_over": 0.6464
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 22.5,
+        "fair_over": 0.5203,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 22.5,
+            "over_american": -125,
+            "under_american": -105,
+            "fair_over": 0.5203
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 14.5,
+        "fair_over": 0.498,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 14.5,
+            "over_american": -114,
+            "under_american": -116,
+            "fair_over": 0.498
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 21.5,
+        "fair_over": 0.498,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 21.5,
+            "over_american": -114,
+            "under_american": -116,
+            "fair_over": 0.498
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 9.5,
+        "fair_over": 0.498,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 9.5,
+            "over_american": -114,
+            "under_american": -116,
+            "fair_over": 0.498
+          }
+        ]
+      }
+    ],
+    "Devin Vassell": [
+      {
+        "stat": "Points",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 12.5,
+        "fair_over": 0.5286,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 12.5,
+            "over_american": -128,
+            "under_american": 100,
+            "fair_over": 0.5289
+          },
+          {
+            "book": "fanduel",
+            "line": 12.5,
+            "over_american": -130,
+            "under_american": -102,
+            "fair_over": 0.5282
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.4737,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": -103,
+            "under_american": -127,
+            "fair_over": 0.4756
+          },
+          {
+            "book": "fanduel",
+            "line": 4.5,
+            "over_american": -102,
+            "under_american": -130,
+            "fair_over": 0.4718
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.4201,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": 114,
+            "under_american": -150,
+            "fair_over": 0.4378
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": 132,
+            "under_american": -178,
+            "fair_over": 0.4023
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.4954,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": -110,
+            "under_american": -119,
+            "fair_over": 0.4908
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 19.5,
+        "fair_over": 0.5253,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 19.5,
+            "over_american": -128,
+            "under_american": -103,
+            "fair_over": 0.5253
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 15.5,
+        "fair_over": 0.4969,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 15.5,
+            "over_american": -113,
+            "under_american": -116,
+            "fair_over": 0.4969
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 17.5,
+        "fair_over": 0.501,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 17.5,
+            "over_american": -115,
+            "under_american": -114,
+            "fair_over": 0.501
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 6.5,
+        "fair_over": 0.5391,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 6.5,
+            "over_american": -136,
+            "under_american": 103,
+            "fair_over": 0.5391
+          }
+        ]
+      }
+    ],
+    "Alex Caruso": [
+      {
+        "stat": "Points",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 10.5,
+        "fair_over": 0.5271,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 10.5,
+            "over_american": -124,
+            "under_american": -103,
+            "fair_over": 0.5218
+          },
+          {
+            "book": "fanduel",
+            "line": 10.5,
+            "over_american": -132,
+            "under_american": 100,
+            "fair_over": 0.5323
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.462,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -105,
+            "under_american": -126,
+            "fair_over": 0.4788
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": 110,
+            "under_american": -146,
+            "fair_over": 0.4452
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.4899,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": -105,
+            "under_american": -125,
+            "fair_over": 0.4797
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.6274,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": -195,
+            "under_american": 147,
+            "fair_over": 0.6202
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": 154,
+            "under_american": -210,
+            "fair_over": 0.3676
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 17.5,
+        "fair_over": 0.4706,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 17.5,
+            "over_american": -101,
+            "under_american": -130,
+            "fair_over": 0.4706
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 13.5,
+        "fair_over": 0.4949,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 13.5,
+            "over_american": -112,
+            "under_american": -117,
+            "fair_over": 0.4949
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 14.5,
+        "fair_over": 0.4929,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 14.5,
+            "over_american": -111,
+            "under_american": -118,
+            "fair_over": 0.4929
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 5.5,
+        "fair_over": 0.561,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 5.5,
+            "over_american": -150,
+            "under_american": 113,
+            "fair_over": 0.561
+          }
+        ]
+      }
+    ],
+    "Dylan Harper": [
+      {
+        "stat": "Points",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 9.5,
+        "fair_over": 0.5355,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 9.5,
+            "over_american": -130,
+            "under_american": 102,
+            "fair_over": 0.5331
+          },
+          {
+            "book": "fanduel",
+            "line": 9.5,
+            "over_american": -136,
+            "under_american": 102,
+            "fair_over": 0.5379
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.5645,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -161,
+            "under_american": 122,
+            "fair_over": 0.578
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -144,
+            "under_american": 108,
+            "fair_over": 0.5511
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.498,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": -120,
+            "under_american": -110,
+            "fair_over": 0.5101
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": -108,
+            "under_american": -122,
+            "fair_over": 0.4858
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 0.5,
+        "fair_over": 0.615,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 0.5,
+            "over_american": -192,
+            "under_american": 144,
+            "fair_over": 0.616
+          },
+          {
+            "book": "fanduel",
+            "line": 0.5,
+            "over_american": -192,
+            "under_american": 142,
+            "fair_over": 0.6141
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 16.5,
+        "fair_over": 0.5273,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 16.5,
+            "over_american": -129,
+            "under_american": -102,
+            "fair_over": 0.5273
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 12.5,
+        "fair_over": 0.5092,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 12.5,
+            "over_american": -119,
+            "under_american": -110,
+            "fair_over": 0.5092
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 14.5,
+        "fair_over": 0.4797,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 14.5,
+            "over_american": -105,
+            "under_american": -125,
+            "fair_over": 0.4797
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 6.5,
+        "fair_over": 0.5212,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 6.5,
+            "over_american": -126,
+            "under_american": -105,
+            "fair_over": 0.5212
+          }
+        ]
+      }
+    ],
+    "Julian Champagnie": [
+      {
+        "stat": "Points",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 9.5,
+        "fair_over": 0.4831,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 9.5,
+            "over_american": -106,
+            "under_american": -120,
+            "fair_over": 0.4854
+          },
+          {
+            "book": "fanduel",
+            "line": 9.5,
+            "over_american": -106,
+            "under_american": -125,
+            "fair_over": 0.4808
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 5.5,
+        "fair_over": 0.4615,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 5.5,
+            "over_american": 103,
+            "under_american": -136,
+            "fair_over": 0.4609
+          },
+          {
+            "book": "fanduel",
+            "line": 5.5,
+            "over_american": 102,
+            "under_american": -136,
+            "fair_over": 0.4621
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.4205,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": 127,
+            "under_american": -168,
+            "fair_over": 0.4127
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": 118,
+            "under_american": -158,
+            "fair_over": 0.4283
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.3962,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": 127,
+            "under_american": -168,
+            "fair_over": 0.4127
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": 146,
+            "under_american": -198,
+            "fair_over": 0.3796
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 16.5,
+        "fair_over": 0.4878,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 16.5,
+            "over_american": -109,
+            "under_american": -121,
+            "fair_over": 0.4878
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 10.5,
+        "fair_over": 0.5183,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 10.5,
+            "over_american": -124,
+            "under_american": -106,
+            "fair_over": 0.5183
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 14.5,
+        "fair_over": 0.5212,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 14.5,
+            "over_american": -126,
+            "under_american": -105,
+            "fair_over": 0.5212
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 6.5,
+        "fair_over": 0.5162,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 6.5,
+            "over_american": -123,
+            "under_american": -107,
+            "fair_over": 0.5162
+          }
+        ]
+      }
+    ],
+    "Cason Wallace": [
+      {
+        "stat": "Points",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 9.5,
+        "fair_over": 0.4771,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 9.5,
+            "over_american": 101,
+            "under_american": -129,
+            "fair_over": 0.469
+          },
+          {
+            "book": "fanduel",
+            "line": 8.5,
+            "over_american": -132,
+            "under_american": 100,
+            "fair_over": 0.5323
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.495,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -110,
+            "under_american": -120,
+            "fair_over": 0.4899
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.5136,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": -116,
+            "under_american": -113,
+            "fair_over": 0.5031
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": -128,
+            "under_american": -104,
+            "fair_over": 0.5241
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.4884,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": -113,
+            "under_american": -117,
+            "fair_over": 0.496
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": -106,
+            "under_american": -125,
+            "fair_over": 0.4808
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 15.5,
+        "fair_over": 0.4929,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 15.5,
+            "over_american": -111,
+            "under_american": -118,
+            "fair_over": 0.4929
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 11.5,
+        "fair_over": 0.5122,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 11.5,
+            "over_american": -121,
+            "under_american": -109,
+            "fair_over": 0.5122
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 12.5,
+        "fair_over": 0.5133,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 12.5,
+            "over_american": -121,
+            "under_american": -108,
+            "fair_over": 0.5133
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 6.5,
+        "fair_over": 0.4415,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 6.5,
+            "over_american": 112,
+            "under_american": -148,
+            "fair_over": 0.4415
+          }
+        ]
+      }
+    ],
+    "Isaiah Hartenstein": [
+      {
+        "stat": "Points",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 8.5,
+        "fair_over": 0.4601,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 8.5,
+            "over_american": 106,
+            "under_american": -135,
+            "fair_over": 0.458
+          },
+          {
+            "book": "fanduel",
+            "line": 8.5,
+            "over_american": 102,
+            "under_american": -136,
+            "fair_over": 0.4621
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 7.5,
+        "fair_over": 0.5333,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 7.5,
+            "over_american": -144,
+            "under_american": 109,
+            "fair_over": 0.5523
+          },
+          {
+            "book": "fanduel",
+            "line": 7.5,
+            "over_american": -122,
+            "under_american": -108,
+            "fair_over": 0.5142
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.5676,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": -154,
+            "under_american": 117,
+            "fair_over": 0.5682
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": -154,
+            "under_american": 116,
+            "fair_over": 0.567
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 19.5,
+        "fair_over": 0.496,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 19.5,
+            "over_american": -113,
+            "under_american": -117,
+            "fair_over": 0.496
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 11.5,
+        "fair_over": 0.4768,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 11.5,
+            "over_american": -104,
+            "under_american": -127,
+            "fair_over": 0.4768
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 16.5,
+        "fair_over": 0.499,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 16.5,
+            "over_american": -114,
+            "under_american": -115,
+            "fair_over": 0.499
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 11.5,
+        "fair_over": 0.4569,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 11.5,
+            "over_american": 105,
+            "under_american": -138,
+            "fair_over": 0.4569
+          }
+        ]
+      }
+    ],
+    "Keldon Johnson": [
+      {
+        "stat": "Points",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 6.5,
+        "fair_over": 0.5169,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 6.5,
+            "over_american": -124,
+            "under_american": -103,
+            "fair_over": 0.5218
+          },
+          {
+            "book": "fanduel",
+            "line": 6.5,
+            "over_american": -122,
+            "under_american": -110,
+            "fair_over": 0.512
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.5549,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": -151,
+            "under_american": 115,
+            "fair_over": 0.564
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": -140,
+            "under_american": 106,
+            "fair_over": 0.5458
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 0.5,
+        "fair_over": 0.5273,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 0.5,
+            "over_american": -129,
+            "under_american": -102,
+            "fair_over": 0.5273
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 0.5,
+        "fair_over": 0.5728,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 0.5,
+            "over_american": -158,
+            "under_american": 120,
+            "fair_over": 0.574
+          },
+          {
+            "book": "fanduel",
+            "line": 0.5,
+            "over_american": -158,
+            "under_american": 118,
+            "fair_over": 0.5717
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 10.5,
+        "fair_over": 0.5071,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 10.5,
+            "over_american": -118,
+            "under_american": -111,
+            "fair_over": 0.5071
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 7.5,
+        "fair_over": 0.5051,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 7.5,
+            "over_american": -117,
+            "under_american": -112,
+            "fair_over": 0.5051
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 9.5,
+        "fair_over": 0.5244,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 9.5,
+            "over_american": -127,
+            "under_american": -103,
+            "fair_over": 0.5244
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.5183,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -124,
+            "under_american": -106,
+            "fair_over": 0.5183
+          }
+        ]
+      }
+    ],
+    "Jaylin Williams (OKC)": [
+      {
+        "stat": "Points",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 5.5,
+        "fair_over": 0.4732,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 5.5,
+            "over_american": -101,
+            "under_american": -127,
+            "fair_over": 0.4732
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.564,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -151,
+            "under_american": 115,
+            "fair_over": 0.564
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.504,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": -117,
+            "under_american": -113,
+            "fair_over": 0.504
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.3785,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": 148,
+            "under_american": -196,
+            "fair_over": 0.3785
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 11.5,
+        "fair_over": 0.4677,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 11.5,
+            "over_american": 100,
+            "under_american": -132,
+            "fair_over": 0.4677
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 6.5,
+        "fair_over": 0.5265,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 6.5,
+            "over_american": -128,
+            "under_american": -102,
+            "fair_over": 0.5265
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 9.5,
+        "fair_over": 0.4817,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 9.5,
+            "over_american": -106,
+            "under_american": -124,
+            "fair_over": 0.4817
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 5.5,
+        "fair_over": 0.5162,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 5.5,
+            "over_american": -123,
+            "under_american": -107,
+            "fair_over": 0.5162
+          }
+        ]
+      }
+    ],
+    "Luguentz Dort": [
+      {
+        "stat": "Points",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.5049,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": -125,
+            "under_american": -102,
+            "fair_over": 0.5239
+          },
+          {
+            "book": "fanduel",
+            "line": 4.5,
+            "over_american": -108,
+            "under_american": -122,
+            "fair_over": 0.4858
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.4226,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": 121,
+            "under_american": -160,
+            "fair_over": 0.4237
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": 122,
+            "under_american": -162,
+            "fair_over": 0.4215
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 0.5,
+        "fair_over": 0.5567,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 0.5,
+            "over_american": -147,
+            "under_american": 111,
+            "fair_over": 0.5567
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.3789,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": 146,
+            "under_american": -195,
+            "fair_over": 0.3808
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": 148,
+            "under_american": -200,
+            "fair_over": 0.3769
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 7.5,
+        "fair_over": 0.5273,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 7.5,
+            "over_american": -129,
+            "under_american": -102,
+            "fair_over": 0.5273
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 5.5,
+        "fair_over": 0.5051,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 5.5,
+            "over_american": -117,
+            "under_american": -112,
+            "fair_over": 0.5051
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 6.5,
+        "fair_over": 0.5391,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 6.5,
+            "over_american": -136,
+            "under_american": 103,
+            "fair_over": 0.5391
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.5977,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": -176,
+            "under_american": 133,
+            "fair_over": 0.5977
+          }
+        ]
+      }
+    ],
+    "Isaiah Joe": [
+      {
+        "stat": "Points",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.4803,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -104,
+            "under_american": -123,
+            "fair_over": 0.4803
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 0.5,
+        "fair_over": 0.5391,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 0.5,
+            "over_american": -136,
+            "under_american": 103,
+            "fair_over": 0.5391
+          }
+        ]
+      }
+    ],
+    "Kenrich Williams": [
+      {
+        "stat": "Points",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.4729,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -101,
+            "under_american": -126,
+            "fair_over": 0.474
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -102,
+            "under_american": -130,
+            "fair_over": 0.4718
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.5695,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": -166,
+            "under_american": 125,
+            "fair_over": 0.5841
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": -146,
+            "under_american": 110,
+            "fair_over": 0.5548
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 0.5,
+        "fair_over": 0.4899,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 0.5,
+            "over_american": -110,
+            "under_american": -120,
+            "fair_over": 0.4899
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 0.5,
+        "fair_over": 0.4385,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 0.5,
+            "over_american": 115,
+            "under_american": -152,
+            "fair_over": 0.4354
+          },
+          {
+            "book": "fanduel",
+            "line": 0.5,
+            "over_american": 112,
+            "under_american": -148,
+            "fair_over": 0.4415
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 6.5,
+        "fair_over": 0.4858,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 6.5,
+            "over_american": -108,
+            "under_american": -122,
+            "fair_over": 0.4858
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.4677,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": 100,
+            "under_american": -132,
+            "fair_over": 0.4677
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 5.5,
+        "fair_over": 0.5071,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 5.5,
+            "over_american": -118,
+            "under_american": -111,
+            "fair_over": 0.5071
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "NBA",
+        "team": "OKC",
+        "opponent": "SA",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.5162,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": -123,
+            "under_american": -107,
+            "fair_over": 0.5162
+          }
+        ]
+      }
+    ],
+    "Luke Kornet": [
+      {
+        "stat": "Points",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.4438,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": 138,
+            "under_american": -177,
+            "fair_over": 0.3967
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": -136,
+            "under_american": 102,
+            "fair_over": 0.5379
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.4536,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": 115,
+            "under_american": -152,
+            "fair_over": 0.4354
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": -102,
+            "under_american": -130,
+            "fair_over": 0.4718
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 0.5,
+        "fair_over": 0.4797,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 0.5,
+            "over_american": -105,
+            "under_american": -125,
+            "fair_over": 0.4797
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 5.5,
+        "fair_over": 0.4797,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 5.5,
+            "over_american": -105,
+            "under_american": -125,
+            "fair_over": 0.4797
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.5081,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": -119,
+            "under_american": -111,
+            "fair_over": 0.5081
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "NBA",
+        "team": "SA",
+        "opponent": "OKC",
+        "game": "SA@OKC",
+        "start_time": "2026-05-31T00:10:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.5585,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": -148,
+            "under_american": 112,
+            "fair_over": 0.5585
+          }
+        ]
+      }
+    ],
+    "Jaylin Williams": [
+      {
+        "stat": "Points",
+        "league": "NBA",
+        "line": 4.5,
+        "fair_over": 0.5379,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 4.5,
+            "over_american": -136,
+            "under_american": 102,
+            "fair_over": 0.5379
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "NBA",
+        "line": 3.5,
+        "fair_over": 0.5635,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -152,
+            "under_american": 114,
+            "fair_over": 0.5635
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "NBA",
+        "line": 1.5,
+        "fair_over": 0.5,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "NBA",
+        "line": 1.5,
+        "fair_over": 0.3925,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": 138,
+            "under_american": -186,
+            "fair_over": 0.3925
+          }
+        ]
+      }
+    ]
+  },
+  "total_props": 246,
+  "total_players": 45,
+  "books_coverage": {
+    "1": 141,
+    "2": 105
+  },
+  "per_league": {
+    "WNBA": {
+      "total_props": 107,
+      "total_players": 26
+    },
+    "NBA": {
+      "total_props": 139,
+      "total_players": 19
+    }
+  }
+}

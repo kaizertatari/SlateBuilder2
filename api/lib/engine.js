@@ -26,6 +26,11 @@ import * as ruleR9 from "./rules/ruleR9.js";
 import * as ruleGameCap from "./rules/rule-game-cap.js";
 import * as ruleProvenance from "./rules/rule-provenance.js";
 import * as ruleUnderMechanism from "./rules/rule-under-mechanism.js";
+import * as ruleMarketEdge from "./rules/rule-market-edge.js";
+import * as ruleGameScript from "./rules/rule-game-script.js";
+import * as ruleProjection from "./rules/rule-projection.js";
+import * as ruleRest from "./rules/rule-rest.js";
+import * as ruleUsageShift from "./rules/rule-usage-shift.js";
 import * as ruleSTier from "./rules/rule-s-tier.js";
 
 import { scaleFor } from "./rules/_helpers.js";
@@ -49,6 +54,25 @@ const RULES_PRE_S = [
   ["5f", rule5f],
   ["5h", rule5h],
   ["5b", rule5b],
+  // Market-edge — the sharp-line signal (Stage 1). Runs after the box-score
+  // rules so its suppressor/SKIP reflects the market's view of THIS pick.
+  // No-ops when there's no matching odds (a player the books don't price), so
+  // behavior is unchanged where odds aren't covered.
+  ["market-edge", ruleMarketEdge],
+  // Game-script — Vegas total/spread tailwind/headwind on counting stats
+  // (Stage 2). Secondary to market-edge; no-ops without odds coverage.
+  ["game-script", ruleGameScript],
+  // Projection — native model P(over) confirm/deny vs the market (Stage 3).
+  // Additive; never SKIPs (market-edge owns the hard skip). No-ops without a
+  // baseline to project from.
+  ["projection", ruleProjection],
+  // Rest/schedule density — B2B / 3-in-4 fatigue suppressor (Stage 4).
+  // Counting stats only; no-ops without gamelog dates.
+  ["rest", ruleRest],
+  // Usage shift — star-teammate-out usage redistribution (mech2) + own
+  // minutes restriction (mech1) on the OVER side (Stage 4). UNDER is owned by
+  // under-mechanism. No-ops without a confirmed mechanism.
+  ["usage-shift", ruleUsageShift],
   ["provenance", ruleProvenance],
   ["game-cap", ruleGameCap],
   // UNDER mechanism gate runs late so it sees the fully-populated
@@ -95,6 +119,11 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
   // after the loop (avoids each rule independently re-deriving margin).
   let rule5aBuf = null;
   let rule5jBuf = null;
+  let marketInfo = null;
+  let vegasInfo = null;
+  let projectionInfo = null;
+  let restInfo = null;
+  let usageInfo = null;
 
   for (const [id, mod] of RULES_PRE_S) {
     const out = mod.apply(ctx);
@@ -102,6 +131,12 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
       // Still surface a justification fragment if the rule cared enough
       // to emit one (e.g., "rule disabled, suppressor off" notes from 5f).
       if (out?.justification_part) justParts.push(out.justification_part);
+      // Capture the neutral Vegas context even when game-script doesn't fire,
+      // so calibration sees the game-script inputs on every covered pick.
+      if (id === "game-script" && out?._vegas) vegasInfo = out._vegas;
+      if (id === "projection" && out?._projection) projectionInfo = out._projection;
+      if (id === "rest" && out?._rest) restInfo = out._rest;
+      if (id === "usage-shift" && out?._usage) usageInfo = out._usage;
       continue;
     }
     rulesFired.push(out.rule_id);
@@ -122,6 +157,11 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
       // UNDER baseline gate ISSUE branch counts as one signal.
       if (out._buf_under) signalCount += 1;
     }
+    if (id === "market-edge") marketInfo = out._market ?? null;
+    if (id === "game-script") vegasInfo = out._vegas ?? vegasInfo;
+    if (id === "projection") projectionInfo = out._projection ?? projectionInfo;
+    if (id === "rest") restInfo = out._rest ?? restInfo;
+    if (id === "usage-shift") usageInfo = out._usage ?? usageInfo;
   }
 
   // Edge bonus — applied once based on rule5a's road-adjusted margin.
@@ -250,6 +290,19 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
     raw_score: Math.round(score * 10) / 10,
     // SHADOW (telemetry only; see above) — retire with the snapToBand flip.
     shadow_tier,
+    // Sharp-market signal (Stage 1) when odds covered this pick; null otherwise.
+    // Consumed by verdict-logger (calibration) and the slate builder (EV).
+    market: marketInfo,
+    // Vegas game-script context (Stage 2) when odds covered the player's game;
+    // null otherwise. Logged for calibration slicing.
+    vegas: vegasInfo,
+    // Native model P(over) + market agreement (Stage 3). Logged for
+    // calibration; the market stays the spine until the model grades out.
+    projection: projectionInfo,
+    // Rest / schedule-density context (Stage 4). Null without gamelog dates.
+    rest: restInfo,
+    // Usage-shift context (Stage 4b) — teammate-out + minutes restriction.
+    usage: usageInfo,
     flags,
     justification,
     rules_fired: rulesFired,

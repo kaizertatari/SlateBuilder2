@@ -27,3 +27,8 @@ dist-ssr
 .env*.local
 .claude/
 CLAUDE.local.md
+
+# PrizePicks account access — personal/sensitive, never commit
+.prizepicks-profile/
+data/prizepicks-entries.json
+tmp/prizepicks-entries-raw.json

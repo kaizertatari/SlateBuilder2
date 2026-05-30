@@ -94,6 +94,42 @@ export function logVerdict({
     // SHADOW (temporary) — the would-be tier under the score-driven
     // demote/SKIP fix; lets calibration-report size that change pre-ship.
     shadow_tier: result?.shadow_tier ?? null,
+    // Stage-1 sharp-market signal (rule-market-edge). Null when odds didn't
+    // cover this pick. Lets calibration slice hit rate by market agreement and
+    // prove the standard-line lift. no_vig_prob is at the book line;
+    // market_fair_at_line is shifted to the PrizePicks line for the bet side.
+    no_vig_prob: result?.market?.no_vig_prob ?? null,
+    market_fair_at_line: result?.market?.fair_at_line ?? null,
+    market_line_delta: result?.market?.line_delta ?? null,
+    market_edge: result?.market?.edge ?? null,
+    // Stage-2 game-script context (rule-game-script). Null when odds didn't
+    // cover the player's game. Lets calibration slice by scoring environment /
+    // blowout. Log-only — do NOT add these to the _axiom.mjs query projection
+    // until they've been ingested (Axiom's data-driven schema rejects unseen
+    // fields), same caveat as the market_* fields above.
+    game_total: result?.vegas?.game_total ?? null,
+    team_total: result?.vegas?.team_total ?? null,
+    team_spread: result?.vegas?.team_spread ?? null,
+    vegas_blowout: result?.vegas?.blowout ?? null,
+    // Stage-3 native model probability (rule-projection). Null without a
+    // baseline. Lets calibration test the model standalone and whether
+    // model+market agreement beats the market alone. Log-only — keep out of
+    // the _axiom.mjs query projection until ingested.
+    model_prob: result?.projection?.model_prob ?? null,
+    model_dir_prob: result?.projection?.dir_prob ?? null,
+    model_mean: result?.projection?.mean ?? null,
+    model_sigma: result?.projection?.sigma ?? null,
+    model_market_agree: result?.projection?.market_agree ?? null,
+    // Stage-4 rest / schedule density (rule-rest). Null without gamelog dates.
+    rest_days: result?.rest?.rest_days ?? null,
+    back_to_back: result?.rest?.back_to_back ?? null,
+    three_in_four: result?.rest?.three_in_four ?? null,
+    // Stage-4b usage shift (rule-usage-shift). teammate_out = a star own-team
+    // teammate OUT (mech2, now fed by injury-ppg enrichment); minutes_restriction
+    // = confirmed own restriction (mech1). Log-only.
+    usage_teammate_out: result?.usage?.teammate_out ?? null,
+    usage_teammate_ppg: result?.usage?.teammate_ppg ?? null,
+    usage_minutes_restriction: result?.usage?.minutes_restriction ?? null,
     flags: result?.flags ?? null,
     pre_filtered: !!result?.pre_filtered,
     // Engine: which rule modules contributed to the verdict. Empty array
