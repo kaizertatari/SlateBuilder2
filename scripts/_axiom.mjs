@@ -35,14 +35,15 @@ export async function queryAxiom(token, apl, { start = "2024-01-01T00:00:00Z", e
  */
 export async function fetchJoinedVerdicts(token, dataset) {
   const D = `['${dataset}']`;
-  // TODO(market): once market-aware verdicts have been ingested (rule-market-edge
-  // logs no_vig_prob/market_fair_at_line/market_line_delta/market_edge), add them
-  // to this project list so the backtest can use the sharp-market per-leg prob.
-  // Projecting them BEFORE any are ingested throws "invalid field" in APL
-  // (Axiom's schema is data-driven), so they're intentionally omitted for now.
+  // Pull FULL verdict rows (no `| project`). Axiom's schema is data-driven and
+  // throws "invalid field" if you name a column it hasn't ingested, and the
+  // Stage 1–5 signal fields (no_vig_prob, market_*, game_total/team_*, model_*,
+  // rest_*, usage_*) appear over time. Full rows are schema-proof and the
+  // dataset is small, so the backtest + calibration can read every signal field
+  // as it lands — no projection to keep in sync, no invalid-field break.
   const verdicts = await queryAxiom(
     token,
-    `${D} | where event_type=="verdict" | project player, prop_type, line, direction, game_start_time, odds_type, confidence, tier, verdict, pre_filtered, opponent, league, _time | limit 100000`,
+    `${D} | where event_type=="verdict" | limit 100000`,
   );
   const outcomes = await queryAxiom(
     token,
