@@ -5,7 +5,9 @@ REM emits outcome events back to Axiom. Output appended to logs\grade.log
 REM for postmortem.
 
 setlocal
-cd /d "C:\Users\aminu\OneDrive\Documents\MarkdownFiles\PrizePick\Props_Generator"
+REM Self-locating (%~dp0 = scripts\), so it runs from whichever checkout it
+REM lives in and reads that checkout's .env.local + writes its own logs\.
+cd /d "%~dp0.."
 if not exist "logs" mkdir "logs"
 echo. >> "logs\grade.log"
 echo === %date% %time% start === >> "logs\grade.log"

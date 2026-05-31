@@ -11,7 +11,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { loadEnvLocal } from "./_env.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const OUTPUT = path.join(ROOT, "data/prizepicks-lines.json");
+export const OUTPUT = path.join(ROOT, "data/prizepicks-lines.json");
 const PLAYERS_JSON = path.join(ROOT, "data/players.json");
 
 const PRIZEPICKS_API = "https://api.prizepicks.com/projections";

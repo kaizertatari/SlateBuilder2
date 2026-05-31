@@ -6,8 +6,10 @@
 // Usage: node scripts/refresh-prizepicks.mjs
 //        npm run refresh-prizepicks
 
+import fs from "node:fs/promises";
+import path from "node:path";
 import { loadEnvLocal } from "./_env.mjs";
-import { scrapePrizePicksForToday } from "./scrape-prizepicks.mjs";
+import { scrapePrizePicksForToday, OUTPUT } from "./scrape-prizepicks.mjs";
 import { writeLines } from "../api/lib/lines-store.js";
 
 loadEnvLocal();
@@ -16,7 +18,11 @@ async function main() {
   console.log("=== refresh-prizepicks ===");
 
   console.log("\n[1/2] Scraping PrizePicks NBA + WNBA lines for today...");
-  const result = await scrapePrizePicksForToday();
+  // Scrape WITHOUT writing. A 0-prop scrape (rate-limit 429, cloud-IP block,
+  // PrizePicks outage) must never clobber the good local file or blob — we
+  // persist only after confirming the result is non-empty, mirroring the
+  // guard in api/refresh-lines.js.
+  const result = await scrapePrizePicksForToday({ write: false });
 
   console.log(`\n  ${result.total_props} props scraped for ${result.total_players} players`);
   console.log(`  Games: ${Object.keys(result.games).join(", ")}`);
@@ -29,6 +35,16 @@ async function main() {
 
   if (result.note) {
     console.log(`\n  Note: ${result.note}`);
+  }
+
+  // Guard: refuse to persist an empty scrape — keep the prior good snapshot
+  // (local file + blob) intact and exit non-zero so callers/Task Scheduler see
+  // the failure.
+  if (!result.total_props) {
+    console.error(
+      "\n  Scrape returned 0 props — refusing to overwrite file or blob. Prior snapshot kept.",
+    );
+    process.exit(1);
   }
 
   // Show unmatched players
@@ -44,6 +60,11 @@ async function main() {
       console.log(`    ! ${u}`);
     }
   }
+
+  // Persist locally now that we know the scrape is non-empty (same path +
+  // format scrapePrizePicksForToday uses when write:true).
+  await fs.writeFile(OUTPUT, JSON.stringify(result, null, 2) + "\n");
+  console.log(`\n  Written to ${path.relative(process.cwd(), OUTPUT)}`);
 
   // PrizePicks blocks cloud-provider IPs (Vercel's iad1 returns 403), so the
   // deployed cron can't refresh. Push from this residential-IP run instead;
