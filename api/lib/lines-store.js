@@ -50,8 +50,13 @@ export async function readLines() {
     // set on `put` still bounds origin load.
     const res = await fetch(url, { cache: "no-store" });
     if (res.ok) return await res.json();
-  } catch {
-    // Fall through to bundled file.
+    // Non-OK (e.g. blob deleted) — log so a stale-data situation is visible
+    // instead of silently serving the build-time bundle.
+    console.warn(`[lines-store] blob fetch ${res.status}; serving bundled fallback (stale).`);
+  } catch (err) {
+    // A bad/expired BLOB_READ_WRITE_TOKEN lands here — without this log the
+    // app silently serves the bundled snapshot and looks "fine" but stale.
+    console.warn(`[lines-store] blob read failed (${err.message}); serving bundled fallback (stale).`);
   }
   const raw = await fs.readFile(BUNDLED_PATH, "utf8");
   return JSON.parse(raw);

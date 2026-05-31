@@ -165,24 +165,26 @@ export default function App() {
 
   // Fetch the PrizePicks slate so we can populate the Game filter and
   // constrain the player picker to players who actually have lines tonight.
-  // Re-run on league change to refresh the game list. The endpoint reads
-  // from blob (or bundled fallback) — cheap; no need to debounce.
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/lines")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (cancelled) return;
-        setLinesData(d || null);
-        if (d?.fetched_at) setLinesFetchedAt(d.fetched_at);
-      })
-      .catch(() => {
-        if (!cancelled) setLinesData(null);
-      });
-    return () => {
-      cancelled = true;
-    };
+  // The endpoint reads from blob (or bundled fallback) — cheap. Extracted so
+  // the REFRESH LINES handler can re-pull it; otherwise the games/players list
+  // stays stale until a full page reload.
+  const loadLines = useCallback(async () => {
+    try {
+      const r = await fetch("/api/lines");
+      const d = r.ok ? await r.json() : null;
+      setLinesData(d || null);
+      if (d?.fetched_at) setLinesFetchedAt(d.fetched_at);
+    } catch {
+      setLinesData(null);
+    }
   }, []);
+
+  useEffect(() => {
+    // loadLines() only setStates after an awaited fetch (not synchronously),
+    // so the set-state-in-effect rule is a false positive here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadLines();
+  }, [loadLines]);
 
   // Derive the unique games list for the active league. The scraper writes
   // two game entries per matchup (one per team perspective: "BOS@LAL" and
@@ -620,7 +622,16 @@ export default function App() {
     setRefreshing(true);
     setRefreshStatus(null);
     try {
-      const token = import.meta.env.VITE_REFRESH_TOKEN ?? "";
+      // import.meta.env values are inlined at build time. A stray non-Latin-1
+      // char (smart quote, em/en-dash, zero-width space from a bad paste into
+      // the env var) makes fetch() throw "String contains non ISO-8859-1 code
+      // point" before the request is sent — HTTP header values must be Latin-1.
+      const token = (import.meta.env.VITE_REFRESH_TOKEN ?? "").trim();
+      if (/[\u0100-\uffff]/.test(token)) {
+        throw new Error(
+          "VITE_REFRESH_TOKEN contains a non-ASCII character — re-enter it as plain ASCII (no smart quotes/dashes) and redeploy.",
+        );
+      }
       const response = await fetch("/api/refresh-lines", {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -632,6 +643,10 @@ export default function App() {
           kind: "success",
           message: `Refreshed — ${body.total_props ?? "?"} props across ${body.total_players ?? "?"} players.`,
         });
+        // Re-pull the slate so newly-refreshed games/players appear without a
+        // page reload. (Blob edge cache is 60s, so a brand-new game may take up
+        // to a minute to surface.)
+        loadLines();
       } else if (response.status === 502) {
         setRefreshStatus({
           kind: "no-data",
@@ -648,7 +663,7 @@ export default function App() {
     } finally {
       setRefreshing(false);
     }
-  }, [refreshing]);
+  }, [refreshing, loadLines]);
 
   // Auto-clear the refresh status banner so it doesn't linger.
   useEffect(() => {
