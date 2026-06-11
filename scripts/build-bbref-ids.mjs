@@ -17,7 +17,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { normalizeName } from "../api/lib/string-utils.js";
+import { normalizeName } from "../api/_lib/string-utils.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PLAYERS_PATH = path.join(ROOT, "data/players.json");

@@ -10,13 +10,13 @@
 //
 // Run: node scripts/smoke-v35.mjs
 
-import { computeWeightedL5 } from "../api/lib/weighted-l5.js";
-import { preFilterMechanical } from "../api/lib/verdict-verifier.js";
-import { composeGroundTruth } from "../api/lib/ground-truth.js";
-import { FRAMEWORK_SCALING, ftFloorBaseline } from "../api/lib/framework.js";
+import { computeWeightedL5 } from "../api/_lib/weighted-l5.js";
+import { preFilterMechanical } from "../api/_lib/verdict-verifier.js";
+import { composeGroundTruth } from "../api/_lib/ground-truth.js";
+import { FRAMEWORK_SCALING, ftFloorBaseline } from "../api/_lib/framework.js";
 import { selectLinesForStat } from "../api/analyze-all.js";
-import { applyEngine } from "../api/lib/engine.js";
-import { setOdds } from "../api/lib/odds.js";
+import { applyEngine } from "../api/_lib/engine.js";
+import { setOdds } from "../api/_lib/odds.js";
 
 // Hermetic odds: applyEngine's market rules lazy-load data/odds.json, so a
 // fixture name that the latest odds refresh happens to price would fire

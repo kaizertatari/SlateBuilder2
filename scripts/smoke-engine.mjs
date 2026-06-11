@@ -11,10 +11,10 @@
 //
 // Pure local — no LLM, no network. Builds synthetic groundTruth inline.
 
-import { applyEngine } from "../api/lib/engine.js";
-import { computeOverBufferCheck } from "../api/lib/rules/_helpers.js";
-import { shadowTierFor, TIER_RANK } from "../api/lib/rule-weights.js";
-import { setOdds } from "../api/lib/odds.js";
+import { applyEngine } from "../api/_lib/engine.js";
+import { computeOverBufferCheck } from "../api/_lib/rules/_helpers.js";
+import { shadowTierFor, TIER_RANK } from "../api/_lib/rule-weights.js";
+import { setOdds } from "../api/_lib/odds.js";
 
 // Hermetic odds: the engine's market rules (market-edge / game-script /
 // projection) lazy-load data/odds.json on first lookup, and the fixtures
@@ -544,7 +544,7 @@ console.log("\n[s] H2H blend — never fires in playoff_L5 context");
 // rather than through applyEngine so the threshold math is exposed.
 console.log("\n[t] Playoff outlier reference vs regular-season");
 {
-  const { computeWeightedL5 } = await import("../api/lib/weighted-l5.js");
+  const { computeWeightedL5 } = await import("../api/_lib/weighted-l5.js");
   const playoffGames = [
     { pts: 30, reb: 10, ast: 5, fgm: 11, fga: 22, fg3a: 4, ftm: 8, fta: 10, blk: 1, stl: 1, tov: 3, minutes: 36, matchup: "OKC @ SAS" },
     { pts: 32, reb: 12, ast: 4, fgm: 12, fga: 24, fg3a: 4, ftm: 8, fta: 10, blk: 2, stl: 1, tov: 3, minutes: 36, matchup: "OKC vs SAS" },
@@ -579,7 +579,7 @@ console.log("\n[t] Playoff outlier reference vs regular-season");
 // the caller), the function falls back to seasonPpg even in playoff mode.
 console.log("\n[u] Playoff outlier ref falls back to seasonPpg when playoffPpg null");
 {
-  const { computeWeightedL5 } = await import("../api/lib/weighted-l5.js");
+  const { computeWeightedL5 } = await import("../api/_lib/weighted-l5.js");
   const games = [
     { pts: 20, reb: 5, ast: 5, fgm: 8, fga: 18, fg3a: 3, ftm: 4, fta: 5, blk: 1, stl: 1, tov: 2, minutes: 32, matchup: "OKC @ SAS" },
     { pts: 22, reb: 6, ast: 4, fgm: 9, fga: 19, fg3a: 3, ftm: 4, fta: 5, blk: 1, stl: 1, tov: 2, minutes: 33, matchup: "OKC vs SAS" },
@@ -806,7 +806,7 @@ console.log("\n[y] Rule 5a trimmed-baseline cap — single-game dependent OVER")
     { matchup: "SA @ MIN",  pts: 15, reb: 5,  ast: 2, stl: 0, blk: 1, tov: 3, minutes: 26 },
     { matchup: "SA vs MIN", pts: 12, reb: 10, ast: 2, stl: 1, blk: 1, tov: 2, minutes: 25 },
   ];
-  const { computeWeightedL5 } = await import("../api/lib/weighted-l5.js");
+  const { computeWeightedL5 } = await import("../api/_lib/weighted-l5.js");
   const w = computeWeightedL5({
     games, seasonPpg: 11.9, playoffPpg: 13.8, ownAbbr: "SA",
     series: { opponent_abbr: "OKC", next_game_number: 5 },

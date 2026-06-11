@@ -2,8 +2,8 @@
 // .env.local automatically. Doesn't touch stats.nba.com.
 // Usage: node scripts/smoke-balldontlie.mjs ["Player Name"]
 
-import * as bdl from "../api/lib/balldontlie.js";
-import { currentSeason } from "../api/lib/nba-stats.js";
+import * as bdl from "../api/_lib/balldontlie.js";
+import { currentSeason } from "../api/_lib/nba-stats.js";
 import { loadEnvLocal } from "./_env.mjs";
 
 loadEnvLocal();

@@ -10,7 +10,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { loadEnvLocal } from "./_env.mjs";
 import { scrapePrizePicksForToday, OUTPUT } from "./scrape-prizepicks.mjs";
-import { writeLines } from "../api/lib/lines-store.js";
+import { writeLines } from "../api/_lib/lines-store.js";
 
 loadEnvLocal();
 

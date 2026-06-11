@@ -1,11 +1,11 @@
 // Probe stats.nba.com/stats/leagueseasonmatchups to confirm column names + shape
-// before building api/lib/matchup-defender.js.
+// before building api/_lib/matchup-defender.js.
 // Usage: node scripts/smoke-defender.mjs ["Player Name"] ["OPP_ABBR"] [Regular|Playoffs]
 
-import { resolvePlayerId } from "../api/lib/player-ids.js";
-import { currentSeason } from "../api/lib/nba-stats.js";
+import { resolvePlayerId } from "../api/_lib/player-ids.js";
+import { currentSeason } from "../api/_lib/nba-stats.js";
 
-import { TEAM_ID_BY_ABBR } from "../api/lib/team-ids.js";
+import { TEAM_ID_BY_ABBR } from "../api/_lib/team-ids.js";
 
 const HEADERS = {
   "User-Agent":

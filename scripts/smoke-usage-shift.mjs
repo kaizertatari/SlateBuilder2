@@ -1,6 +1,6 @@
 // Smoke for rule-usage-shift (Stage 4b role-change OVER signal). No network.
 //   node scripts/smoke-usage-shift.mjs
-import { apply } from "../api/lib/rules/rule-usage-shift.js";
+import { apply } from "../api/_lib/rules/rule-usage-shift.js";
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) pass++; else { fail++; console.error("  FAIL: " + m); } };

@@ -1,6 +1,6 @@
 // Smoke for rule-rest (Stage 4 schedule-density fatigue). No network.
 //   node scripts/smoke-rest.mjs
-import { apply } from "../api/lib/rules/rule-rest.js";
+import { apply } from "../api/_lib/rules/rule-rest.js";
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) pass++; else { fail++; console.error("  FAIL: " + m); } };

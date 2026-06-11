@@ -21,7 +21,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { loadEnvLocal } from "./_env.mjs";
-import { confidenceBucket } from "../api/lib/calibration.js";
+import { confidenceBucket } from "../api/_lib/calibration.js";
 import { fetchJoinedVerdicts, settledBettable } from "./_axiom.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");

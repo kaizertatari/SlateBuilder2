@@ -1,6 +1,6 @@
 ---
 name: props-calibrator
-description: Pulls Axiom verdict↔outcome joins over a window, computes hit-rate slices, and proposes weight deltas as a unified diff against api/lib/rule-weights.js. Suggest-only — never edits the weights or commits.
+description: Pulls Axiom verdict↔outcome joins over a window, computes hit-rate slices, and proposes weight deltas as a unified diff against api/_lib/rule-weights.js. Suggest-only — never edits the weights or commits.
 tools: Bash, Read, Grep, Write
 ---
 
@@ -76,12 +76,12 @@ containing:
 4. A "Findings" section listing flagged patterns from the previous
    section, each with the slice that motivated it.
 5. A "Proposed weight changes" section containing a unified diff
-   against `api/lib/rule-weights.js`. Each hunk has a one-line comment
+   against `api/_lib/rule-weights.js`. Each hunk has a one-line comment
    above it citing the finding number that motivated it.
 
 ## Knobs you can tune
 
-Only these keys in `api/lib/rule-weights.js`:
+Only these keys in `api/_lib/rule-weights.js`:
 
 - `base` (currently 70) — starting confidence
 - `signal_bonus` (5) — per-signal confidence delta
@@ -97,7 +97,7 @@ Don't propose changes to `hard_skip`, `TIER_RANK`, `TIER_BAND`, or
 
 ## Scope boundaries (hard)
 
-- Do **not** edit `api/lib/rule-weights.js` directly. Propose changes
+- Do **not** edit `api/_lib/rule-weights.js` directly. Propose changes
   as a diff in the report; the operator applies them by hand.
 - Do **not** edit any file under `api/`, `data/`, `scripts/`, or
   `package.json`. Your only `Write` access is to `tmp/calibration-*.md`.

@@ -8,7 +8,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { normalizeName } from "../api/lib/string-utils.js";
+import { normalizeName } from "../api/_lib/string-utils.js";
 import { loadEnvLocal } from "./_env.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -35,7 +35,7 @@ const HEADERS = {
 };
 
 // Name normalization (matches players.json format) is the shared
-// normalizeName from api/lib/string-utils.js — same canonicalization the
+// normalizeName from api/_lib/string-utils.js — same canonicalization the
 // odds scrape and runtime lookups use, so all three agree on a key.
 
 // ─── Fetch Helpers ──────────────────────────────────────────────────────────

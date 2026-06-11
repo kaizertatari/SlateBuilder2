@@ -1,6 +1,6 @@
 // Enumerate the active 2026 NBA playoff player pool, look up nba+espn IDs,
 // and rewrite data/players.json with the merged set. Both the server
-// (api/lib/player-ids.js) and client (src/App.jsx) read that file directly,
+// (api/_lib/player-ids.js) and client (src/App.jsx) read that file directly,
 // so this script touches a single source of truth.
 //
 // Sources:
@@ -15,7 +15,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { PLAYER_INFO } from "../api/lib/player-ids.js";
+import { PLAYER_INFO } from "../api/_lib/player-ids.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PLAYERS_JSON_PATH = path.join(ROOT, "data/players.json");

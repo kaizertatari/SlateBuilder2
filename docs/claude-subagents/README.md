@@ -26,7 +26,7 @@ types become available as `props-calibrator`, `verdict-forensics`, and
 
 - **`props-calibrator`** — pulls Axiom verdict↔outcome joins over a window,
   computes hit-rate slices, proposes a unified diff against
-  `api/lib/rule-weights.js`. Suggest-only: never edits weights itself.
+  `api/_lib/rule-weights.js`. Suggest-only: never edits weights itself.
 - **`verdict-forensics`** — given a player (and optional prop), reconstructs
   the full reasoning path of the most recent verdict by walking
   `rules_fired[]` against the rule modules.

@@ -252,7 +252,7 @@ Open `http://localhost:5173` (or Vercel URL in production)
 
 `data/prizepicks-lines.json` is bundled at deploy time. On Vercel, only `/tmp` is writable at runtime, and `/tmp` is per-instance and ephemeral.
 
-Current behavior (`api/lib/lines-store.js`):
+Current behavior (`api/_lib/lines-store.js`):
 1. On read, prefer `/tmp/prizepicks-lines.json` if present (warm-instance cache).
 2. Fall back to the bundled `data/prizepicks-lines.json` from the deploy.
 3. `POST /api/refresh-lines` (token-guarded via `REFRESH_TOKEN`) re-runs the scraper and writes to `/tmp` so subsequent reads on that instance are fresh.
@@ -273,7 +273,7 @@ Caveats:
 
 ## Future Enhancements
 
-1. Replace `/tmp` cache with Vercel Blob or Edge Config in `api/lib/lines-store.js` for durable cross-instance freshness.
+1. Replace `/tmp` cache with Vercel Blob or Edge Config in `api/_lib/lines-store.js` for durable cross-instance freshness.
 2. Add a Vercel Cron that hits `/api/refresh-lines` hourly during NBA hours.
 3. Add caching for Gemini results to avoid re-analyzing identical (player, prop_type, line) tuples.
 4. Add "Refresh Lines" button in UI that calls `/api/refresh-lines` (token-guarded).

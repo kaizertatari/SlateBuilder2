@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import { getSeasonAverages, getLastNGames } from "../api/lib/espn-stats.js";
+import { getSeasonAverages, getLastNGames } from "../api/_lib/espn-stats.js";
 
 const players = JSON.parse(fs.readFileSync("data/players.json", "utf8"));
 const targets = [

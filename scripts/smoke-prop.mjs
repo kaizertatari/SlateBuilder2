@@ -13,8 +13,8 @@
 import { loadEnvLocal } from "./_env.mjs";
 loadEnvLocal();
 
-import { PROP_TO_FIELD } from "../api/lib/prop-types.js";
-import { FRAMEWORK_SCALING, ftFloorBaseline } from "../api/lib/framework.js";
+import { PROP_TO_FIELD } from "../api/_lib/prop-types.js";
+import { FRAMEWORK_SCALING, ftFloorBaseline } from "../api/_lib/framework.js";
 
 const [, , playerArg, propTypeArg, lineArg] = process.argv;
 if (!playerArg || !propTypeArg || lineArg == null) {

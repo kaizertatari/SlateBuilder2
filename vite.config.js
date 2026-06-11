@@ -9,8 +9,8 @@ export default defineConfig({
     // by itself it handles both the SPA and the functions, so this proxy
     // is a no-op in that mode.
     //
-    // Bypass: src/App.jsx imports workspace files from ../api/lib/*.js as
-    // native ESM. Those resolve to URLs like /api/lib/prop-types.js. If we
+    // Bypass: src/App.jsx imports workspace files from ../api/_lib/*.js as
+    // native ESM. Those resolve to URLs like /api/_lib/prop-types.js. If we
     // proxy them, vercel dev 404s (it only knows function routes). Returning
     // the URL from bypass tells Vite to serve it from the filesystem instead.
     proxy: {

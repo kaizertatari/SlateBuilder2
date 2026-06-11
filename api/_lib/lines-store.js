@@ -1,5 +1,5 @@
 // Read/write access to the PrizePicks lines blob. Thin wrapper over the
-// shared blob-store factory — see api/lib/blob-store.js for the
+// shared blob-store factory — see api/_lib/blob-store.js for the
 // blob-vs-bundled fallback semantics and edge-cache rationale.
 
 import path from "node:path";

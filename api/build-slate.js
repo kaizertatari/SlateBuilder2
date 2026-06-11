@@ -16,14 +16,14 @@
 //   size?: number (3), maxPerGame?: number (1)
 // }
 
-import { rateLimit } from "./lib/rate-limit.js";
-import { runWithRequestContext } from "./lib/request-context.js";
-import { readLines } from "./lib/lines-store.js";
-import { STATS, mapPrizePicksStatType } from "./lib/prop-types.js";
-import { ALL_ODDS_TYPES } from "./lib/select-lines.js";
-import { lookupMarket, setOdds } from "./lib/odds.js";
-import { readOdds } from "./lib/odds-store.js";
-import { buildSlate } from "./lib/slate-builder.js";
+import { rateLimit } from "./_lib/rate-limit.js";
+import { runWithRequestContext } from "./_lib/request-context.js";
+import { readLines } from "./_lib/lines-store.js";
+import { STATS, mapPrizePicksStatType } from "./_lib/prop-types.js";
+import { ALL_ODDS_TYPES } from "./_lib/select-lines.js";
+import { lookupMarket, setOdds } from "./_lib/odds.js";
+import { readOdds } from "./_lib/odds-store.js";
+import { buildSlate } from "./_lib/slate-builder.js";
 import { randomUUID } from "node:crypto";
 
 export const runtime = "nodejs";

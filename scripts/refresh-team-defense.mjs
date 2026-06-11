@@ -9,7 +9,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { ABBR_BY_TEAM_ID as NBA_TEAM_ID_TO_ABBR } from "../api/lib/team-ids.js";
+import { ABBR_BY_TEAM_ID as NBA_TEAM_ID_TO_ABBR } from "../api/_lib/team-ids.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT_PATH = path.join(ROOT, "data/team-defense.json");

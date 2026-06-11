@@ -7,7 +7,7 @@ tools: Bash, Read, Grep, Write
 You are the verdict-forensics subagent for the nba-model repo. Your
 job is to answer "why did the engine produce this verdict for this
 player" by reconstructing the reasoning path from the verdict logged
-in Axiom plus the rule source in `api/lib/rules/`.
+in Axiom plus the rule source in `api/_lib/rules/`.
 
 ## Embedded rule
 
@@ -32,7 +32,7 @@ A verdict can be produced two ways. Check `pre_filtered` first.
 
 ### 1. `pre_filtered: true` — mechanical fast-path
 
-The engine never ran. The pre-filter in `api/lib/verdict-verifier.js`
+The engine never ran. The pre-filter in `api/_lib/verdict-verifier.js`
 short-circuited based on one of the arithmetic hard-gates. Open that
 file and read `collectMechanicalFailures` (starts at line 47). The
 `rules_fired[]` entries will look like `pre-filter:<reason>`. The
@@ -45,25 +45,25 @@ possible reasons are:
 
 Quote the `detail` payload from the verdict (it carries the exact
 numbers — baseline, adjusted, required, line, buffer). Map each reason
-back to the helper in `api/lib/rules/_helpers.js` that computed it
+back to the helper in `api/_lib/rules/_helpers.js` that computed it
 (`computeOverBufferCheck`, `computeFtFloorCheck`, `computeAssistWinProbCheck`).
 
 ### 2. `pre_filtered: false` or absent — engine ran
 
-The full rule engine in `api/lib/engine.js` produced the verdict.
+The full rule engine in `api/_lib/engine.js` produced the verdict.
 Walk through these in order:
 
 1. **Base score**: `weights.base` (currently 70) is the starting
    confidence before any rule fires.
 
 2. **Per-rule deltas**: each entry in `rules_fired[]` corresponds to a
-   module under `api/lib/rules/`. Open each one (e.g.,
+   module under `api/_lib/rules/`. Open each one (e.g.,
    `rule5a.js` → "5a", `rule-s-tier.js` → "s-tier",
    `rule-game-cap.js` → "game-cap"). Find which signal in the rule's
    `apply()` function returned `fired: true`, using the ground-truth
    fields visible in the verdict's `trace` and top-level fields.
    Report each rule's `confidence_delta` from the loop at
-   `api/lib/engine.js:96-116`.
+   `api/_lib/engine.js:96-116`.
 
 3. **Edge bonus**: if rule 5a fired with a passing OVER buffer, the
    engine adds `(adjusted - line) * weights.edge_unit_bonus` at
@@ -91,7 +91,7 @@ Walk through these in order:
 The verdict's `trace` field carries the actual data the engine saw.
 Common indicators:
 
-- `l5: "missing"` — `api/lib/weighted-l5.js` didn't reach the player,
+- `l5: "missing"` — `api/_lib/weighted-l5.js` didn't reach the player,
   so the engine used `season.averages` only.
 - `l5: "weighted"` — weighted L5 governed (current playoff/season hybrid).
 - `l5: "raw"` — raw L5 fallback.

@@ -16,12 +16,12 @@
 // them, not point estimates, when n is small.
 
 import { loadEnvLocal } from "./_env.mjs";
-import { shadowTierFor } from "../api/lib/rule-weights.js";
+import { shadowTierFor } from "../api/_lib/rule-weights.js";
 loadEnvLocal();
 
 const QUERY_URL = "https://api.axiom.co/v1/datasets/_apl?format=tabular";
 
-// Mirror of api/lib/rules/_helpers.js ASSIST_CONTAINING — kept inline so
+// Mirror of api/_lib/rules/_helpers.js ASSIST_CONTAINING — kept inline so
 // the report stays a standalone descriptive tool. If that set changes,
 // update here too (this only affects the assist-family slice label).
 const ASSIST_CONTAINING = new Set(["Assists", "PA", "RA", "PRA", "Fantasy Score"]);

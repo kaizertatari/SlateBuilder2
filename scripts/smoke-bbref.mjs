@@ -3,7 +3,7 @@
 // Two checks:
 //  1. Live parse — calls fetchPlayerSplits against three known slugs and
 //     prints the home/road averages. Validates the BR HTML hasn't shifted.
-//  2. Snapshot read — loads api/lib/bbref.js and queries the snapshot for
+//  2. Snapshot read — loads api/_lib/bbref.js and queries the snapshot for
 //     the same three players (whatever names are committed in the snapshot).
 //     A miss is fine; the snapshot may be empty or pre-refresh.
 //
@@ -45,7 +45,7 @@ for (const p of PROBES) {
 }
 
 console.log("\nSnapshot read:");
-const adapter = await import("../api/lib/bbref.js");
+const adapter = await import("../api/_lib/bbref.js");
 const meta = adapter.snapshotMeta();
 console.log(`  meta: season=${meta.season} fetched_at=${meta.fetched_at} players=${meta.player_count}`);
 for (const p of PROBES) {
