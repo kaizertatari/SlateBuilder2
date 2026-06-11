@@ -34,7 +34,9 @@ export const SUPPORTED_SIZES = Object.keys(POWER_MULTIPLIER).map(Number);
 // Coarse per-pick multiplier relative to a standard pick. APPROXIMATE — see
 // the accuracy note. Loosely back-fit from observed entries (≈3 goblins paid
 // ~2.2× vs a standard 3-pick 5× ⇒ ~0.76 each); demon is the rough inverse.
-const LINE_TYPE_FACTOR = { standard: 1, goblin: 0.76, demon: 1.6, unknown: 1 };
+// Exported so slate-builder's variant ranking uses the same constants (a
+// drift between the two would silently skew leg selection vs payout math).
+export const LINE_TYPE_FACTOR = { standard: 1, goblin: 0.76, demon: 1.6, unknown: 1 };
 
 function legFactorProduct(legs) {
   let prod = 1;

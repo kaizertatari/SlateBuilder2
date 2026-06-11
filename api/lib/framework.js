@@ -119,3 +119,13 @@ export function ftFloorBaseline(league, position) {
   const pos = position && table[position] != null ? position : c.ft_floor_default_position;
   return table[pos];
 }
+
+// FanDuel fantasy-score formula — the single source for every fs
+// computation (season averages, weighted/trimmed/raw L5, per-game).
+// Returns null when tov is unknown: the framework SKIPs a Fantasy Score
+// prop cleanly rather than evaluating it against an inflated baseline
+// (a missing −1·tov term only ever overstates fs).
+export function fanduelFantasyScore({ pts, reb, ast, stl, blk, tov }) {
+  if (pts == null || reb == null || ast == null || tov == null) return null;
+  return pts + 1.2 * reb + 1.5 * ast + 3 * (stl ?? 0) + 3 * (blk ?? 0) - 1 * tov;
+}

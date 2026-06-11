@@ -2,8 +2,9 @@
 // + series-lead closeout. Applies to OVER on any stat.
 //
 //   85-90% win prob  → A-tier max OVER.
-//   >90% win prob    → A-tier max OVER, require line 3+ below L5 avg
-//                      (use weighted L5 when present).
+//   >90% win prob    → A-tier max OVER; the flag ADVISES the line should
+//                      sit 3+ below the L5 avg (operator judgment — the
+//                      engine does not enforce that check).
 //   Playoff series tied (leading_team_abbr === null) → suppressor
 //                      DISABLED — unless pre-tip override fires.
 //   Player's team has series lead at closeout threshold → FULLY ENGAGED
@@ -102,7 +103,7 @@ export function apply(ctx) {
       confidence_delta: -ctx.weights.suppressor_penalty,
       flag: overrideFired
         ? "⚠️ Rule 5f — pre-tip blowout override (≥0.80 + 2 starters OUT + home)"
-        : `⚠️ Rule 5f — heavy favorite (${(effectiveWp * 100).toFixed(0)}%), line should sit 3+ below L5 baseline`,
+        : `⚠️ Rule 5f — heavy favorite (${(effectiveWp * 100).toFixed(0)}%); advisory: line should sit 3+ below L5 baseline (not enforced)`,
       justification_part: `Rule 5f — win_prob ${(effectiveWp * 100).toFixed(0)}%${overrideFired ? " (pre-tip override)" : ""}; OVER capped at A-tier.`,
       suppressor: true,
     };

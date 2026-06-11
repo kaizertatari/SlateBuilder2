@@ -17,9 +17,22 @@
 // stacks — it keeps Π p_i honest. Same-game correlation is a later upgrade.
 
 import { calibratedProb, calibrationSupport } from "./calibration.js";
-import { powerMultiplier, flexMultiplier, POWER_MULTIPLIER, FLEX_PAYOUTS } from "./prizepicks-payouts.js";
+import { powerMultiplier, flexMultiplier, POWER_MULTIPLIER, FLEX_PAYOUTS, LINE_TYPE_FACTOR } from "./prizepicks-payouts.js";
 
-const LINE_TYPE_FACTOR = { standard: 1, goblin: 0.76, demon: 1.6, unknown: 1 };
+// Canonical per-game key for the diversification cap. The PrizePicks scrape
+// writes TWO game entries per matchup (one per team perspective: "BOS@LAL"
+// AND "LAL@BOS", optionally "WNBA:"-prefixed), so capping on the raw key
+// would let two legs from the same physical game — one per team — both pass
+// maxPerGame and break the independence assumption behind Π p_i. Sorting the
+// abbr pair collapses both perspectives to one key ("BOS|LAL"). Unparseable
+// strings fall back unchanged (so unknown-game legs still group together,
+// matching prior behavior).
+function canonicalGameKey(game) {
+  const s = String(game || "");
+  const parts = s.replace(/^WNBA:/, "").split("@");
+  if (parts.length !== 2 || !parts[0] || !parts[1]) return s;
+  return parts.sort().join("|");
+}
 
 // P(exactly k of n hit) for independent legs — Poisson-binomial DP.
 function poissonBinomial(probs) {
@@ -112,6 +125,8 @@ export function buildSlate(candidates, options = {}) {
       return { ...c, oddsType, odds_type: oddsType, confidence, prob, prob_source, support, stat,
         propKey: `${String(c.player || "").toLowerCase()}|${String(stat).toLowerCase()}`,
         game,
+        // Cap key — perspective-collapsed. `game` stays raw for display/filters.
+        gameCapKey: canonicalGameKey(game),
         rank: (LINE_TYPE_FACTOR[(oddsType || "standard")] ?? 1) * prob };
     })
     .filter((c) => typeof c.prob === "number" && c.prob > 0 && c.support >= minSupport);
@@ -139,27 +154,30 @@ export function buildSlate(candidates, options = {}) {
   const idx = new Array(size);
 
   const consider = (legs) => {
-    // per-game cap
-    const perGame = {};
-    for (const l of legs) {
-      perGame[l.game] = (perGame[l.game] || 0) + 1;
-      if (perGame[l.game] > maxPerGame) return;
-    }
     const ev = evaluateSlate(legs, mode);
     if (!bestRejected || ev.ev > bestRejected.ev) bestRejected = { ev: ev.ev, win_multiplier: ev.win_multiplier };
     const qualifies = ev.win_multiplier >= targetMultiplier && ev.ev >= minEdge;
     if (qualifies && (!best || ev.ev > best.evObj.ev)) best = { legs: legs.slice(), evObj: ev };
   };
 
-  // recursive combination generator over pool
+  // Recursive combination generator over pool. The per-game cap is enforced
+  // DURING recursion (increment on pick, decrement on backtrack) rather than
+  // on completed combos — prunes whole subtrees, which matters at larger
+  // sizes (C(40,6) ≈ 3.8M raw combos in flex). Same output set as the old
+  // post-hoc check: capped combos never reached evaluateSlate before either.
+  const perGame = Object.create(null);
   const recurse = (start, depth) => {
     if (depth === size) {
       consider(idx.map((i) => pool[i]));
       return;
     }
     for (let i = start; i < pool.length; i++) {
+      const key = pool[i].gameCapKey;
+      if ((perGame[key] || 0) >= maxPerGame) continue;
+      perGame[key] = (perGame[key] || 0) + 1;
       idx[depth] = i;
       recurse(i + 1, depth + 1);
+      perGame[key] -= 1;
     }
   };
   recurse(0, 0);

@@ -147,12 +147,13 @@ export function lookupMarket({ player, stat, line, league = null }) {
   if (!_odds) loadOdds();
   const hit = _normIndex?.[normalizeName(player)];
   if (!hit) return null;
-  // When a league is supplied, prefer a league-consistent entry: NBA & WNBA
+  // When a league is supplied, require a league-consistent entry: NBA & WNBA
   // share one odds.json keyed by player name, so an exact cross-league name
-  // collision is otherwise possible. Fall back to any stat match (league-less
-  // legacy/test odds, or when the caller doesn't know the league).
+  // collision is otherwise possible. The fallback only admits LEAGUE-LESS
+  // entries (legacy/test odds) — never an entry tagged with a different
+  // league, which would price the wrong player's market.
   const entry = (hit.props || []).find((p) => p.stat === stat && (league == null || p.league == null || p.league === league))
-    || (hit.props || []).find((p) => p.stat === stat);
+    || (hit.props || []).find((p) => p.stat === stat && p.league == null);
   if (!entry) return null;
 
   // Per-book sources. Back-compat: a flat entry (older schema / injected test
@@ -223,9 +224,11 @@ export function lookupVegas({ player, league = null } = {}) {
   const hit = _normIndex?.[normalizeName(player)];
   if (!hit) return null;
   const games = _odds?.games || {};
-  // Prefer a league-consistent entry that carries DK game/team meta.
+  // Require a league-consistent entry that carries DK game/team meta; the
+  // fallback only admits league-less entries (legacy/test odds) — same
+  // cross-league guard as lookupMarket.
   const tagged = (hit.props || []).find((p) => p.game && p.team && (league == null || p.league == null || p.league === league))
-    || (hit.props || []).find((p) => p.game && p.team);
+    || (hit.props || []).find((p) => p.game && p.team && p.league == null);
   if (!tagged) return null;
   const g = games[tagged.game];
   if (!g || typeof g.game_total !== "number") return null;

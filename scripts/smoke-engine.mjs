@@ -14,6 +14,16 @@
 import { applyEngine } from "../api/lib/engine.js";
 import { computeOverBufferCheck } from "../api/lib/rules/_helpers.js";
 import { shadowTierFor, TIER_RANK } from "../api/lib/rule-weights.js";
+import { setOdds } from "../api/lib/odds.js";
+
+// Hermetic odds: the engine's market rules (market-edge / game-script /
+// projection) lazy-load data/odds.json on first lookup, and the fixtures
+// below use REAL player names ("Kelsey Plum") that can collide with
+// whatever the latest odds refresh priced — firing market suppressors
+// mid-test and flaking tier assertions. Seed an empty store so this smoke
+// asserts box-score rule behavior only; the market rules have dedicated
+// smokes that inject their own odds.
+setOdds({ by_player: {}, games: {} });
 
 let passed = 0, failed = 0;
 function assert(name, cond, detail) {

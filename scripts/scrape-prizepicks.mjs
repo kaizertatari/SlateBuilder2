@@ -8,6 +8,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { normalizeName } from "../api/lib/string-utils.js";
 import { loadEnvLocal } from "./_env.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -33,17 +34,9 @@ const HEADERS = {
   "Accept-Language": "en-US,en;q=0.9",
 };
 
-// ─── Name Normalization (matches players.json format) ───────────────────────
-
-function normalizeName(s) {
-  return s
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .replace(/[.'’\-]/g, "")
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
-}
+// Name normalization (matches players.json format) is the shared
+// normalizeName from api/lib/string-utils.js — same canonicalization the
+// odds scrape and runtime lookups use, so all three agree on a key.
 
 // ─── Fetch Helpers ──────────────────────────────────────────────────────────
 
@@ -217,6 +210,10 @@ export async function scrapePrizePicksForToday(opts = {}) {
       };
 
       if (!gamesOutput[gameKey]) {
+        // NOTE: `home`/`away` are perspective labels (player's team /
+        // opponent), NOT actual venue — PrizePicks projections don't say
+        // who hosts. Keys kept for snapshot-schema stability; nothing
+        // downstream reads them as venue.
         gamesOutput[gameKey] = { league, home: playerTeam, away: opponent, props: [] };
       }
       gamesOutput[gameKey].props.push(prop);

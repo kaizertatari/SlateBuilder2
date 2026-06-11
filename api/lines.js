@@ -101,5 +101,10 @@ export async function GET(req) {
       0
     ),
     total_players: Object.keys(result.by_player || {}).length,
+  }, {
+    // The unfiltered response re-serializes the whole ~2MB snapshot; let the
+    // edge absorb repeats. 60s matches the blob's own edge TTL, so a lines
+    // refresh is visible within the same minute it lands.
+    headers: { "Cache-Control": "public, max-age=0, s-maxage=60" },
   });
 }

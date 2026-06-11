@@ -26,15 +26,17 @@ import { runWithRequestContext } from "./lib/request-context.js";
 import { PROP_TO_FIELD } from "./lib/prop-types.js";
 import { preFilterMechanical } from "./lib/verdict-verifier.js";
 import { applyEngine } from "./lib/engine.js";
+import { setOdds } from "./lib/odds.js";
+import { readOdds } from "./lib/odds-store.js";
 import { logVerdict } from "./lib/verdict-logger.js";
 import { randomUUID } from "node:crypto";
 import * as bbref from "./lib/bbref.js";
 import {
-  ConfigurationError,
   RateLimitError,
   createErrorResponse,
   isRetryableError,
   calculateBackoffDelay,
+  sleep,
 } from "./lib/errors.js";
 
 export const runtime = "nodejs";
@@ -373,8 +375,7 @@ export async function gatherGroundTruthWithRetry(
         // Retry transient skips while attempts remain; otherwise return.
         const isTransient = RETRIABLE_SKIP_REASONS.has(result.skipReason);
         if (isTransient && attempt < maxRetries) {
-          const delay = calculateBackoffDelay(attempt, baseDelayMs);
-          await new Promise((r) => setTimeout(r, delay));
+          await sleep(calculateBackoffDelay(attempt, baseDelayMs));
           continue;
         }
         return result;
@@ -393,8 +394,7 @@ export async function gatherGroundTruthWithRetry(
       }
 
       // Wait before retrying with exponential backoff
-      const delay = calculateBackoffDelay(attempt, baseDelayMs);
-      await new Promise((r) => setTimeout(r, delay));
+      await sleep(calculateBackoffDelay(attempt, baseDelayMs));
     }
   }
 }
@@ -438,6 +438,12 @@ async function handlePost(req) {
       return validationResult.response;
     }
     const { player, propType, line } = validationResult.data;
+
+    // Warm the sharp-odds store from the blob (falls back to the bundled
+    // data/odds.json) so the Stage 1–3 market rules price against the
+    // freshest snapshot instead of the deploy-time bundle. Mirrors
+    // build-slate / analyze-all.
+    setOdds(await readOdds());
 
     // Gather ground truth data from various sources with retry logic
     const gathered = await gatherGroundTruthWithRetry({ player, propType, line });
@@ -548,8 +554,11 @@ async function parseAndValidateRequest(req) {
   const body = await req.json();
   const { player, propType, line } = body;
 
-  // Validate required fields
-  if (!player || !propType || !line) {
+  // Validate required fields. `line` must be a finite number (or numeric
+  // string) — a bare truthiness check would reject a legitimate 0 and let
+  // non-numeric strings flow into the engine's comparisons.
+  const numericLine = Number(line);
+  if (!player || !propType || line == null || line === "" || !Number.isFinite(numericLine)) {
     return {
       isError: true,
       response: Response.json({ error: "Missing required fields" }, { status: 400 })
@@ -571,7 +580,7 @@ async function parseAndValidateRequest(req) {
 
   return {
     isError: false,
-    data: { player, propType, line }
+    data: { player, propType, line: numericLine }
   };
 }
 

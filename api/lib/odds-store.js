@@ -1,58 +1,27 @@
-// Read/write access to the sharp-odds blob (DK+FD no-vig consensus).
-//
-// Mirrors lines-store.js: a single fixed Vercel Blob object that every Fluid
-// Compute instance reads, so a residential `npm run refresh-odds` propagates
-// to the deployed slate builder without a redeploy. Reads fall back to the
-// bundled data/odds.json (a floor, not a cache) when the blob is unreachable.
+// Read/write access to the sharp-odds blob (DK+FD no-vig consensus). Thin
+// wrapper over the shared blob-store factory — see api/lib/blob-store.js
+// for the blob-vs-bundled fallback semantics and edge-cache rationale.
+// A residential `npm run refresh-odds` propagates to the deployed slate
+// builder without a redeploy.
 
-import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { put, head } from "@vercel/blob";
+import { createBlobStore } from "./blob-store.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const BUNDLED_PATH = path.resolve(HERE, "../../data/odds.json");
-const BLOB_PATHNAME = "odds.json";
-const EDGE_CACHE_SECONDS = 60;
 
-let cachedBlobUrl = null;
-
-async function getBlobUrl() {
-  if (cachedBlobUrl) return cachedBlobUrl;
-  const meta = await head(BLOB_PATHNAME);
-  cachedBlobUrl = meta.url;
-  return cachedBlobUrl;
-}
+const store = createBlobStore({
+  pathname: "odds.json",
+  bundledPath: path.resolve(HERE, "../../data/odds.json"),
+  label: "odds-store",
+  // Missing odds is non-fatal: the market rules no-op on an empty store, so
+  // degrade to "no market signal" rather than failing the request.
+  emptyFallback: { by_player: {}, games: {}, sources: [] },
+});
 
 export function getOddsStoreLocation() {
-  return `vercel-blob:${BLOB_PATHNAME}`;
+  return store.location;
 }
 
-export async function readOdds() {
-  try {
-    const url = await getBlobUrl();
-    const res = await fetch(url, { cache: "no-store" });
-    if (res.ok) return await res.json();
-  } catch {
-    // Fall through to bundled file.
-  }
-  try {
-    const raw = await fs.readFile(BUNDLED_PATH, "utf8");
-    return JSON.parse(raw);
-  } catch {
-    return { by_player: {}, games: {}, sources: [] };
-  }
-}
-
-export async function writeOdds(data) {
-  const body = JSON.stringify(data, null, 2) + "\n";
-  const result = await put(BLOB_PATHNAME, body, {
-    access: "public",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    contentType: "application/json",
-    cacheControlMaxAge: EDGE_CACHE_SECONDS,
-  });
-  cachedBlobUrl = result.url;
-  return result.url;
-}
+export const readOdds = store.read;
+export const writeOdds = store.write;

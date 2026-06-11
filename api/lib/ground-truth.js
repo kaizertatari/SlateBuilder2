@@ -5,7 +5,7 @@
 import { toEspnAbbr } from "./espn.js";
 import { normalizeName } from "./string-utils.js";
 import { computeWeightedL5 } from "./weighted-l5.js";
-import { ftFloorBaseline } from "./framework.js";
+import { ftFloorBaseline, fanduelFantasyScore } from "./framework.js";
 import { parseInjuryRegions } from "./injury-regions.js";
 import { detectMechanisms } from "./mechanisms.js";
 
@@ -224,13 +224,14 @@ function playoffL5MeanPts(games) {
   return n === 0 ? null : sum / n;
 }
 
-// FanDuel-style fantasy score per the user direction. Returns null when
-// any of the four required inputs is missing — the framework should
-// rather SKIP a Fantasy Score prop than evaluate it against a baseline
-// inflated by a missing turnover penalty.
+// FanDuel-style fantasy score — the formula lives in framework.js
+// (fanduelFantasyScore, the single source); this adapter maps the
+// season-average field names. Returns null when any of the four required
+// inputs is missing — the framework should rather SKIP a Fantasy Score
+// prop than evaluate it against a baseline inflated by a missing
+// turnover penalty.
 function fantasyScoreFanDuel({ ppg, rpg, apg, spg, bpg, topg }) {
-  if (ppg == null || rpg == null || apg == null || topg == null) return null;
-  return ppg + 1.2 * rpg + 1.5 * apg + 3 * (spg ?? 0) + 3 * (bpg ?? 0) - 1 * topg;
+  return fanduelFantasyScore({ pts: ppg, reb: rpg, ast: apg, stl: spg, blk: bpg, tov: topg });
 }
 
 function enrichL5Averages(a) {

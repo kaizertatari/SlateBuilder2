@@ -21,6 +21,7 @@
 // needs role/minutes to tell a starter from a reserve) — deferred to Stage 4.
 
 import { lookupVegas } from "../odds.js";
+import { COUNTING_STATS } from "./_helpers.js";
 
 // League-average implied TEAM total (game_total / 2 at a pick'em). Deviations
 // beyond ENV_BAND read as a real scoring tail/headwind. Spread magnitude at or
@@ -30,11 +31,9 @@ const REF_TEAM_TOTAL = { NBA: 114, WNBA: 83 };
 const ENV_BAND = { NBA: 5, WNBA: 4 };
 const BLOWOUT = { NBA: 12, WNBA: 11 };
 
-// Counting stats that scale with pace / scoring environment (every stat the
-// odds feed prices). Non-volume stats (Blks/Stls/TO) are left untouched.
-const COUNTING_STATS = new Set([
-  "Points", "Rebounds", "Assists", "3-Pointers Made", "PRA", "PR", "PA", "RA",
-]);
+// COUNTING_STATS (shared with rest/usage-shift) — counting stats that scale
+// with pace / scoring environment (every stat the odds feed prices).
+// Non-volume stats (Blks/Stls/TO) are left untouched.
 
 export function apply(ctx) {
   const { groundTruth, statType, direction } = ctx;
