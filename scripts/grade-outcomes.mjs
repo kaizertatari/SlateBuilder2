@@ -31,6 +31,7 @@ loadEnvLocal();
 
 import { getLastNGames } from "../api/_lib/espn-stats.js";
 import { currentSeason } from "../api/_lib/nba-stats.js";
+import { normalizeName } from "../api/_lib/string-utils.js";
 
 const AXIOM_INGEST_URL_BASE = "https://api.axiom.co/v1/datasets";
 const AXIOM_QUERY_URL = "https://api.axiom.co/v1/datasets/_apl?format=tabular";
@@ -241,6 +242,68 @@ async function main() {
     }
   }
 
+  // ── World Cup (soccer) leg — WC_FRAMEWORK_SPEC.md §7 ──────────────────────
+  // WC verdicts carry no espn_id (soccer identity never touches players.json),
+  // so the basketball gamelog join above filtered them out. Actuals come from
+  // ESPN fifa.world match summaries (per-player shots / shots on target),
+  // matched by normalized player name on the verdict's match date.
+  const wcUngradedByKey = new Map();
+  for (const v of verdictsRaw) {
+    if (v.league !== "WC" || !v.game_start_time) continue;
+    const k = joinKey(v);
+    if (graded.has(k) || wcUngradedByKey.has(k)) continue;
+    wcUngradedByKey.set(k, v);
+  }
+  const wcUngraded = [...wcUngradedByKey.values()];
+  let wcHits = 0, wcMisses = 0, wcPushes = 0, wcVoids = 0, wcPostponed = 0, wcUnmatched = 0;
+  if (wcUngraded.length) {
+    console.log(`\n=== World Cup leg: ${wcUngraded.length} ungraded WC verdicts ===`);
+    const byDate = new Map();
+    for (const v of wcUngraded) {
+      const d = v.game_start_time.slice(0, 10);
+      if (!byDate.has(d)) byDate.set(d, []);
+      byDate.get(d).push(v);
+    }
+    for (const [date, vs] of byDate) {
+      let actuals;
+      try {
+        actuals = await fetchWorldCupActuals(date);
+      } catch (err) {
+        console.warn(`  WC actuals fetch failed for ${date}: ${err.message}`);
+        wcPostponed += vs.length;
+        continue;
+      }
+      for (const v of vs) {
+        const entry = actuals.players.get(normalizeName(v.player));
+        if (!entry) {
+          // Not on any completed match's roster that day: match still in
+          // progress/postponed (retry within the lookback window) or a
+          // PP↔ESPN name mismatch (counted, surfaced, never auto-graded).
+          if (actuals.completed_events === 0) wcPostponed++;
+          else wcUnmatched++;
+          continue;
+        }
+        if (!entry.played) {
+          outcomeEvents.push(buildWcOutcomeEvent(v, entry, { hit_or_miss: "void", reason: "dnp", actual_value: null }));
+          wcVoids++;
+          continue;
+        }
+        const stat = canonicalStat(v.prop_type);
+        const actual = stat === "Shots" ? entry.sh : stat === "Shots On Target" ? entry.st : null;
+        if (actual == null) {
+          wcUnmatched++;
+          continue;
+        }
+        const r = gradeRaw(actual, num(v.line), v.direction);
+        outcomeEvents.push(buildWcOutcomeEvent(v, entry, { hit_or_miss: r, reason: null, actual_value: actual }));
+        if (r === "hit") wcHits++;
+        else if (r === "miss") wcMisses++;
+        else wcPushes++;
+      }
+    }
+    console.log(`WC result: hits=${wcHits}  misses=${wcMisses}  pushes=${wcPushes}  voids=${wcVoids}  postponed=${wcPostponed}  unmatched=${wcUnmatched}`);
+  }
+
   console.log(`\nResult: hits=${hits}  misses=${misses}  pushes=${pushes}  voids=${voids}`);
   console.log(`Ungraded (postponed / no gamelog yet): ${postponed}`);
   if (unmatched) console.log(`Unknown stat type: ${unmatched}`);
@@ -370,6 +433,89 @@ function joinKey(e) {
     String(e.direction ?? ""),
     String(e.game_start_time ?? ""),
   ].join("|");
+}
+
+// ─── World Cup (soccer) helpers ─────────────────────────────────────────────
+
+const WC_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
+const WC_SUMMARY = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary";
+
+// First finite value among candidate stat keys. ESPN soccer ships stats as
+// abbreviation/name pairs whose exact labels we validate against live
+// matches — candidates cover the observed/likely variants.
+function pickWcStat(statMap, keys) {
+  for (const k of keys) {
+    const v = statMap[k];
+    if (Number.isFinite(v)) return v;
+  }
+  return null;
+}
+
+// Per-player actuals for every COMPLETED fifa.world match on a UTC date.
+// Returns { completed_events, players: Map<normName, { name, team, played,
+// sh, st, event_id }> }. "played" = started or subbed in (or has stats);
+// rostered-but-unused → void/dnp.
+async function fetchWorldCupActuals(dateYmd) {
+  const dates = dateYmd.replace(/-/g, "");
+  const sbRes = await fetch(`${WC_SCOREBOARD}?dates=${dates}`, { signal: AbortSignal.timeout(15000) });
+  if (!sbRes.ok) throw new Error(`scoreboard HTTP ${sbRes.status}`);
+  const sb = await sbRes.json();
+  const players = new Map();
+  let completedEvents = 0;
+  for (const ev of sb?.events ?? []) {
+    if (ev?.status?.type?.completed !== true) continue;
+    completedEvents++;
+    const sumRes = await fetch(`${WC_SUMMARY}?event=${ev.id}`, { signal: AbortSignal.timeout(15000) });
+    if (!sumRes.ok) continue;
+    const sum = await sumRes.json();
+    for (const side of sum?.rosters ?? []) {
+      const teamName = side?.team?.displayName ?? null;
+      for (const slot of side?.roster ?? []) {
+        const name = slot?.athlete?.displayName;
+        if (!name) continue;
+        const statMap = {};
+        for (const s of slot?.stats ?? []) {
+          const key = s?.abbreviation ?? s?.name;
+          const val = Number(s?.value ?? s?.displayValue);
+          if (key != null && Number.isFinite(val)) statMap[key] = val;
+        }
+        const played = slot?.starter === true || slot?.subbedIn === true || Object.keys(statMap).length > 0;
+        players.set(normalizeName(name), {
+          name,
+          team: teamName,
+          played,
+          sh: pickWcStat(statMap, ["SH", "totalShots", "shotsTotal", "Shots"]),
+          st: pickWcStat(statMap, ["ST", "SOT", "shotsOnTarget", "Shots on Target"]),
+          event_id: ev.id,
+        });
+      }
+    }
+  }
+  return { completed_events: completedEvents, players };
+}
+
+// Mirrors buildOutcomeEvent with soccer context: no espn_id/nba_id identity
+// (the join key never includes them), matchup = the player's country.
+function buildWcOutcomeEvent(verdict, entry, outcome) {
+  return {
+    _time: new Date().toISOString(),
+    event_type: "outcome",
+    source: "grade-outcomes",
+    player: verdict.player,
+    prop_type: verdict.prop_type,
+    line: verdict.line,
+    direction: verdict.direction,
+    game_start_time: verdict.game_start_time,
+    espn_id: null,
+    nba_id: null,
+    league: "WC",
+    is_playoff: false,
+    actual_value: outcome.actual_value,
+    hit_or_miss: outcome.hit_or_miss,
+    reason: outcome.reason,
+    game_id: entry?.event_id ?? null,
+    matchup: entry?.team ?? null,
+  };
 }
 
 function canonicalStat(propType) {

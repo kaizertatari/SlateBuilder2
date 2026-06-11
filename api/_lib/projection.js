@@ -20,6 +20,8 @@
 
 import { getBaselines, computeOverBufferCheck } from "./rules/_helpers.js";
 import { slopeFor } from "./odds.js";
+import { poissonFairOver } from "./poisson.js";
+import { PROP_TO_FIELD } from "./prop-types.js";
 
 // Standard normal CDF — Abramowitz & Stegun 26.2.17 (|error| < 7.5e-8).
 export function normCdf(z) {
@@ -68,6 +70,26 @@ export function probOver({ mean, sigma, line }) {
  */
 export function projectProb({ groundTruth, statType, direction, line, mean }) {
   const league = groundTruth?.league ?? "NBA";
+
+  // World Cup (soccer): counting stats with means 0.5–4 are Poisson, not
+  // Normal — the Normal crossing is wrong exactly in the tails PrizePicks
+  // prices (WC_FRAMEWORK_SPEC.md §4). λ_model comes pre-composed from the
+  // soccer ground truth (per-90 rate × expected minutes × opponent env).
+  if (String(league).toUpperCase() === "WC") {
+    const field = PROP_TO_FIELD[statType];
+    const lam = groundTruth?.soccer?.lambda?.[field];
+    if (!(typeof lam === "number" && lam > 0) || typeof line !== "number") return null;
+    const p = poissonFairOver(lam, line);
+    if (p == null) return null;
+    const model_prob = Math.max(0.01, Math.min(0.99, p));
+    return {
+      model_prob: Number(model_prob.toFixed(4)),
+      dir_prob: Number((direction === "UNDER" ? 1 - model_prob : model_prob).toFixed(4)),
+      mean: lam,
+      sigma: Number(Math.sqrt(lam).toFixed(4)), // Poisson: Var = λ (telemetry)
+    };
+  }
+
   let m = typeof mean === "number" ? mean : null;
   if (m == null) {
     const bl = getBaselines({ groundTruth, statType });

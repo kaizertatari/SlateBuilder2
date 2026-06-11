@@ -16,7 +16,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { devigTwoWay, parseAmerican, fairProbAtLine } from "../api/_lib/odds.js";
+import { devigTwoWay, parseAmerican, fairProbAtLine, impliedProb } from "../api/_lib/odds.js";
+import { fitLadderPoisson, poissonFairOver, poissonTail, fairLambda } from "../api/_lib/poisson.js";
 import { normalizeName } from "../api/_lib/string-utils.js";
 import { loadEnvLocal } from "./_env.mjs";
 
@@ -99,6 +100,158 @@ async function scrapeDraftKings(league) {
       (byPlayer[player] ??= []).push({
         stat, line: over.points, over_american: parseAmerican(over.displayOdds?.american), under_american: parseAmerican(under.displayOdds?.american),
         fair_over: Number(fair.toFixed(4)), team, opponent: team && ev.home && ev.away ? (team === ev.home ? ev.away : ev.home) : null, game: ev.gameKey ?? null, start_time: ev.start_time ?? null,
+      });
+    }
+  }
+  return { games, byPlayer };
+}
+
+// ─── DraftKings World Cup (soccer milestone ladders) ─────────────────────────
+//
+// Soccer player props are ONE-SIDED milestone ladders ("2+ shots −650") — no
+// Under side exists, so devigTwoWay can't apply. Each ladder is fitted to
+// Poisson(λ) + a one-sided overround at scrape time (WC_FRAMEWORK_SPEC.md §3);
+// lookupMarket then prices ANY PrizePicks line from λ̂ via the Poisson tail.
+// DK-only for v1 (FD soccer is also ladder-style; consensus is a calibration-
+// driven follow-up). IDs verified live 2026-06-11.
+const DK_WC = {
+  league: 209533, // "World Cup 2026"
+  props: [
+    { stat: "Shots", cat: 1113, sub: 16868 },
+    { stat: "Shots On Target", cat: 1113, sub: 16861 },
+  ],
+  // Match Lines: the soccer base payload only carries Moneyline; totals and
+  // goal handicaps live in their own subcategories, each as an alt-line
+  // ladder. The "main" line is the rung priced closest to even money.
+  lines: { cat: 490, total: 13171, spread: 13170 },
+};
+
+// Full country names (not abbrOf): PrizePicks uses full country names for
+// soccer teams, so identity matching needs none of the abbreviation
+// machinery — "South Africa@Mexico", not "Sou@Mex".
+function dkWcEventMap(base) {
+  const events = {};
+  for (const e of base?.events || []) {
+    const home = e.participants?.find((p) => p.venueRole === "Home");
+    const away = e.participants?.find((p) => p.venueRole === "Away");
+    if (!home || !away) continue;
+    events[e.id] = { home: home.name, away: away.name, start_time: e.startEventDate, gameKey: `${away.name}@${home.name}` };
+  }
+  return events;
+}
+
+// Main total from an Over/Under alt ladder: the line whose two sides are
+// priced closest to even.
+function dkWcMainTotal(sels) {
+  const byLine = {};
+  for (const s of sels) {
+    if (s.points == null) continue;
+    (byLine[Math.abs(s.points)] ??= {})[/over/i.test(s.label) ? "over" : "under"] = impliedProb(s.displayOdds?.american);
+  }
+  let best = null;
+  for (const [line, p] of Object.entries(byLine)) {
+    if (typeof p.over !== "number" || typeof p.under !== "number") continue;
+    const gap = Math.abs(p.over - p.under);
+    if (!best || gap < best.gap) best = { line: Number(line), gap };
+  }
+  return best?.line ?? null;
+}
+
+// Main goal handicap: same closest-to-even rule across the two-sided alt
+// ladder; selection labels are full team names.
+function dkWcMainSpread(sels, homeName) {
+  const byAbs = {};
+  for (const s of sels) {
+    if (s.points == null) continue;
+    const side = s.label === homeName ? "home" : "away";
+    (byAbs[Math.abs(s.points)] ??= {})[side] = { points: s.points, imp: impliedProb(s.displayOdds?.american) };
+  }
+  let best = null;
+  for (const v of Object.values(byAbs)) {
+    if (typeof v.home?.imp !== "number" || typeof v.away?.imp !== "number") continue;
+    const gap = Math.abs(v.home.imp - v.away.imp);
+    if (!best || gap < best.gap) best = { home_spread: v.home.points, away_spread: v.away.points, gap };
+  }
+  return best;
+}
+
+async function scrapeDraftKingsWorldCup() {
+  const base = await jsonFetch(`${DK_NASH}/${DK_WC.league}`, DK_HEADERS);
+  if (!base) throw new Error("DK WC base payload fetch failed");
+  const eventMap = dkWcEventMap(base);
+
+  const games = {};
+  for (const ev of Object.values(eventMap)) {
+    games[ev.gameKey] = { home: ev.home, away: ev.away, start_time: ev.start_time, game_total: null, home_spread: null, away_spread: null };
+  }
+  for (const [kind, sub] of [["total", DK_WC.lines.total], ["spread", DK_WC.lines.spread]]) {
+    const data = await jsonFetch(`${DK_NASH}/${DK_WC.league}/categories/${DK_WC.lines.cat}/subcategories/${sub}`, DK_HEADERS);
+    if (!data) continue;
+    const byMarket = {};
+    for (const s of data.selections || []) (byMarket[s.marketId] ??= []).push(s);
+    for (const m of data.markets || []) {
+      const ev = eventMap[m.eventId];
+      if (!ev) continue;
+      const g = games[ev.gameKey];
+      const sels = byMarket[m.id] || [];
+      if (kind === "total") {
+        const t = dkWcMainTotal(sels);
+        if (t != null) g.game_total = t;
+      } else {
+        const sp = dkWcMainSpread(sels, ev.home);
+        if (sp) { g.home_spread = sp.home_spread; g.away_spread = sp.away_spread; }
+      }
+    }
+  }
+
+  const byPlayer = {};
+  for (const { stat, cat, sub } of DK_WC.props) {
+    const data = await jsonFetch(`${DK_NASH}/${DK_WC.league}/categories/${cat}/subcategories/${sub}`, DK_HEADERS);
+    if (!data) continue;
+    const byMarket = {};
+    for (const s of data.selections || []) (byMarket[s.marketId] ??= []).push(s);
+    for (const m of data.markets || []) {
+      const rungs = [];
+      let player = null;
+      let venue = null;
+      for (const s of byMarket[m.id] || []) {
+        const milestone = /^(\d+)\+$/.exec(String(s.label || "").trim());
+        if (!milestone) continue;
+        const american = parseAmerican(s.displayOdds?.american);
+        const implied = impliedProb(american);
+        if (implied == null) continue;
+        player ??= s.participants?.[0]?.name ?? null;
+        venue ??= s.participants?.[0]?.venueRole ?? null;
+        rungs.push({ k: Number(milestone[1]), american, implied: Number(implied.toFixed(4)) });
+      }
+      if (!player || !rungs.length) continue;
+      rungs.sort((a, b) => a.k - b.k);
+      const fit = fitLadderPoisson(rungs);
+      if (!fit) continue;
+      const ev = eventMap[m.eventId] || {};
+      const team = venue === "HomePlayer" ? ev.home : venue === "AwayPlayer" ? ev.away : null;
+      // Margin correction happens in λ-space (POISSON_LAMBDA_MARGIN — DK
+      // shades the rate, not the probabilities). All fair pricing uses
+      // lambda_fair; `lambda` is kept as the raw fit diagnostic.
+      const lamFair = Number(fairLambda(fit.lambda).toFixed(4));
+      // Representative line: the rung whose fair tail is closest to a coin
+      // flip — the line PP most plausibly posts as standard. lookupMarket
+      // reprices from λ at whatever line PP actually posted.
+      let rep = rungs[0].k;
+      let repGap = Infinity;
+      for (const r of rungs) {
+        const gap = Math.abs(poissonTail(lamFair, r.k) - 0.5);
+        if (gap < repGap) { repGap = gap; rep = r.k; }
+      }
+      const line = rep - 0.5;
+      const fairOver = Number(poissonFairOver(lamFair, line).toFixed(4));
+      (byPlayer[player] ??= []).push({
+        stat, league: "WC", line, fair_over: fairOver,
+        lambda: fit.lambda, lambda_fair: lamFair, overround: fit.overround, ladder_rmse: fit.rmse, ladder: rungs,
+        books: 1,
+        team, opponent: team && ev.home && ev.away ? (team === ev.home ? ev.away : ev.home) : null,
+        game: ev.gameKey ?? null, start_time: ev.start_time ?? null,
+        sources: [{ book: "draftkings", kind: "ladder", line, fair_over: fairOver, rungs: rungs.length }],
       });
     }
   }
@@ -194,6 +347,21 @@ function mergeBooks(dk, fd, league) {
 }
 
 export async function scrapeOdds({ write = true, outputPath = OUTPUT, league = "WNBA" } = {}) {
+  // World Cup: DK-only ladder scrape with the Poisson fit done at scrape
+  // time; no FD leg and no mergeBooks (entries are already consensus-shaped).
+  if (league === "WC") {
+    console.log("  DraftKings WC (soccer ladders)...");
+    const dk = await scrapeDraftKingsWorldCup();
+    const total = Object.values(dk.byPlayer).reduce((n, arr) => n + arr.length, 0);
+    console.log(`    ${Object.keys(dk.games).length} games, ${Object.keys(dk.byPlayer).length} players, ${total} fitted ladders`);
+    const result = {
+      fetched_at: new Date().toISOString(), league, sources: ["draftkings"],
+      games: dk.games, by_player: dk.byPlayer, total_props: total, total_players: Object.keys(dk.byPlayer).length, books_coverage: { 1: total },
+    };
+    if (write) { await fs.writeFile(outputPath, JSON.stringify(result, null, 2) + "\n"); console.log(`  Written to ${path.relative(ROOT, outputPath)}`); }
+    return result;
+  }
+
   console.log(`  DraftKings ${league}...`);
   const dk = await scrapeDraftKings(league);
   console.log(`    ${Object.keys(dk.games).length} games, ${Object.keys(dk.byPlayer).length} players`);
@@ -217,7 +385,7 @@ export async function scrapeOdds({ write = true, outputPath = OUTPUT, league = "
 // blob; each entry carries its `league` so lookupMarket applies the right
 // line-shift slope. A league that fails to scrape is skipped — the rest still
 // publish (better a partial refresh than clobbering both books with nothing).
-export async function scrapeAllOdds({ leagues = ["WNBA", "NBA"], write = true, outputPath = OUTPUT } = {}) {
+export async function scrapeAllOdds({ leagues = ["WNBA", "NBA", "WC"], write = true, outputPath = OUTPUT } = {}) {
   const per = [];
   for (const lg of leagues) {
     try { per.push(await scrapeOdds({ league: lg, write: false })); }

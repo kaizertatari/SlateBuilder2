@@ -4,7 +4,7 @@
 
 // Canonical stat names — the UI lists these, the API validates against
 // them, and PROP_TO_FIELD/mapPrizePicksStatType key off them.
-export const STATS = [
+export const BASKETBALL_STATS = [
   "Points",
   "Rebounds",
   "Assists",
@@ -18,6 +18,24 @@ export const STATS = [
   "Blocks+Steals",
   "Fantasy Score",
 ];
+
+// World Cup (soccer) v1 covers Shots + SOT only — see WC_FRAMEWORK_SPEC.md §9
+// for what's deliberately excluded (fouls/tackles/goals/cards/passes).
+export const SOCCER_STATS = [
+  "Shots",
+  "Shots On Target",
+];
+
+// Full whitelist (cross-league). League-aware callers (UI stat picker,
+// slate filters) should use STATS_BY_LEAGUE instead so basketball lists
+// don't grow soccer entries and vice versa.
+export const STATS = [...BASKETBALL_STATS, ...SOCCER_STATS];
+
+export const STATS_BY_LEAGUE = {
+  NBA: BASKETBALL_STATS,
+  WNBA: BASKETBALL_STATS,
+  WC: SOCCER_STATS,
+};
 
 // Stat name → key inside an averages object (groundTruth.season.averages,
 // groundTruth.l5.averages). pra/pr/pa/ra are computed in ground-truth.js.
@@ -34,6 +52,9 @@ export const PROP_TO_FIELD = {
   "FG Attempted": "fga",
   "Blocks+Steals": "bs",
   "Fantasy Score": "fs",
+  // Soccer (WC): keys inside soccer ground-truth averages objects.
+  Shots: "shots",
+  "Shots On Target": "sot",
 };
 
 // PrizePicks publishes stat types under abbreviated lowercase labels; map
@@ -51,6 +72,10 @@ const PRIZEPICKS_TO_CANONICAL = {
   "assists": "Assists",
   "blks+stls": "Blocks+Steals",
   "fantasy score": "Fantasy Score",
+  // Soccer (WC). PrizePicks publishes these capitalized; keys here are
+  // lowercase because mapPrizePicksStatType lowercases before lookup.
+  "shots": "Shots",
+  "shots on target": "Shots On Target",
 };
 
 export function mapPrizePicksStatType(statType) {

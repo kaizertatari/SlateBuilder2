@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import playersData from "../data/players.json";
-import { STATS, mapPrizePicksStatType } from "../api/_lib/prop-types.js";
+import { STATS, STATS_BY_LEAGUE, mapPrizePicksStatType } from "../api/_lib/prop-types.js";
 import { selectLinesForStat } from "../api/_lib/select-lines.js";
 import { readNewestCached, writeCached, clearStaleForPlayer, buildKey } from "./lib/result-cache.js";
 
@@ -46,7 +46,7 @@ const PLAYERS_BY_LEAGUE = (() => {
   return grouped;
 })();
 
-const LEAGUES = ["NBA", "WNBA"];
+const LEAGUES = ["NBA", "WNBA", "WC"];
 
 const REFRESH_STATUS_COLORS = {
   success: { fg: "#00FF88", bg: "#002218", border: "#00FF8844" },
@@ -81,7 +81,7 @@ export default function App() {
   const [playerQuery, setPlayerQuery] = useState("");
   const [playerOpen, setPlayerOpen] = useState(false);
   const [playerHighlight, setPlayerHighlight] = useState(0);
-  const [selectedStats, setSelectedStats] = useState([...STATS]);
+  const [selectedStats, setSelectedStats] = useState([...STATS_BY_LEAGUE.NBA]);
   // Direction filter — pre-analysis. Both selected = backend fans out to
   // OVER + UNDER (omits the direction field in the body); single selected
   // pins the request to one side. Empty = blocked at submit time.
@@ -136,7 +136,10 @@ export default function App() {
   const [buildingSlate, setBuildingSlate] = useState(false);
   const [slateError, setSlateError] = useState(null);
 
-  const allStatsSelected = selectedStats.length === STATS.length;
+  // League-scoped stat catalog: basketball leagues share one list; WC shows
+  // only the soccer stats. selectedStats resets on league change.
+  const leagueStats = STATS_BY_LEAGUE[league] ?? STATS;
+  const allStatsSelected = selectedStats.length === leagueStats.length;
   const allOddsSelected = selectedOdds.length === ODDS_TYPES.length;
   const allDirectionsSelected = selectedDirections.length === DIRECTIONS.length;
 
@@ -195,7 +198,7 @@ export default function App() {
     const byCanonical = new Map();
     for (const [gameKey, info] of Object.entries(games)) {
       if (!info || info.league !== league) continue;
-      const cleanKey = gameKey.replace(/^WNBA:/, "");
+      const cleanKey = gameKey.replace(/^(WNBA|WC):/, "");
       const parts = cleanKey.split("@");
       if (parts.length !== 2) continue;
       const [a, b] = parts;
@@ -217,7 +220,11 @@ export default function App() {
   // Players visible in the picker — narrowed to selected games when at
   // least one game is picked. Empty selection means "no game filter".
   const leaguePlayers = useMemo(() => {
-    const all = PLAYERS_BY_LEAGUE[league] ?? [];
+    // WC (soccer) players aren't in players.json — the roster IS the lines
+    // snapshot, so derive the picker list from the slate's games.
+    const all = league === "WC"
+      ? [...new Set(availableGames.flatMap((g) => [...g.players]))].sort()
+      : PLAYERS_BY_LEAGUE[league] ?? [];
     if (selectedGames.length === 0) return all;
     const allowed = new Set();
     for (const g of availableGames) {
@@ -288,7 +295,7 @@ export default function App() {
       games: selectedGames.length,
       gamesTotal: availableGames.length,
       stats: selectedStats.length,
-      statsTotal: STATS.length,
+      statsTotal: leagueStats.length,
       odds: selectedOdds.length,
       oddsTotal: ODDS_TYPES.length,
       directions: selectedDirections.length,
@@ -296,7 +303,7 @@ export default function App() {
       propBuckets,
       linesToAnalyze,
     };
-  }, [linesData, players, selectedStats, selectedOdds, selectedDirections, selectedGames, availableGames]);
+  }, [linesData, players, selectedStats, selectedOdds, selectedDirections, selectedGames, availableGames, leagueStats]);
 
   // top_10 narrowed by the Odds filter. Display-only — tier_counts above
   // still reflects the full analyzed pool so the operator can see the
@@ -312,6 +319,7 @@ export default function App() {
   const handleLeagueChange = (next) => {
     if (next === league) return;
     setLeague(next);
+    setSelectedStats([...(STATS_BY_LEAGUE[next] ?? STATS)]);
     setPlayers([]);
     setPlayerQuery("");
     setPlayerOpen(false);
@@ -434,7 +442,7 @@ export default function App() {
   };
 
   const toggleAllStats = () => {
-    setSelectedStats(allStatsSelected ? [] : [...STATS]);
+    setSelectedStats(allStatsSelected ? [] : [...leagueStats]);
   };
 
   // Fetch (or load from cache) a single player's analyze-all response.
@@ -590,7 +598,7 @@ export default function App() {
       const gameKeys = selectedGames.length
         ? availableGames
             .filter((g) => selectedGames.includes(g.canonical))
-            .flatMap((g) => g.gameKeys.map((k) => k.replace(/^WNBA:/, "")))
+            .flatMap((g) => g.gameKeys.map((k) => k.replace(/^(WNBA|WC):/, "")))
         : null;
       const body = { league, statTypes: selectedStats, targetMultiplier, mode: slateMode, size: 3 };
       if (gameKeys && gameKeys.length) body.games = gameKeys;
@@ -1236,7 +1244,7 @@ export default function App() {
               <span style={{ fontSize: 12 }}>
                 {selectedStats.length === 0
                   ? "— SELECT STATS —"
-                  : selectedStats.length === STATS.length
+                  : selectedStats.length === leagueStats.length
                   ? "ALL STATS"
                   : `${selectedStats.length} STATS SELECTED`}
               </span>
@@ -1285,7 +1293,7 @@ export default function App() {
                   <strong>SELECT ALL</strong>
                 </label>
 
-                {STATS.map((s) => (
+                {leagueStats.map((s) => (
                   <label
                     key={s}
                     style={{

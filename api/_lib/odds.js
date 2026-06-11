@@ -13,6 +13,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { normalizeName } from "./string-utils.js";
+import { poissonFairOver } from "./poisson.js";
 
 // DK ships American odds with a Unicode minus (− U+2212), en/em dashes, etc.
 // Normalize before parsing so "−123" → -123.
@@ -155,6 +156,28 @@ export function lookupMarket({ player, stat, line, league = null }) {
   const entry = (hit.props || []).find((p) => p.stat === stat && (league == null || p.league == null || p.league === league))
     || (hit.props || []).find((p) => p.stat === stat && p.league == null);
   if (!entry) return null;
+
+  // World Cup (soccer): the entry carries a ladder-fitted, margin-corrected
+  // fair λ (WC_FRAMEWORK_SPEC.md §3). Any requested half-line is priced
+  // EXACTLY from the Poisson tail — the linear slope shift and its
+  // MAX_PROB_SHIFT guard never apply (the ladder pins the whole
+  // distribution, so demon/goblin lines extrapolate soundly too).
+  if (typeof entry.lambda_fair === "number") {
+    const target = typeof line === "number" ? line : entry.line;
+    const fair = poissonFairOver(entry.lambda_fair, target);
+    if (fair == null) return null;
+    return {
+      fair_over: Number(Math.max(0.02, Math.min(0.98, fair)).toFixed(4)),
+      book_line: typeof entry.line === "number" ? entry.line : null,
+      line_delta: typeof line === "number" && typeof entry.line === "number" ? Number((line - entry.line).toFixed(2)) : null,
+      books: 1,
+      sources: entry.sources || [],
+      source: "draftkings",
+      league: entry.league ?? league ?? null,
+      lambda_fair: entry.lambda_fair,
+      ladder_rmse: entry.ladder_rmse ?? null,
+    };
+  }
 
   // Per-book sources. Back-compat: a flat entry (older schema / injected test
   // odds) counts as a single source.

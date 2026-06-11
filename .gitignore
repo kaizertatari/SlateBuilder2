@@ -32,3 +32,6 @@ CLAUDE.local.md
 .prizepicks-profile/
 data/prizepicks-entries.json
 tmp/prizepicks-entries-raw.json
+
+# FBref scrape browser profile (Cloudflare clearance cookies) — never commit
+.fbref-profile/

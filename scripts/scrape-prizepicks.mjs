@@ -9,6 +9,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { normalizeName } from "../api/_lib/string-utils.js";
+import { mapPrizePicksStatType } from "../api/_lib/prop-types.js";
 import { loadEnvLocal } from "./_env.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -18,13 +19,21 @@ const PLAYERS_JSON = path.join(ROOT, "data/players.json");
 const PRIZEPICKS_API = "https://api.prizepicks.com/projections";
 
 // PrizePicks league IDs. Add more entries here if PrizePicks publishes more
-// basketball leagues we want to cover; everything downstream is league-aware.
+// leagues we want to cover; everything downstream is league-aware.
 //
 // NOTE: PrizePicks' league IDs are unrelated to stats.wnba.com's LeagueID
-// ("10" there). Verified against api.prizepicks.com/leagues: WNBA=3, NBA=7.
+// ("10" there). Verified against api.prizepicks.com/leagues: WNBA=3, NBA=7,
+// WORLD CUP=241 (the per-match board; 457 "WORLD CUP TRNY" is tournament-long
+// futures and out of scope — WC_FRAMEWORK_SPEC.md §9).
+//
+// `stats` (optional) — canonical stat whitelist for the league; projections
+// whose stat_type doesn't map into it are dropped at scrape time. WC v1
+// covers Shots + SOT only, which also keeps ~4.5k fouls/cards/offsides
+// projections out of the snapshot.
 const LEAGUES = [
   { league: "NBA", league_id: 7 },
   { league: "WNBA", league_id: 3 },
+  { league: "WC", league_id: 241, stats: ["Shots", "Shots On Target"] },
 ];
 
 const HEADERS = {
@@ -58,7 +67,15 @@ async function jsonFetch(url, opts = {}) {
 
 async function scrapePrizePicksForLeague(leagueId) {
   const url = `${PRIZEPICKS_API}?league_id=${leagueId}&per_page=250&single_stat=true`;
-  const data = await jsonFetch(url, { headers: HEADERS });
+  // PP rate-limits bursts (429) — with three leagues scraped back-to-back a
+  // single retry after a cooldown recovers the slate instead of dropping a
+  // whole league from the snapshot.
+  let data = await jsonFetch(url, { headers: HEADERS });
+  if (!data) {
+    console.log(`  league_id=${leagueId} fetch failed — retrying in 15s...`);
+    await new Promise((r) => setTimeout(r, 15000));
+    data = await jsonFetch(url, { headers: HEADERS });
+  }
   if (!data) throw new Error(`Failed to fetch PrizePicks API (league_id=${leagueId})`);
 
   // Build player lookup from "included" array (includes name AND team)
@@ -70,6 +87,10 @@ async function scrapePrizePicksForLeague(leagueId) {
         name: item.attributes.name,
         team: item.attributes.team || null,
         team_name: item.attributes.team_name || null,
+        // Soccer carries a useful position label (Forward/Midfielder/
+        // Defender/Goalkeeper) — basketball sometimes has one too; passed
+        // through for league-aware consumers (WC position priors + GK gate).
+        position: item.attributes.position || null,
       };
     }
   }
@@ -85,12 +106,17 @@ async function scrapePrizePicksForLeague(leagueId) {
       return {
         player_name: playerInfo.name,
         player_team: playerInfo.team,
+        player_position: playerInfo.position,
         opponent: attrs.description || null,
         stat_type: attrs.stat_type || null,
         line_score: attrs.line_score ?? null,
         start_time: attrs.start_time || null,
         status: attrs.status || null,
         odds_type: attrs.odds_type || null,
+        // Promo rows (free squares / flash sales) aren't real lines. NOTE:
+        // event_type is NOT a usable filter — PP marks every soccer
+        // projection event_type:"team", including ordinary player props.
+        is_promo: attrs.is_promo === true,
       };
     })
     .filter((p) => p.player_name && p.stat_type && p.line_score != null && p.opponent);
@@ -160,7 +186,12 @@ export async function scrapePrizePicksForToday(opts = {}) {
   let totalProps = 0;
   const perLeague = {};
 
-  for (const { league, league_id } of leagues) {
+  let firstLeague = true;
+  for (const { league, league_id, stats } of leagues) {
+    // Courtesy gap between league fetches — see 429 note in
+    // scrapePrizePicksForLeague.
+    if (!firstLeague) await new Promise((r) => setTimeout(r, 3000));
+    firstLeague = false;
     console.log(`  Fetching PrizePicks ${league} (league_id=${league_id}) projections...`);
     let projections;
     try {
@@ -172,8 +203,13 @@ export async function scrapePrizePicksForToday(opts = {}) {
     }
     console.log(`  Got ${projections.length} total ${league} projections`);
 
+    const allowedStats = Array.isArray(stats) && stats.length ? new Set(stats) : null;
     let leagueProps = 0;
     for (const proj of projections) {
+      // Promo rows (free squares / discounted flash lines) aren't real lines.
+      if (proj.is_promo) continue;
+      // Per-league stat whitelist (canonical names) — see LEAGUES above.
+      if (allowedStats && !allowedStats.has(mapPrizePicksStatType(proj.stat_type))) continue;
       // Filter by start_time — only include if the game hasn't tipped yet.
       if (!proj.start_time) continue;
       const startMs = Date.parse(proj.start_time);
@@ -188,10 +224,11 @@ export async function scrapePrizePicksForToday(opts = {}) {
 
       if (!playerTeam || !opponent) continue;
 
-      // Prefix WNBA games to disambiguate hypothetical NBA/WNBA abbr clashes.
-      const gameKey = league === "WNBA"
-        ? `WNBA:${opponent}@${playerTeam}`
-        : `${opponent}@${playerTeam}`;
+      // Prefix non-NBA games to disambiguate cross-league key clashes
+      // (WNBA keys keep their existing "WNBA:" form; WC gets "WC:").
+      const gameKey = league === "NBA"
+        ? `${opponent}@${playerTeam}`
+        : `${league}:${opponent}@${playerTeam}`;
       const matched = resolvePlayer(proj.player_name, nameLookup, league);
 
       const prop = {
@@ -207,6 +244,9 @@ export async function scrapePrizePicksForToday(opts = {}) {
         player_key: matched?.name ?? null,
         nba_id: matched?.nba ?? null,
         espn_id: matched?.espn ?? null,
+        // Soccer-only (null for basketball): PP position label, used by the
+        // WC gatherer for position priors and the goalkeeper gate.
+        player_position: proj.player_position ?? null,
       };
 
       if (!gamesOutput[gameKey]) {

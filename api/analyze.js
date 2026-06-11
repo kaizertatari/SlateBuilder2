@@ -28,6 +28,8 @@ import { preFilterMechanical } from "./_lib/verdict-verifier.js";
 import { applyEngine } from "./_lib/engine.js";
 import { setOdds } from "./_lib/odds.js";
 import { readOdds } from "./_lib/odds-store.js";
+import { readLines } from "./_lib/lines-store.js";
+import { gatherSoccerGroundTruth } from "./_lib/soccer-truth.js";
 import { logVerdict } from "./_lib/verdict-logger.js";
 import { randomUUID } from "node:crypto";
 import * as bbref from "./_lib/bbref.js";
@@ -64,6 +66,21 @@ export const runtime = "nodejs";
 // triggered in production. Best-effort, capped, parallel; mutates entries in
 // place (composeGroundTruth slices the same objects). A failed/unknown lookup
 // leaves season_ppg unset → that teammate just isn't counted, as before.
+// World Cup dispatch helper: a player "is a WC player" iff the current
+// lines snapshot has a WC-tagged prop row for them. readLines caches, so
+// the basketball path pays one cheap map lookup. Returns the first WC prop
+// row (it carries team country, opponent, kickoff, position) or null.
+async function findWorldCupProp(player) {
+  try {
+    const lines = await readLines();
+    const rows = (lines?.by_player || {})[player];
+    if (!Array.isArray(rows)) return null;
+    return rows.find((p) => p.league === "WC") ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function enrichInjuriesWithPpg(injuries, league, season) {
   if (!Array.isArray(injuries) || !injuries.length) return;
   const targets = injuries.filter((e) => {
@@ -84,6 +101,18 @@ async function enrichInjuriesWithPpg(injuries, league, season) {
 export async function gatherGroundTruth({ player, propType, line, teamAbbrHint = null }) {
   const playerInfo = resolvePlayer(player);
   if (!playerInfo) {
+    // World Cup (soccer): identity comes from the PrizePicks snapshot itself
+    // — soccer players are never in players.json, so they land here. If the
+    // current lines snapshot carries a WC prop row for this player, route to
+    // the soccer composer. (Routing on the snapshot rather than a request
+    // field keeps /api/analyze and /api/analyze-all on one dispatch point;
+    // checking only after basketball identity fails keeps the basketball
+    // path free of the extra lines read.)
+    const wcProp = await findWorldCupProp(player);
+    if (wcProp) {
+      const r = gatherSoccerGroundTruth({ player, prop: wcProp });
+      return { ...r, missing: [] };
+    }
     return { skipReason: "player_not_configured", message: `No player entry for ${player}` };
   }
   // NBA requires a stats.nba.com PERSON_ID (the BR/ESPN paths alone don't

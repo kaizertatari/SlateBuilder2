@@ -32,6 +32,9 @@ import * as ruleProjection from "./rules/rule-projection.js";
 import * as ruleRest from "./rules/rule-rest.js";
 import * as ruleUsageShift from "./rules/rule-usage-shift.js";
 import * as ruleSTier from "./rules/rule-s-tier.js";
+import * as ruleWcProjection from "./rules/rule-wc-projection.js";
+import * as ruleWcMinutes from "./rules/rule-wc-minutes.js";
+import * as ruleWcContext from "./rules/rule-wc-context.js";
 
 import { scaleFor } from "./rules/_helpers.js";
 import { RULE_WEIGHTS, TIER_RANK, tierMin, snapToBand, TIER_BAND, shadowTierFor } from "./rule-weights.js";
@@ -81,6 +84,20 @@ const RULES_PRE_S = [
   ["under-mechanism", ruleUnderMechanism],
 ];
 
+// World Cup (soccer) rule family — WC_FRAMEWORK_SPEC.md §5–6. Runs INSTEAD
+// of the basketball list: none of the box-score rules transfer (Poisson
+// stats, no L5/H2H/series), and the WC rules league-guard themselves so a
+// misrouted ctx still no-ops. market-edge is shared — it carries the WC
+// branch (ladder pricing + market-led tiering) and stays the spine; the
+// rest confirm or gate. Finalizer (tier caps, suppressor stacking,
+// confidence bands) is shared with basketball.
+const RULES_WC = [
+  ["market-edge", ruleMarketEdge],
+  ["wc-projection", ruleWcProjection],
+  ["wc-minutes", ruleWcMinutes],
+  ["wc-context", ruleWcContext],
+];
+
 /**
  * Run the deterministic v3.5 framework on a single (player, prop, line)
  * task. Returns the verdict shape the rest of the app expects.
@@ -104,6 +121,8 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
   const scale = scaleFor(groundTruth);
   const weights = RULE_WEIGHTS;
   const ctx = { groundTruth, statType, direction, line, scale, weights };
+  const isWC = String(groundTruth?.league ?? "").toUpperCase() === "WC";
+  const ruleList = isWC ? RULES_WC : RULES_PRE_S;
 
   // Accumulators.
   let tierCap = "S"; // start optimistic; rules narrow it down
@@ -125,7 +144,7 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
   let restInfo = null;
   let usageInfo = null;
 
-  for (const [id, mod] of RULES_PRE_S) {
+  for (const [id, mod] of ruleList) {
     const out = mod.apply(ctx);
     if (!out || !out.fired) {
       // Still surface a justification fragment if the rule cared enough
@@ -134,7 +153,7 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
       // Capture the neutral Vegas context even when game-script doesn't fire,
       // so calibration sees the game-script inputs on every covered pick.
       if (id === "game-script" && out?._vegas) vegasInfo = out._vegas;
-      if (id === "projection" && out?._projection) projectionInfo = out._projection;
+      if ((id === "projection" || id === "wc-projection") && out?._projection) projectionInfo = out._projection;
       if (id === "rest" && out?._rest) restInfo = out._rest;
       if (id === "usage-shift" && out?._usage) usageInfo = out._usage;
       continue;
@@ -159,7 +178,7 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
     }
     if (id === "market-edge") marketInfo = out._market ?? null;
     if (id === "game-script") vegasInfo = out._vegas ?? vegasInfo;
-    if (id === "projection") projectionInfo = out._projection ?? projectionInfo;
+    if (id === "projection" || id === "wc-projection") projectionInfo = out._projection ?? projectionInfo;
     if (id === "rest") restInfo = out._rest ?? restInfo;
     if (id === "usage-shift") usageInfo = out._usage ?? usageInfo;
   }
@@ -186,8 +205,17 @@ export function applyEngine({ groundTruth, statType, direction, line }) {
   // L5 sample size ≥ 5 counts as a signal (small samples are riskier).
   if ((groundTruth?.l5?.n ?? 0) >= 5) signalCount += 1;
 
-  // S-tier gate runs last with the accumulated state visible.
-  const sOut = ruleSTier.apply({
+  // WC: signals convert to score directly — basketball routes signal
+  // accounting through the S-tier gate below, which WC bypasses (its
+  // tiering is cap-driven per WC_FRAMEWORK_SPEC.md §5). Without this a
+  // max-signal WC pick (market ≥8pts + model agree + starter) tops out at
+  // ~79 and can never reach the S band floor (82).
+  if (isWC) score += signalCount * weights.signal_bonus;
+
+  // S-tier gate runs last with the accumulated state visible. Basketball
+  // only: WC tiering is owned by the market-led caps (spec §5) — the
+  // basketball S-gate's signal accounting doesn't translate.
+  const sOut = isWC ? null : ruleSTier.apply({
     ...ctx,
     _state: { suppressorCount, signalCount, hardSkip },
   });

@@ -26,6 +26,13 @@ import {
  * this returns non-null.
  */
 export function preFilterMechanical({ groundTruth, statType, direction, line }) {
+  // World Cup (soccer): the arithmetic gates below are basketball math
+  // (season/L5 baselines, OVER buffer, FT floor) — WC ground truth has none
+  // of those fields and would SKIP everything as missing_baseline. WC hard
+  // gates live in the engine's WC rule family instead (no ladder, minutes,
+  // goalkeeper — WC_FRAMEWORK_SPEC.md §6).
+  if (String(groundTruth?.league ?? "").toUpperCase() === "WC") return null;
+
   const overrides = collectMechanicalFailures({ groundTruth, statType, direction, line });
   if (overrides.length === 0) return null;
 
