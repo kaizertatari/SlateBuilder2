@@ -1,5 +1,5 @@
 // PrizePicks Model v3.5 framework — scaling constants shared by the
-// deterministic rule engine (api/lib/engine.js + api/lib/rules/*) and
+// deterministic rule engine (api/_lib/engine.js + api/_lib/rules/*) and
 // the legacy fast-path preFilterMechanical in verdict-verifier.js.
 //
 // Two league variants share the same rule structure. The WNBA variant

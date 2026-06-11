@@ -1,5 +1,5 @@
 // Read/write access to the sharp-odds blob (DK+FD no-vig consensus). Thin
-// wrapper over the shared blob-store factory — see api/lib/blob-store.js
+// wrapper over the shared blob-store factory — see api/_lib/blob-store.js
 // for the blob-vs-bundled fallback semantics and edge-cache rationale.
 // A residential `npm run refresh-odds` propagates to the deployed slate
 // builder without a redeploy.

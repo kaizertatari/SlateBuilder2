@@ -1,6 +1,6 @@
 # PrizePicks Model v3.5 — Portable Framework Spec
 
-Self-contained specification of the v3.5 NBA/WNBA PrizePicks model. Written so it can be lifted into another project that currently runs v3.3 without needing to read this repo's code. Source of truth in this repo: `api/lib/framework.js`, `api/lib/league-config.js`, `api/lib/weighted-l5.js`.
+Self-contained specification of the v3.5 NBA/WNBA PrizePicks model. Written so it can be lifted into another project that currently runs v3.3 without needing to read this repo's code. Source of truth in this repo: `api/_lib/framework.js`, `api/_lib/league-config.js`, `api/_lib/weighted-l5.js`.
 
 ---
 

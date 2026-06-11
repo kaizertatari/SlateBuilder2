@@ -1,8 +1,8 @@
 // Smoke for projection.js (native P(over)) + rule-projection. No network.
 //   node scripts/smoke-projection.mjs
-import { apply } from "../api/lib/rules/rule-projection.js";
-import { normCdf, probOver, sigmaFor, projectProb } from "../api/lib/projection.js";
-import { setOdds } from "../api/lib/odds.js";
+import { apply } from "../api/_lib/rules/rule-projection.js";
+import { normCdf, probOver, sigmaFor, projectProb } from "../api/_lib/projection.js";
+import { setOdds } from "../api/_lib/odds.js";
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) pass++; else { fail++; console.error("  FAIL: " + m); } };

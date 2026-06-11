@@ -1,7 +1,7 @@
 // Unit smoke for rule-market-edge (no network; injects a synthetic market).
 //   node scripts/smoke-market-edge.mjs
-import { apply } from "../api/lib/rules/rule-market-edge.js";
-import { setOdds } from "../api/lib/odds.js";
+import { apply } from "../api/_lib/rules/rule-market-edge.js";
+import { setOdds } from "../api/_lib/odds.js";
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) pass++; else { fail++; console.error("  FAIL: " + m); } };

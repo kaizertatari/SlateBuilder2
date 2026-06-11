@@ -1,7 +1,7 @@
 // Rule: Projection — the Stage-3 native-model confirm/deny.
 //
 // rule-market-edge makes the sharp no-vig market the spine. This rule adds the
-// engine's OWN probability (api/lib/projection.js: P(over) from the adjusted
+// engine's OWN probability (api/_lib/projection.js: P(over) from the adjusted
 // baseline + per-league σ) as a second, independent opinion:
 //
 //   • model agrees with the market AND both like the bet → confirmation signal

@@ -17,11 +17,11 @@
 import { loadEnvLocal } from "./_env.mjs";
 loadEnvLocal();
 
-import { readLines, writeLines } from "../api/lib/lines-store.js";
+import { readLines, writeLines } from "../api/_lib/lines-store.js";
 import { gatherGroundTruth } from "../api/analyze.js";
 import { selectLinesForStat } from "../api/analyze-all.js";
-import { applyEngine } from "../api/lib/engine.js";
-import { mapPrizePicksStatType, STATS } from "../api/lib/prop-types.js";
+import { applyEngine } from "../api/_lib/engine.js";
+import { mapPrizePicksStatType, STATS } from "../api/_lib/prop-types.js";
 
 // ─── Test runner ──────────────────────────────────────────────────────────
 

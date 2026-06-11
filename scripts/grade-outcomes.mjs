@@ -29,8 +29,8 @@
 import { loadEnvLocal } from "./_env.mjs";
 loadEnvLocal();
 
-import { getLastNGames } from "../api/lib/espn-stats.js";
-import { currentSeason } from "../api/lib/nba-stats.js";
+import { getLastNGames } from "../api/_lib/espn-stats.js";
+import { currentSeason } from "../api/_lib/nba-stats.js";
 
 const AXIOM_INGEST_URL_BASE = "https://api.axiom.co/v1/datasets";
 const AXIOM_QUERY_URL = "https://api.axiom.co/v1/datasets/_apl?format=tabular";
@@ -41,7 +41,7 @@ const AXIOM_QUERY_URL = "https://api.axiom.co/v1/datasets/_apl?format=tabular";
 //
 // Fantasy Score uses the FanDuel formula:
 //   pts + 1.2·reb + 1.5·ast + 3·stl + 3·blk − 1·tov
-// matching api/lib/ground-truth.js fantasyScoreFanDuel. Missing tov in the
+// matching api/_lib/ground-truth.js fantasyScoreFanDuel. Missing tov in the
 // gamelog (rare; ESPN ships TO in the column map) underestimates the
 // penalty by at most ~2-3 pts on a ~50-pt baseline — acceptable risk for
 // hit/miss decisions; if it becomes a problem we can return null and

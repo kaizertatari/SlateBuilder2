@@ -9,17 +9,17 @@
 // Returns: { total_analyzed, total_s_a, top_10: [...] }
 
 import { gatherGroundTruthWithRetry } from "./analyze.js";
-import { rateLimit } from "./lib/rate-limit.js";
-import { runWithRequestContext } from "./lib/request-context.js";
-import { readLines } from "./lib/lines-store.js";
-import { STATS, mapPrizePicksStatType } from "./lib/prop-types.js";
-import { get as cacheGet, set as cacheSet } from "./lib/cache.js";
-import { preFilterMechanical } from "./lib/verdict-verifier.js";
-import { applyEngine } from "./lib/engine.js";
-import { selectLinesForStat, ALL_ODDS_TYPES } from "./lib/select-lines.js";
-import { setOdds } from "./lib/odds.js";
-import { readOdds } from "./lib/odds-store.js";
-import { logVerdict } from "./lib/verdict-logger.js";
+import { rateLimit } from "./_lib/rate-limit.js";
+import { runWithRequestContext } from "./_lib/request-context.js";
+import { readLines } from "./_lib/lines-store.js";
+import { STATS, mapPrizePicksStatType } from "./_lib/prop-types.js";
+import { get as cacheGet, set as cacheSet } from "./_lib/cache.js";
+import { preFilterMechanical } from "./_lib/verdict-verifier.js";
+import { applyEngine } from "./_lib/engine.js";
+import { selectLinesForStat, ALL_ODDS_TYPES } from "./_lib/select-lines.js";
+import { setOdds } from "./_lib/odds.js";
+import { readOdds } from "./_lib/odds-store.js";
+import { logVerdict } from "./_lib/verdict-logger.js";
 import { randomUUID } from "node:crypto";
 
 export const runtime = "nodejs";
@@ -75,7 +75,7 @@ const MAX_LINES = parseInt(process.env.MAX_LINES_PER_PLAYER || "60", 10);
 
 // Engine-only batch: one deterministic call per task. The previous
 // LLM batched/single-prop endpoints have been removed on this branch;
-// the engine in api/lib/engine.js implements the v3.5 framework in
+// the engine in api/_lib/engine.js implements the v3.5 framework in
 // JavaScript so analyze-all + /api/analyze produce identical verdicts
 // for the same ground truth.
 

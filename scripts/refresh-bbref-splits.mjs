@@ -1,6 +1,6 @@
 // Pull regular-season home/road splits from Basketball-Reference for every
 // player with a `bbref` slug in data/players.json, and write
-// data/bbref-splits.json. The runtime adapter (api/lib/bbref.js) reads this
+// data/bbref-splits.json. The runtime adapter (api/_lib/bbref.js) reads this
 // snapshot as the primary source for splits — stats.nba.com is the fallback,
 // since Vercel egress IPs are throttled by NBA Stats.
 //
@@ -87,7 +87,7 @@ function num(s) {
 // Convert BR row totals + provided percentages into the per-game shape that
 // nba-stats.js getHomeAwaySplits returns. BR pre-computes a few *_per_g
 // fields (mp_per_g, pts_per_g, trb_per_g, ast_per_g); for the rest we divide
-// totals by games. Field names match api/lib/nba-stats.js pickAverages.
+// totals by games. Field names match api/_lib/nba-stats.js pickAverages.
 function rowToAverages(c) {
   const games = num(c.g);
   if (!games) return null;

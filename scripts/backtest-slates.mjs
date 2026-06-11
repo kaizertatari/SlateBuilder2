@@ -21,9 +21,9 @@ import { fileURLToPath } from "node:url";
 import { loadEnvLocal } from "./_env.mjs";
 import { fetchJoinedVerdicts, settledBettable } from "./_axiom.mjs";
 import { buildShrunkTable } from "./build-calibration.mjs";
-import { buildSlate } from "../api/lib/slate-builder.js";
-import { setCalibrationTable } from "../api/lib/calibration.js";
-import { flexMultiplier } from "../api/lib/prizepicks-payouts.js";
+import { buildSlate } from "../api/_lib/slate-builder.js";
+import { setCalibrationTable } from "../api/_lib/calibration.js";
+import { flexMultiplier } from "../api/_lib/prizepicks-payouts.js";
 
 loadEnvLocal();
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");

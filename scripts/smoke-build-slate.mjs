@@ -1,8 +1,8 @@
 // Smoke for /api/build-slate candidate pricing + assembly. No network.
 //   node scripts/smoke-build-slate.mjs
 import { collectMarketCandidates } from "../api/build-slate.js";
-import { buildSlate } from "../api/lib/slate-builder.js";
-import { setOdds, lookupMarket, slopeFor } from "../api/lib/odds.js";
+import { buildSlate } from "../api/_lib/slate-builder.js";
+import { setOdds, lookupMarket, slopeFor } from "../api/_lib/odds.js";
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) pass++; else { fail++; console.error("  FAIL: " + m); } };

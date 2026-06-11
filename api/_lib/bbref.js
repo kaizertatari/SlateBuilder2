@@ -6,7 +6,7 @@
 // leaves UNDERs without their home/road gating signal. BR is a static
 // snapshot read from disk, so it never times out and never rate-limits.
 //
-// Returns the same shape as api/lib/nba-stats.js getHomeAwaySplits:
+// Returns the same shape as api/_lib/nba-stats.js getHomeAwaySplits:
 //   { home: <averages>|null, road: <averages>|null } or null on miss.
 
 import nbaSnapshot from "../../data/bbref-splits.json" with { type: "json" };

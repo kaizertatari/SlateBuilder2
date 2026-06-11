@@ -7,7 +7,7 @@
 //
 // Usage: GET /api/lines
 
-import { readLines } from "./lib/lines-store.js";
+import { readLines } from "./_lib/lines-store.js";
 
 export const runtime = "nodejs";
 

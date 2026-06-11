@@ -87,7 +87,7 @@ const RULES_PRE_S = [
  *
  * @param {Object} args
  * @param {Object} args.groundTruth - composed ground truth (must include
- *   mechanisms + injury_regions; see api/lib/ground-truth.js)
+ *   mechanisms + injury_regions; see api/_lib/ground-truth.js)
  * @param {string} args.statType
  * @param {"OVER"|"UNDER"} args.direction
  * @param {number} args.line

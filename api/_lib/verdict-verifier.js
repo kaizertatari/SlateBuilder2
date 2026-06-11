@@ -1,5 +1,5 @@
 // Pre-engine mechanical fast-path. On the experiment/no-llm-engine
-// branch, the deterministic rule engine in api/lib/engine.js handles
+// branch, the deterministic rule engine in api/_lib/engine.js handles
 // every framework rule. This module keeps `preFilterMechanical` as a
 // short-circuit that catches the three arithmetic hard-gates (5a OVER
 // buffer, 5i FT-floor, R9 assist win-prob) before engine setup —

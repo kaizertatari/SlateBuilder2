@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import playersData from "../data/players.json";
-import { STATS, mapPrizePicksStatType } from "../api/lib/prop-types.js";
-import { selectLinesForStat } from "../api/lib/select-lines.js";
+import { STATS, mapPrizePicksStatType } from "../api/_lib/prop-types.js";
+import { selectLinesForStat } from "../api/_lib/select-lines.js";
 import { readNewestCached, writeCached, clearStaleForPlayer, buildKey } from "./lib/result-cache.js";
 
 const TIER_ORDER = { S: 0, A: 1, B: 2, SKIP: 3 };

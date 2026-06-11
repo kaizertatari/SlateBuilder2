@@ -1,15 +1,15 @@
-// Exercise api/lib/* end-to-end from the command line.
+// Exercise api/_lib/* end-to-end from the command line.
 // Run: node scripts/smoke-data.mjs ["Player Name"]
 // Default player: LeBron James (always rostered, predictable).
 
-import { resolvePlayerId } from "../api/lib/player-ids.js";
+import { resolvePlayerId } from "../api/_lib/player-ids.js";
 import {
   currentSeason,
   getSeasonAverages,
   getLastNGames,
   getHomeAwaySplits,
   getCommonPlayerInfo,
-} from "../api/lib/nba-stats.js";
+} from "../api/_lib/nba-stats.js";
 import {
   getTodaysGames,
   findGameForTeamAbbr,
@@ -17,7 +17,7 @@ import {
   opponentFor,
   getWinProbability,
   getTeamInjuries,
-} from "../api/lib/espn.js";
+} from "../api/_lib/espn.js";
 
 const player = process.argv[2] || "LeBron James";
 

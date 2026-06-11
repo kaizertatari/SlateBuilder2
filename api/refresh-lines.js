@@ -11,9 +11,9 @@
 // Returns { request_id, fetched_at, total_props, total_players, persisted_to }.
 
 import { scrapePrizePicksForToday } from "../scripts/scrape-prizepicks.mjs";
-import { writeLines, getStoreLocation } from "./lib/lines-store.js";
-import { rateLimit } from "./lib/rate-limit.js";
-import { runWithRequestContext } from "./lib/request-context.js";
+import { writeLines, getStoreLocation } from "./_lib/lines-store.js";
+import { rateLimit } from "./_lib/rate-limit.js";
+import { runWithRequestContext } from "./_lib/request-context.js";
 import { randomUUID } from "node:crypto";
 
 export const runtime = "nodejs";

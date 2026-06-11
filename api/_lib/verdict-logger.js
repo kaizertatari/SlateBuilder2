@@ -72,7 +72,7 @@ export function logVerdict({
     direction,
     stat_field: stat ? (PROP_TO_FIELD[stat] ?? null) : null,
     // composeGroundTruth stores ESPN's full ISO timestamp under `game.date`
-    // (see api/lib/ground-truth.js:64). Fall back to `start_time` for any
+    // (see api/_lib/ground-truth.js:64). Fall back to `start_time` for any
     // future change in the upstream field name.
     game_start_time: groundTruth?.game?.date ?? groundTruth?.game?.start_time ?? null,
     nba_id: playerInfo?.nba ?? groundTruth?.info?.player_id ?? null,

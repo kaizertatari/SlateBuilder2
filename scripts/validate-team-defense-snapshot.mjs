@@ -1,7 +1,7 @@
 // Post-refresh validator for data/team-defense.json. Exits 0 with a
 // one-line summary on pass; exits 1 with the failing assertion on fail.
 //
-// Reuses currentSeason() from api/lib/nba-stats.js — same function the
+// Reuses currentSeason() from api/_lib/nba-stats.js — same function the
 // runtime adapter uses to format season labels, so the validator and the
 // engine agree on the expected label.
 
@@ -9,7 +9,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { currentSeason } from "../api/lib/nba-stats.js";
+import { currentSeason } from "../api/_lib/nba-stats.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DEFAULT_PATH = path.join(ROOT, "data/team-defense.json");

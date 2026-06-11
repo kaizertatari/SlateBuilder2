@@ -1,10 +1,10 @@
 // One-time: hit ESPN search for every player in PLAYER_IDS and emit
 // a JS object literal mapping name -> { nba, espn }. Paste the output
-// into api/lib/player-ids.js.
+// into api/_lib/player-ids.js.
 //
 // Run: node scripts/build-espn-ids.mjs
 
-import { PLAYER_IDS } from "../api/lib/player-ids.js";
+import { PLAYER_IDS } from "../api/_lib/player-ids.js";
 
 const SEARCH = "https://site.web.api.espn.com/apis/search/v2";
 
@@ -51,7 +51,7 @@ for (const name of names) {
   await new Promise((res) => setTimeout(res, 100));
 }
 
-console.log("\n--- Paste this into api/lib/player-ids.js ---\n");
+console.log("\n--- Paste this into api/_lib/player-ids.js ---\n");
 console.log("export const PLAYER_INFO = {");
 for (const name of names) {
   const nba = PLAYER_IDS[name];

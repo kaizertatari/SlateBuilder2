@@ -1,6 +1,6 @@
 // Quick edge-case checks: playoff season type + omitted-player path.
-import { resolvePlayerId } from "../api/lib/player-ids.js";
-import { getLastNGames } from "../api/lib/nba-stats.js";
+import { resolvePlayerId } from "../api/_lib/player-ids.js";
+import { getLastNGames } from "../api/_lib/nba-stats.js";
 
 const dump = (label, val) =>
   console.log("\n--- " + label + " ---\n" + JSON.stringify(val, null, 2));

@@ -21,7 +21,7 @@ calibration/backtest loop.
 
 ## Why the current engine can't beat standard lines
 
-`api/lib/engine.js` + `api/lib/rules/_helpers.js` (`computeOverBufferCheck`)
+`api/_lib/engine.js` + `api/_lib/rules/_helpers.js` (`computeOverBufferCheck`)
 implement a **box-score projection vs the line**:
 
 > baseline = weighted-L5 / season / H2H blend → road deduction → per-stat
@@ -87,8 +87,8 @@ versus "out-project Vegas," which is not.
 ## Staged plan (each stage measured against standard-line hit rate)
 
 ### Stage 1 — Sharp odds + no-vig edge  ★ the edge  ✅ SHIPPED
-Built with **direct DK + FanDuel scraping** (no paid odds API): `scripts/scrape-odds.mjs` → `data/odds.json`/blob, `api/lib/odds.js` (de-vig + per-league line-shift), `rule-market-edge.js`, market fields logged. Covers **WNBA + NBA**. Forward measurement of the standard-line lift is pending settled games.
-- New `api/lib/odds.js` + `scripts/refresh-odds.mjs` → `data/odds.json`: pull
+Built with **direct DK + FanDuel scraping** (no paid odds API): `scripts/scrape-odds.mjs` → `data/odds.json`/blob, `api/_lib/odds.js` (de-vig + per-league line-shift), `rule-market-edge.js`, market fields logged. Covers **WNBA + NBA**. Forward measurement of the standard-line lift is pending settled games.
+- New `api/_lib/odds.js` + `scripts/refresh-odds.mjs` → `data/odds.json`: pull
   player props + game totals/spreads for NBA **and WNBA** from an odds API,
   compute **no-vig fair probability** per (player, stat, line, direction).
 - Match PrizePicks lines ↔ market; expose a `market` block in ground truth:
@@ -116,7 +116,7 @@ via calibration (same status as the line-shift slopes).
   favorites, starter unders on big dogs). Refines `computeOverBufferCheck`.
 
 ### Stage 3 — Probability model (native P(over))  ✅ SHIPPED (6f6b171)
-Built as `api/lib/projection.js` (mean = the engine's adjusted baseline; σ =
+Built as `api/_lib/projection.js` (mean = the engine's adjusted baseline; σ =
 live points stddev or the slope-implied per-league σ; normal crossing) +
 `rule-projection.js` (confirm/deny vs the no-vig market — agree→signal,
 conflict→suppressor, never SKIPs). The engine emits a `projection` block
@@ -124,7 +124,7 @@ conflict→suppressor, never SKIPs). The engine emits a `projection` block
 gated on the model grading out:** folding game-script/minutes INTO the
 projection mean, and blending model-P into the slate builder's EV — until
 then the model is confirm/telemetry-only and the market stays the spine.
-- `api/lib/projection.js`: projected mean (baseline + game-script + minutes) +
+- `api/_lib/projection.js`: projected mean (baseline + game-script + minutes) +
   variance → `P(over)` via a normal/negative-binomial crossing. Engine emits a
   **probability**, not just a tier — makes calibration native and lets us learn
   weights against outcomes. Blend model-P with market no-vig-P; bet when they

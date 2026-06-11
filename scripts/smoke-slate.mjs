@@ -1,7 +1,7 @@
 // Smoke test for the slate builder + payout math. No network. Run:
 //   node scripts/smoke-slate.mjs
-import { buildSlate } from "../api/lib/slate-builder.js";
-import { setCalibrationTable } from "../api/lib/calibration.js";
+import { buildSlate } from "../api/_lib/slate-builder.js";
+import { setCalibrationTable } from "../api/_lib/calibration.js";
 
 let pass = 0, fail = 0;
 function ok(cond, msg) { if (cond) { pass++; } else { fail++; console.error(`  FAIL: ${msg}`); } }

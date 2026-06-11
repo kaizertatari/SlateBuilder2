@@ -1,4 +1,4 @@
-import { resolvePlayer } from "./lib/player-ids.js";
+import { resolvePlayer } from "./_lib/player-ids.js";
 import {
   currentSeason,
   priorSeasonLabel,
@@ -6,11 +6,11 @@ import {
   getSeasonAverages,
   getLastNGames,
   getHomeAwaySplits,
-} from "./lib/nba-stats.js";
-import * as bdl from "./lib/balldontlie.js";
-import * as espnStats from "./lib/espn-stats.js";
-import { getOpponentDefense, getDefRankByAbbr } from "./lib/team-defense.js";
-import { getPrimaryDefender } from "./lib/matchup-defender.js";
+} from "./_lib/nba-stats.js";
+import * as bdl from "./_lib/balldontlie.js";
+import * as espnStats from "./_lib/espn-stats.js";
+import { getOpponentDefense, getDefRankByAbbr } from "./_lib/team-defense.js";
+import { getPrimaryDefender } from "./_lib/matchup-defender.js";
 import {
   getTodaysGames,
   findGameForTeamAbbr,
@@ -18,26 +18,26 @@ import {
   getWinProbability,
   getAllInjuries,
   opponentFor,
-} from "./lib/espn.js";
-import { composeGroundTruth } from "./lib/ground-truth.js";
-import { computeH2HAverages } from "./lib/weighted-l5.js";
-import { rateLimit } from "./lib/rate-limit.js";
-import { runWithRequestContext } from "./lib/request-context.js";
-import { PROP_TO_FIELD } from "./lib/prop-types.js";
-import { preFilterMechanical } from "./lib/verdict-verifier.js";
-import { applyEngine } from "./lib/engine.js";
-import { setOdds } from "./lib/odds.js";
-import { readOdds } from "./lib/odds-store.js";
-import { logVerdict } from "./lib/verdict-logger.js";
+} from "./_lib/espn.js";
+import { composeGroundTruth } from "./_lib/ground-truth.js";
+import { computeH2HAverages } from "./_lib/weighted-l5.js";
+import { rateLimit } from "./_lib/rate-limit.js";
+import { runWithRequestContext } from "./_lib/request-context.js";
+import { PROP_TO_FIELD } from "./_lib/prop-types.js";
+import { preFilterMechanical } from "./_lib/verdict-verifier.js";
+import { applyEngine } from "./_lib/engine.js";
+import { setOdds } from "./_lib/odds.js";
+import { readOdds } from "./_lib/odds-store.js";
+import { logVerdict } from "./_lib/verdict-logger.js";
 import { randomUUID } from "node:crypto";
-import * as bbref from "./lib/bbref.js";
+import * as bbref from "./_lib/bbref.js";
 import {
   RateLimitError,
   createErrorResponse,
   isRetryableError,
   calculateBackoffDelay,
   sleep,
-} from "./lib/errors.js";
+} from "./_lib/errors.js";
 
 export const runtime = "nodejs";
 

@@ -25,7 +25,7 @@ import http from "node:http";
 import { randomUUID } from "node:crypto";
 import { loadEnvLocal } from "./_env.mjs";
 import { scrapePrizePicksForToday } from "./scrape-prizepicks.mjs";
-import { writeLines, getStoreLocation } from "../api/lib/lines-store.js";
+import { writeLines, getStoreLocation } from "../api/_lib/lines-store.js";
 
 loadEnvLocal();
 

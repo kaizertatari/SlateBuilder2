@@ -3,7 +3,7 @@
 // per defender). Used by Rule 5h FT-leak modifier and Mechanism 3 to gate on
 // a confirmed named matchup vs falling back to a team-rank proxy.
 //
-// Contract mirrors the rest of api/lib/*: returns null on any failure or
+// Contract mirrors the rest of api/_lib/*: returns null on any failure or
 // insufficient signal so the orchestrator never hard-fails on this lookup.
 
 import { nbaFetch, rowToObj, findResultSet } from "./nba-http.js";

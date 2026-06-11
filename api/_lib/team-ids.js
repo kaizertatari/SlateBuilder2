@@ -1,6 +1,6 @@
 // Authoritative team-id ↔ abbreviation mappings for NBA and WNBA. Single
 // source of truth for both api/ runtime and offline scripts. ESPN's
-// abbreviations differ in a few cases (handled in api/lib/espn.js).
+// abbreviations differ in a few cases (handled in api/_lib/espn.js).
 
 export const TEAM_ID_BY_ABBR = {
   ATL: 1610612737, BOS: 1610612738, CLE: 1610612739, NOP: 1610612740,
@@ -20,7 +20,7 @@ export const ABBR_BY_TEAM_ID = Object.fromEntries(
 // WNBA team IDs (stats.wnba.com convention). 15 teams as of 2026 (13
 // holdovers + Portland Fire and Toronto Tempo expansion). Abbreviations
 // match stats.wnba.com — PrizePicks publishes slight variants (LV, LA, NY,
-// GS) which are aliased to these in api/lib/espn.js.
+// GS) which are aliased to these in api/_lib/espn.js.
 //
 // POR/TOR team IDs are not yet known until stats.wnba.com publishes their
 // rosters; they live in the map without an ID so the def_rank lookup
