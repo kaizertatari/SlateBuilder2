@@ -53,6 +53,66 @@ export function poissonFairOver(lambda, line) {
   return poissonTail(lambda, Math.floor(line) + 1);
 }
 
+// ─── Outfield Fantasy Score composite (WC_FRAMEWORK_SPEC.md §10.5) ──────────
+
+// Official PrizePicks outfield fantasy weights, transcribed from the in-app
+// scoring chart 2026-06-11 (not published anywhere public — re-verify if PP
+// revises the chart). Keys match the soccer ground-truth λ field names.
+export const WC_FANTASY_WEIGHTS = {
+  goals: 10,
+  assists: 5,
+  shots: 1,
+  sot: 1,
+  passes_att: 0.05,
+  key_passes: 0.5, // PP "Shots Assisted"
+  clearances: 1,
+  tackles: 1,
+  dribbles_att: 1, // PP "Attempted Dribbles"
+  crosses: 0.5,
+  yellow: -1,
+  red: -2,
+  fouls: -0.5,
+};
+
+/**
+ * Moment-match the fantasy composite F = Σ wᵢ·Xᵢ from per-component match
+ * rates. Components are Poisson (Var = λ) except passes (overdispersed,
+ * Var = φλ), with Poisson-thinning covariances along the containment chains
+ * goals ⊂ SOT ⊂ shots and assists ⊂ key passes — a scored goal books
+ * ~12 pts of simultaneous mass (goal + shot + SOT), which is why fantasy
+ * variance is goal-dominated for attackers.
+ *
+ * @param {Object} lambda — per-component expected counts for the match
+ *   (missing/invalid components contribute nothing).
+ * @param {{phiPasses?: number}} opts
+ * @returns {null | { mean:number, variance:number, sd:number }}
+ */
+export function fantasyMoments(lambda, { phiPasses = 3.5 } = {}) {
+  if (!lambda || typeof lambda !== "object") return null;
+  let mean = 0;
+  let variance = 0;
+  let used = 0;
+  for (const [k, w] of Object.entries(WC_FANTASY_WEIGHTS)) {
+    const lam = lambda[k];
+    if (!Number.isFinite(lam) || lam < 0) continue;
+    mean += w * lam;
+    variance += w * w * (k === "passes_att" ? phiPasses * lam : lam);
+    used += 1;
+  }
+  if (!used) return null;
+  const W = WC_FANTASY_WEIGHTS;
+  const addCov = (lam, wi, wj) => { if (Number.isFinite(lam) && lam > 0) variance += 2 * wi * wj * lam; };
+  addCov(lambda.sot, W.shots, W.sot); // Cov(shots, sot) = λ_sot
+  addCov(lambda.goals, W.shots, W.goals); // Cov(shots, goals) = λ_goal
+  addCov(lambda.goals, W.sot, W.goals); // Cov(sot, goals) = λ_goal
+  addCov(lambda.assists, W.key_passes, W.assists); // Cov(kp, assists) = λ_assist
+  return {
+    mean: Number(mean.toFixed(4)),
+    variance: Number(variance.toFixed(4)),
+    sd: Number(Math.sqrt(Math.max(variance, 1e-9)).toFixed(4)),
+  };
+}
+
 // SSE of log-prob residuals for a candidate λ, with the profile-optimal c.
 function ladderSse(lambda, rungs, weights) {
   let logc = 0;

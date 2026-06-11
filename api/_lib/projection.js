@@ -21,7 +21,7 @@
 import { getBaselines, computeOverBufferCheck } from "./rules/_helpers.js";
 import { slopeFor } from "./odds.js";
 import { poissonFairOver } from "./poisson.js";
-import { PROP_TO_FIELD } from "./prop-types.js";
+import { PROP_TO_FIELD, WC_STAT_MODEL } from "./prop-types.js";
 
 // Standard normal CDF — Abramowitz & Stegun 26.2.17 (|error| < 7.5e-8).
 export function normCdf(z) {
@@ -71,22 +71,50 @@ export function probOver({ mean, sigma, line }) {
 export function projectProb({ groundTruth, statType, direction, line, mean }) {
   const league = groundTruth?.league ?? "NBA";
 
-  // World Cup (soccer): counting stats with means 0.5–4 are Poisson, not
-  // Normal — the Normal crossing is wrong exactly in the tails PrizePicks
-  // prices (WC_FRAMEWORK_SPEC.md §4). λ_model comes pre-composed from the
-  // soccer ground truth (per-90 rate × expected minutes × opponent env).
+  // World Cup (soccer): per-stat distributions (WC_FRAMEWORK_SPEC.md §10.1).
+  // Low-count stats (shots/SOT/tackles/saves/clearances, means 0.5–4) are
+  // Poisson — the Normal crossing is wrong exactly in the tails PrizePicks
+  // prices (spec §4). High-count passes are an overdispersed count
+  // (Var = φλ; Poisson σ is far too small at λ 15–70), and the fantasy
+  // composite is Normal via moment matching (§10.5). λ_model comes
+  // pre-composed from the soccer ground truth (per-90 rate × expected
+  // minutes × per-stat environment driver).
   if (String(league).toUpperCase() === "WC") {
-    const field = PROP_TO_FIELD[statType];
-    const lam = groundTruth?.soccer?.lambda?.[field];
-    if (!(typeof lam === "number" && lam > 0) || typeof line !== "number") return null;
-    const p = poissonFairOver(lam, line);
-    if (p == null) return null;
-    const model_prob = Math.max(0.01, Math.min(0.99, p));
+    if (typeof line !== "number") return null;
+    const cfg = WC_STAT_MODEL[statType];
+    const field = cfg?.field ?? PROP_TO_FIELD[statType];
+
+    let model_prob = null;
+    let mean = null;
+    let sigma = null;
+    if (cfg?.composite) {
+      const fm = groundTruth?.soccer?.fantasy;
+      if (!(typeof fm?.mean === "number" && typeof fm?.sd === "number" && fm.sd > 0)) return null;
+      mean = fm.mean;
+      sigma = fm.sd;
+      model_prob = probOver({ mean, sigma, line }); // quasi-continuous: half-line needs no correction
+    } else if (cfg?.dist === "normal_od") {
+      const lam = groundTruth?.soccer?.lambda?.[field];
+      if (!(typeof lam === "number" && lam > 0)) return null;
+      mean = lam;
+      sigma = Math.sqrt((cfg.phi ?? 3.5) * lam);
+      // PP half-lines double as the integer continuity correction.
+      model_prob = probOver({ mean, sigma, line });
+    } else {
+      const lam = groundTruth?.soccer?.lambda?.[field];
+      if (!(typeof lam === "number" && lam > 0)) return null;
+      const p = poissonFairOver(lam, line);
+      if (p == null) return null;
+      mean = lam;
+      sigma = Math.sqrt(lam); // Poisson: Var = λ (telemetry)
+      model_prob = Math.max(0.01, Math.min(0.99, p));
+    }
+    if (model_prob == null) return null;
     return {
       model_prob: Number(model_prob.toFixed(4)),
       dir_prob: Number((direction === "UNDER" ? 1 - model_prob : model_prob).toFixed(4)),
-      mean: lam,
-      sigma: Number(Math.sqrt(lam).toFixed(4)), // Poisson: Var = λ (telemetry)
+      mean: Number(mean.toFixed(4)),
+      sigma: Number(sigma.toFixed(4)),
     };
   }
 

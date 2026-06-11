@@ -119,6 +119,11 @@ const DK_WC = {
   props: [
     { stat: "Shots", cat: 1113, sub: 16868 },
     { stat: "Shots On Target", cat: 1113, sub: 16861 },
+    // v2 expansion (spec §10) — both are milestone ladders like Shots/SOT
+    // (probed live 2026-06-11: label shapes 100% "N+"). Passes/Clearances/
+    // Fantasy have NO DK market — they ride the model-led path instead.
+    { stat: "Tackles", cat: 1567, sub: 18345 },
+    { stat: "Goalie Saves", cat: 1567, sub: 18346 },
   ],
   // Match Lines: the soccer base payload only carries Moneyline; totals and
   // goal handicaps live in their own subcategories, each as an alt-line

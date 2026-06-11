@@ -1,8 +1,12 @@
 // Rule: WC Minutes — the soccer analog of the injury/minutes gates
-// (WC_FRAMEWORK_SPEC.md §4.2, §6.2, §6.5). Minutes are the dominant variance
-// source in soccer (subs at ~60–75', group-stage rotation), so:
+// (WC_FRAMEWORK_SPEC.md §4.2, §6.2, §6.5, §10.3). Minutes are the dominant
+// variance source in soccer (subs at ~60–75', group-stage rotation), so:
 //
-//   • Goalkeeper on a Shots/SOT prop          → hard SKIP (PP posts them; noise)
+//   • position–stat incoherence (spec §10.3):
+//       GK on an outfield-stat prop (shots/SOT/tackles/clearances/fantasy)
+//         → hard SKIP (PP posts them; noise)
+//       non-GK on Goalie Saves → hard SKIP
+//       Passes Attempted is position-agnostic (keepers attempt ~20–35)
 //   • OVER with expected minutes < 60         → hard SKIP
 //   • expected minutes 60–70 (rotation risk)  → suppressor + A cap (OVER side)
 //   • confirmed/expected starter (≥75)        → 1 signal
@@ -10,25 +14,38 @@
 // UNDER picks are not gated on low minutes — sub risk supports the under —
 // but get no boost either (v1 logs; calibrate first). WC-only.
 
+import { WC_STAT_MODEL } from "../prop-types.js";
+
 const OVER_MIN_GATE = 60;
 const ROTATION_RISK_MAX = 70;
 const STARTER_MIN = 75;
 
 export function apply(ctx) {
-  const { groundTruth, direction } = ctx;
+  const { groundTruth, statType, direction } = ctx;
   if (String(groundTruth?.league ?? "").toUpperCase() !== "WC") {
     return { fired: false, rule_id: "wc-minutes" };
   }
 
   const position = groundTruth?.info?.position ?? null;
-  if (position === "Goalkeeper") {
+  const gkPolicy = WC_STAT_MODEL[statType]?.gk ?? "skip";
+  if (position === "Goalkeeper" && gkPolicy === "skip") {
     return {
       fired: true,
       rule_id: "wc-minutes",
       hard_skip: true,
       tier_cap: "SKIP",
-      flag: "⛔ Goalkeeper shots prop — SKIP",
-      justification_part: "Goalkeeper on a shots-family prop — framework abstains (spec §6.5).",
+      flag: "⛔ Goalkeeper on an outfield-stat prop — SKIP",
+      justification_part: "Goalkeeper on an outfield-stat prop — framework abstains (spec §6.5/§10.3).",
+    };
+  }
+  if (position !== "Goalkeeper" && gkPolicy === "only") {
+    return {
+      fired: true,
+      rule_id: "wc-minutes",
+      hard_skip: true,
+      tier_cap: "SKIP",
+      flag: `⛔ ${statType} requires a Goalkeeper — position is ${position ?? "unknown"}, SKIP`,
+      justification_part: `Position–stat incoherence: ${statType} is keeper-only and the player is ${position ?? "unlisted"} (spec §10.3).`,
     };
   }
 

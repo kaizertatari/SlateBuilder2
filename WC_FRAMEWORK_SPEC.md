@@ -173,7 +173,114 @@ Both signals are probabilities on the same scale; the existing
 
 ## 9. Non-goals (v1)
 
-Fouls/Fouls Drawn/Tackles (no market coverage → no Stage-1), Goals/Assists/
-G+A/Cards (tail events, demon/goblin pricing), Passes (game-state regime
-risk), 1H/2H and TRNY leagues, FotMob integration, xG models, extra-time
-markets. Revisit only if the group-stage calibration slice is healthy.
+Fouls/Fouls Drawn (demon/goblin-only pricing), Goals/Assists/G+A/Cards
+(tail events, demon/goblin pricing), Offsides, Attempted Dribbles, Shots
+Assisted, Crosses (standalone — they DO feed the fantasy composite, §10.5),
+1H/2H and TRNY leagues, FotMob integration, xG models, extra-time markets.
+Revisit only if the group-stage calibration slice is healthy.
+
+> Superseded for Tackles and Passes (v2, §10): DK turned out to carry full
+> Tackles ladders (sub 18345), and Passes Attempted ships model-led with a
+> B-tier cap rather than being excluded.
+
+## 10. v2 prop expansion (2026-06-11): Tackles, Goalie Saves, Clearances, Passes Attempted, Outfield Fantasy Score
+
+Each prop keeps the §4 skeleton (`λ = r_p90 × E[min]/90 × A`), but the
+five stats differ in distribution, market anchor, and environment driver.
+All IDs probed live 2026-06-11; PP fantasy weights transcribed from the
+in-app scoring chart (not published anywhere public).
+
+### 10.1 Per-stat model table
+
+| Stat (PP name) | DK anchor | Distribution | FBref per-90 source | Env driver `A` | Tiering |
+|---|---|---|---|---|---|
+| Tackles | cat 1567 / sub **18345** (ladders, ~1k markets) | Poisson | defense `tackles` | opp-attack, mild (`(opp_total/μ)^0.3`, clamp [0.85, 1.2]) | market-led (same as Shots) |
+| Goalie Saves | cat 1567 / sub **18346** (ladders) | Poisson | keepers `gk_saves` | **opp-attack, strong** (`(opp_total/μ)^0.8`, clamp [0.6, 1.5]) | market-led; **GK required** |
+| Clearances | — none — | Poisson | defense `clearances` | opp-attack (`(opp_total/μ)^0.6`, clamp [0.7, 1.4]) | **model-led, B cap** |
+| Passes Attempted | — none — | **Normal, Var = φλ, φ = 3.5** (overdispersed count; λ 15–70 ⇒ Poisson σ far too small) | passing `passes` | own-dominance (`(team_total/μ)^0.45`, clamp [0.8, 1.25]) — favored sides hold the ball | **model-led, B cap** |
+| Outfield Fantasy Score | — synthetic (§10.5) — | Normal via moment matching | all component rates | per-component drivers | **model-led, B cap; outfield only** |
+
+Driver inversion is the quant core here: shooters scale with their OWN
+team's goal environment (§4.3), but saves/clearances/tackles scale with the
+OPPONENT's — a keeper behind a heavy underdog faces more shots. Passes
+scale with own dominance instead of goal environment.
+
+### 10.2 Market-led vs model-led policy
+
+- **Anchored stats** (Shots, SOT, Tackles, Goalie Saves): unchanged §5
+  policy — ladder-fitted `λ_fair` is the spine; no ladder for the player
+  → hard SKIP.
+- **Model-led stats** (Clearances, Passes Attempted, Fantasy): there is no
+  sharp anchor to lead, so `rule-market-edge` does NOT skip — it applies a
+  **B-tier cap + `model_led` flag** and hands the spine to
+  `rule-wc-projection`: `p_dir < 0.55` → SKIP (stricter than the market-led
+  0.53 — an unproven model needs more edge), `0.55–0.60` → 1 signal,
+  `≥ 0.60` → 2 signals. **Prior-only rates → SKIP** (a position prior as
+  the sole spine is no spine). S/A are unreachable until the calibration
+  checkpoint proves the model-led slice; the cap is the whole risk policy.
+
+### 10.3 Position–stat coherence (extends gate §6.5)
+
+Per-stat GK policy: `Goalie Saves` REQUIRES Goalkeeper (others → SKIP);
+`Passes Attempted` allows any position (keepers attempt ~20–35);
+everything else SKIPs Goalkeepers (incl. Outfield Fantasy Score — PP
+defines it as outfield-only; keepers get a separate Goalie Fantasy Score
+stat we don't cover). GK minutes: keepers don't rotate within a match —
+club share ≥ 0.75 ⇒ E[min] = 90 (not 78); unknown keeper share defaults
+LOW (45) so OVERs gate out rather than ride a backup.
+
+### 10.4 Position priors (per-90, initial — recalibrate)
+
+| stat | Attacker | Midfielder | Defender | Goalkeeper |
+|---|---|---|---|---|
+| tackles | 0.8 | 1.8 | 1.6 | 0.1 |
+| clearances | 0.5 | 1.2 | 4.0 | 1.0 |
+| passes_att | 25 | 45 | 50 | 25 |
+| saves | 0 | 0 | 0 | 3.0 |
+| goals | 0.35 | 0.10 | 0.04 | 0 |
+| assists | 0.15 | 0.12 | 0.05 | 0 |
+| key_passes | 1.2 | 1.1 | 0.5 | 0 |
+| crosses | 1.5 | 1.8 | 2.0 | 0 |
+| dribbles_att | 2.2 | 1.2 | 0.6 | 0 |
+| fouls | 1.2 | 1.2 | 1.0 | 0.1 |
+| yellow | 0.12 | 0.18 | 0.20 | 0.05 |
+| red | 0.01 | 0.01 | 0.015 | 0.005 |
+
+### 10.5 Outfield Fantasy Score composite
+
+Official PP weights (in-app scoring chart, transcribed 2026-06-11):
+Goal **10**, Assist **5**, Shot **1**, SOT **1**, Pass Attempted **0.05**,
+Shot Assisted (key pass) **0.5**, Clearance **1**, Tackle **1**, Attempted
+Dribble **1**, Cross **0.5**, Yellow **−1**, Red **−2**, Foul **−0.5**.
+
+Moment matching over component rates:
+
+- `E[F] = Σ wᵢ λᵢ`
+- `Var[F] = Σ wᵢ² Varᵢ + 2 Σ wᵢ wⱼ Cov(i,j)` with Poisson-thinning
+  covariances along the containment chains **goals ⊂ SOT ⊂ shots**
+  (`Cov(shots,sot)=λ_sot`, `Cov(shots,goals)=Cov(sot,goals)=λ_goal`) and
+  **assists ⊂ key passes** (`Cov(kp,assist)=λ_assist`). Passes use
+  `Var = φλ` (φ = 3.5); all other components independent Poisson
+  (`Var = λ`). A scored goal correctly books ~12 pts of simultaneous mass
+  (10 + shot + SOT) — variance is goal-dominated for attackers
+  (w² = 100: λ_goal = 0.3 alone ⇒ σ ≈ 5.5).
+- **Sharp-component override**: when DK ladders cover the player's Shots /
+  SOT / Tackles, the component λ uses the margin-corrected `λ_fair`
+  (already an all-in match estimate — no minutes rescaling) instead of the
+  model λ. The composite is then partially market-anchored; per-component
+  sources are logged for calibration.
+- `P(over) = 1 − Φ((line − E[F]) / σ_F)` (quasi-continuous, no continuity
+  correction).
+
+### 10.6 Grading the new stats
+
+ESPN soccer summaries are validated for SH/ST only (§7). Saves likely
+present; tackles/clearances/passes unverified — the grader attempts
+candidate keys and logs an explicit `ungradeable` warning per missing
+stat rather than guessing. Fantasy actuals are computed from components
+ONLY when every component is present; otherwise ungradeable (FBref
+match-report scrape is the planned weekly fallback). Calibration items
+added: φ = 3.5 (passes), driver exponents 0.8/0.6/0.45/0.3, the
+fantasy covariance structure, and the FBref-vs-settlement definition of
+"Tackles" (FBref `Tkl` = attempted; PP scoring chart says "Tackles
+Attempted" — verify against the first graded match).

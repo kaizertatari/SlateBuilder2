@@ -256,6 +256,7 @@ async function main() {
   }
   const wcUngraded = [...wcUngradedByKey.values()];
   let wcHits = 0, wcMisses = 0, wcPushes = 0, wcVoids = 0, wcPostponed = 0, wcUnmatched = 0;
+  const wcUngradeableByStat = new Map();
   if (wcUngraded.length) {
     console.log(`\n=== World Cup leg: ${wcUngraded.length} ungraded WC verdicts ===`);
     const byDate = new Map();
@@ -289,9 +290,10 @@ async function main() {
           continue;
         }
         const stat = canonicalStat(v.prop_type);
-        const actual = stat === "Shots" ? entry.sh : stat === "Shots On Target" ? entry.st : null;
+        const actual = wcActualFor(stat, entry);
         if (actual == null) {
           wcUnmatched++;
+          wcUngradeableByStat.set(stat, (wcUngradeableByStat.get(stat) || 0) + 1);
           continue;
         }
         const r = gradeRaw(actual, num(v.line), v.direction);
@@ -302,6 +304,14 @@ async function main() {
       }
     }
     console.log(`WC result: hits=${wcHits}  misses=${wcMisses}  pushes=${wcPushes}  voids=${wcVoids}  postponed=${wcPostponed}  unmatched=${wcUnmatched}`);
+    if (wcUngradeableByStat.size) {
+      // ESPN roster stats lack the key for these — spec §10.6: surface, never
+      // guess. If a stat stays here after the first completed match, the
+      // FBref match-report fallback is the path to grading it.
+      for (const [stat, n] of wcUngradeableByStat) {
+        console.warn(`  UNGRADEABLE on ESPN: ${stat} ×${n} — no candidate stat key matched`);
+      }
+    }
   }
 
   console.log(`\nResult: hits=${hits}  misses=${misses}  pushes=${pushes}  voids=${voids}`);
@@ -486,6 +496,23 @@ async function fetchWorldCupActuals(dateYmd) {
           played,
           sh: pickWcStat(statMap, ["SH", "totalShots", "shotsTotal", "Shots"]),
           st: pickWcStat(statMap, ["ST", "SOT", "shotsOnTarget", "Shots on Target"]),
+          // v2 stats (spec §10.6) — candidate keys UNVALIDATED until the
+          // first completed match; a miss returns null and the verdict
+          // counts as ungradeable (surfaced per stat below), never guessed.
+          tk: pickWcStat(statMap, ["TKL", "TCK", "totalTackles", "tacklesTotal", "Tackles"]),
+          sv: pickWcStat(statMap, ["SV", "SVS", "saves", "Saves", "goalkeeperSaves"]),
+          clr: pickWcStat(statMap, ["CLR", "EFF", "totalClearance", "clearances", "Clearances"]),
+          pa: pickWcStat(statMap, ["PA", "APP", "totalPasses", "passesAttempted", "passes", "Passes"]),
+          // Fantasy components beyond the above (goals/assists usually ship;
+          // key passes/crosses/dribbles/fouls/cards spotty on ESPN rosters).
+          g: pickWcStat(statMap, ["G", "totalGoals", "goals", "Goals"]),
+          a: pickWcStat(statMap, ["A", "goalAssists", "assists", "Assists"]),
+          kp: pickWcStat(statMap, ["KP", "keyPasses", "shotAssists"]),
+          cr: pickWcStat(statMap, ["CR", "crosses", "totalCrosses"]),
+          drb: pickWcStat(statMap, ["DRB", "takeOns", "dribblesAttempted"]),
+          fc: pickWcStat(statMap, ["FC", "foulsCommitted", "fouls"]),
+          yc: pickWcStat(statMap, ["YC", "yellowCards"]),
+          rc: pickWcStat(statMap, ["RC", "redCards"]),
           event_id: ev.id,
         });
       }
@@ -521,6 +548,34 @@ function buildWcOutcomeEvent(verdict, entry, outcome) {
 function canonicalStat(propType) {
   if (!propType) return null;
   return String(propType).replace(/\s+(OVER|UNDER)\s*$/i, "").trim();
+}
+
+// Resolve a WC verdict's actual from the per-player ESPN entry (spec §10.6).
+// Fantasy is computed from the official PP outfield weights ONLY when every
+// component graded — a partial sum would silently mis-grade, so null it and
+// let the ungradeable counter surface the gap instead.
+const WC_FANTASY_COMPONENTS = [
+  ["g", 10], ["a", 5], ["sh", 1], ["st", 1], ["pa", 0.05], ["kp", 0.5],
+  ["clr", 1], ["tk", 1], ["drb", 1], ["cr", 0.5], ["yc", -1], ["rc", -2], ["fc", -0.5],
+];
+function wcActualFor(stat, entry) {
+  switch (stat) {
+    case "Shots": return entry.sh;
+    case "Shots On Target": return entry.st;
+    case "Tackles": return entry.tk;
+    case "Goalie Saves": return entry.sv;
+    case "Clearances": return entry.clr;
+    case "Passes Attempted": return entry.pa;
+    case "Outfield Fantasy Score": {
+      let total = 0;
+      for (const [k, w] of WC_FANTASY_COMPONENTS) {
+        if (!Number.isFinite(entry[k])) return null; // all-or-nothing
+        total += w * entry[k];
+      }
+      return Number(total.toFixed(2));
+    }
+    default: return null;
+  }
 }
 
 function gradeRaw(actual, line, direction) {

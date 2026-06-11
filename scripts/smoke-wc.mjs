@@ -3,7 +3,7 @@
 // fit, WC lookupMarket pricing, soccer ground truth composition, the WC rule
 // family through applyEngine, and the pre-filter bypass.
 //   node scripts/smoke-wc.mjs
-import { poissonTail, poissonFairOver, fitLadderPoisson, fairLambda, POISSON_LAMBDA_MARGIN } from "../api/_lib/poisson.js";
+import { poissonTail, poissonFairOver, fitLadderPoisson, fairLambda, POISSON_LAMBDA_MARGIN, fantasyMoments, WC_FANTASY_WEIGHTS } from "../api/_lib/poisson.js";
 import { setOdds, lookupMarket, lookupVegas } from "../api/_lib/odds.js";
 import { gatherSoccerGroundTruth, setSoccerRates, setSoccerAccrual } from "../api/_lib/soccer-truth.js";
 import { projectProb } from "../api/_lib/projection.js";
@@ -147,6 +147,98 @@ const bball = applyEngine({
   statType: "Points", direction: "OVER", line: 16.5,
 });
 ok(!bball.rules_fired.some((id) => id.startsWith("wc-")), "H basketball path fires no WC rules");
+
+// ── 7) v2 props (WC_FRAMEWORK_SPEC.md §10) ──────────────────────────────────
+
+// 7.1 Fantasy moment matching: mean = Σwλ; covariances inflate variance
+// beyond the independent sum (goal-domination).
+const fmLam = { goals: 0.3, assists: 0.2, shots: 2.8, sot: 1.0, passes_att: 30, key_passes: 1.5, clearances: 1, tackles: 1.5, dribbles_att: 2, crosses: 2, yellow: 0.2, red: 0.01, fouls: 1 };
+const fm = fantasyMoments(fmLam, { phiPasses: 3.5 });
+const fmMeanManual = Object.entries(WC_FANTASY_WEIGHTS).reduce((a, [k, w]) => a + w * (fmLam[k] ?? 0), 0);
+ok(fm && Math.abs(fm.mean - fmMeanManual) < 1e-6, `fantasy mean = Σwλ (got ${fm?.mean} vs ${fmMeanManual.toFixed(4)})`);
+const indepVar = Object.entries(WC_FANTASY_WEIGHTS).reduce((a, [k, w]) => a + w * w * (k === "passes_att" ? 3.5 : 1) * (fmLam[k] ?? 0), 0);
+ok(fm && fm.variance > indepVar, `fantasy covariances inflate variance (${fm?.variance} > ${indepVar.toFixed(2)})`);
+ok(fm && Math.abs(fm.sd - Math.sqrt(fm.variance)) < 1e-3, "fantasy sd = √variance");
+ok(fantasyMoments({ shots: 2 }) !== null && fantasyMoments({}) === null, "fantasy handles sparse/empty components");
+
+// 7.2 Ground truth v2: per-stat λs, driver inversion, fantasy block.
+const v2Row = {
+  name: "Test Striker", minutes: 2000, matches: 24,
+  shots_p90: 3.0, sot_p90: 1.1, goals_p90: 0.4, assists_p90: 0.2, key_passes_p90: 1.5,
+  passes_att_p90: 60, tackles_p90: 1.0, clearances_p90: 0.8, crosses_p90: 2.0,
+  dribbles_att_p90: 2.5, fouls_p90: 1.0, yellow_p90: 0.1, red_p90: 0.01, saves_p90: 0,
+};
+setSoccerRates({ players: { "test striker": v2Row } });
+injectOdds(wcEntry()); // Shots ladder present → fantasy shots component anchors to λ_fair
+const gt2 = gatherSoccerGroundTruth({ player: "Test Striker", prop: ppProp() }).groundTruth;
+ok(gt2.soccer.lambda.passes_att > 50 && gt2.soccer.lambda.passes_att < 62, `λ_passes composed (got ${gt2.soccer.lambda.passes_att})`);
+ok(gt2.soccer.lambda.tackles > 0 && gt2.soccer.lambda.clearances > 0, "tackles/clearances λ present");
+ok(gt2.soccer.rates.prior_only_fields.length === 0, `full v2 row → no prior-only fields (got ${gt2.soccer.rates.prior_only_fields})`);
+// Driver inversion: Mexico (team_total 2.0, opp 0.5, slate mean 1.25) —
+// shooters boosted, saves/clearances suppressed.
+const ab = gt2.soccer.a_opp_by_field;
+ok(ab.shots === 1.3 && ab.saves === 0.6 && ab.saves < 1 && 1 < ab.shots, `driver inversion (shots ${ab.shots} vs saves ${ab.saves})`);
+ok(ab.passes_att > 1.2 && ab.passes_att <= 1.25, `passes own-dominance driver (got ${ab.passes_att})`);
+ok(gt2.soccer.fantasy && gt2.soccer.fantasy.mean > 0 && gt2.soccer.fantasy.sd > 0, "fantasy block composed");
+ok(gt2.soccer.fantasy.anchored_components.includes("shots"), `fantasy shots component market-anchored (got ${gt2.soccer.fantasy.anchored_components})`);
+ok(Math.abs(gt2.soccer.lambda.fantasy - gt2.soccer.fantasy.mean) < 1e-9, "lambda.fantasy mirrors composite mean");
+
+// 7.3 Projection dists: overdispersed Normal for passes; composite for fantasy.
+const projPass = projectProb({ groundTruth: gt2, statType: "Passes Attempted", direction: "OVER", line: 45.5 });
+ok(projPass && Math.abs(projPass.sigma - Math.sqrt(3.5 * projPass.mean)) < 0.01, `passes σ=√(φλ) (got ${projPass?.sigma})`);
+ok(projPass && projPass.model_prob > 0.6, `passes P(over 45.5) from Normal-OD (got ${projPass?.model_prob})`);
+const projFs = projectProb({ groundTruth: gt2, statType: "Outfield Fantasy Score", direction: "OVER", line: gt2.soccer.fantasy.mean - gt2.soccer.fantasy.sd });
+ok(projFs && Math.abs(projFs.model_prob - 0.8413) < 0.02, `fantasy P(over μ−σ) ≈ Φ(1) (got ${projFs?.model_prob})`);
+
+// 7.4 Engine — model-led spine (Passes Attempted, no DK market exists).
+// I) Strong model edge → B-capped pick with the model-led flag.
+r = run(gt2, { stat: "Passes Attempted", line: 45.5 });
+ok(r.verdict === "OVER" && r.tier === "B", `I model-led strong edge → B-capped OVER (got ${r.verdict}/${r.tier})`);
+ok(r.flags.some((f) => /model-led/i.test(f)), "I model-led flag present");
+ok(r.projection && r.projection.model_led === true, "I projection telemetry marks model_led");
+// K) Thin model edge → abstain.
+r = run(gt2, { stat: "Passes Attempted", line: Math.round(gt2.soccer.lambda.passes_att) + 0.5 });
+ok(r.verdict === "SKIP", `K model-led thin edge → SKIP (got ${r.verdict})`);
+// J) Prior-only for the stat (v1-era rates row without passes field) → SKIP.
+setSoccerRates({ players: { "test striker": { name: "Test Striker", minutes: 2000, matches: 24, shots_p90: 3.0, sot_p90: 1.1 } } });
+const gtV1Row = gatherSoccerGroundTruth({ player: "Test Striker", prop: ppProp() }).groundTruth;
+ok(gtV1Row.soccer.rates.prior_only_fields.includes("passes_att"), "J v1 row marks passes prior-only");
+r = run(gtV1Row, { stat: "Passes Attempted", line: 40.5 });
+ok(r.verdict === "SKIP" && r.flags.some((f) => /prior-only/i.test(f)), `J prior-only model-led → SKIP (got ${r.verdict})`);
+
+// 7.5 Engine — Goalie Saves (anchored, GK-only).
+// L) Underdog keeper, DK saves ladder, model agrees → market-led pick issues.
+setSoccerRates({ players: { "test keeper": { name: "Test Keeper", minutes: 2000, matches: 24, saves_p90: 3.2, passes_att_p90: 25, shots_p90: 0.05, sot_p90: 0.02 } } });
+setOdds({
+  league: "WC", sources: ["draftkings"],
+  by_player: { "Test Keeper": [wcEntry({ stat: "Goalie Saves", lambda_fair: 3.5, team: "South Africa", opponent: "Mexico" })] },
+  games: { "South Africa@Mexico": { home: "Mexico", away: "South Africa", game_total: 2.5, home_spread: -1.5, away_spread: 1.5, start_time: "2026-06-11T19:00:00Z" } },
+});
+const gkProp = ppProp({ player_position: "Goalkeeper", player_team: "South Africa", opponent: "Mexico", stat_type: "Goalie Saves" });
+const gtGk2 = gatherSoccerGroundTruth({ player: "Test Keeper", prop: gkProp }).groundTruth;
+ok(gtGk2.soccer.expected_minutes === 90 && gtGk2.soccer.minutes_source === "club_share_starter_gk", `GK starter plays 90 (got ${gtGk2.soccer.expected_minutes})`);
+ok(gtGk2.soccer.a_opp_by_field.saves > 1.3, `underdog keeper saves driver > 1.3 (got ${gtGk2.soccer.a_opp_by_field.saves})`);
+r = run(gtGk2, { stat: "Goalie Saves", line: 2.5 });
+ok(r.verdict === "OVER" && (r.tier === "S" || r.tier === "A"), `L GK saves market-led pick issues (got ${r.verdict}/${r.tier})`);
+ok(!r.flags.some((f) => /outfield-stat/i.test(f)), "L no GK-position skip on a saves prop");
+// M) Outfield player on Goalie Saves → position-incoherence SKIP.
+setSoccerRates({ players: { "test striker": v2Row } });
+setOdds({
+  league: "WC", sources: ["draftkings"],
+  by_player: { "Test Striker": [wcEntry(), wcEntry({ stat: "Goalie Saves", lambda_fair: 3.5 })] },
+  games: { "South Africa@Mexico": { home: "Mexico", away: "South Africa", game_total: 2.5, home_spread: -1.5, away_spread: 1.5, start_time: "2026-06-11T19:00:00Z" } },
+});
+const gtStr = gatherSoccerGroundTruth({ player: "Test Striker", prop: ppProp() }).groundTruth;
+r = run(gtStr, { stat: "Goalie Saves", line: 2.5 });
+ok(r.verdict === "SKIP" && r.flags.some((f) => /requires a Goalkeeper/i.test(f)), `M non-GK on saves → SKIP (got ${r.verdict})`);
+// N) Goalkeeper on Outfield Fantasy Score → SKIP (PP scores keepers separately).
+const gtGkFs = gatherSoccerGroundTruth({ player: "Test Striker", prop: ppProp({ player_position: "Goalkeeper" }) }).groundTruth;
+r = run(gtGkFs, { stat: "Outfield Fantasy Score", line: 8.5 });
+ok(r.verdict === "SKIP" && r.flags.some((f) => /outfield-stat/i.test(f)), `N GK on outfield fantasy → SKIP (got ${r.verdict})`);
+// O) Fantasy composite end-to-end: strong model edge → B-capped pick.
+const fsLine = Math.max(0.5, gtStr.soccer.fantasy.mean - gtStr.soccer.fantasy.sd);
+r = run(gtStr, { stat: "Outfield Fantasy Score", line: fsLine });
+ok(r.verdict === "OVER" && r.tier === "B", `O fantasy composite → B-capped OVER (got ${r.verdict}/${r.tier})`);
 
 // Cleanup injected stores.
 setSoccerRates(null);

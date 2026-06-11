@@ -15,6 +15,7 @@
 // don't cover, and the existing smokes, are unaffected.
 
 import { lookupMarket } from "../odds.js";
+import { WC_STAT_MODEL } from "../prop-types.js";
 
 // Stage 5 — WNBA is a softer market: PrizePicks lines lag the sharp consensus
 // more, books disagree more, and a 3-pt line gap is real edge (vs noise in the
@@ -39,10 +40,24 @@ export function apply(ctx) {
 
   const m = lookupMarket({ player, stat: statType, line, league: groundTruth?.league });
   if (!m) {
-    // WC is market-LED (spec §6.1): no sharp ladder ⇒ nothing to price the
-    // pick against ⇒ hard abstain. Basketball keeps its no-op (the box-score
-    // rules carry those picks).
     if (isWC) {
+      // Model-led WC stats (spec §10.2): no sharp anchor EXISTS for these
+      // (Passes Attempted / Clearances / Fantasy have no DK market at all),
+      // so absence of a ladder isn't disqualifying — cap at B and hand the
+      // spine to wc-projection. S/A stay unreachable until the model-led
+      // slice proves out at the calibration checkpoint.
+      if (WC_STAT_MODEL[statType]?.modelLed) {
+        return {
+          fired: true,
+          rule_id: "market-edge",
+          tier_cap: "B",
+          flag: "ℹ️ Model-led prop — no sharp anchor exists for this stat, B-tier cap",
+          justification_part: "Market: no sharp market exists for this stat — model-led path, capped at B (spec §10.2).",
+        };
+      }
+      // Anchored WC stats are market-LED (spec §6.1): no sharp ladder for
+      // this player ⇒ nothing to price the pick against ⇒ hard abstain.
+      // Basketball keeps its no-op (the box-score rules carry those picks).
       return {
         fired: true,
         rule_id: "market-edge",

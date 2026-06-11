@@ -27,13 +27,17 @@ const PRIZEPICKS_API = "https://api.prizepicks.com/projections";
 // futures and out of scope — WC_FRAMEWORK_SPEC.md §9).
 //
 // `stats` (optional) — canonical stat whitelist for the league; projections
-// whose stat_type doesn't map into it are dropped at scrape time. WC v1
-// covers Shots + SOT only, which also keeps ~4.5k fouls/cards/offsides
-// projections out of the snapshot.
+// whose stat_type doesn't map into it are dropped at scrape time. WC covers
+// the v1 pair plus the v2 expansion (WC_FRAMEWORK_SPEC.md §10); the
+// whitelist still keeps ~4k fouls/cards/offsides projections out of the
+// snapshot.
 const LEAGUES = [
   { league: "NBA", league_id: 7 },
   { league: "WNBA", league_id: 3 },
-  { league: "WC", league_id: 241, stats: ["Shots", "Shots On Target"] },
+  { league: "WC", league_id: 241, stats: [
+    "Shots", "Shots On Target", "Tackles", "Goalie Saves", "Clearances",
+    "Passes Attempted", "Outfield Fantasy Score",
+  ] },
 ];
 
 const HEADERS = {
