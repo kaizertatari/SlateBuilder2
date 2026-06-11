@@ -77,6 +77,42 @@ function scenario(fairs) {
   ok(w && n && w.fair_over > n.fair_over, `E: a +1.0 shift moves WNBA more than NBA (w=${w?.fair_over}, n=${n?.fair_over})`);
 }
 
+// F) per-game cap collapses the two perspective keys the PrizePicks scrape
+// writes per matchup ("AAA@BBB" AND "BBB@AAA") — two legs from the same
+// physical game must never share a maxPerGame=1 slate, even though their
+// raw game keys differ.
+{
+  const leg = (player, prob, game) => ({ player, stat_type: "Points", direction: "OVER", line: 15.5, odds_type: "standard", prob, game });
+  const candidates = [
+    leg("P1", 0.90, "AAA@BBB"),
+    leg("P2", 0.90, "BBB@AAA"), // same game as P1, opposite perspective
+    leg("P3", 0.85, "CCC@DDD"),
+    leg("P4", 0.80, "EEE@FFF"),
+  ];
+  const r = buildSlate(candidates, { targetMultiplier: 3, mode: "power", size: 3, maxPerGame: 1 });
+  ok(!r.abstained, "F: builds a slate");
+  const legs = r.slate?.legs ?? [];
+  const hasP1 = legs.some((l) => l.player === "P1");
+  const hasP2 = legs.some((l) => l.player === "P2");
+  ok(!(hasP1 && hasP2), "F: opposite-perspective same-game legs don't stack under maxPerGame=1");
+  ok(legs.length === 3 && (hasP1 || hasP2), "F: one leg from the shared game is still allowed");
+}
+
+// G) WNBA:-prefixed perspective keys canonicalize the same way
+{
+  const leg = (player, prob, game) => ({ player, stat_type: "Points", direction: "OVER", line: 15.5, odds_type: "standard", prob, game });
+  const candidates = [
+    leg("P1", 0.90, "WNBA:GSV@LVA"),
+    leg("P2", 0.90, "WNBA:LVA@GSV"), // same game as P1
+    leg("P3", 0.85, "WNBA:SEA@DAL"),
+  ];
+  const r = buildSlate(candidates, { targetMultiplier: 2, mode: "power", size: 2, maxPerGame: 1 });
+  ok(!r.abstained, "G: builds a slate");
+  const legs = r.slate?.legs ?? [];
+  const both = legs.some((l) => l.player === "P1") && legs.some((l) => l.player === "P2");
+  ok(!both, "G: WNBA-prefixed perspective keys collapse to one game");
+}
+
 setOdds(null);
 console.log(`\nsmoke-build-slate: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

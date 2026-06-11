@@ -16,6 +16,13 @@ import { composeGroundTruth } from "../api/lib/ground-truth.js";
 import { FRAMEWORK_SCALING, ftFloorBaseline } from "../api/lib/framework.js";
 import { selectLinesForStat } from "../api/analyze-all.js";
 import { applyEngine } from "../api/lib/engine.js";
+import { setOdds } from "../api/lib/odds.js";
+
+// Hermetic odds: applyEngine's market rules lazy-load data/odds.json, so a
+// fixture name that the latest odds refresh happens to price would fire
+// market suppressors mid-test. Seed an empty store — same rationale as
+// smoke-engine.mjs.
+setOdds({ by_player: {}, games: {} });
 
 let passed = 0, failed = 0;
 function check(name, cond, detail = "") {

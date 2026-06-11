@@ -11,6 +11,8 @@
 // Returns the {averages, raw_vs_weighted_delta, outlier_present, mode}
 // shape consumed by composeGroundTruth + verdict-verifier.
 
+import { fanduelFantasyScore } from "./framework.js";
+
 const RECENCY_RAMP = [0.30, 0.25, 0.20, 0.15, 0.10];
 
 // Move 1 (current-series accuracy hybrid) — per-game weight modifier based
@@ -263,9 +265,7 @@ export function computeWeightedL5({ games, seasonPpg, playoffPpg, ownAbbr, serie
   // when tov is unknown — matches the Rule 5a baseline-missing semantics
   // used elsewhere (the framework SKIPs cleanly instead of evaluating
   // against an inflated FS).
-  const wFs = (wTov == null)
-    ? null
-    : ppg + 1.2 * rpg + 1.5 * apg + 3 * (wStl ?? 0) + 3 * (wBlk ?? 0) - 1 * wTov;
+  const wFs = fanduelFantasyScore({ pts: ppg, reb: rpg, ast: apg, stl: wStl, blk: wBlk, tov: wTov });
   const averages = {
     ppg: round1(ppg),
     rpg: round1(rpg),
@@ -374,10 +374,7 @@ function computeTrimmedAverages(games, weights) {
   const pa  = (g) => (g?.pts != null && g?.ast != null) ? g.pts + g.ast : null;
   const ra  = (g) => (g?.reb != null && g?.ast != null) ? g.reb + g.ast : null;
   const bs  = (g) => (g?.blk != null || g?.stl != null) ? (g.blk ?? 0) + (g.stl ?? 0) : null;
-  const fs  = (g) => {
-    if (g?.pts == null || g?.reb == null || g?.ast == null || g?.tov == null) return null;
-    return g.pts + 1.2 * g.reb + 1.5 * g.ast + 3 * (g.stl ?? 0) + 3 * (g.blk ?? 0) - g.tov;
-  };
+  const fs  = (g) => fanduelFantasyScore({ pts: g?.pts, reb: g?.reb, ast: g?.ast, stl: g?.stl, blk: g?.blk, tov: g?.tov });
   return {
     ppg: round1(trimmedWeightedMean(games, weights, pts)),
     rpg: round1(trimmedWeightedMean(games, weights, reb)),
@@ -424,9 +421,7 @@ function rawAverages(games) {
   const fta = avg("fta");
   const ft_pct = avg("ft_pct");
   const minutes = avg("minutes");
-  const fs = (topg == null)
-    ? null
-    : ppg + 1.2 * rpg + 1.5 * apg + 3 * (spg ?? 0) + 3 * (bpg ?? 0) - 1 * topg;
+  const fs = fanduelFantasyScore({ pts: ppg, reb: rpg, ast: apg, stl: spg, blk: bpg, tov: topg });
   return {
     ppg: round1(ppg),
     rpg: round1(rpg),

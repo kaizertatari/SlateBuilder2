@@ -10,9 +10,7 @@
 // 3-in-4 is weighted heavier than a lone back-to-back (cumulative fatigue).
 // Forward-gated: magnitudes are modest and meant to be tuned by calibration.
 
-const COUNTING_STATS = new Set([
-  "Points", "Rebounds", "Assists", "3-Pointers Made", "PRA", "PR", "PA", "RA",
-]);
+import { COUNTING_STATS } from "./_helpers.js";
 
 export function apply(ctx) {
   const { groundTruth, statType, direction } = ctx;

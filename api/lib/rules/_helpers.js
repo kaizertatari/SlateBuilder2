@@ -38,6 +38,13 @@ export const ASSIST_CONTAINING = new Set([
 // Win-prob bands, regular season vs playoff (R9).
 export const ASSIST_WP_BAND_REG = { lo: 0.40, hi: 0.75 };
 export const ASSIST_WP_BAND_PLAYOFF = { lo: 0.35, hi: 0.80 };
+// Volume/counting props the Stage 2–4 signal rules (game-script, rest,
+// usage-shift) apply to — production scales with possessions/usage.
+// Defensive stats (Blocks, Steals) and Fantasy Score are excluded: their
+// relationship to pace/usage is weaker or mixed-sign.
+export const COUNTING_STATS = new Set([
+  "Points", "Rebounds", "Assists", "3-Pointers Made", "PRA", "PR", "PA", "RA",
+]);
 
 export function scaleFor(groundTruth) {
   const league = String(groundTruth?.league ?? "NBA").toUpperCase();

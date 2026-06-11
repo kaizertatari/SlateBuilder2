@@ -42,13 +42,6 @@ export class ExternalAPIError extends AnalysisError {
   }
 }
 
-export class LLMError extends AnalysisError {
-  constructor(message, retryable = false) {
-    super(message, 'LLM_ERROR', 500, retryable);
-    this.name = 'LLMError';
-  }
-}
-
 export class DataNotFoundError extends AnalysisError {
   constructor(message) {
     super(message, 'DATA_NOT_FOUND_ERROR', 404, false);
@@ -73,8 +66,10 @@ export function createErrorResponse(error) {
     headers['Retry-After'] = String(Math.ceil(error.retryAfterMs / 1000));
   }
   
+  // Generic errors (SyntaxError from req.json(), plain Error) carry no
+  // .status — default to 500 so unhandled failures never surface as HTTP 200.
   return Response.json(responseBody, {
-    status: error.status,
+    status: error.status ?? 500,
     headers
   });
 }

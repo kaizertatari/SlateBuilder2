@@ -17,16 +17,18 @@ import { get as cacheGet, set as cacheSet } from "./lib/cache.js";
 import { preFilterMechanical } from "./lib/verdict-verifier.js";
 import { applyEngine } from "./lib/engine.js";
 import { selectLinesForStat, ALL_ODDS_TYPES } from "./lib/select-lines.js";
+import { setOdds } from "./lib/odds.js";
+import { readOdds } from "./lib/odds-store.js";
 import { logVerdict } from "./lib/verdict-logger.js";
 import { randomUUID } from "node:crypto";
 
 export const runtime = "nodejs";
 
 // Response cache TTL. Primary invalidation is via the key itself
-// (incorporates linesData.fetched_at), so when the cron at 5/17 UTC rewrites
-// lines, prior keys become unreachable. The TTL is a defensive bound past
-// the 12h cron cadence to keep the Map from growing unbounded on a
-// long-lived warm instance.
+// (incorporates linesData.fetched_at), so when the lines refresh (home
+// Task Scheduler, 4×/day) rewrites the blob, prior keys become
+// unreachable. The TTL is a defensive bound to keep the Map from growing
+// unbounded on a long-lived warm instance.
 const CACHE_TTL_MS = 13 * 60 * 60 * 1000;
 
 function normalizePlayer(name) {
@@ -138,7 +140,7 @@ async function handlePost(req, reqId) {
       }
     }
 
-    // Read PrizePicks lines (from /tmp cache when warm, else bundled file).
+    // Read PrizePicks lines (blob first, bundled-file fallback).
     let linesData;
     try {
       linesData = await readLines();
@@ -150,10 +152,10 @@ async function handlePost(req, reqId) {
     }
 
     // Cache lookup. Inputs are deterministic in (player, fetched_at,
-    // statTypes, direction) — between cron ticks (12h), the same inputs
-    // yield the same response. A hit skips every external API call and
-    // every LLM call. fetched_at is embedded in the key, so the next
-    // cron-driven refresh makes prior keys unreachable.
+    // statTypes, direction) — between lines refreshes, the same inputs
+    // yield the same response. A hit skips every external API call.
+    // fetched_at is embedded in the key, so the next refresh makes prior
+    // keys unreachable.
     const linesFetchedAt = linesData.fetched_at || null;
     const sortedStats = (Array.isArray(statTypes) && statTypes.length > 0)
       ? [...statTypes].sort().join(",")
@@ -167,6 +169,15 @@ async function handlePost(req, reqId) {
     if (cached) {
       return Response.json(cached, { headers: { "X-Cache": "HIT" } });
     }
+
+    // Warm the sharp-odds store from the blob (falls back to the bundled
+    // data/odds.json) so the Stage 1–3 market rules (market-edge,
+    // game-script, projection) price against the freshest snapshot instead
+    // of whatever the deploy bundled. Mirrors build-slate. Without this,
+    // lookupMarket/lookupVegas lazy-load the bundled file once and never
+    // refresh on a warm instance. Placed after the cache check — cached
+    // responses were priced when they were computed.
+    setOdds(await readOdds());
 
     // Find the player's props (exact match on by_player keys). If the client
     // sent a league, filter cross-league props out — defends against the rare
@@ -330,7 +341,6 @@ async function handlePost(req, reqId) {
     // a time. No LLM, no provider rotation, no TPM pacing. tier_counts
     // captures the verdict distribution across all completed analyses.
     const results = [];
-    const errors = [];
     const tierCounts = { S: 0, A: 0, B: 0, SKIP: 0, UNKNOWN: 0 };
 
     for (const task of tasks) {
@@ -419,10 +429,10 @@ async function handlePost(req, reqId) {
     // Return top 10
     const top10 = results.slice(0, 10);
 
-    // Cache the full response. Partial-failure responses (errors[] non-empty)
-    // are cached on purpose: user picked fetched_at-only invalidation, so a
-    // retry within the same window would re-spend tokens for the same
-    // chance of success. Errors clear at the next cron tick.
+    // Cache the full response. Partial responses (skipped[] non-empty) are
+    // cached on purpose: user picked fetched_at-only invalidation, so a
+    // retry within the same window would redo the same work for the same
+    // outcome. Stale entries clear at the next lines refresh.
     const responseBody = {
       request_id: reqId,
       total_analyzed: tasks.length,
@@ -430,7 +440,6 @@ async function handlePost(req, reqId) {
       tier_counts: tierCounts,
       top_10: top10,
       lines_fetched_at: linesFetchedAt,
-      errors: errors.length > 0 ? errors : undefined,
       skipped: skipped.length > 0 ? skipped : undefined,
     };
     cacheSet(cacheKey, responseBody, CACHE_TTL_MS);

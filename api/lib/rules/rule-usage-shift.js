@@ -14,9 +14,7 @@
 // symmetric OVER-side gap, where neither mechanism was previously expressed.
 // Counting stats only; no-ops when no mechanism is confirmed.
 
-const COUNTING_STATS = new Set([
-  "Points", "Rebounds", "Assists", "3-Pointers Made", "PRA", "PR", "PA", "RA",
-]);
+import { COUNTING_STATS } from "./_helpers.js";
 
 export function apply(ctx) {
   const { groundTruth, statType, direction } = ctx;
