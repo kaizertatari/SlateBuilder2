@@ -96,6 +96,13 @@ export default function App() {
   // selection = no filter (all players visible).
   const [selectedGames, setSelectedGames] = useState([]);
   const [gamesOpen, setGamesOpen] = useState(false);
+  // Date filter — narrows the Games list (and through it the player picker
+  // and slate builder) to slates on the chosen local dates. Keys are local
+  // YYYY-MM-DD strings derived from prop start_time; useful because the
+  // snapshot can span several days (WC group stage / NBA Finals post
+  // early). Empty selection = no filter.
+  const [selectedDates, setSelectedDates] = useState([]);
+  const [datesOpen, setDatesOpen] = useState(false);
   // Odds-type filter for the displayed top picks. Default: all three.
   const [selectedOdds, setSelectedOdds] = useState([...ODDS_TYPES]);
   const [oddsOpen, setOddsOpen] = useState(false);
@@ -106,6 +113,7 @@ export default function App() {
   // click the chevron again.
   const playerRef = useRef(null);
   const gamesRef = useRef(null);
+  const datesRef = useRef(null);
   const oddsRef = useRef(null);
   const directionsRef = useRef(null);
   const statsRef = useRef(null);
@@ -152,6 +160,7 @@ export default function App() {
       const tuples = [
         [playerOpen, playerRef, setPlayerOpen],
         [gamesOpen, gamesRef, setGamesOpen],
+        [datesOpen, datesRef, setDatesOpen],
         [oddsOpen, oddsRef, setOddsOpen],
         [directionsOpen, directionsRef, setDirectionsOpen],
         [statsOpen, statsRef, setStatsOpen],
@@ -164,7 +173,7 @@ export default function App() {
     }
     document.addEventListener("mousedown", handleMouseDown);
     return () => document.removeEventListener("mousedown", handleMouseDown);
-  }, [playerOpen, gamesOpen, oddsOpen, directionsOpen, statsOpen]);
+  }, [playerOpen, gamesOpen, datesOpen, oddsOpen, directionsOpen, statsOpen]);
 
   // Fetch the PrizePicks slate so we can populate the Game filter and
   // constrain the player picker to players who actually have lines tonight.
@@ -205,17 +214,59 @@ export default function App() {
       const canonical = [a, b].sort().join("|");
       let entry = byCanonical.get(canonical);
       if (!entry) {
-        entry = { canonical, label: `${a} @ ${b}`, gameKeys: [], players: new Set() };
+        entry = { canonical, label: `${a} @ ${b}`, gameKeys: [], players: new Set(), start_ms: null };
         byCanonical.set(canonical, entry);
       }
       entry.gameKeys.push(gameKey);
       for (const prop of info.props || []) {
         const name = prop.player_key || prop.player;
         if (name) entry.players.add(name);
+        // Earliest prop start_time = the game's kickoff/tipoff. Drives the
+        // Date filter; stays null when the scrape carried no start_time.
+        const ms = prop.start_time ? Date.parse(prop.start_time) : NaN;
+        if (Number.isFinite(ms) && (entry.start_ms == null || ms < entry.start_ms)) {
+          entry.start_ms = ms;
+        }
       }
     }
-    return [...byCanonical.values()].sort((a, b) => a.label.localeCompare(b.label));
+    // Resolve each game to its LOCAL kickoff date (viewer's timezone) —
+    // key for filtering, label for display.
+    const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+    const out = [...byCanonical.values()];
+    for (const g of out) {
+      if (g.start_ms != null) {
+        const d = new Date(g.start_ms);
+        const m = d.getMonth() + 1;
+        g.date = `${d.getFullYear()}-${String(m).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        g.dateLabel = `${WEEKDAYS[d.getDay()]} ${m}/${d.getDate()}`;
+      } else {
+        g.date = null;
+        g.dateLabel = null;
+      }
+    }
+    return out.sort((a, b) => a.label.localeCompare(b.label));
   }, [linesData, league]);
+
+  // Distinct local dates across the league's games, chronological, each with
+  // its game count. Drives the Date dropdown.
+  const availableDates = useMemo(() => {
+    const byDate = new Map();
+    for (const g of availableGames) {
+      if (!g.date) continue;
+      const cur = byDate.get(g.date);
+      if (cur) cur.count += 1;
+      else byDate.set(g.date, { key: g.date, label: g.dateLabel, count: 1 });
+    }
+    return [...byDate.values()].sort((a, b) => a.key.localeCompare(b.key));
+  }, [availableGames]);
+
+  // Games surviving the Date filter — the pool every downstream consumer
+  // (Games dropdown, player picker, slate-builder fan-out) draws from.
+  // Dateless games (no start_time in the scrape) only show unfiltered.
+  const dateFilteredGames = useMemo(() => {
+    if (selectedDates.length === 0) return availableGames;
+    return availableGames.filter((g) => g.date && selectedDates.includes(g.date));
+  }, [availableGames, selectedDates]);
 
   // Players visible in the picker — narrowed to selected games when at
   // least one game is picked. Empty selection means "no game filter".
@@ -223,17 +274,19 @@ export default function App() {
     // WC (soccer) players aren't in players.json — the roster IS the lines
     // snapshot, so derive the picker list from the slate's games.
     const all = league === "WC"
-      ? [...new Set(availableGames.flatMap((g) => [...g.players]))].sort()
+      ? [...new Set(dateFilteredGames.flatMap((g) => [...g.players]))].sort()
       : PLAYERS_BY_LEAGUE[league] ?? [];
-    if (selectedGames.length === 0) return all;
+    // With dates narrowed but no explicit game picks, the date pool IS the
+    // game filter; explicit game picks narrow further within it.
+    if (selectedGames.length === 0 && selectedDates.length === 0) return all;
     const allowed = new Set();
-    for (const g of availableGames) {
-      if (selectedGames.includes(g.canonical)) {
+    for (const g of dateFilteredGames) {
+      if (selectedGames.length === 0 || selectedGames.includes(g.canonical)) {
         for (const p of g.players) allowed.add(p);
       }
     }
     return all.filter((name) => allowed.has(name));
-  }, [league, selectedGames, availableGames]);
+  }, [league, selectedGames, selectedDates, dateFilteredGames]);
 
   const filteredPlayers = useMemo(() => {
     const q = playerQuery.trim().toLowerCase();
@@ -293,7 +346,9 @@ export default function App() {
     return {
       players: players.length,
       games: selectedGames.length,
-      gamesTotal: availableGames.length,
+      gamesTotal: dateFilteredGames.length,
+      dates: selectedDates.length,
+      datesTotal: availableDates.length,
       stats: selectedStats.length,
       statsTotal: leagueStats.length,
       odds: selectedOdds.length,
@@ -303,7 +358,7 @@ export default function App() {
       propBuckets,
       linesToAnalyze,
     };
-  }, [linesData, players, selectedStats, selectedOdds, selectedDirections, selectedGames, availableGames, leagueStats]);
+  }, [linesData, players, selectedStats, selectedOdds, selectedDirections, selectedGames, selectedDates, dateFilteredGames, availableDates, leagueStats]);
 
   // top_10 narrowed by the Odds filter. Display-only — tier_counts above
   // still reflects the full analyzed pool so the operator can see the
@@ -325,6 +380,7 @@ export default function App() {
     setPlayerOpen(false);
     setPlayerHighlight(0);
     setSelectedGames([]);
+    setSelectedDates([]);
     setResults(null);
     setError(null);
     setCacheStatus(null);
@@ -347,11 +403,33 @@ export default function App() {
         : [...selectedGames, next];
       if (stillSelected.length === 0) return cur;
       const allowed = new Set();
-      for (const g of availableGames) {
+      for (const g of dateFilteredGames) {
         if (stillSelected.includes(g.canonical)) {
           for (const p of g.players) allowed.add(p);
         }
       }
+      return cur.filter((p) => allowed.has(p));
+    });
+  };
+
+  // Date filter toggle. Narrowing dates also prunes game selections (and
+  // their player chips) that the new date set hides — same reasoning as
+  // toggleGame: stale selections must not silently survive into the
+  // request body.
+  const toggleDate = (key) => {
+    const next = selectedDates.includes(key)
+      ? selectedDates.filter((d) => d !== key)
+      : [...selectedDates, key];
+    setSelectedDates(next);
+    const visible = next.length === 0
+      ? availableGames
+      : availableGames.filter((g) => g.date && next.includes(g.date));
+    const visibleKeys = new Set(visible.map((g) => g.canonical));
+    setSelectedGames((cur) => cur.filter((c) => visibleKeys.has(c)));
+    setPlayers((cur) => {
+      if (cur.length === 0 || next.length === 0) return cur;
+      const allowed = new Set();
+      for (const g of visible) for (const p of g.players) allowed.add(p);
       return cur.filter((p) => allowed.has(p));
     });
   };
@@ -595,10 +673,15 @@ export default function App() {
     setSlate(null);
     setBuildingSlate(true);
     try {
-      const gameKeys = selectedGames.length
-        ? availableGames
-            .filter((g) => selectedGames.includes(g.canonical))
-            .flatMap((g) => g.gameKeys.map((k) => k.replace(/^(WNBA|WC):/, "")))
+      // Date filter constrains the board even without explicit game picks;
+      // explicit picks narrow further within the date-filtered pool.
+      const pool = selectedGames.length
+        ? dateFilteredGames.filter((g) => selectedGames.includes(g.canonical))
+        : selectedDates.length
+        ? dateFilteredGames
+        : null;
+      const gameKeys = pool
+        ? pool.flatMap((g) => g.gameKeys.map((k) => k.replace(/^(WNBA|WC):/, "")))
         : null;
       const body = { league, statTypes: selectedStats, targetMultiplier, mode: slateMode, size: 3 };
       if (gameKeys && gameKeys.length) body.games = gameKeys;
@@ -617,7 +700,7 @@ export default function App() {
     } finally {
       setBuildingSlate(false);
     }
-  }, [league, selectedStats, selectedGames, availableGames, targetMultiplier, slateMode]);
+  }, [league, selectedStats, selectedGames, selectedDates, dateFilteredGames, targetMultiplier, slateMode]);
 
   // Trigger a live PrizePicks refresh via the existing /api/refresh-lines
   // endpoint. Locally (residential IP) this scrapes + writes the blob; on
@@ -973,12 +1056,13 @@ export default function App() {
             </div>
           </div>
 
-          {/* Game Multi-Select — pulled from /api/lines on mount. Filters
-              the player picker to players who have lines in the selected
-              games. Empty selection = no filter (all players visible). */}
-          <div ref={gamesRef} style={{ position: "relative" }}>
+          {/* Date Multi-Select — narrows the Games list (and through it the
+              player picker + slate builder) to slates on the chosen local
+              dates. The snapshot can span several days (WC group stage /
+              NBA Finals post early). Empty selection = all dates. */}
+          <div ref={datesRef} style={{ position: "relative" }}>
             <div
-              onClick={() => setGamesOpen(!gamesOpen)}
+              onClick={() => setDatesOpen(!datesOpen)}
               style={{
                 ...selectStyle,
                 display: "flex",
@@ -988,19 +1072,19 @@ export default function App() {
               }}
             >
               <span style={{ fontSize: 12 }}>
-                {availableGames.length === 0
-                  ? "— NO GAMES AVAILABLE —"
-                  : selectedGames.length === 0
-                  ? "ALL GAMES"
-                  : selectedGames.length === 1
-                  ? availableGames.find((g) => g.canonical === selectedGames[0])?.label || "1 GAME"
-                  : `${selectedGames.length} GAMES SELECTED`}
+                {availableDates.length === 0
+                  ? "— NO DATES AVAILABLE —"
+                  : selectedDates.length === 0
+                  ? "ALL DATES"
+                  : selectedDates.length === 1
+                  ? availableDates.find((d) => d.key === selectedDates[0])?.label || "1 DATE"
+                  : `${selectedDates.length} DATES SELECTED`}
               </span>
               <span style={{ fontSize: 10, color: "#446688" }}>
-                {gamesOpen ? "▲" : "▼"}
+                {datesOpen ? "▲" : "▼"}
               </span>
             </div>
-            {gamesOpen && availableGames.length > 0 && (
+            {datesOpen && availableDates.length > 0 && (
               <div
                 style={{
                   position: "absolute",
@@ -1015,7 +1099,83 @@ export default function App() {
                   overflowY: "auto",
                 }}
               >
-                {availableGames.map((g) => (
+                {availableDates.map((d) => (
+                  <label
+                    key={d.key}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "6px 12px",
+                      fontSize: 12,
+                      cursor: "pointer",
+                      background: selectedDates.includes(d.key) ? "#0066cc22" : "transparent",
+                    }}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      toggleDate(d.key);
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedDates.includes(d.key)}
+                      readOnly
+                      style={{ cursor: "pointer" }}
+                    />
+                    <span style={{ flex: 1 }}>{d.label}</span>
+                    <span style={{ fontSize: 10, color: "#446688" }}>
+                      {d.count} {d.count === 1 ? "GAME" : "GAMES"}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Game Multi-Select — pulled from /api/lines on mount, narrowed
+              by the Date filter. Filters the player picker to players who
+              have lines in the selected games. Empty selection = no filter
+              (all date-visible players). */}
+          <div ref={gamesRef} style={{ position: "relative" }}>
+            <div
+              onClick={() => setGamesOpen(!gamesOpen)}
+              style={{
+                ...selectStyle,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                cursor: "pointer",
+              }}
+            >
+              <span style={{ fontSize: 12 }}>
+                {dateFilteredGames.length === 0
+                  ? "— NO GAMES AVAILABLE —"
+                  : selectedGames.length === 0
+                  ? "ALL GAMES"
+                  : selectedGames.length === 1
+                  ? dateFilteredGames.find((g) => g.canonical === selectedGames[0])?.label || "1 GAME"
+                  : `${selectedGames.length} GAMES SELECTED`}
+              </span>
+              <span style={{ fontSize: 10, color: "#446688" }}>
+                {gamesOpen ? "▲" : "▼"}
+              </span>
+            </div>
+            {gamesOpen && dateFilteredGames.length > 0 && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 2px)",
+                  left: 0,
+                  right: 0,
+                  background: "#0a1420",
+                  border: "1px solid #1e3040",
+                  padding: "8px 0",
+                  zIndex: 10,
+                  maxHeight: 300,
+                  overflowY: "auto",
+                }}
+              >
+                {dateFilteredGames.map((g) => (
                   <label
                     key={g.canonical}
                     style={{
@@ -1038,7 +1198,10 @@ export default function App() {
                       readOnly
                       style={{ cursor: "pointer" }}
                     />
-                    {g.label}
+                    <span style={{ flex: 1 }}>{g.label}</span>
+                    {g.dateLabel && (
+                      <span style={{ fontSize: 10, color: "#446688" }}>{g.dateLabel}</span>
+                    )}
                   </label>
                 ))}
               </div>
@@ -1343,6 +1506,14 @@ export default function App() {
             <span style={{ color: "#8ab0cc" }}>
               <span style={{ color: "#446688" }}>PLAYERS </span>
               <strong style={{ color: "#c8d8e8" }}>{filterStats.players}</strong>
+            </span>
+            <span style={{ color: "#8ab0cc" }}>
+              <span style={{ color: "#446688" }}>DATES </span>
+              <strong style={{ color: "#c8d8e8" }}>
+                {filterStats.dates === 0
+                  ? `ALL${filterStats.datesTotal > 0 ? ` (${filterStats.datesTotal})` : ""}`
+                  : `${filterStats.dates} / ${filterStats.datesTotal}`}
+              </strong>
             </span>
             <span style={{ color: "#8ab0cc" }}>
               <span style={{ color: "#446688" }}>GAMES </span>
