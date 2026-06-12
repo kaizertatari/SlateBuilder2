@@ -72,6 +72,27 @@ async function handleRefresh(req, reqId, method) {
     );
   }
 
+  // ?ping=1 — funnel-path health probe for scripts/funnel-watchdog.mjs.
+  // Checks Vercel → Tailscale funnel → bridge reachability WITHOUT running a
+  // scrape. Reachable means the fetch resolved at all: any HTTP status
+  // (even 404 from an older bridge build without /health) proves the funnel
+  // path; only a network-level failure is the zombie signature.
+  if (new URL(req.url).searchParams.get("ping") === "1") {
+    const bridgeUrl = process.env.HOME_REFRESH_URL;
+    if (!bridgeUrl) {
+      return Response.json({ request_id: reqId, ping: true, error: "HOME_REFRESH_URL not configured" }, { status: 503 });
+    }
+    try {
+      const r = await fetch(`${bridgeUrl.replace(/\/$/, "")}/health`, { signal: AbortSignal.timeout(15_000) });
+      return Response.json({ request_id: reqId, ping: true, bridge_reachable: true, bridge_status: r.status });
+    } catch (err) {
+      return Response.json(
+        { request_id: reqId, ping: true, bridge_reachable: false, error: `Home bridge unreachable: ${err.message}` },
+        { status: 502 }
+      );
+    }
+  }
+
   try {
     const data = await scrapePrizePicksForToday({ write: false });
     // PrizePicks blocks cloud-provider IPs, so a scrape from Vercel silently

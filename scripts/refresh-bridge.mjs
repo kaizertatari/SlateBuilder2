@@ -51,6 +51,13 @@ function send(res, status, body) {
 const server = http.createServer(async (req, res) => {
   const reqId = randomUUID().slice(0, 8);
 
+  // Unauthenticated liveness probe for the funnel watchdog (the Vercel
+  // ?ping=1 path hits this through the funnel). Reveals only that the
+  // bridge is up — same as the 404 any other path already returns.
+  if (req.method === "GET" && req.url === "/health") {
+    return send(res, 200, { ok: true, service: "refresh-bridge", in_flight: inFlight });
+  }
+
   if (req.method !== "POST" || req.url !== "/refresh") {
     return send(res, 404, { request_id: reqId, error: "Not found" });
   }

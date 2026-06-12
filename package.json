@@ -29,6 +29,7 @@
     "refresh-soccer-rates": "node scripts/refresh-soccer-rates.mjs",
     "refresh-wc-match-stats": "node scripts/refresh-wc-match-stats.mjs",
     "refresh-bridge": "node scripts/refresh-bridge.mjs",
+    "funnel-watchdog": "node scripts/funnel-watchdog.mjs",
     "refresh-prizepicks:guarded": "node scripts/refresh-prizepicks.mjs && node scripts/validate-prizepicks-snapshot.mjs || (git checkout -- data/prizepicks-lines.json && exit 1)",
     "refresh-team-defense": "node scripts/refresh-team-defense.mjs",
     "refresh-team-defense:guarded": "node scripts/refresh-team-defense.mjs && node scripts/validate-team-defense-snapshot.mjs || (git checkout -- data/team-defense.json && exit 1)",
