@@ -451,8 +451,12 @@ const WC_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa
 const WC_SUMMARY = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary";
 
 // First finite value among candidate stat keys. ESPN soccer ships stats as
-// abbreviation/name pairs whose exact labels we validate against live
-// matches — candidates cover the observed/likely variants.
+// abbreviation/name pairs; both are indexed into the stat map. Keys were
+// validated 2026-06-12 against event 760415 (Mexico–South Africa) — fifa.world
+// rosters carry only: SHOT, SOG, SV, G, A, FC, FA, YC, RC, OF, OG, GA, SHF,
+// SUB, APP (appearances — NOT passes). Tackles/clearances/key passes/crosses/
+// dribbles/passes are absent → those props stay ungradeable from ESPN until
+// the FBref match-report fallback lands.
 function pickWcStat(statMap, keys) {
   for (const k of keys) {
     const v = statMap[k];
@@ -485,24 +489,28 @@ async function fetchWorldCupActuals(dateYmd) {
         if (!name) continue;
         const statMap = {};
         for (const s of slot?.stats ?? []) {
-          const key = s?.abbreviation ?? s?.name;
           const val = Number(s?.value ?? s?.displayValue);
-          if (key != null && Number.isFinite(val)) statMap[key] = val;
+          if (!Number.isFinite(val)) continue;
+          // Index abbreviation AND name — candidates reference both forms.
+          if (s?.abbreviation != null) statMap[s.abbreviation] = val;
+          if (s?.name != null) statMap[s.name] = val;
         }
         const played = slot?.starter === true || slot?.subbedIn === true || Object.keys(statMap).length > 0;
         players.set(normalizeName(name), {
           name,
           team: teamName,
           played,
-          sh: pickWcStat(statMap, ["SH", "totalShots", "shotsTotal", "Shots"]),
-          st: pickWcStat(statMap, ["ST", "SOT", "shotsOnTarget", "Shots on Target"]),
-          // v2 stats (spec §10.6) — candidate keys UNVALIDATED until the
-          // first completed match; a miss returns null and the verdict
-          // counts as ungradeable (surfaced per stat below), never guessed.
-          tk: pickWcStat(statMap, ["TKL", "TCK", "totalTackles", "tacklesTotal", "Tackles"]),
-          sv: pickWcStat(statMap, ["SV", "SVS", "saves", "Saves", "goalkeeperSaves"]),
-          clr: pickWcStat(statMap, ["CLR", "EFF", "totalClearance", "clearances", "Clearances"]),
-          pa: pickWcStat(statMap, ["PA", "APP", "totalPasses", "passesAttempted", "passes", "Passes"]),
+          sh: pickWcStat(statMap, ["SHOT", "totalShots", "SH", "shotsTotal"]),
+          st: pickWcStat(statMap, ["SOG", "shotsOnTarget", "ST", "SOT"]),
+          // v2 stats (spec §10.6) — a missing key returns null and the
+          // verdict counts as ungradeable (surfaced per stat below), never
+          // guessed. Validated 2026-06-12: ESPN rosters carry NONE of
+          // tk/clr/pa — kept as forward-compat candidates only. APP is
+          // appearances, never a passes key (was a silent mis-grade).
+          tk: pickWcStat(statMap, ["TKL", "TCK", "totalTackles", "tacklesTotal"]),
+          sv: pickWcStat(statMap, ["SV", "SVS", "saves", "goalkeeperSaves"]),
+          clr: pickWcStat(statMap, ["CLR", "totalClearance", "clearances"]),
+          pa: pickWcStat(statMap, ["totalPasses", "passesAttempted", "totalPassesAttempted"]),
           // Fantasy components beyond the above (goals/assists usually ship;
           // key passes/crosses/dribbles/fouls/cards spotty on ESPN rosters).
           g: pickWcStat(statMap, ["G", "totalGoals", "goals", "Goals"]),
