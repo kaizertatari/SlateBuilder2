@@ -247,6 +247,25 @@ export default function App() {
     return out.sort((a, b) => a.label.localeCompare(b.label));
   }, [linesData, league]);
 
+  // Per-league badge counts for the League toggle. NBA/WNBA come from the
+  // players.json roster; WC players aren't in players.json (the roster IS the
+  // lines snapshot), so count unique slate names — same source the picker uses.
+  const leagueCounts = useMemo(() => {
+    const counts = {};
+    for (const l of LEAGUES) counts[l] = PLAYERS_BY_LEAGUE[l]?.length ?? 0;
+    const games = linesData?.data?.games || {};
+    const wcPlayers = new Set();
+    for (const info of Object.values(games)) {
+      if (info?.league !== "WC") continue;
+      for (const prop of info.props || []) {
+        const name = prop.player_key || prop.player;
+        if (name) wcPlayers.add(name);
+      }
+    }
+    counts.WC = wcPlayers.size;
+    return counts;
+  }, [linesData]);
+
   // Distinct local dates across the league's games, chronological, each with
   // its game count. Drives the Date dropdown.
   const availableDates = useMemo(() => {
@@ -838,7 +857,7 @@ export default function App() {
           <div role="tablist" aria-label="League" style={{ display: "flex", gap: 0, border: "1px solid #1e3040" }}>
             {LEAGUES.map((l) => {
               const active = l === league;
-              const count = PLAYERS_BY_LEAGUE[l]?.length ?? 0;
+              const count = leagueCounts[l] ?? 0;
               return (
                 <button
                   key={l}
