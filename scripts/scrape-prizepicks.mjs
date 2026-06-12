@@ -10,6 +10,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { normalizeName } from "../api/_lib/string-utils.js";
 import { mapPrizePicksStatType } from "../api/_lib/prop-types.js";
+import { readLines } from "../api/_lib/lines-store.js";
 import { loadEnvLocal } from "./_env.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -144,6 +145,35 @@ function resolvePlayer(rawName, nameLookup, league) {
   return null;
 }
 
+// ─── League Salvage ────────────────────────────────────────────────────────
+
+// Extract one league's still-upcoming props from a previous snapshot so a
+// failed league fetch (PP rate-limits league 241 aggressively) keeps the
+// prior good data instead of thinning the snapshot. Props whose game has
+// already started are dropped — salvage never resurrects a tipped slate.
+export function salvageLeagueFromSnapshot(previous, league, nowMs) {
+  const games = {};
+  const byPlayer = {};
+  let count = 0;
+  for (const [gameKey, info] of Object.entries(previous?.games ?? {})) {
+    if (!info || info.league !== league) continue;
+    const props = (info.props ?? []).filter((p) => {
+      const ms = Date.parse(p.start_time ?? "");
+      return Number.isFinite(ms) && ms >= nowMs;
+    });
+    if (!props.length) continue;
+    games[gameKey] = { ...info, props };
+    count += props.length;
+    for (const prop of props) {
+      const key = prop.player_key ?? prop.player;
+      if (!key) continue;
+      if (!byPlayer[key]) byPlayer[key] = [];
+      byPlayer[key].push(prop);
+    }
+  }
+  return { games, byPlayer, count };
+}
+
 // ─── Main Export Function ──────────────────────────────────────────────────
 
 // opts.write (default true) — write the result to OUTPUT. Set false when
@@ -272,6 +302,41 @@ export async function scrapePrizePicksForToday(opts = {}) {
     perLeague[league] = { total_props: leagueProps };
   }
 
+  // Salvage guard: a league whose fetch failed outright would otherwise just
+  // vanish from the snapshot ("thinning") — the next write wipes its props
+  // from the blob until a later scrape succeeds. Backfill failed leagues from
+  // the previous snapshot (blob first, bundled file fallback), keeping only
+  // props for games that haven't started. Partial failure only: when EVERY
+  // league failed (cloud-IP block, PP outage) the result stays total_props=0
+  // so the existing refuse-write / forward-to-bridge guards still fire.
+  const failedLeagues = Object.keys(perLeague).filter((l) => perLeague[l].error);
+  if (failedLeagues.length > 0 && failedLeagues.length < leagues.length) {
+    let previous = null;
+    try {
+      previous = await readLines();
+    } catch (err) {
+      console.error(`  ! salvage skipped — previous snapshot unreadable: ${err.message}`);
+    }
+    for (const league of failedLeagues) {
+      if (!previous?.games) break;
+      const salvaged = salvageLeagueFromSnapshot(previous, league, nowMs);
+      if (!salvaged.count) {
+        console.error(`  ! ${league} salvage found no upcoming props in previous snapshot`);
+        continue;
+      }
+      Object.assign(gamesOutput, salvaged.games);
+      for (const [key, props] of Object.entries(salvaged.byPlayer)) {
+        if (!byPlayer[key]) byPlayer[key] = [];
+        byPlayer[key].push(...props);
+      }
+      totalProps += salvaged.count;
+      perLeague[league].total_props = salvaged.count;
+      perLeague[league].salvaged = true;
+      perLeague[league].salvaged_from = previous.fetched_at ?? null;
+      console.log(`  ! ${league} salvaged ${salvaged.count} props from previous snapshot (${previous.fetched_at})`);
+    }
+  }
+
   const result = {
     fetched_at: new Date().toISOString(),
     games: gamesOutput,
@@ -297,7 +362,10 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     .then((result) => {
       console.log(`\nDone: ${result.total_props} props for ${result.total_players} players`);
       for (const [league, stats] of Object.entries(result.leagues ?? {})) {
-        console.log(`  ${league}: ${stats.total_props ?? 0} props${stats.error ? ` (error: ${stats.error})` : ""}`);
+        const note = stats.salvaged
+          ? ` (salvaged from ${stats.salvaged_from} after: ${stats.error})`
+          : stats.error ? ` (error: ${stats.error})` : "";
+        console.log(`  ${league}: ${stats.total_props ?? 0} props${note}`);
       }
     })
     .catch((e) => {

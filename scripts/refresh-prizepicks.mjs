@@ -29,7 +29,10 @@ async function main() {
   console.log(`  Fetched at: ${result.fetched_at}`);
   if (result.leagues) {
     for (const [league, stats] of Object.entries(result.leagues)) {
-      console.log(`  ${league}: ${stats.total_props ?? 0} props${stats.error ? ` (error: ${stats.error})` : ""}`);
+      const note = stats.salvaged
+        ? ` (salvaged from ${stats.salvaged_from} after: ${stats.error})`
+        : stats.error ? ` (error: ${stats.error})` : "";
+      console.log(`  ${league}: ${stats.total_props ?? 0} props${note}`);
     }
   }
 
