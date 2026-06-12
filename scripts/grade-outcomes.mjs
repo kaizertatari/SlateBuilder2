@@ -32,6 +32,7 @@ loadEnvLocal();
 import { getLastNGames } from "../api/_lib/espn-stats.js";
 import { currentSeason } from "../api/_lib/nba-stats.js";
 import { normalizeName } from "../api/_lib/string-utils.js";
+import { loadWcMatchStats, indexWcMatchStatsByDate, mergeWcEntry, pickWcStat, wcActualFor } from "./_wc-actuals.mjs";
 
 const AXIOM_INGEST_URL_BASE = "https://api.axiom.co/v1/datasets";
 const AXIOM_QUERY_URL = "https://api.axiom.co/v1/datasets/_apl?format=tabular";
@@ -257,8 +258,16 @@ async function main() {
   const wcUngraded = [...wcUngradedByKey.values()];
   let wcHits = 0, wcMisses = 0, wcPushes = 0, wcVoids = 0, wcPostponed = 0, wcUnmatched = 0;
   const wcUngradeableByStat = new Map();
+  let wcFbFilled = 0;
   if (wcUngraded.length) {
     console.log(`\n=== World Cup leg: ${wcUngraded.length} ungraded WC verdicts ===`);
+    // FBref match-report fallback — fills the stats ESPN rosters don't carry
+    // (tk/clr/pa/kp/cr/drb → Tackles/Clearances/Passes Attempted/fantasy).
+    const fbSnap = await loadWcMatchStats();
+    const fbByDate = indexWcMatchStatsByDate(fbSnap);
+    console.log(fbSnap
+      ? `  FBref fallback: ${fbSnap.total_matches ?? Object.keys(fbSnap.matches).length} match reports (fetched ${fbSnap.fetched_at})`
+      : "  FBref fallback: no data/wc-match-stats.json — ESPN-only grading (npm run refresh-wc-match-stats)");
     const byDate = new Map();
     for (const v of wcUngraded) {
       const d = v.game_start_time.slice(0, 10);
@@ -274,8 +283,11 @@ async function main() {
         wcPostponed += vs.length;
         continue;
       }
+      const fbDay = fbByDate.get(date);
       for (const v of vs) {
-        const entry = actuals.players.get(normalizeName(v.player));
+        const espnEntry = actuals.players.get(normalizeName(v.player)) ?? null;
+        const fbEntry = fbDay?.get(normalizeName(v.player)) ?? null;
+        const entry = mergeWcEntry(espnEntry, fbEntry);
         if (!entry) {
           // Not on any completed match's roster that day: match still in
           // progress/postponed (retry within the lookback window) or a
@@ -296,6 +308,9 @@ async function main() {
           wcUngradeableByStat.set(stat, (wcUngradeableByStat.get(stat) || 0) + 1);
           continue;
         }
+        // FBref provided what ESPN couldn't (or the whole entry) — telemetry
+        // for how load-bearing the fallback is per slate.
+        if (espnEntry == null || wcActualFor(stat, espnEntry) == null) wcFbFilled++;
         const r = gradeRaw(actual, num(v.line), v.direction);
         outcomeEvents.push(buildWcOutcomeEvent(v, entry, { hit_or_miss: r, reason: null, actual_value: actual }));
         if (r === "hit") wcHits++;
@@ -303,13 +318,14 @@ async function main() {
         else wcPushes++;
       }
     }
-    console.log(`WC result: hits=${wcHits}  misses=${wcMisses}  pushes=${wcPushes}  voids=${wcVoids}  postponed=${wcPostponed}  unmatched=${wcUnmatched}`);
+    console.log(`WC result: hits=${wcHits}  misses=${wcMisses}  pushes=${wcPushes}  voids=${wcVoids}  postponed=${wcPostponed}  unmatched=${wcUnmatched}  fbref_filled=${wcFbFilled}`);
     if (wcUngradeableByStat.size) {
-      // ESPN roster stats lack the key for these — spec §10.6: surface, never
-      // guess. If a stat stays here after the first completed match, the
-      // FBref match-report fallback is the path to grading it.
+      // Neither ESPN nor the FBref snapshot resolved these — spec §10.6:
+      // surface, never guess. Usually means data/wc-match-stats.json is
+      // stale for the date: run refresh-wc-match-stats and re-grade (the
+      // lookback window retries automatically).
       for (const [stat, n] of wcUngradeableByStat) {
-        console.warn(`  UNGRADEABLE on ESPN: ${stat} ×${n} — no candidate stat key matched`);
+        console.warn(`  UNGRADEABLE: ${stat} ×${n} — no stat resolved from ESPN or FBref snapshot`);
       }
     }
   }
@@ -450,20 +466,13 @@ function joinKey(e) {
 const WC_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
 const WC_SUMMARY = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary";
 
-// First finite value among candidate stat keys. ESPN soccer ships stats as
-// abbreviation/name pairs; both are indexed into the stat map. Keys were
-// validated 2026-06-12 against event 760415 (Mexico–South Africa) — fifa.world
-// rosters carry only: SHOT, SOG, SV, G, A, FC, FA, YC, RC, OF, OG, GA, SHF,
-// SUB, APP (appearances — NOT passes). Tackles/clearances/key passes/crosses/
-// dribbles/passes are absent → those props stay ungradeable from ESPN until
-// the FBref match-report fallback lands.
-function pickWcStat(statMap, keys) {
-  for (const k of keys) {
-    const v = statMap[k];
-    if (Number.isFinite(v)) return v;
-  }
-  return null;
-}
+// ESPN soccer ships stats as abbreviation/name pairs; both are indexed
+// into the stat map. Keys were validated 2026-06-12 against event 760415
+// (Mexico–South Africa) — fifa.world rosters carry only: SHOT, SOG, SV, G,
+// A, FC, FA, YC, RC, OF, OG, GA, SHF, SUB, APP (appearances — NOT passes).
+// Tackles/clearances/key passes/crosses/dribbles/passes are absent → those
+// fields stay null here and the FBref match-stats snapshot fills them
+// (mergeWcEntry in _wc-actuals.mjs; refreshed by refresh-wc-match-stats).
 
 // Per-player actuals for every COMPLETED fifa.world match on a UTC date.
 // Returns { completed_events, players: Map<normName, { name, team, played,
@@ -558,33 +567,8 @@ function canonicalStat(propType) {
   return String(propType).replace(/\s+(OVER|UNDER)\s*$/i, "").trim();
 }
 
-// Resolve a WC verdict's actual from the per-player ESPN entry (spec §10.6).
-// Fantasy is computed from the official PP outfield weights ONLY when every
-// component graded — a partial sum would silently mis-grade, so null it and
-// let the ungradeable counter surface the gap instead.
-const WC_FANTASY_COMPONENTS = [
-  ["g", 10], ["a", 5], ["sh", 1], ["st", 1], ["pa", 0.05], ["kp", 0.5],
-  ["clr", 1], ["tk", 1], ["drb", 1], ["cr", 0.5], ["yc", -1], ["rc", -2], ["fc", -0.5],
-];
-function wcActualFor(stat, entry) {
-  switch (stat) {
-    case "Shots": return entry.sh;
-    case "Shots On Target": return entry.st;
-    case "Tackles": return entry.tk;
-    case "Goalie Saves": return entry.sv;
-    case "Clearances": return entry.clr;
-    case "Passes Attempted": return entry.pa;
-    case "Outfield Fantasy Score": {
-      let total = 0;
-      for (const [k, w] of WC_FANTASY_COMPONENTS) {
-        if (!Number.isFinite(entry[k])) return null; // all-or-nothing
-        total += w * entry[k];
-      }
-      return Number(total.toFixed(2));
-    }
-    default: return null;
-  }
-}
+// wcActualFor / WC_FANTASY_COMPONENTS / pickWcStat live in _wc-actuals.mjs
+// (shared with the FBref match-stats fallback and its smoke).
 
 function gradeRaw(actual, line, direction) {
   if (!Number.isFinite(actual) || !Number.isFinite(line)) return "miss";
