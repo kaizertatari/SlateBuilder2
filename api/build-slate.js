@@ -24,6 +24,7 @@ import { ALL_ODDS_TYPES } from "./_lib/select-lines.js";
 import { lookupMarket, setOdds } from "./_lib/odds.js";
 import { readOdds } from "./_lib/odds-store.js";
 import { buildSlate } from "./_lib/slate-builder.js";
+import { logSlateLegs } from "./_lib/verdict-logger.js";
 import { randomUUID } from "node:crypto";
 
 export const runtime = "nodejs";
@@ -81,9 +82,18 @@ export function collectMarketCandidates(linesData, { league = null, allowedLeagu
         line: p.line,
         odds_type: ot,
         market_fair_at_line: Number(fairForSide.toFixed(4)),
+        no_vig_prob: overP,
         market_line_delta: m.line_delta,
         books: m.books,
         game,
+        // Join keys carried from the lines snapshot so the priced leg can be
+        // logged as a gradeable verdict (verdict-logger.logSlateLegs): the
+        // grader settles on game_start_time + espn_id (basketball) or
+        // game_start_time + league=WC (soccer, FBref-by-name).
+        league: propLeague,
+        game_start_time: p.start_time ?? null,
+        espn_id: p.espn_id ?? null,
+        nba_id: p.nba_id ?? null,
       });
     }
   }
@@ -114,27 +124,19 @@ async function handlePost(req, reqId) {
       return Response.json({ error: "direction must be 'OVER' or 'UNDER'" }, { status: 400 });
     }
 
-    // Calibration gate: pause a league whose standard-line calibration isn't
-    // validated yet (WC, mid-tournament) with a clear reason — don't silently
-    // price its uncalibrated single-book lines into a fake-+EV slate.
+    // Calibration gate. A league whose standard-line calibration isn't
+    // validated yet (WC, mid-tournament) still gets PRICED + its legs LOGGED
+    // for calibration telemetry — we just don't publish a slate, returning a
+    // clear "pending" abstain instead of fake-+EV picks. (Pricing the pending
+    // league here is exactly what accrues the data that lets us un-gate it.)
     const reqLeague = rawLeague ? String(rawLeague).toUpperCase() : null;
-    if (reqLeague && SLATE_PENDING_LEAGUES[reqLeague]) {
-      return Response.json({
-        request_id: reqId,
-        league: reqLeague,
-        abstained: true,
-        calibration_pending: true,
-        reason: `${reqLeague} slates are paused pending calibration (target ${SLATE_PENDING_LEAGUES[reqLeague]})`,
-        slate: null,
-        considered: 0,
-        best_rejected: null,
-        params: null,
-        props_examined: 0,
-        props_priced: 0,
-      });
-    }
+    const isPending = !!(reqLeague && SLATE_PENDING_LEAGUES[reqLeague]);
     const calibratedLeagues = new Set(SLATE_CALIBRATED_LEAGUES);
-    const league = reqLeague && calibratedLeagues.has(reqLeague) ? reqLeague : null;
+    const league = reqLeague && (calibratedLeagues.has(reqLeague) || isPending) ? reqLeague : null;
+    // Pricing allow-list: a pending league prices only itself (telemetry);
+    // otherwise restrict to the calibrated set so the no-league path can't
+    // price an un-enabled league.
+    const allowedLeagues = isPending ? new Set([reqLeague]) : calibratedLeagues;
     // Default to STANDARD lines only: their payout is exact (3-pick Power = 5×)
     // and they're where the ≥3× target lives. goblin/demon payout multipliers
     // are approximate (LINE_TYPE_FACTOR) and fabricate EV, so they're opt-in
@@ -150,7 +152,32 @@ async function handlePost(req, reqId) {
     // into the sync lookupMarket cache before pricing.
     const odds = await readOdds();
     setOdds(odds);
-    const { candidates, matchedMarket, considered } = collectMarketCandidates(linesData, { league, allowedLeagues: calibratedLeagues, allowedStats, oddsTypes, games, direction });
+    const { candidates, matchedMarket, considered } = collectMarketCandidates(linesData, { league, allowedLeagues, allowedStats, oddsTypes, games, direction });
+
+    // Telemetry: log every priced leg as a gradeable verdict (market path),
+    // fire-and-forget. This is the ONLY place the de-vig prob the builder bets
+    // on gets recorded — the daily grader settles these and calibrate-market
+    // validates them. Covers pending leagues too (their slate stays withheld).
+    logSlateLegs(candidates, { source: "build-slate" });
+
+    if (isPending) {
+      return Response.json({
+        request_id: reqId,
+        league: reqLeague,
+        lines_fetched_at: linesData.fetched_at ?? null,
+        odds_fetched_at: odds?.fetched_at ?? null,
+        odds_sources: odds?.sources ?? null,
+        abstained: true,
+        calibration_pending: true,
+        reason: `${reqLeague} slates are paused pending calibration (target ${SLATE_PENDING_LEAGUES[reqLeague]})`,
+        slate: null,
+        considered: candidates.length,
+        best_rejected: null,
+        params: null,
+        props_examined: considered,
+        props_priced: matchedMarket,
+      }, { headers: { "X-Cache": "MISS" } });
+    }
 
     const result = buildSlate(candidates, { targetMultiplier, mode, size, maxPerGame });
 

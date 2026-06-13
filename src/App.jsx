@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import playersData from "../data/players.json";
-import { STATS, STATS_BY_LEAGUE, mapPrizePicksStatType, SLATE_PENDING_LEAGUES } from "../api/_lib/prop-types.js";
+import { STATS, STATS_BY_LEAGUE, mapPrizePicksStatType } from "../api/_lib/prop-types.js";
 import { selectLinesForStat } from "../api/_lib/select-lines.js";
 import { readNewestCached, writeCached, clearStaleForPlayer, buildKey } from "./lib/result-cache.js";
 
@@ -694,13 +694,9 @@ export default function App() {
   const buildSlateNow = useCallback(async () => {
     setSlateError(null);
     setSlate(null);
-    // Calibration gate (mirrors /api/build-slate): a paused league can't
-    // publish an EV, so short-circuit with the reason instead of round-tripping
-    // for a slate we know will be withheld.
-    if (SLATE_PENDING_LEAGUES[league]) {
-      setSlate({ abstained: true, calibration_pending: true, league, reason: `${league} slates are paused pending calibration (target ${SLATE_PENDING_LEAGUES[league]})`, slate: null, best_rejected: null, params: null });
-      return;
-    }
+    // A paused league (WC) still round-trips to /api/build-slate: the server
+    // prices + logs its legs for calibration telemetry, then returns the
+    // "pending" abstain, which the abstain card renders (calibration_pending).
     setBuildingSlate(true);
     try {
       // Date filter constrains the board even without explicit game picks;

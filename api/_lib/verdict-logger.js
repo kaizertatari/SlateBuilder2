@@ -194,6 +194,82 @@ export function logVerdict({
 }
 
 /**
+ * Emit gradeable `verdict` events for the slate builder's market-priced legs
+ * (api/build-slate.js). The slate builder bets on `market_fair_at_line` (the
+ * de-vig consensus) but has no ground-truth fan-out, so it never went through
+ * logVerdict — leaving the probability it actually bets on un-graded and
+ * un-calibratable. These events carry the SAME join keys + market fields the
+ * grader and `calibrate-market` read, so the daily grader settles them and the
+ * reliability of the de-vig prob can finally be measured.
+ *
+ * Batched into a single ingest call (a board can price 100+ legs/request).
+ * Fire-and-forget; no-ops without AXIOM_TOKEN.
+ *
+ * Only GRADEABLE legs are emitted: a leg needs game_start_time, plus either an
+ * espn_id (basketball gamelog grading) or league==="WC" (soccer FBref-by-name).
+ * NOTE: is_playoff is intentionally absent — the lines snapshot doesn't carry
+ * it, so the grader treats these as regular-season. WNBA + WC grade cleanly;
+ * NBA *playoff* legs won't match until is_playoff is sourced (known gap).
+ *
+ * @param {Array<Object>} legs  build-slate candidates (player, stat_type,
+ *   direction, line, odds_type, league, game_start_time, espn_id, nba_id,
+ *   market_fair_at_line, no_vig_prob, market_line_delta)
+ * @param {Object} [opts]
+ * @param {string} [opts.source="build-slate"]
+ */
+export function logSlateLegs(legs, { source = "build-slate" } = {}) {
+  const token = process.env.AXIOM_TOKEN;
+  if (!token) return;
+  const events = [];
+  for (const l of legs || []) {
+    const e = buildSlateLegEvent(l, source);
+    if (e) events.push(e);
+  }
+  if (events.length) ingestMany(token, events);
+}
+
+// Exported for the smoke — pure (no I/O). Returns the verdict event for one
+// priced leg, or null when the leg isn't gradeable.
+export function buildSlateLegEvent(l, source = "build-slate") {
+  if (!l) return null;
+  const gameStart = l.game_start_time ?? null;
+  const league = l.league ?? null;
+  // Gradeable only: need a start time, and an identity the grader can resolve.
+  if (!gameStart) return null;
+  if (!l.espn_id && league !== "WC") return null;
+  const stat = l.stat_type ?? null;
+  const direction = l.direction ?? null;
+  return {
+    _time: new Date().toISOString(),
+    event_type: "verdict",
+    req_id: getReqId(),
+    source: source ?? "build-slate",
+    player: l.player ?? null,
+    // grader: canonicalStat strips the trailing OVER/UNDER → "Points OVER".
+    prop_type: stat && direction ? `${stat} ${direction}` : stat,
+    line: l.line ?? null,
+    odds_type: l.odds_type ? String(l.odds_type).toLowerCase() : null,
+    direction,
+    stat_field: stat ? (PROP_TO_FIELD[stat] ?? null) : null,
+    game_start_time: gameStart,
+    nba_id: l.nba_id ?? null,
+    espn_id: l.espn_id ?? null,
+    engine_mode: "rules",
+    // The bet side IS the market-favored direction; verdict=direction keeps the
+    // row in settledBettable (non-SKIP) so it grades + feeds calibrate-market.
+    verdict: direction,
+    tier: null,
+    confidence: null,
+    no_vig_prob: typeof l.no_vig_prob === "number" ? l.no_vig_prob : null,
+    market_fair_at_line: typeof l.market_fair_at_line === "number" ? l.market_fair_at_line : null,
+    market_line_delta: l.market_line_delta ?? null,
+    league,
+    pre_filtered: false,
+    rules_fired: ["market-edge"],
+  };
+}
+
+/**
  * Emit a structured non-verdict event (external API failure, scrape
  * error, etc.). Same Axiom dataset, `event_type: "log"`. Fire-and-forget.
  *
@@ -227,6 +303,12 @@ export function logEvent({ level, source, message, errorName, errorStatus, conte
 // --- internals ------------------------------------------------------------
 
 function ingest(token, event) {
+  ingestMany(token, [event]);
+}
+
+// Ship one or many events in a single ingest POST (Axiom accepts an array).
+function ingestMany(token, events) {
+  if (!events || !events.length) return;
   const dataset = process.env.AXIOM_DATASET || "props_verdict";
   // Dangling promise on purpose — do NOT await. Catch network errors so
   // they never escape as unhandled rejections; surface non-2xx responses
@@ -238,7 +320,7 @@ function ingest(token, event) {
       "Authorization": `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify([event]),
+    body: JSON.stringify(events),
     signal: AbortSignal.timeout(TIMEOUT_MS),
   })
     .then(async (res) => {

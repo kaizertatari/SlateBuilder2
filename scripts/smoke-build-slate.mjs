@@ -3,6 +3,7 @@
 import { collectMarketCandidates } from "../api/build-slate.js";
 import { buildSlate } from "../api/_lib/slate-builder.js";
 import { setOdds, lookupMarket, slopeFor } from "../api/_lib/odds.js";
+import { buildSlateLegEvent } from "../api/_lib/verdict-logger.js";
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) pass++; else { fail++; console.error("  FAIL: " + m); } };
@@ -155,6 +156,40 @@ function scenario(fairs) {
   // without the allow-list, the WC prop IS collected (proves the gate is what filters it, not a stat/pricing miss)
   const { candidates: all } = collectMarketCandidates(lines, { allowedStats: new Set(["Points", "Shots"]) });
   ok(all.length === 2, `J: both leagues priced when no allow-list (got ${all.length})`);
+}
+
+// K) telemetry: candidates carry the grader join keys (game_start_time,
+// espn_id, nba_id, league) threaded from the lines snapshot.
+{
+  const odds = { source: "dk+fd", fetched_at: "t", by_player: {}, games: {} };
+  const lines = { fetched_at: "t", by_player: {} };
+  odds.by_player.Star = [{ stat: "Points", line: 15.5, over_american: -110, under_american: -110, fair_over: 0.7 }];
+  lines.by_player.Star = [{
+    stat_type: "Points", line: 15.5, odds_type: "standard", league: "WNBA",
+    player_team: "AAA", opponent: "BBB", start_time: "2026-06-13T23:00:00Z", espn_id: 99, nba_id: 7,
+  }];
+  setOdds(odds);
+  const { candidates } = collectMarketCandidates(lines, { league: "WNBA", allowedStats: new Set(["Points"]) });
+  const c = candidates[0];
+  ok(c && c.game_start_time === "2026-06-13T23:00:00Z" && c.espn_id === 99 && c.nba_id === 7 && c.league === "WNBA",
+    `K: candidate carries join keys (got ${JSON.stringify({ g: c?.game_start_time, e: c?.espn_id, n: c?.nba_id, l: c?.league })})`);
+  ok(typeof c.no_vig_prob === "number", "K: candidate carries no_vig_prob");
+}
+
+// L) gradeable-leg filter: build a verdict event only for legs the grader can
+// settle (game_start_time + espn_id for basketball, or league==='WC').
+{
+  const base = { player: "P", stat_type: "Points", direction: "OVER", line: 15.5, odds_type: "standard", market_fair_at_line: 0.7, game_start_time: "2026-06-13T23:00:00Z", espn_id: 99, league: "WNBA" };
+  const ev = buildSlateLegEvent(base);
+  ok(ev && ev.event_type === "verdict" && ev.prop_type === "Points OVER" && ev.verdict === "OVER", "L: basketball leg → gradeable verdict event");
+  ok(ev && ev.market_fair_at_line === 0.7 && ev.pre_filtered === false, "L: event carries market prob + non-SKIP");
+  // WC leg with no espn_id is still gradeable (FBref-by-name path)
+  const wc = buildSlateLegEvent({ ...base, league: "WC", espn_id: null, stat_type: "Shots" });
+  ok(wc && wc.prop_type === "Shots OVER" && wc.league === "WC", "L: WC leg gradeable without espn_id");
+  // missing start time → not gradeable
+  ok(buildSlateLegEvent({ ...base, game_start_time: null }) === null, "L: no game_start_time → null");
+  // basketball missing espn_id → not gradeable
+  ok(buildSlateLegEvent({ ...base, espn_id: null }) === null, "L: basketball leg without espn_id → null");
 }
 
 setOdds(null);
