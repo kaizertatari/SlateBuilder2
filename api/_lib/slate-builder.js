@@ -146,6 +146,29 @@ export function buildSlate(candidates, options = {}) {
     return { abstained: true, reason: `only ${pool.length} eligible legs (< ${size})`, slate: null, considered: pool.length, best_rejected: null, params };
   }
 
+  // 2b. Diversification feasibility: a slate needs `size` legs drawn from
+  //     distinct games, ≤ maxPerGame each. The most legs the board can supply
+  //     is Σ_game min(legsInGame, maxPerGame). If that's < size, NO combination
+  //     can ever reach `size` — recursion would return best=null/bestRejected=null
+  //     and emit the generic "no valid slate under constraints", which hides the
+  //     real cause (e.g. a single-game NBA board under maxPerGame=1). Detect it
+  //     here and say so plainly.
+  const legsPerGame = new Map();
+  for (const c of pool) legsPerGame.set(c.gameCapKey, (legsPerGame.get(c.gameCapKey) || 0) + 1);
+  let capacity = 0;
+  for (const n of legsPerGame.values()) capacity += Math.min(n, maxPerGame);
+  if (capacity < size) {
+    const g = legsPerGame.size;
+    return {
+      abstained: true,
+      reason: `only ${g} game${g === 1 ? "" : "s"} on the board (${capacity} leg${capacity === 1 ? "" : "s"} under max ${maxPerGame}/game) — need ${size} for a diversified slate`,
+      slate: null,
+      considered: pool.length,
+      best_rejected: null,
+      params,
+    };
+  }
+
   // 3. Enumerate size-combinations under the per-game cap; keep the best +EV
   //    slate clearing the target, and (separately) the best-EV slate overall
   //    for diagnostics when we abstain.

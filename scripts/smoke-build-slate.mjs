@@ -113,6 +113,50 @@ function scenario(fairs) {
   ok(!both, "G: WNBA-prefixed perspective keys collapse to one game");
 }
 
+// H) single-game board: all legs collapse to one game key, so maxPerGame=1
+// makes a 3-leg slate impossible. Abstain with the game-count reason, NOT the
+// generic "no valid slate under constraints" (regression guard for the NBA
+// Finals single-game case).
+{
+  const leg = (player, game) => ({ player, stat_type: "Points", direction: "OVER", line: 15.5, odds_type: "standard", prob: 0.95, game });
+  const candidates = [
+    leg("P1", "NYK@SAS"),
+    leg("P2", "SAS@NYK"), // same physical game, opposite perspective
+    leg("P3", "NYK@SAS"),
+  ];
+  const r = buildSlate(candidates, { targetMultiplier: 3, mode: "power", size: 3, maxPerGame: 1 });
+  ok(r.abstained, "H: single-game board abstains");
+  ok(/1 game on the board/.test(r.reason || ""), `H: reason names the single-game cause (got "${r.reason}")`);
+  ok(r.best_rejected === null, "H: no slate was evaluated (best_rejected null)");
+}
+
+// I) maxPerGame=2 lets a single-game board reach size 2 (capacity respects the
+// cap, not just distinct-game count).
+{
+  const leg = (player, game) => ({ player, stat_type: "Points", direction: "OVER", line: 15.5, odds_type: "standard", prob: 0.95, game });
+  const candidates = [leg("P1", "NYK@SAS"), leg("P2", "NYK@SAS")];
+  const r = buildSlate(candidates, { targetMultiplier: 2, mode: "power", size: 2, maxPerGame: 2 });
+  ok(!r.abstained, "I: maxPerGame=2 builds a 2-leg slate from one game");
+}
+
+// J) calibration allow-list: a paused league (WC) is never priced, even with
+// no explicit `league` filter (the no-league API path must not leak WC props).
+{
+  const odds = { source: "dk+fd", fetched_at: "t", by_player: {}, games: {} };
+  const lines = { fetched_at: "t", by_player: {} };
+  odds.by_player.Hoops = [{ stat: "Points", line: 15.5, over_american: -110, under_american: -110, fair_over: 0.8 }];
+  lines.by_player.Hoops = [{ stat_type: "Points", line: 15.5, odds_type: "standard", league: "WNBA", player_team: "AAA", opponent: "BBB" }];
+  odds.by_player.Striker = [{ stat: "Shots", line: 1.5, lambda_fair: 3.0, fair_over: 0.8 }];
+  lines.by_player.Striker = [{ stat_type: "Shots", line: 1.5, odds_type: "standard", league: "WC", player_team: "USA", opponent: "MEX" }];
+  setOdds(odds);
+  // no `league` filter, but allowedLeagues excludes WC
+  const { candidates } = collectMarketCandidates(lines, { allowedLeagues: new Set(["NBA", "WNBA"]), allowedStats: new Set(["Points", "Shots"]) });
+  ok(candidates.length === 1 && candidates[0].player === "Hoops", `J: WC prop excluded by calibration allow-list (got ${candidates.map((c) => c.player).join(",") || "none"})`);
+  // without the allow-list, the WC prop IS collected (proves the gate is what filters it, not a stat/pricing miss)
+  const { candidates: all } = collectMarketCandidates(lines, { allowedStats: new Set(["Points", "Shots"]) });
+  ok(all.length === 2, `J: both leagues priced when no allow-list (got ${all.length})`);
+}
+
 setOdds(null);
 console.log(`\nsmoke-build-slate: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

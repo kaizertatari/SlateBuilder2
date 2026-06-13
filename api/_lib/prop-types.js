@@ -61,6 +61,16 @@ export const STATS_BY_LEAGUE = {
   WC: SOCCER_STATS,
 };
 
+// Slate-builder calibration gate (shared by the API + UI so they agree).
+// A league only publishes a slate EV once its standard-line calibration is
+// validated — otherwise the market-fair probs are trusted blind and read as
+// wildly +EV (see slate-builder-pivot). WC is mid-tournament and ungraded, so
+// the builder pauses it; the value is the target checkpoint surfaced to users.
+// Move "WC" from PENDING into CALIBRATED once its outcomes are graded
+// (world-cup-framework checkpoint).
+export const SLATE_CALIBRATED_LEAGUES = ["NBA", "WNBA"];
+export const SLATE_PENDING_LEAGUES = { WC: "~2026-06-20" };
+
 // Stat name → key inside an averages object (groundTruth.season.averages,
 // groundTruth.l5.averages). pra/pr/pa/ra are computed in ground-truth.js.
 export const PROP_TO_FIELD = {

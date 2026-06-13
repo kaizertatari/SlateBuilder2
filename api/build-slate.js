@@ -19,7 +19,7 @@
 import { rateLimit } from "./_lib/rate-limit.js";
 import { runWithRequestContext } from "./_lib/request-context.js";
 import { readLines } from "./_lib/lines-store.js";
-import { STATS, mapPrizePicksStatType } from "./_lib/prop-types.js";
+import { STATS, mapPrizePicksStatType, SLATE_CALIBRATED_LEAGUES, SLATE_PENDING_LEAGUES } from "./_lib/prop-types.js";
 import { ALL_ODDS_TYPES } from "./_lib/select-lines.js";
 import { lookupMarket, setOdds } from "./_lib/odds.js";
 import { readOdds } from "./_lib/odds-store.js";
@@ -36,17 +36,22 @@ export const runtime = "nodejs";
  *
  * @returns {{ candidates: Object[], matchedMarket: number, considered: number }}
  */
-export function collectMarketCandidates(linesData, { league = null, allowedStats, oddsTypes = null, games = null, direction = null } = {}) {
+export function collectMarketCandidates(linesData, { league = null, allowedLeagues = null, allowedStats, oddsTypes = null, games = null, direction = null } = {}) {
   const statSet = allowedStats instanceof Set ? allowedStats : new Set(allowedStats || STATS);
   const oddsSet = Array.isArray(oddsTypes) && oddsTypes.length ? new Set(oddsTypes) : null;
   const gameSet = Array.isArray(games) && games.length ? new Set(games) : null;
+  // Calibration allow-list: even with no explicit `league` filter, never price
+  // a league that isn't slate-enabled (e.g. WC via the no-league API path).
+  const leagueAllow = allowedLeagues instanceof Set ? allowedLeagues : null;
 
   const candidates = [];
   let considered = 0;
   let matchedMarket = 0;
   for (const [player, props] of Object.entries(linesData.by_player || {})) {
     for (const p of props) {
-      if (league && (p.league ?? "NBA") !== league) continue;
+      const propLeague = p.league ?? "NBA";
+      if (league && propLeague !== league) continue;
+      if (leagueAllow && !leagueAllow.has(propLeague)) continue;
       const ot = (p.odds_type || "standard").toLowerCase();
       if (oddsSet && !oddsSet.has(ot)) continue;
       const stat = mapPrizePicksStatType(p.stat_type);
@@ -105,10 +110,31 @@ async function handlePost(req, reqId) {
     const size = Number.isInteger(body.size) ? body.size : 3;
     const maxPerGame = Number.isInteger(body.maxPerGame) ? body.maxPerGame : 1;
 
-    const league = rawLeague && ["NBA", "WNBA"].includes(String(rawLeague).toUpperCase()) ? String(rawLeague).toUpperCase() : null;
     if (direction && !["OVER", "UNDER"].includes(direction)) {
       return Response.json({ error: "direction must be 'OVER' or 'UNDER'" }, { status: 400 });
     }
+
+    // Calibration gate: pause a league whose standard-line calibration isn't
+    // validated yet (WC, mid-tournament) with a clear reason — don't silently
+    // price its uncalibrated single-book lines into a fake-+EV slate.
+    const reqLeague = rawLeague ? String(rawLeague).toUpperCase() : null;
+    if (reqLeague && SLATE_PENDING_LEAGUES[reqLeague]) {
+      return Response.json({
+        request_id: reqId,
+        league: reqLeague,
+        abstained: true,
+        calibration_pending: true,
+        reason: `${reqLeague} slates are paused pending calibration (target ${SLATE_PENDING_LEAGUES[reqLeague]})`,
+        slate: null,
+        considered: 0,
+        best_rejected: null,
+        params: null,
+        props_examined: 0,
+        props_priced: 0,
+      });
+    }
+    const calibratedLeagues = new Set(SLATE_CALIBRATED_LEAGUES);
+    const league = reqLeague && calibratedLeagues.has(reqLeague) ? reqLeague : null;
     // Default to STANDARD lines only: their payout is exact (3-pick Power = 5×)
     // and they're where the ≥3× target lives. goblin/demon payout multipliers
     // are approximate (LINE_TYPE_FACTOR) and fabricate EV, so they're opt-in
@@ -124,7 +150,7 @@ async function handlePost(req, reqId) {
     // into the sync lookupMarket cache before pricing.
     const odds = await readOdds();
     setOdds(odds);
-    const { candidates, matchedMarket, considered } = collectMarketCandidates(linesData, { league, allowedStats, oddsTypes, games, direction });
+    const { candidates, matchedMarket, considered } = collectMarketCandidates(linesData, { league, allowedLeagues: calibratedLeagues, allowedStats, oddsTypes, games, direction });
 
     const result = buildSlate(candidates, { targetMultiplier, mode, size, maxPerGame });
 

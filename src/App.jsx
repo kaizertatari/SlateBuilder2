@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import playersData from "../data/players.json";
-import { STATS, STATS_BY_LEAGUE, mapPrizePicksStatType } from "../api/_lib/prop-types.js";
+import { STATS, STATS_BY_LEAGUE, mapPrizePicksStatType, SLATE_PENDING_LEAGUES } from "../api/_lib/prop-types.js";
 import { selectLinesForStat } from "../api/_lib/select-lines.js";
 import { readNewestCached, writeCached, clearStaleForPlayer, buildKey } from "./lib/result-cache.js";
 
@@ -74,14 +74,18 @@ function formatLinesFetchedAt(iso) {
 }
 
 export default function App() {
-  const [league, setLeague] = useState("NBA");
+  // Default to WNBA: it's slate-calibrated and reliably has a multi-game board,
+  // so the builder produces a slate out of the box. (NBA is calibrated too but
+  // off-season/Finals nights often have a single game → diversification can't
+  // fill a slate; WC is paused pending calibration — SLATE_PENDING_LEAGUES.)
+  const [league, setLeague] = useState("WNBA");
   // Multi-player selection. Order preserved so the chip row is stable;
   // togglePlayer is the single mutation site so duplicates can't accrete.
   const [players, setPlayers] = useState([]);
   const [playerQuery, setPlayerQuery] = useState("");
   const [playerOpen, setPlayerOpen] = useState(false);
   const [playerHighlight, setPlayerHighlight] = useState(0);
-  const [selectedStats, setSelectedStats] = useState([...STATS_BY_LEAGUE.NBA]);
+  const [selectedStats, setSelectedStats] = useState([...STATS_BY_LEAGUE.WNBA]);
   // Direction filter — pre-analysis. Both selected = backend fans out to
   // OVER + UNDER (omits the direction field in the body); single selected
   // pins the request to one side. Empty = blocked at submit time.
@@ -690,6 +694,13 @@ export default function App() {
   const buildSlateNow = useCallback(async () => {
     setSlateError(null);
     setSlate(null);
+    // Calibration gate (mirrors /api/build-slate): a paused league can't
+    // publish an EV, so short-circuit with the reason instead of round-tripping
+    // for a slate we know will be withheld.
+    if (SLATE_PENDING_LEAGUES[league]) {
+      setSlate({ abstained: true, calibration_pending: true, league, reason: `${league} slates are paused pending calibration (target ${SLATE_PENDING_LEAGUES[league]})`, slate: null, best_rejected: null, params: null });
+      return;
+    }
     setBuildingSlate(true);
     try {
       // Date filter constrains the board even without explicit game picks;
@@ -1670,7 +1681,7 @@ export default function App() {
             </div>
             {slate.abstained ? (
               <div style={{ background: "#1a1200", border: "1px solid #664400", padding: 16, color: "#cc9944", fontSize: 12, lineHeight: 1.6 }}>
-                <div style={{ fontWeight: "bold", letterSpacing: 1, marginBottom: 6 }}>NO +EV SLATE — ABSTAIN</div>
+                <div style={{ fontWeight: "bold", letterSpacing: 1, marginBottom: 6 }}>{slate.calibration_pending ? "SLATE PAUSED — PENDING CALIBRATION" : "NO +EV SLATE — ABSTAIN"}</div>
                 <div style={{ color: "#aa8855" }}>{slate.reason}</div>
                 {slate.best_rejected && (
                   <div style={{ marginTop: 8, color: "#886644" }}>
@@ -1678,7 +1689,9 @@ export default function App() {
                   </div>
                 )}
                 <div style={{ marginTop: 8, fontSize: 10, color: "#665533" }}>
-                  Not betting is the correct call when nothing clears +EV at ≥{slate.params?.targetMultiplier ?? targetMultiplier}×.
+                  {slate.calibration_pending
+                    ? "EV is withheld until this league's standard-line calibration is validated — its market is single-book and ungraded, so a slate would read as falsely +EV."
+                    : `Not betting is the correct call when nothing clears +EV at ≥${slate.params?.targetMultiplier ?? targetMultiplier}×.`}
                 </div>
               </div>
             ) : slate.slate ? (
