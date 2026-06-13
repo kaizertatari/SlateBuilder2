@@ -222,6 +222,20 @@ trusting it or enabling the slate-builder EV blend.
 `scripts/backtest-slates.mjs` reads every signal field (schema-proof
 full-row pull in `scripts/_axiom.mjs`).
 
+`node scripts/calibrate-market.mjs` (`npm run calibrate-market`) is the
+slate-builder–specific rig: it tests the de-vig prob the builder actually
+BETS ON (`market_fair_at_line`) against graded outcomes. Two reads: a
+reliability curve + Brier (*is the prob right?* — a persistent negative gap
+⇒ discount EV in `buildSlate`), and an **EDGE BY LINE Δ** block (*where is
+the exploitable slice?*) — realized hit vs predicted, bucketed by
+`market_line_delta` (PP line − sharp book line): by |Δ| magnitude (a gap
+that grows with |Δ| ⇒ the linear line-shift slope is biased far from the
+book line) and by direction-adjusted **favorable** Δ (a positive gap in the
+favorable bucket ⇒ the market under-credits PP lines that lag sharp = real
+edge). Leads with a COVERAGE line and is data-gated: build-slate telemetry
+must accrue and settle first (today only ~2 settled rows carry the market
+prob), and the favorable bucket prints "too thin to call" under n=30.
+
 ## Debug 0-analyzed players
 
 Check in order: (1) PrizePicks scrape produced a `player_team` hint,

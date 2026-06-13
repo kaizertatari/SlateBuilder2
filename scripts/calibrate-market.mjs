@@ -13,6 +13,15 @@
 // EV is trustworthy. If it's optimistic (actual < predicted), the +EV the
 // builder shows is a de-vig artifact and EV must be discounted before betting.
 //
+// It also reads EDGE BY LINE Δ — the realized hit rate vs the market's predicted
+// prob, bucketed by `market_line_delta` (PP line − sharp book line). Reliability
+// (above) asks "is the prob right?"; this asks "WHERE is the exploitable slice?"
+// PrizePicks lines are ~efficient on average, but edge — if any — lives where the
+// PP line lags the sharp market in the bettor's favor. A positive gap in the
+// "favorable" Δ bucket ⇒ the market under-credits those lines (real edge). The
+// |Δ|-magnitude cut doubles as an approximation check: a gap that widens with
+// |Δ| means the linear line-shift slope is biased far from the book's line.
+//
 // IMPORTANT — this is data-gated. The market prob is only logged when odds
 // covered the pick at verdict time; today almost no SETTLED rows carry it, so
 // the report will show n≈0 until production verdicts log market coverage at
@@ -98,6 +107,72 @@ export function marketReliability(settled, { bins = DEFAULT_BINS } = {}) {
   };
 }
 
+// ── Line-delta edge read ───────────────────────────────────────────────────
+// market_line_delta = PP line − sharp book line (stat units, direction-
+// independent). The de-vig prob already folds the shift in, but via a LINEAR
+// slope (rule-market-edge) that degrades as the PP line drifts from where the
+// book priced it. Two cuts on it answer different questions (see header).
+
+/** Direction-adjusted favorable line delta (+ = PP line set in the bettor's
+ * favor vs the sharp book line: a LOWER line for OVER, a HIGHER line for UNDER). */
+export function favorableDelta(row) {
+  const d = row?.market_line_delta;
+  if (typeof d !== "number") return null;
+  const dir = String(row.verdict ?? row.direction ?? "").toUpperCase();
+  if (dir === "OVER") return -d;
+  if (dir === "UNDER") return d;
+  return null; // non-directional (SKIP/unknown) — not edge-bettable
+}
+
+// |Δ| magnitude buckets (stat units), grid-aligned to 0.5-step lines. Tests the
+// linear line-shift approximation: a gap that grows with |Δ| ⇒ biased slope.
+export const DEFAULT_MAG_BUCKETS = [
+  [0, 1e-9, "exact"],            // pp line == book line
+  [1e-9, 0.5 + 1e-9, "≤0.5"],
+  [0.5 + 1e-9, 1.0 + 1e-9, "0.5–1"],
+  [1.0 + 1e-9, 2.0 + 1e-9, "1–2"],
+  [2.0 + 1e-9, Infinity, ">2"],
+];
+
+// Signed favorable-Δ buckets — tests for an exploitable PP-vs-sharp slice.
+export const DEFAULT_FAV_BUCKETS = [
+  [-Infinity, -1e-9, "unfavorable"], // PP line worse than the sharp book line
+  [-1e-9, 1e-9, "neutral"],          // PP line == book line
+  [1e-9, Infinity, "favorable"],     // PP line lags sharp in the bettor's favor
+];
+
+/**
+ * Realized hit rate vs the market's predicted prob, bucketed by line delta.
+ * @param {Array<{market_fair_at_line:number, market_line_delta:number, verdict?:string, direction?:string, hit_or_miss:string}>} settled
+ * @returns {{n:number, by_magnitude:Array, by_favorable:Array}}
+ */
+export function edgeByLineDelta(settled, { magBuckets = DEFAULT_MAG_BUCKETS, favBuckets = DEFAULT_FAV_BUCKETS } = {}) {
+  const rows = (settled || []).filter(
+    (r) =>
+      typeof r.market_fair_at_line === "number" &&
+      typeof r.market_line_delta === "number" &&
+      (r.hit_or_miss === "hit" || r.hit_or_miss === "miss"),
+  );
+  const isHit = (r) => (r.hit_or_miss === "hit" ? 1 : 0);
+  const summarize = (subset, label) => {
+    if (!subset.length) return { label, n: 0, pred_avg: null, actual_hit: null, gap: null };
+    const pred = mean(subset.map((r) => r.market_fair_at_line));
+    const act = mean(subset.map(isHit));
+    return { label, n: subset.length, pred_avg: round(pred), actual_hit: round(act), gap: round(act - pred) };
+  };
+
+  const byMag = magBuckets
+    .map(([lo, hi, label]) =>
+      summarize(rows.filter((r) => { const a = Math.abs(r.market_line_delta); return a >= lo && a < hi; }), label))
+    .filter((b) => b.n);
+  const byFav = favBuckets
+    .map(([lo, hi, label]) =>
+      summarize(rows.filter((r) => { const f = favorableDelta(r); return f != null && f >= lo && f < hi; }), label))
+    .filter((b) => b.n);
+
+  return { n: rows.length, by_magnitude: byMag, by_favorable: byFav };
+}
+
 function printSlice(label, s) {
   if (!s || !s.n) { console.log(`  ${label.padEnd(12)} n=0`); return; }
   const gap = s.actual_hit - s.pred_avg;
@@ -141,6 +216,34 @@ async function main() {
     console.log("BY ODDS TYPE:");
     for (const [k, s] of Object.entries(rel.by_odds_type)) printSlice(k, s);
   }
+
+  // ── Edge by line Δ — the "where's the edge" read ──────────────────────────
+  const edge = edgeByLineDelta(withMkt);
+  if (edge.n) {
+    const fmt = (b, w) =>
+      `  ${b.label.padEnd(w)} ${String(b.n).padStart(4)}   ${(b.pred_avg * 100).toFixed(1)}%   ` +
+      `${(b.actual_hit * 100).toFixed(1)}%   ${b.gap >= 0 ? "+" : ""}${(b.gap * 100).toFixed(1)}%`;
+    console.log("\nEDGE BY LINE Δ (PP line − sharp book line) — realized hit vs market's predicted prob:");
+    console.log("  by |Δ| magnitude (approximation check — gap should NOT grow with |Δ|):");
+    console.log("    bucket      n     pred    actual   gap");
+    for (const b of edge.by_magnitude) console.log("  " + fmt(b, 10));
+    console.log("  by favorable Δ (edge check — favorable = PP line in bettor's favor vs sharp):");
+    console.log("    bucket         n     pred    actual   gap");
+    for (const b of edge.by_favorable) console.log("  " + fmt(b, 13));
+
+    const fav = edge.by_favorable.find((b) => b.label === "favorable");
+    if (fav && fav.n >= 30) {
+      const verdict =
+        fav.gap > 0.02 ? "EXPLOITABLE — the market under-credits PP lines that lag sharp; bet this slice"
+        : fav.gap < -0.02 ? "NO EDGE — the favorable lines are over-priced if anything"
+        : "NO EDGE — the lag is already fully priced into the de-vig prob";
+      console.log(`\n  ⇒ favorable-Δ: actual ${(fav.actual_hit * 100).toFixed(1)}% vs market ` +
+        `${(fav.pred_avg * 100).toFixed(1)}% (gap ${fav.gap >= 0 ? "+" : ""}${(fav.gap * 100).toFixed(1)}%, n=${fav.n}) — ${verdict}`);
+    } else if (fav) {
+      console.log(`\n  ⇒ favorable-Δ slice n=${fav.n} (<30) — too thin to call; let it accrue.`);
+    }
+  }
+
   console.log("\nCAVEAT: face-value de-vig assumes the market prob IS the true P(hit). This rig\n" +
     "tests that. A persistent negative gap ⇒ discount EV in buildSlate before betting.");
 }

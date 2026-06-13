@@ -1,6 +1,6 @@
 // Smoke for the market-reliability math (no network).
 //   node scripts/smoke-calibrate-market.mjs
-import { marketReliability, DEFAULT_BINS } from "./calibrate-market.mjs";
+import { marketReliability, DEFAULT_BINS, edgeByLineDelta, favorableDelta } from "./calibrate-market.mjs";
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) pass++; else { fail++; console.error("  FAIL: " + m); } };
@@ -66,6 +66,54 @@ const row = (p, hit, league = "WNBA", odds_type = "standard") => ({
   ok(DEFAULT_BINS[0][0] === 0 && DEFAULT_BINS[DEFAULT_BINS.length - 1][1] > 1, "G: bins span 0..>1");
   const rel = marketReliability([row(0.999, true), row(0.0, false)]);
   ok(rel.n === 2 && rel.bins.length === 2, `G: extreme probs each fall in a bin (got ${rel.bins.length} bins)`);
+}
+
+// H) favorableDelta is direction-adjusted (lower line favors OVER, higher favors UNDER)
+{
+  ok(favorableDelta({ market_line_delta: -1, verdict: "OVER" }) === 1, "H: OVER, pp 1 below book → favorable +1");
+  ok(favorableDelta({ market_line_delta: 1, verdict: "UNDER" }) === 1, "H: UNDER, pp 1 above book → favorable +1");
+  ok(favorableDelta({ market_line_delta: 1, verdict: "OVER" }) === -1, "H: OVER, pp 1 above book → unfavorable -1");
+  ok(favorableDelta({ verdict: "OVER" }) === null, "H: missing delta → null");
+  ok(favorableDelta({ market_line_delta: 1, verdict: "SKIP" }) === null, "H: non-directional → null");
+}
+
+// edge-row helper (carries a line delta + direction)
+const erow = (p, hit, delta, dir = "OVER") => ({
+  market_fair_at_line: p, market_line_delta: delta, verdict: dir,
+  hit_or_miss: hit ? "hit" : "miss",
+});
+
+// I) by_favorable: a favorable bucket where actual beats the market prob → +gap
+{
+  const rows = [];
+  for (let i = 0; i < 10; i++) rows.push(erow(0.55, i < 8, -1, "OVER")); // favorable, under-priced
+  for (let i = 0; i < 10; i++) rows.push(erow(0.50, i < 5, 0, "OVER"));  // neutral, calibrated
+  const e = edgeByLineDelta(rows);
+  const fav = e.by_favorable.find((b) => b.label === "favorable");
+  const neu = e.by_favorable.find((b) => b.label === "neutral");
+  ok(fav?.n === 10 && fav.gap > 0.2, `I: favorable bucket shows large +gap (got ${fav?.gap})`);
+  ok(neu?.n === 10 && approx(neu.gap, 0, 0.02), `I: neutral bucket ~calibrated (got ${neu?.gap})`);
+}
+
+// J) by_magnitude partitions on |delta| and drops rows missing a delta
+{
+  const rows = [
+    erow(0.6, true, 0),     // exact
+    erow(0.6, true, 0.5),   // ≤0.5
+    erow(0.6, false, 2.5),  // >2
+    { market_fair_at_line: 0.6, hit_or_miss: "hit", verdict: "OVER" }, // no delta → dropped
+  ];
+  const e = edgeByLineDelta(rows);
+  ok(e.n === 3, `J: drops the no-delta row (got ${e.n})`);
+  const labels = e.by_magnitude.map((b) => b.label);
+  ok(labels.includes("exact") && labels.includes("≤0.5") && labels.includes(">2"),
+    `J: magnitude buckets present (${labels.join(",")})`);
+}
+
+// K) empty input is safe
+{
+  const e = edgeByLineDelta([]);
+  ok(e.n === 0 && e.by_magnitude.length === 0 && e.by_favorable.length === 0, "K: empty input → zeros, no throw");
 }
 
 console.log(`\nsmoke-calibrate-market: ${pass} passed, ${fail} failed`);
