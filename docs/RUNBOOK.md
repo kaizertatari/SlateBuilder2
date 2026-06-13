@@ -45,6 +45,19 @@ sole keeper. To verify a task launches
 cleanly after editing: `Start-ScheduledTask -TaskName <name>` then check
 `logs\grade.log` / `Get-ScheduledTaskInfo` for `LastTaskResult 0`.
 
+**WC(0) on the scheduled lines refresh (fixed 2026-06-13):** `PrizePicks
+Refresh Lines` runs `scripts/refresh-prizepicks-task.bat`, which had a
+HARDCODED `cd /d ...\Props_Generator` — so every scheduled run executed the
+RETIRED checkout's pre-WC scraper (NBA + WNBA only, league 241 absent, no
+salvage guard) and pushed WC(0) to the shared blob. Manual REFRESH LINES was
+unaffected because it routes through the Slate Builder `refresh-bridge`. Fix:
+the wrapper now self-locates with `cd /d "%~dp0.."` like
+`refresh-odds-task.bat`. Verified by a triggered run — scraped NBA+WNBA+WC and
+salvaged WC to 2160 props on the expected 429. **Lesson:** a self-locating
+`.bat` only helps if the task's *Task To Run* points at the right copy — when
+auditing, check BOTH the bat body AND the registered Task-To-Run path
+(`schtasks /Query /TN <name> /V /FO LIST`).
+
 ## Daily grader
 
 Manual: `npm run grade-outcomes`. Options: `--date YYYY-MM-DD`,
