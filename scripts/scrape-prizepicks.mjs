@@ -302,26 +302,57 @@ export async function scrapePrizePicksForToday(opts = {}) {
     perLeague[league] = { total_props: leagueProps };
   }
 
-  // Salvage guard: a league whose fetch failed outright would otherwise just
-  // vanish from the snapshot ("thinning") — the next write wipes its props
-  // from the blob until a later scrape succeeds. Backfill failed leagues from
-  // the previous snapshot (blob first, bundled file fallback), keeping only
-  // props for games that haven't started. Partial failure only: when EVERY
-  // league failed (cloud-IP block, PP outage) the result stays total_props=0
-  // so the existing refuse-write / forward-to-bridge guards still fire.
-  const failedLeagues = Object.keys(perLeague).filter((l) => perLeague[l].error);
+  // Salvage guard: a league whose scrape yielded nothing — a thrown fetch
+  // error OR a successful-but-empty response (PP soft-blocks league 241 with a
+  // 200/empty body about as often as a 429/throw) — would otherwise vanish
+  // from the snapshot ("thinning"): the next write wipes its props from the
+  // blob until a later scrape succeeds. Backfill those leagues, keeping only
+  // props for games that haven't started.
+  //
+  // Source order matters. We salvage from the previous blob first, but the
+  // blob may ITSELF already be missing the failed league — a prior partial
+  // refresh wiped it, so salvaging from a blob that already lost WC recovers
+  // nothing. That is the death-spiral that strands WC at 0 across every
+  // refresh. When the blob yields no upcoming props for a league, fall through
+  // to the deploy-bundled snapshot (data/prizepicks-lines.json) as a durable
+  // floor, which a fresh deploy keeps stocked.
+  //
+  // Partial failure only: when EVERY league came up empty (cloud-IP block, PP
+  // outage) the result stays total_props=0 so the refuse-write /
+  // forward-to-bridge guards still fire.
+  const failedLeagues = Object.keys(perLeague).filter(
+    (l) => perLeague[l].error || !perLeague[l].total_props
+  );
   if (failedLeagues.length > 0 && failedLeagues.length < leagues.length) {
     let previous = null;
     try {
       previous = await readLines();
     } catch (err) {
-      console.error(`  ! salvage skipped — previous snapshot unreadable: ${err.message}`);
+      console.error(`  ! salvage: previous blob unreadable (${err.message})`);
     }
+    // Deep floor: the deploy-bundled snapshot, read straight off disk rather
+    // than through readLines() (which would just hand back the live blob
+    // again). Used only when the blob has no upcoming props for a league.
+    let bundled = null;
+    try {
+      bundled = JSON.parse(await fs.readFile(OUTPUT, "utf8"));
+    } catch {
+      // Fresh checkout with no bundled snapshot — blob-only salvage.
+    }
+
     for (const league of failedLeagues) {
-      if (!previous?.games) break;
-      const salvaged = salvageLeagueFromSnapshot(previous, league, nowMs);
+      // Take the freshest source that still has upcoming props for this
+      // league: the live blob first, then the bundled floor.
+      let salvaged = previous?.games
+        ? salvageLeagueFromSnapshot(previous, league, nowMs)
+        : { count: 0, games: {}, byPlayer: {} };
+      let source = previous?.fetched_at ?? null;
+      if (!salvaged.count && bundled?.games) {
+        salvaged = salvageLeagueFromSnapshot(bundled, league, nowMs);
+        source = `bundled@${bundled.fetched_at ?? "?"}`;
+      }
       if (!salvaged.count) {
-        console.error(`  ! ${league} salvage found no upcoming props in previous snapshot`);
+        console.error(`  ! ${league} salvage found no upcoming props in blob or bundled floor`);
         continue;
       }
       Object.assign(gamesOutput, salvaged.games);
@@ -332,8 +363,8 @@ export async function scrapePrizePicksForToday(opts = {}) {
       totalProps += salvaged.count;
       perLeague[league].total_props = salvaged.count;
       perLeague[league].salvaged = true;
-      perLeague[league].salvaged_from = previous.fetched_at ?? null;
-      console.log(`  ! ${league} salvaged ${salvaged.count} props from previous snapshot (${previous.fetched_at})`);
+      perLeague[league].salvaged_from = source;
+      console.log(`  ! ${league} salvaged ${salvaged.count} props from ${source}`);
     }
   }
 
@@ -363,7 +394,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       console.log(`\nDone: ${result.total_props} props for ${result.total_players} players`);
       for (const [league, stats] of Object.entries(result.leagues ?? {})) {
         const note = stats.salvaged
-          ? ` (salvaged from ${stats.salvaged_from} after: ${stats.error})`
+          ? ` (salvaged from ${stats.salvaged_from}${stats.error ? ` after: ${stats.error}` : " — empty scrape"})`
           : stats.error ? ` (error: ${stats.error})` : "";
         console.log(`  ${league}: ${stats.total_props ?? 0} props${note}`);
       }
