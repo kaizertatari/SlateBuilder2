@@ -1,60 +1,60 @@
 {
-  "generated_at": "2026-05-29T20:04:33.750Z",
-  "n_total": 217,
+  "generated_at": "2026-06-13T19:46:37.561Z",
+  "n_total": 855,
   "global_prior": 0.5,
-  "global_raw_hit_rate": 0.622,
+  "global_raw_hit_rate": 0.54,
   "params": {
     "alpha": 15,
     "beta": 20
   },
-  "note": "Shrunken P(hit). raw_hit_rate fields are the unshrunk empirical rates (small-n = noisy). Regenerate as the grader accrues data.",
+  "note": "Shrunken P(hit). raw_hit_rate fields are unshrunk empirical rates (small-n = noisy). Regenerate as the grader accrues data.",
   "by_odds_type": {
     "goblin": {
-      "base_rate": 0.647,
-      "n": 116,
-      "raw_hit_rate": 0.672,
+      "base_rate": 0.676,
+      "n": 273,
+      "raw_hit_rate": 0.689,
       "buckets": {
         "70-79": {
-          "p": 0.676,
-          "n": 57,
-          "raw_hit_rate": 0.684
+          "p": 0.696,
+          "n": 136,
+          "raw_hit_rate": 0.699
         },
         "80-89": {
-          "p": 0.683,
-          "n": 27,
-          "raw_hit_rate": 0.704
+          "p": 0.677,
+          "n": 90,
+          "raw_hit_rate": 0.678
         },
         "90+": {
-          "p": 0.63,
+          "p": 0.655,
           "n": 2,
           "raw_hit_rate": 0.5
         },
         "60-69": {
-          "p": 0.638,
-          "n": 30,
-          "raw_hit_rate": 0.633
+          "p": 0.686,
+          "n": 45,
+          "raw_hit_rate": 0.689
         }
       }
     },
     "standard": {
-      "base_rate": 0.479,
-      "n": 51,
-      "raw_hit_rate": 0.471,
+      "base_rate": 0.455,
+      "n": 532,
+      "raw_hit_rate": 0.453,
       "buckets": {
         "80-89": {
-          "p": 0.485,
-          "n": 6,
-          "raw_hit_rate": 0.5
+          "p": 0.497,
+          "n": 55,
+          "raw_hit_rate": 0.509
         },
         "70-79": {
-          "p": 0.455,
-          "n": 25,
-          "raw_hit_rate": 0.44
+          "p": 0.428,
+          "n": 379,
+          "raw_hit_rate": 0.427
         },
         "60-69": {
-          "p": 0.491,
-          "n": 20,
-          "raw_hit_rate": 0.5
+          "p": 0.512,
+          "n": 98,
+          "raw_hit_rate": 0.52
         }
       }
     },

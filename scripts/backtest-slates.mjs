@@ -53,9 +53,12 @@ function candFromRow(r) {
     odds_type: r.odds_type,
     confidence: r.confidence,
     verdict: r.verdict,
-    // Sharp-market prob (Stage 1) — null until market-aware verdicts are
-    // ingested AND _axiom.mjs projects these fields (see TODO there). buildSlate
-    // prefers it over confidence calibration when present.
+    // Sharp-market prob (Stage 1), logged by verdict-logger and read straight
+    // off the full Axiom row (_axiom.mjs pulls full rows — no projection).
+    // buildSlate prefers it over confidence calibration when present. NOTE:
+    // populated only when odds covered the pick at verdict time — today that's
+    // a tiny fraction (see `npm run calibrate-market` for live coverage), so
+    // this path is effectively dormant until production logs market coverage.
     market_fair_at_line: r.market_fair_at_line ?? null,
     market_line_delta: r.market_line_delta ?? null,
     // Approx game key: same opponent + day ⇒ same game (prevents same-team
