@@ -32,6 +32,19 @@ or the task silently queues on battery. All task `.bat` wrappers are
 self-locating (`%~dp0..`), so a moved checkout only needs the Action path
 updated.
 
+**Audit (2026-06-13):** `PrizePicks Refresh Odds` + both grader tasks still had
+the battery conditions set, so on battery the scheduled refreshes/grades silently
+skipped (e.g. the odds blob sat ~20h stale; `analyze-all` then priced against no
+odds → ~zero `market_fair_at_line` coverage in the verdict log). Cleared
+`DisallowStartIfOnBatteries`/`StopIfGoingOnBatteries` and set
+`StartWhenAvailable=$true` on `PrizePicks Refresh Odds`, `grade-outcomes-daily`,
+`PrizePicks Grade Outcomes`. Also found a DUPLICATE grader: `PrizePicks Grade
+Outcomes` pointed at the old `Props_Generator` checkout — **unregistered** it
+(Props_Generator is retired); `grade-outcomes-daily` (this checkout) is the
+sole keeper. To verify a task launches
+cleanly after editing: `Start-ScheduledTask -TaskName <name>` then check
+`logs\grade.log` / `Get-ScheduledTaskInfo` for `LastTaskResult 0`.
+
 ## Daily grader
 
 Manual: `npm run grade-outcomes`. Options: `--date YYYY-MM-DD`,
