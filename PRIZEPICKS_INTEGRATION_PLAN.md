@@ -1,7 +1,7 @@
 # PrizePicks Integration
 
 ## Overview
-Integrate PrizePicks NBA lines with the existing Props Generator app. Scrape PrizePicks API for today's NBA games, match player names to `players.json`, and provide batch analysis with a top 10 S/A tier results table.
+Integrate PrizePicks NBA lines with the existing Slate Builder app. Scrape PrizePicks API for today's NBA games, match player names to `players.json`, and provide batch analysis with a top 10 S/A tier results table.
 
 ## Current State (last verified 2026-05-04)
 
