@@ -23,7 +23,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PLAYERS_PATH = path.join(ROOT, "data/players.json");
 
 const SEARCH = "https://www.basketball-reference.com/search/search.fcgi";
-const HEADERS = { "User-Agent": "Mozilla/5.0 (compatible; PropsGenerator/1.0)" };
+const HEADERS = { "User-Agent": "Mozilla/5.0 (compatible; SlateBuilder/1.0)" };
 const THROTTLE_MS = 3500;
 
 function sleep(ms) {

@@ -25,7 +25,7 @@ const PLAYERS_PATH = path.join(ROOT, "data/players.json");
 const OUT_PATH_NBA = path.join(ROOT, "data/bbref-splits.json");
 const OUT_PATH_WNBA = path.join(ROOT, "data/bbref-splits-wnba.json");
 
-const HEADERS = { "User-Agent": "Mozilla/5.0 (compatible; PropsGenerator/1.0)" };
+const HEADERS = { "User-Agent": "Mozilla/5.0 (compatible; SlateBuilder/1.0)" };
 const THROTTLE_MS = 3500;
 
 function sleep(ms) {

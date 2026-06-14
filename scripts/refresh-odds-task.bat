@@ -7,8 +7,8 @@ REM cadence as the lines refresh (10 min after it) so odds and lines stay in
 REM sync. Output is appended to logs\refresh-odds.log for postmortem.
 REM
 REM Path is derived from the .bat's own location (%~dp0 = scripts\), so this
-REM runs correctly from whichever checkout it lives in (Slate Builder today,
-REM Props_Generator after merge) with no edit.
+REM runs correctly from whichever checkout it lives in (Slate Builder) with no
+REM edit.
 
 setlocal
 cd /d "%~dp0.."

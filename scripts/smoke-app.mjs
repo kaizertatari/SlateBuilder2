@@ -1,4 +1,4 @@
-// End-to-end smoke for the PrizePicks props generator.
+// End-to-end smoke for the PrizePicks slate builder.
 // Verifies every layer the deployed app depends on, locally:
 //   1. Required env vars present
 //   2. Lines store reads (Blob → bundled fallback) return well-formed data
