@@ -11,6 +11,7 @@
 // Returns { request_id, fetched_at, total_props, total_players, persisted_to }.
 
 import { scrapePrizePicksForToday } from "../scripts/scrape-prizepicks.mjs";
+import { refreshOddsAndPush } from "../scripts/scrape-odds.mjs";
 import { writeLines, getStoreLocation } from "./_lib/lines-store.js";
 import { rateLimit } from "./_lib/rate-limit.js";
 import { runWithRequestContext } from "./_lib/request-context.js";
@@ -138,12 +139,24 @@ async function handleRefresh(req, reqId, method) {
       );
     }
     const persistedTo = await writeLines(data);
+    // This direct path only runs when our own scrape returned props — i.e. a
+    // residential IP (on Vercel the scrape yields 0 → we forwarded to the bridge
+    // above, which refreshes odds itself). So the odds scrape works here too.
+    // Best-effort: don't fail the lines refresh if odds hiccups.
+    let odds = {};
+    try {
+      const o = await refreshOddsAndPush({ write: false });
+      odds = { odds_total_props: o.total_props, odds_total_players: o.total_players, odds_persisted_to: o.persisted_to ?? null };
+    } catch (err) {
+      odds = { odds_error: err.message };
+    }
     return Response.json({
       request_id: reqId,
       fetched_at: data.fetched_at,
       total_props: data.total_props,
       total_players: data.total_players,
       persisted_to: persistedTo,
+      ...odds,
     });
   } catch (err) {
     return Response.json(

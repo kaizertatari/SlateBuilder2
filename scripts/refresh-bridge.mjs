@@ -25,6 +25,7 @@ import http from "node:http";
 import { randomUUID } from "node:crypto";
 import { loadEnvLocal } from "./_env.mjs";
 import { scrapePrizePicksForToday } from "./scrape-prizepicks.mjs";
+import { refreshOddsAndPush } from "./scrape-odds.mjs";
 import { writeLines, getStoreLocation } from "../api/_lib/lines-store.js";
 
 loadEnvLocal();
@@ -88,12 +89,26 @@ const server = http.createServer(async (req, res) => {
     }
     const persistedTo = await writeLines(data);
     console.log(`[${reqId}] wrote ${data.total_props} props (${data.total_players} players) → ${persistedTo}`);
+    // Also refresh the sharp-odds blob — DK/FD bot-block cloud IPs too, so this
+    // residential bridge is the only place it can run, and one REFRESH LINES
+    // click should keep lines AND odds in sync. Best-effort: an odds failure
+    // must NOT fail the lines refresh that already succeeded.
+    let odds = {};
+    try {
+      const o = await refreshOddsAndPush({ write: false });
+      odds = { odds_total_props: o.total_props, odds_total_players: o.total_players, odds_persisted_to: o.persisted_to ?? null };
+      console.log(`[${reqId}] odds: ${o.total_props} props (${o.total_players} players) → ${o.persisted_to ?? o.skipped_push ?? "no token"}`);
+    } catch (err) {
+      odds = { odds_error: err.message };
+      console.error(`[${reqId}] odds refresh failed: ${err.message}`);
+    }
     return send(res, 200, {
       request_id: reqId,
       fetched_at: data.fetched_at,
       total_props: data.total_props,
       total_players: data.total_players,
       persisted_to: persistedTo,
+      ...odds,
     });
   } catch (err) {
     console.error(`[${reqId}] error:`, err.message);

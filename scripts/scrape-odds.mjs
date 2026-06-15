@@ -419,19 +419,33 @@ export async function scrapeAllOdds({ leagues = ["WNBA", "NBA", "WC"], write = t
   return combined;
 }
 
+// Scrape every league and push to the sharp-odds blob (when BLOB_READ_WRITE_TOKEN
+// is set). Shared by the CLI (npm run refresh-odds), the home bridge, and the
+// /api/refresh-lines endpoint so the REFRESH LINES button keeps odds in sync
+// with lines — the scrape + push lives in ONE place. Refuses to push an empty
+// scrape (cloud-IP bot-block → 0 props) so a bad run can't clobber the good blob
+// a residential refresh pushed. `write` controls the local data/odds.json file
+// (true for the committed-snapshot CLI; false for the button/bridge path, which
+// only needs the blob).
+export async function refreshOddsAndPush({ write = true } = {}) {
+  const r = await scrapeAllOdds({ write });
+  if (!r.total_props) return { ...r, persisted_to: null, skipped_push: "0 props — refused to overwrite blob" };
+  let persisted_to = null;
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const { writeOdds } = await import("../api/_lib/odds-store.js");
+    persisted_to = await writeOdds(r);
+  }
+  return { ...r, persisted_to };
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   loadEnvLocal();
-  scrapeAllOdds()
-    .then(async (r) => {
-      console.log(`\nDone: ${r.total_props} props / ${r.total_players} players across ${r.leagues.join("+")}. Per-league: ${JSON.stringify(r.per_league)}. Book coverage: ${JSON.stringify(r.books_coverage)}`);
-      // Push to the blob so the deployed slate builder sees fresh odds (same
-      // pattern as refresh-prizepicks → writeLines). File-only without a token.
-      if (process.env.BLOB_READ_WRITE_TOKEN) {
-        const { writeOdds } = await import("../api/_lib/odds-store.js");
-        console.log(`  Pushed to blob: ${await writeOdds(r)}`);
-      } else {
-        console.log("  (BLOB_READ_WRITE_TOKEN not set — wrote file only; deployed app keeps its bundled odds)");
-      }
+  refreshOddsAndPush({ write: true })
+    .then((r) => {
+      console.log(`\nDone: ${r.total_props} props / ${r.total_players} players across ${(r.leagues || []).join("+")}. Per-league: ${JSON.stringify(r.per_league)}. Book coverage: ${JSON.stringify(r.books_coverage)}`);
+      if (r.persisted_to) console.log(`  Pushed to blob: ${r.persisted_to}`);
+      else if (r.skipped_push) console.log(`  ${r.skipped_push}`);
+      else console.log("  (BLOB_READ_WRITE_TOKEN not set — wrote file only; deployed app keeps its bundled odds)");
     })
     .catch((e) => { console.error("Fatal:", e.message); process.exit(1); });
 }

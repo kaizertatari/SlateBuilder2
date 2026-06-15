@@ -756,9 +756,17 @@ export default function App() {
       const body = await response.json().catch(() => ({}));
       if (response.ok) {
         if (body.fetched_at) setLinesFetchedAt(body.fetched_at);
+        // The refresh also re-pulls the sharp-odds blob (DK/FD no-vig consensus)
+        // so lines + odds stay in sync on one click — surface it, but a failed
+        // odds leg doesn't undo the successful lines refresh.
+        const oddsMsg = body.odds_error
+          ? ` (odds refresh failed: ${body.odds_error})`
+          : typeof body.odds_total_props === "number"
+            ? ` · odds ${body.odds_total_props} props`
+            : "";
         setRefreshStatus({
           kind: "success",
-          message: `Refreshed — ${body.total_props ?? "?"} props across ${body.total_players ?? "?"} players.`,
+          message: `Refreshed — ${body.total_props ?? "?"} props across ${body.total_players ?? "?"} players.${oddsMsg}`,
         });
         // Re-pull the slate so newly-refreshed games/players appear without a
         // page reload. (Blob edge cache is 60s, so a brand-new game may take up
