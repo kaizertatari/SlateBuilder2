@@ -120,6 +120,10 @@ export function logVerdict({
     model_mean: result?.projection?.mean ?? null,
     model_sigma: result?.projection?.sigma ?? null,
     model_market_agree: result?.projection?.market_agree ?? null,
+    // WC only: the v1 point-Poisson over-prob, logged beside the live
+    // minutes-mixture model_prob so the ~06-20 checkpoint can compare v1 vs v2
+    // tail calibration. Null for basketball / non-Poisson WC stats.
+    model_prob_point: result?.projection?.model_prob_point ?? null,
     // Stage-4 rest / schedule density (rule-rest). Null without gamelog dates.
     rest_days: result?.rest?.rest_days ?? null,
     back_to_back: result?.rest?.back_to_back ?? null,

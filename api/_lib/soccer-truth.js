@@ -47,6 +47,25 @@ const ACCRUAL_MATCH_WEIGHT = 3; // a WC match counts 3× a club match (spec §4.
 // unknown/backup GK defaults LOW so OVERs gate out rather than ride a backup.
 const EXP_MIN = { starter: 78, rotation: 55, bench: 25, unknown: 55, gk_starter: 90, gk_unknown: 45 };
 
+// Minutes DISTRIBUTION per minutes_source — the predictive spread the
+// projection tail integrates over (spec §4.2: minutes are the dominant
+// variance source). Conditional on the player APPEARING: DNPs settle as
+// `void` not `miss` (grade-outcomes.mjs), so no 0-minute scenario. Each
+// distribution's mean is ≈ the matching EXP_MIN point, so the mean λ and the
+// rule-wc-minutes gate (which keys on expected_minutes) are unchanged — the
+// mixture adds only variance, and that variance scales with minutes
+// uncertainty (wide for rotation outfielders, ~0 for confirmed-90 keepers).
+// Masses are tunable calibration constants (like POSITION_PRIORS / ENV_DRIVERS).
+const MINUTES_DIST = {
+  club_share_starter:    [{ minutes: 90, p: 0.45 }, { minutes: 78, p: 0.30 }, { minutes: 62, p: 0.18 }, { minutes: 45, p: 0.07 }], // mean ≈ 78
+  club_share_rotation:   [{ minutes: 75, p: 0.25 }, { minutes: 62, p: 0.30 }, { minutes: 45, p: 0.30 }, { minutes: 28, p: 0.15 }], // mean ≈ 55
+  unknown:               [{ minutes: 75, p: 0.25 }, { minutes: 62, p: 0.30 }, { minutes: 45, p: 0.30 }, { minutes: 28, p: 0.15 }], // mean ≈ 55
+  club_share_bench:      [{ minutes: 45, p: 0.15 }, { minutes: 30, p: 0.30 }, { minutes: 20, p: 0.40 }, { minutes: 10, p: 0.15 }], // mean ≈ 25
+  club_share_starter_gk: [{ minutes: 90, p: 0.92 }, { minutes: 78, p: 0.08 }],                                                     // keepers ~always 90
+  gk_rotation:           [{ minutes: 70, p: 0.20 }, { minutes: 48, p: 0.35 }, { minutes: 35, p: 0.30 }, { minutes: 20, p: 0.15 }], // mean ≈ 45
+  gk_unknown:            [{ minutes: 70, p: 0.20 }, { minutes: 48, p: 0.35 }, { minutes: 35, p: 0.30 }, { minutes: 20, p: 0.15 }], // mean ≈ 45
+};
+
 // 2026 format: group stage ends 2026-06-27; from the Round of 32 on,
 // PrizePicks settles on 90' + stoppage ONLY (extra time excluded).
 const KNOCKOUT_FROM_MS = Date.parse("2026-06-28T00:00:00Z");
@@ -210,12 +229,23 @@ export function gatherSoccerGroundTruth({ player, prop }) {
   }
 
   const minutesFactor = expectedMinutes / 90;
+  // Minutes mixture for the projection tail (spec §4.2). Degenerate fallback
+  // (unknown source) is a single scenario at the point → mixture == point.
+  const minutesDist = MINUTES_DIST[minutesSource] ?? [{ minutes: expectedMinutes, p: 1 }];
   const lambda = {};
+  const lambdaScenarios = {};
   const aOppByField = {};
   for (const f of LAMBDA_FIELDS) {
     const a = envFactor(f, vegas, mu);
     aOppByField[f] = Number(a.toFixed(4));
     lambda[f] = Number((per90[f] * minutesFactor * a).toFixed(4));
+    // Per-field λ across the minutes scenarios — what projection.js mixes the
+    // Poisson tail over. lambda[f] above stays the point/mean read (gate +
+    // back-compat for fantasy components and telemetry).
+    lambdaScenarios[f] = minutesDist.map((s) => ({
+      lambda: Number((per90[f] * (s.minutes / 90) * a).toFixed(4)),
+      p: s.p,
+    }));
   }
 
   // ── Outfield Fantasy Score composite (spec §10.5): moment-match the
@@ -272,6 +302,10 @@ export function gatherSoccerGroundTruth({ player, prop }) {
       minutes_source: minutesSource,
       starter_confirmed: null, // ESPN roster enrichment — follow-up
       lambda,
+      // Per-field minutes mixture (spec §4.2) — projection.js integrates the
+      // Poisson tail over these to get an overdispersed, minutes-aware P(over).
+      lambda_scenarios: lambdaScenarios,
+      minutes_dist: minutesDist,
       // Back-compat scalar: the shots-family multiplier (v1 consumers/
       // telemetry); a_opp_by_field carries the per-stat drivers (§10.1).
       a_opp: aOppByField.shots,

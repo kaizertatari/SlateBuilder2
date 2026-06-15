@@ -53,6 +53,9 @@ export function apply(ctx) {
     dir_prob: proj?.dir_prob ?? null,
     lambda_model: proj?.mean ?? null,
     sigma_model: proj?.sigma ?? null,
+    // v1 point-Poisson over-prob (telemetry) — vs the live minutes-mixture
+    // model_prob; lets the checkpoint diff v1/v2 tail calibration.
+    model_prob_point: proj?.model_prob_point ?? null,
     model_led: modelLed,
     rates_source: ratesSource,
     prior_only_stat: priorOnly,

@@ -53,6 +53,62 @@ export function poissonFairOver(lambda, line) {
   return poissonTail(lambda, Math.floor(line) + 1);
 }
 
+/**
+ * Fair P(over a PrizePicks half line) for a Poisson MIXTURE — the predictive
+ * distribution when λ is itself uncertain (primarily from minutes; spec §4.2,
+ * §10). Mixing Poisson tails over a small λ distribution yields an
+ * overdispersed predictive (Var = E[λ] + Var(λ) > Poisson), the honest read
+ * where a point-λ Poisson is overconfident exactly in the tails PrizePicks
+ * prices. Weights are normalized; a single scenario reduces exactly to
+ * poissonFairOver.
+ *
+ * @param {Array<{lambda:number, p:number}>} scenarios
+ * @param {number} line
+ * @returns {number|null}
+ */
+export function poissonMixtureTail(scenarios, line) {
+  if (typeof line !== "number" || !Array.isArray(scenarios)) return null;
+  const k = Math.floor(line) + 1;
+  let acc = 0, wsum = 0;
+  for (const s of scenarios) {
+    if (!s || !Number.isFinite(s.lambda) || s.lambda <= 0 || !Number.isFinite(s.p) || s.p <= 0) continue;
+    const tail = poissonTail(s.lambda, k);
+    if (tail == null) continue;
+    acc += s.p * tail;
+    wsum += s.p;
+  }
+  return wsum > 0 ? acc / wsum : null;
+}
+
+/**
+ * Mean / variance / sd of a Poisson mixture X (X|s ~ Poisson(λ_s), s ~ p).
+ * Law of total variance: Var(X) = E[λ_s] + Var(λ_s) — strictly ≥ the Poisson
+ * mean, which IS the overdispersion the mixture buys. Weights normalized.
+ *
+ * @param {Array<{lambda:number, p:number}>} scenarios
+ * @returns {null | { mean:number, variance:number, sd:number }}
+ */
+export function mixtureMoments(scenarios) {
+  if (!Array.isArray(scenarios)) return null;
+  const valid = [];
+  let wsum = 0, mean = 0;
+  for (const s of scenarios) {
+    if (!s || !Number.isFinite(s.lambda) || s.lambda < 0 || !Number.isFinite(s.p) || s.p <= 0) continue;
+    valid.push(s); wsum += s.p; mean += s.p * s.lambda;
+  }
+  if (wsum <= 0) return null;
+  mean /= wsum;
+  let lamVar = 0;
+  for (const s of valid) lamVar += s.p * (s.lambda - mean) * (s.lambda - mean);
+  lamVar /= wsum;
+  const variance = mean + lamVar; // total variance for a Poisson mixture
+  return {
+    mean: Number(mean.toFixed(4)),
+    variance: Number(variance.toFixed(4)),
+    sd: Number(Math.sqrt(Math.max(variance, 1e-9)).toFixed(4)),
+  };
+}
+
 // ─── Outfield Fantasy Score composite (WC_FRAMEWORK_SPEC.md §10.5) ──────────
 
 // Official PrizePicks outfield fantasy weights, transcribed from the in-app

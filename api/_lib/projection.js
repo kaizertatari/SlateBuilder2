@@ -20,7 +20,7 @@
 
 import { getBaselines, computeOverBufferCheck } from "./rules/_helpers.js";
 import { slopeFor } from "./odds.js";
-import { poissonFairOver } from "./poisson.js";
+import { poissonFairOver, poissonMixtureTail, mixtureMoments } from "./poisson.js";
 import { PROP_TO_FIELD, WC_STAT_MODEL } from "./prop-types.js";
 
 // Standard normal CDF — Abramowitz & Stegun 26.2.17 (|error| < 7.5e-8).
@@ -87,6 +87,7 @@ export function projectProb({ groundTruth, statType, direction, line, mean }) {
     let model_prob = null;
     let mean = null;
     let sigma = null;
+    let model_prob_point = null; // v1 point-Poisson over-prob — telemetry only
     if (cfg?.composite) {
       const fm = groundTruth?.soccer?.fantasy;
       if (!(typeof fm?.mean === "number" && typeof fm?.sd === "number" && fm.sd > 0)) return null;
@@ -101,12 +102,18 @@ export function projectProb({ groundTruth, statType, direction, line, mean }) {
       // PP half-lines double as the integer continuity correction.
       model_prob = probOver({ mean, sigma, line });
     } else {
+      // Poisson low-count stat. Integrate the tail over the minutes mixture
+      // (spec §4.2) so the predictive is overdispersed and minutes-aware; the
+      // point λ is the fallback and the v1 comparison value.
       const lam = groundTruth?.soccer?.lambda?.[field];
       if (!(typeof lam === "number" && lam > 0)) return null;
-      const p = poissonFairOver(lam, line);
+      model_prob_point = poissonFairOver(lam, line); // v1 point Poisson (telemetry)
+      const scenarios = groundTruth?.soccer?.lambda_scenarios?.[field];
+      const mm = Array.isArray(scenarios) && scenarios.length ? mixtureMoments(scenarios) : null;
+      const p = mm ? poissonMixtureTail(scenarios, line) : model_prob_point;
       if (p == null) return null;
-      mean = lam;
-      sigma = Math.sqrt(lam); // Poisson: Var = λ (telemetry)
+      mean = mm ? mm.mean : lam;
+      sigma = mm ? mm.sd : Math.sqrt(lam); // mixture sd (overdispersed) or Poisson √λ
       model_prob = Math.max(0.01, Math.min(0.99, p));
     }
     if (model_prob == null) return null;
@@ -115,6 +122,7 @@ export function projectProb({ groundTruth, statType, direction, line, mean }) {
       dir_prob: Number((direction === "UNDER" ? 1 - model_prob : model_prob).toFixed(4)),
       mean: Number(mean.toFixed(4)),
       sigma: Number(sigma.toFixed(4)),
+      model_prob_point: model_prob_point == null ? null : Number(model_prob_point.toFixed(4)),
     };
   }
 

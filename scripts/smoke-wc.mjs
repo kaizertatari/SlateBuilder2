@@ -3,7 +3,7 @@
 // fit, WC lookupMarket pricing, soccer ground truth composition, the WC rule
 // family through applyEngine, and the pre-filter bypass.
 //   node scripts/smoke-wc.mjs
-import { poissonTail, poissonFairOver, fitLadderPoisson, fairLambda, POISSON_LAMBDA_MARGIN, fantasyMoments, WC_FANTASY_WEIGHTS } from "../api/_lib/poisson.js";
+import { poissonTail, poissonFairOver, poissonMixtureTail, mixtureMoments, fitLadderPoisson, fairLambda, POISSON_LAMBDA_MARGIN, fantasyMoments, WC_FANTASY_WEIGHTS } from "../api/_lib/poisson.js";
 import { setOdds, lookupMarket, lookupVegas } from "../api/_lib/odds.js";
 import { gatherSoccerGroundTruth, setSoccerRates, setSoccerAccrual } from "../api/_lib/soccer-truth.js";
 import { projectProb } from "../api/_lib/projection.js";
@@ -18,6 +18,21 @@ ok(Math.abs(poissonTail(1, 1) - (1 - Math.exp(-1))) < 1e-9, "P(X≥1|λ=1) = 1�
 ok(poissonTail(2.5, 0) === 1, "P(X≥0) = 1");
 ok(Math.abs(poissonFairOver(3.0, 2.5) - poissonTail(3.0, 3)) < 1e-12, "fair over 2.5 = P(X≥3)");
 ok(Math.abs(fairLambda(3.15) - 3.15 / (1 + POISSON_LAMBDA_MARGIN)) < 1e-9, "λ margin haircut");
+
+// Poisson mixture (minutes-uncertainty predictive): single scenario === point;
+// the mixture is overdispersed (Var = E[λ]+Var(λ) > Poisson mean) and pulls
+// P(over) toward 0.5 vs the point read.
+ok(Math.abs(poissonMixtureTail([{ lambda: 3.0, p: 1 }], 2.5) - poissonFairOver(3.0, 2.5)) < 1e-12, "mixture single scenario = point tail");
+{
+  const scen = [{ lambda: 4.0, p: 0.5 }, { lambda: 2.0, p: 0.5 }];
+  const mm = mixtureMoments(scen);
+  ok(mm && Math.abs(mm.mean - 3.0) < 1e-9, `mixtureMoments mean (got ${mm?.mean})`);
+  // Var = E[λ] + Var(λ) = 3 + 1 = 4, strictly > the Poisson mean 3.
+  ok(mm && Math.abs(mm.variance - 4.0) < 1e-9 && mm.variance > mm.mean, `mixture overdispersed (var ${mm?.variance} > mean ${mm?.mean})`);
+  const mix = poissonMixtureTail(scen, 4.5);
+  const pt = poissonFairOver(3.0, 4.5);
+  ok(Math.abs(mix - 0.5) < Math.abs(pt - 0.5), `mixture closer to 0.5 than point (mix ${mix.toFixed(3)} vs pt ${pt.toFixed(3)})`);
+}
 
 // Ladder fit recovers λ: synthesize implied probs from a known λ with a 4% shade.
 const lamTrue = 3.2;
@@ -83,7 +98,14 @@ ok(gt.game.knockout === true, "knockout flagged from kickoff date");
 // ── 4) Projection (Poisson path) ────────────────────────────────────────────
 gt = gatherSoccerGroundTruth({ player: "Test Striker", prop: ppProp() }).groundTruth;
 const proj = projectProb({ groundTruth: gt, statType: "Shots", direction: "OVER", line: 2.5 });
-ok(proj && Math.abs(proj.model_prob - poissonFairOver(gt.soccer.lambda.shots, 2.5)) < 1e-3, `projectProb WC = Poisson tail (got ${proj?.model_prob})`);
+// model_prob is now the minutes-MIXTURE tail; model_prob_point preserves the v1
+// point-Poisson read for the ~06-20 checkpoint comparison.
+const scen = gt.soccer.lambda_scenarios.shots;
+ok(proj && Math.abs(proj.model_prob - poissonMixtureTail(scen, 2.5)) < 1e-3, `projectProb WC = minutes-mixture tail (got ${proj?.model_prob})`);
+ok(proj && Math.abs(proj.model_prob_point - poissonFairOver(gt.soccer.lambda.shots, 2.5)) < 1e-3, `model_prob_point = v1 point Poisson (got ${proj?.model_prob_point})`);
+// Mixture adds variance (overdispersion) → P(over) pulled toward 0.5 and σ > √λ.
+ok(proj && Math.abs(proj.model_prob - 0.5) < Math.abs(proj.model_prob_point - 0.5), `mixture more conservative than point (mix ${proj?.model_prob} vs pt ${proj?.model_prob_point})`);
+ok(proj && proj.sigma > Math.sqrt(gt.soccer.lambda.shots), `mixture σ > Poisson √λ (got ${proj?.sigma} vs ${Math.sqrt(gt.soccer.lambda.shots).toFixed(3)})`);
 const projU = projectProb({ groundTruth: gt, statType: "Shots", direction: "UNDER", line: 2.5 });
 ok(projU && Math.abs(projU.dir_prob - (1 - projU.model_prob)) < 1e-9, "UNDER dir_prob mirrors");
 
@@ -218,6 +240,10 @@ const gkProp = ppProp({ player_position: "Goalkeeper", player_team: "South Afric
 const gtGk2 = gatherSoccerGroundTruth({ player: "Test Keeper", prop: gkProp }).groundTruth;
 ok(gtGk2.soccer.expected_minutes === 90 && gtGk2.soccer.minutes_source === "club_share_starter_gk", `GK starter plays 90 (got ${gtGk2.soccer.expected_minutes})`);
 ok(gtGk2.soccer.a_opp_by_field.saves > 1.3, `underdog keeper saves driver > 1.3 (got ${gtGk2.soccer.a_opp_by_field.saves})`);
+// GK minutes are near-certain (90) → narrow dist → mixture ≈ point Poisson
+// (overdispersion only where minutes are genuinely uncertain).
+const projGk = projectProb({ groundTruth: gtGk2, statType: "Goalie Saves", direction: "OVER", line: 2.5 });
+ok(projGk && Math.abs(projGk.model_prob - projGk.model_prob_point) < 0.02, `GK saves mixture ≈ point (narrow minutes) (got ${projGk?.model_prob} vs ${projGk?.model_prob_point})`);
 r = run(gtGk2, { stat: "Goalie Saves", line: 2.5 });
 ok(r.verdict === "OVER" && (r.tier === "S" || r.tier === "A"), `L GK saves market-led pick issues (got ${r.verdict}/${r.tier})`);
 ok(!r.flags.some((f) => /outfield-stat/i.test(f)), "L no GK-position skip on a saves prop");
