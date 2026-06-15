@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Local scratch + generated output (not committed)
+tmp/
+graphify-out/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
