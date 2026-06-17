@@ -30,6 +30,7 @@ graphify-out/
 .vercel
 .env
 .env*.local
+.env.vercel*
 .claude/
 CLAUDE.local.md
 
