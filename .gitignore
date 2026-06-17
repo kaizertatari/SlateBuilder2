@@ -28,6 +28,7 @@ graphify-out/
 *.sw?
 
 .vercel
+.env
 .env*.local
 .claude/
 CLAUDE.local.md
