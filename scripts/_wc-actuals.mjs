@@ -16,6 +16,10 @@ import { normalizeName } from "../api/_lib/string-utils.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const WC_MATCH_STATS_PATH = path.join(ROOT, "data/wc-match-stats.json");
+// FotMob per-match actuals (scripts/refresh-wc-fotmob-stats.mjs). Same schema
+// as the FBref snapshot; the grader merges both (FotMob preferred — it carries
+// the advanced Opta stats FBref hasn't posted this tournament).
+export const WC_FOTMOB_STATS_PATH = path.join(ROOT, "data/wc-fotmob-stats.json");
 
 // Per-player stat fields shared by ESPN entries and FBref snapshot rows.
 export const WC_STAT_FIELDS = ["sh", "st", "tk", "sv", "clr", "pa", "g", "a", "kp", "cr", "drb", "fc", "yc", "rc"];

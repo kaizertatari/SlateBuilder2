@@ -14,7 +14,7 @@ home-bridge daemon that the deployed UI forwards to.
 
 | Task | Schedule | What it runs |
 |---|---|---|
-| `grade-outcomes-daily` | 09:00 local | `scripts/grade-outcomes.mjs` — joins verdicts ↔ ESPN actuals, emits outcome events |
+| `grade-outcomes-daily` | 09:00 local (**DISABLED 2026-06-21**) | `scripts/grade-outcomes.mjs` — joins verdicts ↔ ESPN actuals, emits outcome events. Disabled in favor of on-demand grading at calibration time. ⚠️ Axiom retention is 30 days, so grade within 30 days of any verdict (lookback ≤30) or it ages out unrecoverably. Re-enable: `Enable-ScheduledTask -TaskName grade-outcomes-daily`. |
 | `PrizePicks Refresh Lines` | 00:00 / 06:00 / 12:00 / 18:00 | PrizePicks lines scrape → `data/prizepicks-lines.json` + blob |
 | `PrizePicks Refresh Odds` | 00:10 / 06:10 / 12:10 / 18:10 | `scripts/refresh-odds-task.bat` → DK+FD no-vig consensus → `data/odds.json` + blob (+10 min after lines so they stay in sync) |
 | `Funnel Watchdog` | every 15 min | `scripts/funnel-watchdog-task.bat` → self-heals the Tailscale funnel zombie (see below) |
@@ -200,6 +200,40 @@ during the tournament is plenty (club seasons are over; in-tournament
 signal accrues via the grader). Missing players degrade to position
 priors + A-tier cap; rows missing a v2 field degrade per-stat (model-led
 props SKIP on prior-only) — a partial snapshot is safe.
+
+## Refresh WC FotMob stats (PRIMARY grader fallback for model-led stats)
+
+`node scripts/refresh-wc-fotmob-stats.mjs --headed` → `data/wc-fotmob-stats.json`.
+This is the working source for the stats ESPN doesn't carry (Tackles /
+Clearances / Passes Attempted / key passes / crosses / dribbles → and the
+Outfield Fantasy composite), because **FBref posted no advanced Opta tables at
+all this tournament** (see below — its reports stayed "basic only"). FotMob's
+`/api/data/*` endpoints are gated by a signed, rotating header (`x-mas` /
+`x-fm-req`) so a plain fetch 401s; the scraper instead drives a real browser
+(Playwright, persistent `.fotmob-profile`, same recipe as the FBref/soccer-rates
+scrapers) to the WC match pages — the browser signs its own requests and the
+scraper intercepts the `matchDetails` JSON response. MUST be `--headed` (the
+headless run gets bot-challenged). Incremental: it reads the finished-match list
+from `/api/data/leagues?id=77` and scrapes only matches missing from the
+snapshot (~4s apart, ~3–5 min for a full group stage). `--all` rescrapes all.
+
+The grader merges this snapshot AND the FBref one (FotMob preferred, FBref fills,
+ESPN wins) via `scripts/_wc-actuals.mjs`. Dates are stored in America/New_York to
+match ESPN's ET `game_start_time` (the grader keys on `game_start_time.slice(0,10)`).
+
+**Cadence:** run it after WC matches have been played, then
+`node scripts/grade-outcomes.mjs --lookback 30`. Unlike the FBref fallback there
+is NO enrichment-lag rescrape — FotMob's `matchDetails` is complete the moment a
+match ends, so each match is scraped exactly once (the run skips matches already
+in the snapshot). So the only thing that warrants a re-run is *new finished
+matches*: roughly daily during the group stage (matches most days through
+2026-06-27), only on match days through the knockouts. It is not time-critical —
+the grader's 30-day lookback auto-retries ungraded verdicts, so a skipped day
+backfills on the next refresh + grade. In practice: refresh once before any
+calibration check and one incremental pass grabs every match since last time.
+Residual `UNGRADEABLE` counts after a fresh run are PP↔FotMob name mismatches,
+not a staleness bug. Not wired to Task Scheduler (it's a headed run) — schedule
+it like the FBref one if you want it automated.
 
 ## Refresh WC match stats (FBref grader fallback)
 

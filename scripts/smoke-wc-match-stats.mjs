@@ -11,6 +11,7 @@
 // Pure local — no network, no Playwright.
 
 import { composeMatchPlayers, completedMatchesFromSchedule, hasAdvancedStats, needsRescrape } from "./refresh-wc-match-stats.mjs";
+import { composeFotmobPlayers, parseFotmobCards, finishedMatchesFromLeagues, etDate } from "./refresh-wc-fotmob-stats.mjs";
 import { indexWcMatchStatsByDate, mergeWcEntry, wcActualFor, normalizeName } from "./_wc-actuals.mjs";
 
 let passed = 0, failed = 0;
@@ -160,6 +161,101 @@ assert("ESPN-only: fantasy null (all-or-nothing)", wcActualFor("Outfield Fantasy
 assert("merged: fantasy composite grades", wcActualFor("Outfield Fantasy Score", merged) === 11.4,
   `got ${wcActualFor("Outfield Fantasy Score", merged)}`);
 assert("keeper: Goalie Saves grades from FBref", wcActualFor("Goalie Saves", mergeWcEntry(null, rangel)) === 2);
+
+// ── FotMob composer (refresh-wc-fotmob-stats.mjs) ───────────────────────────
+// FotMob carries the advanced Opta stats FBref hasn't posted this tournament.
+// Per-player stats are grouped; attempted counts (passes/dribbles/crosses) live
+// in `.total`; cards come from matchFacts events; omitted countables = true 0.
+
+const FM_MD = {
+  content: {
+    playerStats: {
+      "1": {
+        name: "Heung-Min Son", teamName: "South Korea", isGoalkeeper: false,
+        stats: [
+          { title: "Top stats", stats: {
+            "Minutes played": { stat: { value: 90 } },
+            "Goals": { stat: { value: 1 } },
+            "Assists": { stat: { value: 0 } },
+            "Total shots": { stat: { value: 4 } },
+            "Shots on target": { stat: { value: 2 } },
+            "Accurate passes": { stat: { value: 30, total: 42 } }, // pa = attempted (total)
+            "Chances created": { stat: { value: 3 } },
+          } },
+          { title: "Attack", stats: {
+            "Successful dribbles": { stat: { value: 2, total: 5 } }, // drb = attempted
+            "Accurate crosses": { stat: { value: 1, total: 4 } },    // cr = attempted
+          } },
+          { title: "Defense", stats: { "Tackles": { stat: { value: 1 } }, "Clearances": { stat: { value: 0 } } } },
+          { title: "Duels", stats: { "Fouls committed": { stat: { value: 2 } } } },
+        ],
+      },
+      "2": { // keeper: Saves present, isGoalkeeper → sv defaults 0 if absent
+        name: "Test Keeper", teamName: "South Korea", isGoalkeeper: true,
+        stats: [
+          { title: "Top stats", stats: { "Minutes played": { stat: { value: 90 } } } },
+          { title: "Goalkeeping", stats: { "Saves": { stat: { value: 3 } } } },
+        ],
+      },
+      "3": { name: "Unused Sub", teamName: "South Korea", isGoalkeeper: false, stats: [] }, // no minutes → excluded
+      "4": { // outfielder with no crosses/dribbles (omitted = 0) + a yellow card
+        name: "Carded Player", teamName: "Czechia", isGoalkeeper: false,
+        stats: [
+          { title: "Top stats", stats: { "Minutes played": { stat: { value: 80 } }, "Accurate passes": { stat: { value: 20, total: 25 } }, "Total shots": { stat: { value: 0 } }, "Shots on target": { stat: { value: 0 } }, "Goals": { stat: { value: 0 } }, "Assists": { stat: { value: 0 } }, "Chances created": { stat: { value: 0 } } } },
+          { title: "Defense", stats: { "Tackles": { stat: { value: 3 } }, "Clearances": { stat: { value: 5 } } } },
+        ],
+      },
+    },
+    matchFacts: { events: { events: [
+      { type: "Card", player: { name: "Carded Player" }, card: "Yellow" },
+      { type: "Card", player: { name: "Heung-Min Son" }, card: "Red" },
+    ] } },
+  },
+};
+
+const fm = composeFotmobPlayers(FM_MD);
+const son = fm[normalizeName("Heung-Min Son")];
+const keeper = fm[normalizeName("Test Keeper")];
+const carded = fm[normalizeName("Carded Player")];
+
+assert("fotmob: unused sub (no minutes) excluded", !fm[normalizeName("Unused Sub")] && Object.keys(fm).length === 3, `keys=${Object.keys(fm).join(",")}`);
+assert("fotmob: passes attempted from .total", son?.pa === 42);
+assert("fotmob: dribbles + crosses attempted from .total", son?.drb === 5 && son?.cr === 4);
+assert("fotmob: tackles/clearances/kp/fouls parse", son?.tk === 1 && son?.clr === 0 && son?.kp === 3 && son?.fc === 2);
+assert("fotmob: red card → rc from events", son?.rc === 1 && son?.yc === 0);
+assert("fotmob: team + played", son?.team === "South Korea" && son?.played === true);
+assert("fotmob: keeper saves + sv default", keeper?.sv === 3 && keeper?.sh === 0);
+assert("fotmob: omitted countables default to 0", carded?.cr === 0 && carded?.drb === 0 && carded?.yc === 1 && carded?.rc === 0);
+
+const fmCards = parseFotmobCards(FM_MD);
+assert("parseFotmobCards: yellow vs red split", fmCards.get(normalizeName("Carded Player")).yc === 1 && fmCards.get(normalizeName("Heung-Min Son")).rc === 1);
+
+// Grader merge order: FotMob preferred over FBref, ESPN wins over both.
+const espnSon = { name: "Heung-Min Son", team: "South Korea", played: true, event_id: "e1", sh: 4, st: 2, g: 1, a: 0, sv: null, tk: null, clr: null, pa: null, kp: null, cr: null, drb: null, fc: null, yc: null, rc: null };
+const fbSon = { name: "Heung-Min Son", team: "South Korea", min: 90, tk: 99 }; // FBref disagrees on tk
+const snapSon = mergeWcEntry(son, fbSon);          // FotMob preferred
+const mergedSon = mergeWcEntry(espnSon, snapSon);  // ESPN wins overall
+assert("merge: FotMob preferred over FBref", snapSon.tk === 1);
+assert("merge: ESPN identity preserved", mergedSon.event_id === "e1" && mergedSon.sh === 4);
+assert("merge: FotMob fills model-led for ESPN", mergedSon.pa === 42 && mergedSon.clr === 0 && mergedSon.drb === 5);
+// 10g +0a +4sh +2st +42·0.05 +3·0.5 +0clr +1tk +5drb +4·0.5cr +0yc +1·-2rc +2·-0.5fc
+assert("merge: fantasy grades off FotMob", wcActualFor("Outfield Fantasy Score", mergedSon) === 24.6,
+  `got ${wcActualFor("Outfield Fantasy Score", mergedSon)}`);
+
+// ── finishedMatchesFromLeagues + etDate ─────────────────────────────────────
+
+const LG = { fixtures: { allMatches: [
+  { id: 1, pageUrl: "/matches/a-vs-b/x#1", home: { name: "A" }, away: { name: "B" }, status: { finished: true, utcTime: "2026-06-11T19:00:00Z" } },
+  { id: 2, pageUrl: "/matches/c-vs-d/y#2", home: { name: "C" }, away: { name: "D" }, status: { finished: false, utcTime: "2026-06-25T19:00:00Z" } },
+  { id: 3, pageUrl: "/matches/e-vs-f/z#3", home: { name: "E" }, away: { name: "F" }, status: { finished: true, cancelled: true, utcTime: "2026-06-12T19:00:00Z" } },
+] } };
+const finished = finishedMatchesFromLeagues(LG);
+assert("leagues: only finished, non-cancelled kept", finished.length === 1 && finished[0].id === "1");
+assert("leagues: id/pageUrl/teams carried", finished[0].pageUrl === "/matches/a-vs-b/x#1" && finished[0].home === "A" && finished[0].away === "B");
+assert("leagues: overview fallback path", finishedMatchesFromLeagues({ overview: { leagueOverviewMatches: LG.fixtures.allMatches } }).length === 1);
+// 19:00Z = 15:00 EDT same day; 02:00Z = 22:00 EDT previous day (the reason for ET conversion)
+assert("etDate: same-day afternoon", etDate("2026-06-11T19:00:00Z") === "2026-06-11");
+assert("etDate: post-midnight-UTC stays previous ET day", etDate("2026-06-12T02:00:00Z") === "2026-06-11");
 
 console.log(`\nsmoke-wc-match-stats: ${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);

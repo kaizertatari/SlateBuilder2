@@ -41,3 +41,6 @@ tmp/prizepicks-entries-raw.json
 
 # FBref scrape browser profile (Cloudflare clearance cookies) — never commit
 .fbref-profile/
+
+# FotMob scrape browser profile (session/header cookies) — never commit
+.fotmob-profile/

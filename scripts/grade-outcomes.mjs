@@ -32,7 +32,7 @@ loadEnvLocal();
 import { getLastNGames } from "../api/_lib/espn-stats.js";
 import { currentSeason } from "../api/_lib/nba-stats.js";
 import { normalizeName } from "../api/_lib/string-utils.js";
-import { loadWcMatchStats, indexWcMatchStatsByDate, mergeWcEntry, pickWcStat, wcActualFor } from "./_wc-actuals.mjs";
+import { loadWcMatchStats, indexWcMatchStatsByDate, mergeWcEntry, pickWcStat, wcActualFor, WC_FOTMOB_STATS_PATH } from "./_wc-actuals.mjs";
 
 const AXIOM_INGEST_URL_BASE = "https://api.axiom.co/v1/datasets";
 const AXIOM_QUERY_URL = "https://api.axiom.co/v1/datasets/_apl?format=tabular";
@@ -104,14 +104,19 @@ async function main() {
   // never been ingested throws "invalid field" at query time. Instead we
   // pull all verdict events in the window and filter in JS. Old-schema
   // events (without game_start_time / espn_id) drop out naturally.
+  // `| limit 100000` is REQUIRED: Axiom returns only 1000 rows when no limit is
+  // given, silently truncating the window. A busy slate logs >1000 verdicts in a
+  // few days, so without this the grader (and its WC leg, which reads verdictsRaw
+  // below) only ever sees an arbitrary 1000-row slice and leaves the rest
+  // ungraded — starving calibration of outcomes. Mirrors _axiom.mjs.
   const verdictsRaw = await queryAxiom(token, dataset, {
-    apl: `['${dataset}'] | where event_type == "verdict"`,
+    apl: `['${dataset}'] | where event_type == "verdict" | limit 100000`,
     startTime: iso(windowStart),
     endTime: iso(windowEnd),
   });
   const verdicts = verdictsRaw.filter((v) => v.game_start_time && v.espn_id);
   const outcomes = await queryAxiom(token, dataset, {
-    apl: `['${dataset}'] | where event_type == "outcome"`,
+    apl: `['${dataset}'] | where event_type == "outcome" | limit 100000`,
     startTime: iso(windowStart),
     endTime: iso(windowEnd),
   });
@@ -261,13 +266,19 @@ async function main() {
   let wcFbFilled = 0;
   if (wcUngraded.length) {
     console.log(`\n=== World Cup leg: ${wcUngraded.length} ungraded WC verdicts ===`);
-    // FBref match-report fallback — fills the stats ESPN rosters don't carry
+    // Snapshot fallbacks — fill the stats ESPN rosters don't carry
     // (tk/clr/pa/kp/cr/drb → Tackles/Clearances/Passes Attempted/fantasy).
+    // FotMob is preferred (it carries the advanced Opta stats; FBref has
+    // posted none this tournament), FBref fills any gap, ESPN wins overall.
     const fbSnap = await loadWcMatchStats();
     const fbByDate = indexWcMatchStatsByDate(fbSnap);
-    console.log(fbSnap
-      ? `  FBref fallback: ${fbSnap.total_matches ?? Object.keys(fbSnap.matches).length} match reports (fetched ${fbSnap.fetched_at})`
-      : "  FBref fallback: no data/wc-match-stats.json — ESPN-only grading (npm run refresh-wc-match-stats)");
+    const fmSnap = await loadWcMatchStats(WC_FOTMOB_STATS_PATH);
+    const fmByDate = indexWcMatchStatsByDate(fmSnap);
+    const snapDesc = (label, snap, hint) => snap
+      ? `  ${label}: ${snap.total_matches ?? Object.keys(snap.matches).length} match reports (fetched ${snap.fetched_at})`
+      : `  ${label}: none — ${hint}`;
+    console.log(snapDesc("FotMob fallback", fmSnap, "node scripts/refresh-wc-fotmob-stats.mjs --headed"));
+    console.log(snapDesc("FBref fallback", fbSnap, "node scripts/refresh-wc-match-stats.mjs --headed"));
     const byDate = new Map();
     for (const v of wcUngraded) {
       const d = v.game_start_time.slice(0, 10);
@@ -284,10 +295,14 @@ async function main() {
         continue;
       }
       const fbDay = fbByDate.get(date);
+      const fmDay = fmByDate.get(date);
       for (const v of vs) {
         const espnEntry = actuals.players.get(normalizeName(v.player)) ?? null;
         const fbEntry = fbDay?.get(normalizeName(v.player)) ?? null;
-        const entry = mergeWcEntry(espnEntry, fbEntry);
+        const fmEntry = fmDay?.get(normalizeName(v.player)) ?? null;
+        // FotMob preferred over FBref, then ESPN wins over both.
+        const snapEntry = mergeWcEntry(fmEntry, fbEntry);
+        const entry = mergeWcEntry(espnEntry, snapEntry);
         if (!entry) {
           // Not on any completed match's roster that day: match still in
           // progress/postponed (retry within the lookback window) or a
@@ -318,7 +333,7 @@ async function main() {
         else wcPushes++;
       }
     }
-    console.log(`WC result: hits=${wcHits}  misses=${wcMisses}  pushes=${wcPushes}  voids=${wcVoids}  postponed=${wcPostponed}  unmatched=${wcUnmatched}  fbref_filled=${wcFbFilled}`);
+    console.log(`WC result: hits=${wcHits}  misses=${wcMisses}  pushes=${wcPushes}  voids=${wcVoids}  postponed=${wcPostponed}  unmatched=${wcUnmatched}  snap_filled=${wcFbFilled}`);
     if (wcUngradeableByStat.size) {
       // Neither ESPN nor the FBref snapshot resolved these — spec §10.6:
       // surface, never guess. Usually means data/wc-match-stats.json is

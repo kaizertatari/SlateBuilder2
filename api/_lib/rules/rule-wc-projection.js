@@ -78,7 +78,7 @@ export function apply(ctx) {
         justification_part: priorOnly
           ? "Model-led: rates are position-prior-only for this stat — a prior can't carry the spine (spec §10.2)."
           : "Model-led: no model probability available — SKIP.",
-        _projection: telemetry({ agree: null }),
+        _projection: telemetry({ market_agree: null }),
       };
     }
     const pct = (proj.dir_prob * 100).toFixed(0);
@@ -90,7 +90,7 @@ export function apply(ctx) {
         tier_cap: "SKIP",
         flag: `⛔ Model-led edge too thin — model ${pct}% for ${direction}`,
         justification_part: `Model-led spine: ${pct}% for ${direction} at ${line} (< ${MODEL_LED_SKIP_BELOW * 100}%) — abstain.`,
-        _projection: telemetry({ agree: null }),
+        _projection: telemetry({ market_agree: null }),
       };
     }
     const modelEdge = proj.dir_prob - 0.5;
@@ -163,7 +163,9 @@ export function apply(ctx) {
     justification_part: just,
     _projection: telemetry({
       market_dir_prob: marketDir != null ? Number(marketDir.toFixed(4)) : null,
-      agree: marketDir != null ? (proj.dir_prob > 0.5) === (marketDir > 0.5) : null,
+      // key is `market_agree` (not `agree`) so verdict-logger logs it as
+      // model_market_agree — lets the §7 checkpoint measure the confirmer.
+      market_agree: marketDir != null ? (proj.dir_prob > 0.5) === (marketDir > 0.5) : null,
     }),
   };
 }
