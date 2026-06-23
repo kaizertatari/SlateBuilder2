@@ -71,6 +71,20 @@ timestamped message. The refresh has occasionally produced an empty file
 mid-slate; verify the file is non-empty before committing
 (`git checkout --` to restore on failure).
 
+**PerimeterX (since 2026-06-23):** `api.prizepicks.com` is now fronted by
+PerimeterX/HUMAN bot management — plain fetch (and curl/.NET) gets HTTP 403
+with a challenge body (`appId "PXZNeitfzP"`). The scrape therefore runs
+through a real browser: `scripts/scrape-prizepicks-browser.mjs` drives a
+Playwright persistent context (`.prizepicks-profile`, same recipe as
+fetch-prizepicks-entries / soccer-rates) that loads `app.prizepicks.com` to
+earn a cleared `_px3` cookie, then in-page-`fetch`es the projections API.
+`refresh-prizepicks` and the `refresh-bridge` both call it. **Headless works**
+— the decisive bit is the `addInitScript` fingerprint patch (navigator.webdriver
+undefined etc.); without it headless 403s. Run `node
+scripts/scrape-prizepicks-browser.mjs --headed` once to (re)seed the profile if
+PX ever hard-blocks the headless path. After deploying a bridge code change,
+the NSSM service must be restarted (elevated) to pick it up.
+
 **WC-leg thinning:** PrizePicks rate-limits league 241 (World Cup)
 aggressively. Since 2026-06-12 the scraper has a salvage guard
 (`salvageLeagueFromSnapshot` in `scripts/scrape-prizepicks.mjs`, smoke

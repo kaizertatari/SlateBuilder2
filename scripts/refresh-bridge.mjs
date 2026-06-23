@@ -24,7 +24,7 @@
 import http from "node:http";
 import { randomUUID } from "node:crypto";
 import { loadEnvLocal } from "./_env.mjs";
-import { scrapePrizePicksForToday } from "./scrape-prizepicks.mjs";
+import { scrapePrizePicksViaBrowser } from "./scrape-prizepicks-browser.mjs";
 import { refreshOddsAndPush } from "./scrape-odds.mjs";
 import { writeLines, getStoreLocation } from "../api/_lib/lines-store.js";
 
@@ -77,7 +77,11 @@ const server = http.createServer(async (req, res) => {
   console.log(`[${reqId}] scrape starting`);
 
   try {
-    const data = await scrapePrizePicksForToday({ write: false });
+    // Browser-backed (headless + fingerprint hardening) to clear PerimeterX —
+    // plain fetch 403s now. Headless works from this service; if PX ever
+    // hard-blocks, re-seed the .prizepicks-profile with a one-off
+    // `node scripts/scrape-prizepicks-browser.mjs --headed` in the user session.
+    const data = await scrapePrizePicksViaBrowser({ write: false });
     if (!data.total_props) {
       console.log(`[${reqId}] scrape returned 0 props; refusing to write blob`);
       return send(res, 502, {

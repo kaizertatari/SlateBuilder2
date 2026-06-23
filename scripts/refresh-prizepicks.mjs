@@ -9,7 +9,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { loadEnvLocal } from "./_env.mjs";
-import { scrapePrizePicksForToday, OUTPUT } from "./scrape-prizepicks.mjs";
+import { OUTPUT } from "./scrape-prizepicks.mjs";
+import { scrapePrizePicksViaBrowser } from "./scrape-prizepicks-browser.mjs";
 import { writeLines } from "../api/_lib/lines-store.js";
 
 loadEnvLocal();
@@ -17,12 +18,16 @@ loadEnvLocal();
 async function main() {
   console.log("=== refresh-prizepicks ===");
 
-  console.log("\n[1/2] Scraping PrizePicks NBA + WNBA lines for today...");
-  // Scrape WITHOUT writing. A 0-prop scrape (rate-limit 429, cloud-IP block,
-  // PrizePicks outage) must never clobber the good local file or blob — we
-  // persist only after confirming the result is non-empty, mirroring the
-  // guard in api/refresh-lines.js.
-  const result = await scrapePrizePicksForToday({ write: false });
+  console.log("\n[1/2] Scraping PrizePicks lines for today (browser/PerimeterX)...");
+  // Scrape WITHOUT writing. A 0-prop scrape (PerimeterX block, rate-limit 429,
+  // cloud-IP block, PrizePicks outage) must never clobber the good local file
+  // or blob — we persist only after confirming the result is non-empty,
+  // mirroring the guard in api/refresh-lines.js. Browser-backed to clear PX;
+  // --headed re-seeds the profile if PX ever hard-blocks the headless path.
+  const result = await scrapePrizePicksViaBrowser({
+    write: false,
+    headed: process.argv.includes("--headed"),
+  });
 
   console.log(`\n  ${result.total_props} props scraped for ${result.total_players} players`);
   console.log(`  Games: ${Object.keys(result.games).join(", ")}`);

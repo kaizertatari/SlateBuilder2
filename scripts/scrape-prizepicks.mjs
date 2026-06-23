@@ -68,18 +68,26 @@ async function jsonFetch(url, opts = {}) {
   }
 }
 
+// Default JSON fetcher — direct HTTP with browser-like headers. As of 2026-06,
+// PrizePicks fronts the API with PerimeterX (HUMAN) bot management that 403s
+// this path (challenge body with appId "PXZNeitfzP"). scrapePrizePicksViaBrowser
+// (scrape-prizepicks-browser.mjs) injects a browser-backed fetcher that carries
+// a cleared _px3 cookie. Kept as the default so callers that pass no fetcher
+// (and any future un-gated endpoint) still work unchanged.
+const defaultFetchJson = (url) => jsonFetch(url, { headers: HEADERS });
+
 // ─── Scrape PrizePicks ─────────────────────────────────────────────────────
 
-async function scrapePrizePicksForLeague(leagueId) {
+async function scrapePrizePicksForLeague(leagueId, fetchJson = defaultFetchJson) {
   const url = `${PRIZEPICKS_API}?league_id=${leagueId}&per_page=250&single_stat=true`;
   // PP rate-limits bursts (429) — with three leagues scraped back-to-back a
   // single retry after a cooldown recovers the slate instead of dropping a
   // whole league from the snapshot.
-  let data = await jsonFetch(url, { headers: HEADERS });
+  let data = await fetchJson(url);
   if (!data) {
     console.log(`  league_id=${leagueId} fetch failed — retrying in 15s...`);
     await new Promise((r) => setTimeout(r, 15000));
-    data = await jsonFetch(url, { headers: HEADERS });
+    data = await fetchJson(url);
   }
   if (!data) throw new Error(`Failed to fetch PrizePicks API (league_id=${leagueId})`);
 
@@ -181,7 +189,7 @@ export function salvageLeagueFromSnapshot(previous, league, nowMs) {
 // opts.outputPath — override OUTPUT (e.g. "/tmp/prizepicks-lines.json").
 // opts.leagues — override LEAGUES (e.g. scrape just one league).
 export async function scrapePrizePicksForToday(opts = {}) {
-  const { write = true, outputPath = OUTPUT, leagues = LEAGUES } = opts;
+  const { write = true, outputPath = OUTPUT, leagues = LEAGUES, fetchJson = defaultFetchJson } = opts;
 
   // Load players.json and build normalized lookup. Lookup carries the league
   // so we don't accidentally match an NBA player to a WNBA prop (or vice
@@ -229,7 +237,7 @@ export async function scrapePrizePicksForToday(opts = {}) {
     console.log(`  Fetching PrizePicks ${league} (league_id=${league_id}) projections...`);
     let projections;
     try {
-      projections = await scrapePrizePicksForLeague(league_id);
+      projections = await scrapePrizePicksForLeague(league_id, fetchJson);
     } catch (err) {
       console.error(`  ! ${league} scrape failed: ${err.message}`);
       perLeague[league] = { total_props: 0, error: err.message };
