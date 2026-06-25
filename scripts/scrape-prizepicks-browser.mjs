@@ -98,6 +98,45 @@ function makeFetchJson(page) {
   };
 }
 
+// A light API probe: 200 means PerimeterX has cleared this session. A non-200
+// (403 challenge) or a thrown fetch (status 0 — CORS/"Failed to fetch" because
+// the app page is a PX block, not the real app) means not yet cleared.
+const PROBE_URL = "https://api.prizepicks.com/projections?league_id=3&per_page=10&single_stat=true";
+async function probePxStatus(page) {
+  return page.evaluate(async (u) => {
+    try {
+      const r = await fetch(u, { headers: { Accept: "application/json" } });
+      return r.status;
+    } catch {
+      return 0;
+    }
+  }, PROBE_URL);
+}
+
+// Load the app and wait for PerimeterX to issue a cleared _px3, CONFIRMED by a
+// 200 API probe. PX frequently challenges the first load (403) or serves a
+// block page (in-page fetch → "Failed to fetch"); a reload once _pxvid is set
+// usually clears it. A single goto + fixed wait is therefore unreliable —
+// observed ~50/50 — so we reload and re-probe until 200 or the budget runs out.
+// Returns false on budget exhaustion; caller proceeds and the 0-prop scrape
+// trips the refuse-write guard rather than clobbering the blob.
+async function ensurePxCleared(page, budgetMs = 60000) {
+  const deadline = Date.now() + budgetMs;
+  let cycle = 0;
+  while (Date.now() < deadline) {
+    await page.goto(APP_URL, { waitUntil: "domcontentloaded", timeout: 60000 }).catch(() => {});
+    for (let probe = 0; probe < 4 && Date.now() < deadline; probe++) {
+      await sleep(3000); // give PX's sensor JS time to run after (re)load
+      if ((await probePxStatus(page)) === 200) {
+        if (cycle > 0 || probe > 0) console.log(`  PerimeterX cleared (reload ${cycle}, probe ${probe + 1})`);
+        return true;
+      }
+    }
+    cycle++;
+  }
+  return false;
+}
+
 // opts: { headed?, write?, outputPath?, leagues? } — write/outputPath/leagues
 // pass straight through to scrapePrizePicksForToday.
 export async function scrapePrizePicksViaBrowser(opts = {}) {
@@ -108,12 +147,13 @@ export async function scrapePrizePicksViaBrowser(opts = {}) {
   const context = await launchContext(headed);
   const page = context.pages()[0] || (await context.newPage());
   try {
-    // Load the app so PerimeterX's JS executes and sets a cleared _px3 cookie
-    // on .prizepicks.com (shared with the api. subdomain). The top-level doc
-    // itself may return 403 — that's fine; clearance lands a few seconds later
-    // and the in-page API fetch (makeFetchJson) retries past it.
-    await page.goto(APP_URL, { waitUntil: "domcontentloaded", timeout: 60000 }).catch(() => {});
-    await sleep(8000);
+    // Earn a cleared _px3 on .prizepicks.com (shared with the api. subdomain)
+    // BEFORE scraping — verified by a 200 probe, with reloads. Without this the
+    // run is a coin flip: when PX doesn't clear on the first load, every league
+    // fetch returns 403 / "Failed to fetch" and the scrape yields 0 props.
+    if (!(await ensurePxCleared(page))) {
+      console.warn("  PerimeterX did not clear within budget — scrape will likely return 0 props. Re-seed with --headed if this persists.");
+    }
     return await scrapePrizePicksForToday({ ...rest, fetchJson: makeFetchJson(page) });
   } finally {
     await context.close();
