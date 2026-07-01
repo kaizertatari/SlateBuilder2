@@ -12,7 +12,7 @@
 
 import { composeMatchPlayers, completedMatchesFromSchedule, hasAdvancedStats, needsRescrape } from "./refresh-wc-match-stats.mjs";
 import { composeFotmobPlayers, parseFotmobCards, finishedMatchesFromLeagues, etDate } from "./refresh-wc-fotmob-stats.mjs";
-import { indexWcMatchStatsByDate, mergeWcEntry, wcActualFor, normalizeName } from "./_wc-actuals.mjs";
+import { indexWcMatchStatsByDate, mergeWcEntry, wcActualFor, normalizeName, buildSoccerAccrual } from "./_wc-actuals.mjs";
 
 let passed = 0, failed = 0;
 function assert(name, cond, detail) {
@@ -256,6 +256,41 @@ assert("leagues: overview fallback path", finishedMatchesFromLeagues({ overview:
 // 19:00Z = 15:00 EDT same day; 02:00Z = 22:00 EDT previous day (the reason for ET conversion)
 assert("etDate: same-day afternoon", etDate("2026-06-11T19:00:00Z") === "2026-06-11");
 assert("etDate: post-midnight-UTC stays previous ET day", etDate("2026-06-12T02:00:00Z") === "2026-06-11");
+
+// ── buildSoccerAccrual (spec §4.4 tournament accrual) ───────────────────────
+
+const P = normalizeName("Heung-Min Son");
+const FULL = { name: "Heung-Min Son", min: 90, sh: 3, st: 1, tk: 2, clr: 1, pa: 40, sv: 0, g: 1, a: 0, kp: 2, cr: 3, drb: 4, fc: 1, yc: 0, rc: 0 };
+const fmAcc = { matches: {
+  m1: { date: "2026-06-11", players: { [P]: FULL } },
+  m2: { date: "2026-06-17", players: { [P]: { ...FULL, min: 60, sh: 1, pa: 20 } } },
+} };
+const accr = buildSoccerAccrual(fmAcc, null);
+assert("accrual: totals sum across matches", accr.players[P]?.shots === 4 && accr.players[P]?.passes_att === 60);
+assert("accrual: minutes + matches accumulate", accr.players[P]?.minutes === 150 && accr.players[P]?.matches === 2);
+assert("accrual: snapshot keys → LAMBDA_FIELDS names",
+  accr.players[P]?.sot === 2 && accr.players[P]?.key_passes === 4 && accr.players[P]?.dribbles_att === 8 && accr.players[P]?.yellow === 0);
+
+// FotMob preferred per field; FBref fills what FotMob lacks on the same date.
+const fmSparse = { matches: { m1: { date: "2026-06-11", players: { [P]: { name: "Heung-Min Son", min: 90, sh: 2, tk: 5 } } } } };
+const fbSame = { matches: { f1: { date: "2026-06-11", players: { [P]: { name: "Heung-Min Son", min: 90, sh: 9, tk: 9, clr: 3 } } } } };
+const accrMerged = buildSoccerAccrual(fmSparse, fbSame);
+assert("accrual: FotMob preferred, FBref fills", accrMerged.players[P]?.shots === 2 && accrMerged.players[P]?.tackles === 5 && accrMerged.players[P]?.clearances === 3);
+
+// A field missing in ANY of the player's matches is omitted (all-or-nothing
+// per field): a partial total over full minutes would deflate the per-90.
+const fmPartial = { matches: {
+  m1: { date: "2026-06-11", players: { [P]: FULL } },
+  m2: { date: "2026-06-17", players: { [P]: { name: "Heung-Min Son", min: 45, sh: 1 } } }, // basic-only: no tk/clr/pa
+} };
+const accrPartial = buildSoccerAccrual(fmPartial, null);
+assert("accrual: field missing in one match → omitted", accrPartial.players[P]?.tackles === undefined && accrPartial.players[P]?.shots === 4);
+assert("accrual: minutes still cover all matches", accrPartial.players[P]?.minutes === 135);
+
+// Rows without minutes can't per-90 — skipped entirely.
+const fmNoMin = { matches: { m1: { date: "2026-06-11", players: { [P]: { name: "Heung-Min Son", sh: 3 } } } } };
+assert("accrual: row without minutes skipped", Object.keys(buildSoccerAccrual(fmNoMin, null).players).length === 0);
+assert("accrual: null snapshots → empty players", Object.keys(buildSoccerAccrual(null, null).players).length === 0);
 
 console.log(`\nsmoke-wc-match-stats: ${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);

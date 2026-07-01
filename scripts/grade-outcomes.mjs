@@ -32,7 +32,7 @@ loadEnvLocal();
 import { getLastNGames } from "../api/_lib/espn-stats.js";
 import { currentSeason } from "../api/_lib/nba-stats.js";
 import { normalizeName } from "../api/_lib/string-utils.js";
-import { loadWcMatchStats, indexWcMatchStatsByDate, mergeWcEntry, pickWcStat, wcActualFor, WC_FOTMOB_STATS_PATH } from "./_wc-actuals.mjs";
+import { loadWcMatchStats, indexWcMatchStatsByDate, mergeWcEntry, pickWcStat, wcActualFor, WC_FOTMOB_STATS_PATH, buildSoccerAccrual, writeSoccerAccrual, SOCCER_ACCRUAL_PATH } from "./_wc-actuals.mjs";
 
 const AXIOM_INGEST_URL_BASE = "https://api.axiom.co/v1/datasets";
 const AXIOM_QUERY_URL = "https://api.axiom.co/v1/datasets/_apl?format=tabular";
@@ -264,16 +264,18 @@ async function main() {
   let wcHits = 0, wcMisses = 0, wcPushes = 0, wcVoids = 0, wcPostponed = 0, wcUnmatched = 0;
   const wcUngradeableByStat = new Map();
   let wcFbFilled = 0;
+  // Snapshot fallbacks — fill the stats ESPN rosters don't carry
+  // (tk/clr/pa/kp/cr/drb → Tackles/Clearances/Passes Attempted/fantasy).
+  // FotMob is preferred (it carries the advanced Opta stats; FBref has
+  // posted none this tournament), FBref fills any gap, ESPN wins overall.
+  // Loaded outside the ungraded-verdicts guard: the tournament-accrual
+  // write below needs them even when nothing is left to grade.
+  const fbSnap = await loadWcMatchStats();
+  const fbByDate = indexWcMatchStatsByDate(fbSnap);
+  const fmSnap = await loadWcMatchStats(WC_FOTMOB_STATS_PATH);
+  const fmByDate = indexWcMatchStatsByDate(fmSnap);
   if (wcUngraded.length) {
     console.log(`\n=== World Cup leg: ${wcUngraded.length} ungraded WC verdicts ===`);
-    // Snapshot fallbacks — fill the stats ESPN rosters don't carry
-    // (tk/clr/pa/kp/cr/drb → Tackles/Clearances/Passes Attempted/fantasy).
-    // FotMob is preferred (it carries the advanced Opta stats; FBref has
-    // posted none this tournament), FBref fills any gap, ESPN wins overall.
-    const fbSnap = await loadWcMatchStats();
-    const fbByDate = indexWcMatchStatsByDate(fbSnap);
-    const fmSnap = await loadWcMatchStats(WC_FOTMOB_STATS_PATH);
-    const fmByDate = indexWcMatchStatsByDate(fmSnap);
     const snapDesc = (label, snap, hint) => snap
       ? `  ${label}: ${snap.total_matches ?? Object.keys(snap.matches).length} match reports (fetched ${snap.fetched_at})`
       : `  ${label}: none — ${hint}`;
@@ -343,6 +345,22 @@ async function main() {
         console.warn(`  UNGRADEABLE: ${stat} ×${n} — no stat resolved from ESPN or FBref snapshot`);
       }
     }
+  }
+
+  // ── Tournament accrual (spec §4.4) — per-player WC totals for the λ blend
+  // in api/_lib/soccer-truth.js (WC matches at 3× club weight). Rebuilt
+  // idempotently from the merged snapshots on every run so the model stands
+  // on tournament data by the knockouts. Commit the refreshed file like any
+  // other data snapshot — prod reads it via includeFiles data/**.
+  const accrual = buildSoccerAccrual(fmSnap, fbSnap);
+  const accrualPlayers = Object.keys(accrual.players).length;
+  if (!accrualPlayers) {
+    console.log("\nTournament accrual: no WC snapshot rows — data/soccer-accrual.json left untouched");
+  } else if (dryRun) {
+    console.log(`\nDRY RUN — would write tournament accrual for ${accrualPlayers} players to ${SOCCER_ACCRUAL_PATH}`);
+  } else {
+    await writeSoccerAccrual(accrual);
+    console.log(`\nTournament accrual: ${accrualPlayers} players → ${SOCCER_ACCRUAL_PATH}`);
   }
 
   console.log(`\nResult: hits=${hits}  misses=${misses}  pushes=${pushes}  voids=${voids}`);

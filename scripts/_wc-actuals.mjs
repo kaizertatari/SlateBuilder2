@@ -20,6 +20,9 @@ export const WC_MATCH_STATS_PATH = path.join(ROOT, "data/wc-match-stats.json");
 // as the FBref snapshot; the grader merges both (FotMob preferred — it carries
 // the advanced Opta stats FBref hasn't posted this tournament).
 export const WC_FOTMOB_STATS_PATH = path.join(ROOT, "data/wc-fotmob-stats.json");
+// Tournament accrual (spec §4.4) — grader-written, read by
+// api/_lib/soccer-truth.js which blends it into λ at 3× club-match weight.
+export const SOCCER_ACCRUAL_PATH = path.join(ROOT, "data/soccer-accrual.json");
 
 // Per-player stat fields shared by ESPN entries and FBref snapshot rows.
 export const WC_STAT_FIELDS = ["sh", "st", "tk", "sv", "clr", "pa", "g", "a", "kp", "cr", "drb", "fc", "yc", "rc"];
@@ -109,6 +112,65 @@ export function mergeWcEntry(espnEntry, fbEntry) {
     if (!Number.isFinite(merged[f]) && Number.isFinite(fbEntry[f])) merged[f] = fbEntry[f];
   }
   return merged;
+}
+
+// Snapshot stat key → soccer-truth accrual field (LAMBDA_FIELDS vocabulary).
+export const WC_TO_ACCRUAL_FIELD = {
+  sh: "shots", st: "sot", tk: "tackles", clr: "clearances", pa: "passes_att",
+  sv: "saves", g: "goals", a: "assists", kp: "key_passes", cr: "crosses",
+  drb: "dribbles_att", fc: "fouls", yc: "yellow", rc: "red",
+};
+
+// Tournament accrual (spec §4.4): per-player cumulative WC totals from the
+// merged FotMob+FBref snapshots — FotMob preferred per field, FBref fills,
+// the same precedence grading uses. Rebuilt from scratch each call (not
+// appended per match) so regrades and lookback retries can never
+// double-count. A field is emitted only when it resolved in EVERY match the
+// player played ("the grader only writes fields it could grade"): a partial
+// total over full minutes would silently deflate the per-90 blend.
+export function buildSoccerAccrual(fmSnap, fbSnap, { now = () => new Date().toISOString() } = {}) {
+  const fmByDate = indexWcMatchStatsByDate(fmSnap);
+  const fbByDate = indexWcMatchStatsByDate(fbSnap);
+  const dates = [...new Set([...fmByDate.keys(), ...fbByDate.keys()])].sort();
+  const acc = new Map();
+  for (const date of dates) {
+    const fmDay = fmByDate.get(date);
+    const fbDay = fbByDate.get(date);
+    const keys = new Set([...(fmDay?.keys() ?? []), ...(fbDay?.keys() ?? [])]);
+    for (const key of keys) {
+      const fm = fmDay?.get(key);
+      const fb = fbDay?.get(key);
+      const statOf = (f) => (Number.isFinite(fm?.[f]) ? fm[f] : Number.isFinite(fb?.[f]) ? fb[f] : null);
+      const min = statOf("min");
+      if (!min || min <= 0) continue; // no minutes → nothing to per-90
+      let a = acc.get(key);
+      if (!a) acc.set(key, (a = { minutes: 0, matches: 0, totals: {}, missing: new Set() }));
+      a.minutes += min;
+      a.matches += 1;
+      for (const [wcField, accField] of Object.entries(WC_TO_ACCRUAL_FIELD)) {
+        const v = statOf(wcField);
+        if (v === null) a.missing.add(accField);
+        else a.totals[accField] = (a.totals[accField] ?? 0) + v;
+      }
+    }
+  }
+  const players = {};
+  for (const [key, a] of acc) {
+    const entry = { minutes: a.minutes, matches: a.matches };
+    for (const [f, v] of Object.entries(a.totals)) {
+      if (!a.missing.has(f)) entry[f] = v;
+    }
+    players[key] = entry;
+  }
+  return {
+    updated_at: now(),
+    source: "wc-fotmob-stats + wc-match-stats (FotMob preferred)",
+    players,
+  };
+}
+
+export async function writeSoccerAccrual(accrual, file = SOCCER_ACCRUAL_PATH) {
+  await fs.writeFile(file, JSON.stringify(accrual, null, 1) + "\n", "utf8");
 }
 
 export { normalizeName };

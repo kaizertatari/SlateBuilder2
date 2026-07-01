@@ -63,6 +63,14 @@ auditing, check BOTH the bat body AND the registered Task-To-Run path
 Manual: `npm run grade-outcomes`. Options: `--date YYYY-MM-DD`,
 `--lookback N` (default 7 days), `--dry-run`.
 
+Side effect (WC only): every non-dry run rebuilds `data/soccer-accrual.json`
+— per-player tournament totals from the merged FotMob+FBref snapshots
+(`buildSoccerAccrual` in `scripts/_wc-actuals.mjs`). `soccer-truth.js` blends
+it into λ at 3× club-match weight (spec §4.4), so refresh FotMob first
+(`npm run refresh-wc-fotmob-stats`), then grade, then COMMIT the refreshed
+accrual file — prod reads it from the deployed bundle (`includeFiles data/**`),
+so an uncommitted accrual never reaches the live model.
+
 ## Refresh lines
 
 `npm run refresh-prizepicks` (residential IP only). Writes
