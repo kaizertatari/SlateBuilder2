@@ -5,8 +5,7 @@
 //   3. Today's slate has at least one player + props
 //   4. Bucket selection picks lowest + median and tags Goblin/Normal correctly
 //   5. Ground-truth fetch resolves a real player → season/L5/opponent fields
-//   6. Framework prompt builds with the correct line + framework block
-//   7. Routed LLM (Groq/Gemini) returns a parseable verdict + tier
+//   6. Engine call (applyEngine — deterministic, no LLM) returns verdict + tier
 //   8. analyze-all end-to-end produces tier_counts and runs every line
 //  8b. Response cache: repeat call hits X-Cache: HIT with identical top_10
 //   9. Blob roundtrip works (skipped when BLOB_READ_WRITE_TOKEN is absent)

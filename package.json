@@ -30,6 +30,7 @@
     "smoke:engine": "node scripts/smoke-engine.mjs && node scripts/smoke-v35.mjs && node scripts/smoke-slate.mjs && node scripts/smoke-market-edge.mjs && node scripts/smoke-game-script.mjs && node scripts/smoke-projection.mjs && node scripts/smoke-rest.mjs && node scripts/smoke-usage-shift.mjs && node scripts/smoke-build-slate.mjs && node scripts/smoke-calibrate-market.mjs && node scripts/smoke-wc.mjs && node scripts/smoke-scrape-salvage.mjs && node scripts/smoke-wc-match-stats.mjs",
     "refresh-soccer-rates": "node scripts/refresh-soccer-rates.mjs",
     "refresh-wc-match-stats": "node scripts/refresh-wc-match-stats.mjs",
+    "refresh-wc-fotmob-stats": "node scripts/refresh-wc-fotmob-stats.mjs --headed",
     "refresh-bridge": "node scripts/refresh-bridge.mjs",
     "funnel-watchdog": "node scripts/funnel-watchdog.mjs",
     "refresh-prizepicks:guarded": "node scripts/refresh-prizepicks.mjs && node scripts/validate-prizepicks-snapshot.mjs || (git checkout -- data/prizepicks-lines.json && exit 1)",

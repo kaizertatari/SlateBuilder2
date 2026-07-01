@@ -26,6 +26,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { PLAYER_INFO } from "../api/_lib/player-ids.js";
+import { normalizeName as normName } from "../api/_lib/string-utils.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PLAYERS_JSON_PATH = path.join(ROOT, "data/players.json");
@@ -78,16 +79,6 @@ function fmtYYYYMMDD(d) {
   const m = String(d.getUTCMonth() + 1).padStart(2, "0");
   const dd = String(d.getUTCDate()).padStart(2, "0");
   return `${y}${m}${dd}`;
-}
-
-function normName(s) {
-  return s
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .toLowerCase()
-    .replace(/[.'’\-]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
 }
 
 async function jsonFetch(url, opts = {}) {
