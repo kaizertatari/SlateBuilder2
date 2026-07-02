@@ -23,10 +23,22 @@ const OVERROUND_MAX = 1.15;
 // residuals — DK's ladder IS a Poisson curve with the margin already baked
 // into λ (they shade the rate, not the probabilities). So the fair-side
 // correction is a λ haircut: λ_fair = λ̂ / (1 + POISSON_LAMBDA_MARGIN).
-// 0.05 initial: a ~4-prob-pt one-sided margin at the coin-flip rung
-// (dP/dλ = pmf(k−1) ≈ 0.22 at λ≈3.5) ⇒ δλ ≈ 0.18 ≈ 5% of λ. Calibration
-// item — refine against graded group-stage outcomes (spec §7).
-export const POISSON_LAMBDA_MARGIN = 0.05;
+//
+// Recalibrated 2026-07-01 against graded WC outcomes (spec §7 checkpoint):
+// the 0.05 launch guess (sized as a ~4-pt book margin) was off by an order
+// of magnitude. These ladders are ONE-SIDED promotional markets — no Under
+// side exists to arb the shade away — and graded reality ran far below the
+// fitted rate (n=157 decided market-priced picks 06-17→06-29: mean λ̂ 2.61
+// vs mean actual 1.34; OVER outcomes 24%; bet-side ≥64% bucket realized 22%
+// under 0.05). 0.56 = train-optimal log loss on a chronological 60/40 split
+// (train n=94; holdout n=63: ≥64% bucket realized 65.5% under 0.56 vs 14.8%
+// under 0.05, and holdout loss still favored an even larger haircut).
+// Caveat: the shading is stat-heterogeneous (count-space implied margin —
+// Shots ≈ 1.0–1.4, Tackles ≈ 2+, Goalie Saves ≈ 0.05–0.4), so one global
+// haircut over-shrinks keeper props; per-stat margins need more n.
+// Takes effect at the next odds scrape (λ_fair is baked in by
+// scripts/scrape-odds.mjs). Re-fit at the next checkpoint (~2026-07-08).
+export const POISSON_LAMBDA_MARGIN = 0.56;
 
 /** Margin-corrected fair λ from a ladder-fitted λ̂. */
 export function fairLambda(lambda) {
