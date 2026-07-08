@@ -78,9 +78,11 @@ const server = http.createServer(async (req, res) => {
 
   try {
     // Browser-backed (headless + fingerprint hardening) to clear PerimeterX —
-    // plain fetch 403s now. Headless works from this service; if PX ever
-    // hard-blocks, re-seed the .prizepicks-profile with a one-off
-    // `node scripts/scrape-prizepicks-browser.mjs --headed` in the user session.
+    // plain fetch 403s now. Headless only clears PX from an interactive user
+    // session: since 2026-07-07 a session-0 launch (Windows service) hard-403s
+    // AND poisons the shared .prizepicks-profile, which is why this daemon runs
+    // as the "Refresh Bridge" logon task, not a service. If PX ever hard-blocks,
+    // re-seed with `node scripts/scrape-prizepicks-browser.mjs --headed`.
     const data = await scrapePrizePicksViaBrowser({ write: false });
     if (!data.total_props) {
       console.log(`[${reqId}] scrape returned 0 props; refusing to write blob`);

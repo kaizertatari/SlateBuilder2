@@ -18,6 +18,16 @@ home-bridge daemon that the deployed UI forwards to.
 | `PrizePicks Refresh Lines` | 00:00 / 06:00 / 12:00 / 18:00 | PrizePicks lines scrape → `data/prizepicks-lines.json` + blob |
 | `PrizePicks Refresh Odds` | 00:10 / 06:10 / 12:10 / 18:10 | `scripts/refresh-odds-task.bat` → DK+FD no-vig consensus → `data/odds.json` + blob (+10 min after lines so they stay in sync) |
 | `Funnel Watchdog` | every 15 min | `scripts/funnel-watchdog-task.bat` → self-heals the Tailscale funnel zombie (see below) |
+| `Refresh Bridge` | at logon (daemon) | `wscript.exe scripts/refresh-bridge-task.vbs` → hidden, self-restarting `scripts/refresh-bridge.mjs`. Replaced the NSSM service 2026-07-07 — see "Refresh-bridge daemon" |
+
+**Migration audit (2026-07-07):** after the 06-17 move to `Slate Builder2`,
+`PrizePicks Refresh Lines` and `PrizePicks Refresh Odds` still executed the
+OLD `Slate Builder` checkout's `.bat`s — every scheduled run used the old
+code/env and pushed to the DEAD `5smeyecbhyrcod7s` blob store while prod read
+`yKBw`; masked for 3 weeks by manual refreshes and REFRESH LINES clicks. Both
+re-pointed (action + WorkingDirectory) to this checkout. When migrating a
+checkout, audit EVERY task's Task-To-Run (`schtasks /Query /TN <name> /V`)
+AND every NSSM path (`nssm get <svc> AppDirectory/AppStdout/AppStderr`).
 
 Common operations: inspect `schtasks /Query /TN "<name>" /V /FO LIST`,
 run now `schtasks /Run /TN "<name>"`, modify `schtasks /Change`.
@@ -93,6 +103,16 @@ scripts/scrape-prizepicks-browser.mjs --headed` once to (re)seed the profile if
 PX ever hard-blocks the headless path. After deploying a bridge code change,
 the NSSM service must be restarted (elevated) to pick it up.
 
+**Session-0 escalation (2026-07-07, later the same day):** re-seeding fixed
+the interactive paths but the bridge kept 403ing — controlled test showed PX
+now hard-blocks headless Chrome launched from **session 0** (the NSSM
+service) even on a pristine profile, while the identical scrape from the
+logged-on desktop session clears. Worse, each failed session-0 run poisons
+the shared profile (see below), re-breaking the interactive paths within
+minutes. Fix: the bridge moved to the interactive-session `Refresh Bridge`
+scheduled task (see "Refresh-bridge daemon"). ALL PP scrapes must run in the
+operator's desktop session; never host one in a service/session 0.
+
 **Poisoned profile (2026-07-07):** PX can flag the persistent
 `.prizepicks-profile` itself, after which EVERY league 403s ("PerimeterX did
 not clear within budget") **even `--headed`** — the re-seed recipe above is
@@ -132,35 +152,44 @@ Residential IP only (same constraint as lines).
 `node scripts/peek-lines.mjs "<player>"` (one player), or
 `node scripts/peek-lines.mjs --stat "<stat>"`.
 
-## Refresh-bridge service
+## Refresh-bridge daemon
 
 The bridge exists because of the PrizePicks IP block: the deployed
 REFRESH LINES button forwards to this daemon on the operator's
-residential IP. It runs as NSSM Windows service `refresh-bridge`,
-auto-starts on boot, auto-restarts on crash (`AppExit=Restart`,
-`RestartDelay=0ms`).
+residential IP.
 
-- Status: `nssm status refresh-bridge` (no admin needed for read).
-- Restart: elevated `nssm restart refresh-bridge`.
+**Hosting changed 2026-07-07** — the NSSM Windows service was retired
+because PerimeterX now hard-403s headless Chrome launched from session 0
+(any Windows service), and each failed session-0 scrape poisons the shared
+`.prizepicks-profile` for every other scrape. The bridge now runs as
+Scheduled Task **`Refresh Bridge`**: at-logon trigger, Interactive as the
+operator (same session as the other PP scrapes), `wscript.exe
+scripts/refresh-bridge-task.vbs` → launches `refresh-bridge-task.bat`
+hidden (a visible console invites an accidental close — 0xC000013A killed
+the first attempt) → self-restart loop around `node
+scripts/refresh-bridge.mjs` (5s backoff, replaces NSSM `AppExit=Restart`).
+
+- Status: `Get-ScheduledTaskInfo -TaskName "Refresh Bridge"` + `curl
+  http://127.0.0.1:4000/health` (`GET /health`, unauthenticated →
+  `{ok:true}`).
+- Restart (no elevation): `Stop-ScheduledTask -TaskName "Refresh Bridge"`
+  (kills the loop), kill any orphan `node` on port 4000
+  (`Get-NetTCPConnection -LocalPort 4000`), then `Start-ScheduledTask`.
 - Logs: `logs/refresh-bridge.out.log` + `logs/refresh-bridge.err.log`
-  (rotate at 10 MB).
-- Liveness: `GET /health` (unauthenticated) → `{ok:true}`.
+  (append-only now — NSSM's 10 MB rotation is gone; trim occasionally).
 - Public route: the `HOME_REFRESH_URL` Vercel env points at the Tailscale
   Funnel hostname → `127.0.0.1:4000`.
+- Caveat: the bridge only runs while the operator is logged on (Interactive
+  logon type — required, because session 0 is what PX blocks).
 
 If the deployed REFRESH LINES button returns `forwarded_to_bridge: true`
-with no `total_props` field, the bridge is down — check the service
-status first, then the err log.
-
-**NSSM path gotcha:** `AppParameters` MUST stay the relative
-`scripts\refresh-bridge.mjs` — an absolute path breaks on the space in
-"Slate Builder" (NSSM passes it unquoted → MODULE_NOT_FOUND crash-loop →
-service lands in Paused; fix params, then elevated
-`Restart-Service refresh-bridge -Force`).
+with no `total_props` field, the bridge is down or its scrape failed —
+`?ping=1` first (bridge_status 200 = process up; 502 from the funnel =
+process dead), then the err log.
 
 **The bridge imports code at process start:** after pulling scraper or
-bridge changes, restart the service (elevated) or it keeps serving the
-old code.
+bridge changes, restart the task (Stop-/Start-ScheduledTask, no elevation)
+or it keeps serving the old code.
 
 ## Funnel zombie
 

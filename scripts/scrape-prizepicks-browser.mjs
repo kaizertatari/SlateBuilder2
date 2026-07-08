@@ -9,10 +9,14 @@
 // stripping from fetch-prizepicks-entries.mjs. The decisive bit for HEADLESS
 // is the addInitScript fingerprint patch (navigator.webdriver undefined, etc.)
 // — verified: headless passes PX with it, 403s without it. So this runs
-// headless by default (service/cron friendly); --headed is only for debugging
-// or re-seeding the profile if PX ever hard-blocks.
+// headless by default; --headed is only for debugging or re-seeding the
+// profile if PX ever hard-blocks.
 //
 // IMPORTANT: residential/home IP only — PrizePicks 403s cloud IPs regardless.
+// IMPORTANT: interactive user session only — since 2026-07-07 PX hard-403s a
+// session-0 launch (Windows service / non-interactive task) and the failed
+// attempt poisons .prizepicks-profile for every caller until it is deleted
+// and re-seeded with --headed.
 //
 // Usage:
 //   node scripts/scrape-prizepicks-browser.mjs            (headless)
