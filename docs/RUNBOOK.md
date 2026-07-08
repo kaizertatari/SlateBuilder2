@@ -93,6 +93,20 @@ scripts/scrape-prizepicks-browser.mjs --headed` once to (re)seed the profile if
 PX ever hard-blocks the headless path. After deploying a bridge code change,
 the NSSM service must be restarted (elevated) to pick it up.
 
+**Poisoned profile (2026-07-07):** PX can flag the persistent
+`.prizepicks-profile` itself, after which EVERY league 403s ("PerimeterX did
+not clear within budget") **even `--headed`** — the re-seed recipe above is
+not enough. Diagnosis: a scrape on a FRESH profile clears in ~10s, so if
+headed-on-the-existing-profile fails but the IP is fine, the profile is
+flagged. Fix: delete `.prizepicks-profile` and run the `--headed` re-seed —
+it recreates the profile and clears immediately; verify with a headless
+`npm run refresh-prizepicks`. No bridge restart needed (the profile is
+re-read at each scrape's browser launch). Symptom from the deployed button:
+`Home bridge unreachable: The operation was aborted due to timeout` — the
+bridge IS reachable but burns minutes on 403 retries until the Vercel-side
+fetch aborts, so don't chase the funnel zombie (`?ping=1` distinguishes
+them: `bridge_reachable: true` = not a funnel problem).
+
 **WC-leg thinning:** PrizePicks rate-limits league 241 (World Cup)
 aggressively. Since 2026-06-12 the scraper has a salvage guard
 (`salvageLeagueFromSnapshot` in `scripts/scrape-prizepicks.mjs`, smoke
