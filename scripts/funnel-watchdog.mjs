@@ -23,7 +23,7 @@ import { loadEnvLocal } from "./_env.mjs";
 
 loadEnvLocal();
 
-const PING_URL = process.env.WATCHDOG_PING_URL || "https://slate-builder.vercel.app/api/refresh-lines?ping=1";
+const PING_URL = process.env.WATCHDOG_PING_URL || "https://slate-builder2.vercel.app/api/refresh-lines?ping=1";
 const TOKEN = (process.env.REFRESH_TOKEN || "").trim();
 const BRIDGE_PORT = Number(process.env.HOME_BRIDGE_PORT ?? 4000);
 const PROPAGATION_MS = 3 * 60_000;

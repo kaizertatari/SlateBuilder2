@@ -202,7 +202,7 @@ stayed dead, so a passing external probe does NOT clear the funnel. The
 only trustworthy check is the deployed endpoint itself:
 
 ```
-POST https://slate-builder.vercel.app/api/refresh-lines?ping=1
+POST https://slate-builder2.vercel.app/api/refresh-lines?ping=1
 Authorization: Bearer $REFRESH_TOKEN
 ```
 
