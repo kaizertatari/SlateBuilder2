@@ -103,6 +103,30 @@ scripts/scrape-prizepicks-browser.mjs --headed` once to (re)seed the profile if
 PX ever hard-blocks the headless path. After deploying a bridge code change,
 the NSSM service must be restarted (elevated) to pick it up.
 
+**Mid-run PX recovery (2026-07-10):** the browser fetcher now self-heals when
+PX re-challenges the api subdomain mid-scrape. A per-request `HTTP 0
+("Failed to fetch")` / 403 no longer just sleeps and fails the league — it
+reloads `app.prizepicks.com` to earn a fresh `_px3` (`ensurePxCleared`,
+20s budget) and retries, so a SINGLE run recovers all leagues that clear at
+all. This retired the old "just re-run the guarded refresh a few times"
+recipe (that worked only because salvage merged partial runs). 429s (genuine
+rate-limit, cookie fine) still take a plain cooldown, not a re-clear. If one
+run now leaves a league at 0, it's a real block/outage or a poisoned profile —
+not per-request flakiness — so go to the re-seed recipe below.
+
+**Offseason league skip:** set `PP_LEAGUES=WNBA,WC` (comma-separated, matched
+case-insensitively against the league names in `scrape-prizepicks.mjs`
+`LEAGUES`) to skip a dormant league without a code edit — e.g. NBA over the
+summer, which otherwise burns a fetch+retry cycle for a slate with no games.
+Unset = scrape all. Applies to `refresh-prizepicks`, the bridge, and the CLI.
+
+**Warm bridge browser (2026-07-10):** `refresh-bridge.mjs` now holds ONE
+`createBrowserSession()` for the daemon's lifetime instead of launching a fresh
+Chrome per `/refresh`. Each click probes the warm `_px3` first and only re-clears
+when it's stale, saving ~10-25s of launch+clear per click; a crashed page drops
+the context so the next click relaunches clean. Bridge code changes still need a
+`Stop-/Start-ScheduledTask "Refresh Bridge"` to take effect.
+
 **Session-0 escalation (2026-07-07, later the same day):** re-seeding fixed
 the interactive paths but the bridge kept 403ing — controlled test showed PX
 now hard-blocks headless Chrome launched from **session 0** (the NSSM

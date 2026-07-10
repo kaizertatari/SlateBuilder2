@@ -24,7 +24,7 @@
 import http from "node:http";
 import { randomUUID } from "node:crypto";
 import { loadEnvLocal } from "./_env.mjs";
-import { scrapePrizePicksViaBrowser } from "./scrape-prizepicks-browser.mjs";
+import { createBrowserSession } from "./scrape-prizepicks-browser.mjs";
 import { refreshOddsAndPush } from "./scrape-odds.mjs";
 import { writeLines, getStoreLocation } from "../api/_lib/lines-store.js";
 
@@ -43,6 +43,12 @@ if (!process.env.BLOB_READ_WRITE_TOKEN) {
 }
 
 let inFlight = false;
+
+// One warm browser for the daemon's lifetime — each /refresh reuses the cleared
+// PerimeterX cookie instead of relaunching Chrome + re-clearing PX every click.
+// scrape() probes PX first and only re-clears when the cookie has gone stale,
+// and drops the context on any crash so the next call relaunches clean.
+const ppSession = createBrowserSession({ headed: false });
 
 function send(res, status, body) {
   res.writeHead(status, { "Content-Type": "application/json" });
@@ -83,7 +89,7 @@ const server = http.createServer(async (req, res) => {
     // AND poisons the shared .prizepicks-profile, which is why this daemon runs
     // as the "Refresh Bridge" logon task, not a service. If PX ever hard-blocks,
     // re-seed with `node scripts/scrape-prizepicks-browser.mjs --headed`.
-    const data = await scrapePrizePicksViaBrowser({ write: false });
+    const data = await ppSession.scrape({ write: false });
     if (!data.total_props) {
       console.log(`[${reqId}] scrape returned 0 props; refusing to write blob`);
       return send(res, 502, {
@@ -132,3 +138,12 @@ server.listen(PORT, "127.0.0.1", () => {
   console.log(`refresh-bridge listening on http://127.0.0.1:${PORT}/refresh`);
   console.log("Expose via Cloudflare Tunnel or ngrok and set HOME_REFRESH_URL on Vercel.");
 });
+
+// Release the warm browser on shutdown so the persistent profile isn't left
+// locked for the next launch (the scheduled task self-restarts the daemon).
+for (const sig of ["SIGINT", "SIGTERM"]) {
+  process.on(sig, async () => {
+    try { await ppSession.close(); } catch { /* best effort */ }
+    process.exit(0);
+  });
+}

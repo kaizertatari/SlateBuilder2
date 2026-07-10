@@ -96,7 +96,19 @@ function makeFetchJson(page) {
         }
       }
       console.error(`  PP browser fetch HTTP ${r.status}${r.error ? ` (${r.error})` : ""} (attempt ${attempt + 1}/4) ${url.slice(0, 80)}`);
-      await sleep(3000); // let PX finish clearing / rate-limit cool
+      if (attempt === 3) break; // out of attempts — no point sleeping/recovering
+      if (r.status === 429) {
+        // Genuine rate-limit: the _px3 cookie is fine, PP is just throttling
+        // burst hits. Cool down and retry on the same cleared session.
+        await sleep(8000);
+      } else {
+        // status 0 ("Failed to fetch") / 403: PerimeterX re-challenged the api
+        // subdomain and the _px3 cookie is stale. A blind sleep won't fix that
+        // — reload app.prizepicks.com to earn a fresh cookie (confirmed by a
+        // 200 probe) before retrying. This is what lets ONE run recover a
+        // league instead of failing it and forcing a whole re-run.
+        if (!(await ensurePxCleared(page, 20000))) await sleep(2000);
+      }
     }
     return null;
   };
@@ -141,26 +153,68 @@ async function ensurePxCleared(page, budgetMs = 60000) {
   return false;
 }
 
+// A reusable browser session: launches the persistent context once and keeps
+// it warm across scrapes. The bridge daemon (refresh-bridge.mjs) holds one so
+// each REFRESH click reuses the already-cleared PerimeterX cookie instead of
+// paying a fresh browser launch + full PX clear (~10-25s) on every click. A
+// cheap pre-flight probe re-clears only when the warm cookie has gone stale.
+//
+//   const session = createBrowserSession();
+//   await session.scrape({ write: false });   // repeat cheaply
+//   await session.close();                    // on shutdown
+export function createBrowserSession({ headed = false } = {}) {
+  let context = null;
+  let page = null;
+
+  async function ensureReady() {
+    if (context && page && !page.isClosed()) return;
+    if (!fssync.existsSync(PROFILE_DIR)) {
+      console.warn("  No .prizepicks-profile yet — if PerimeterX hard-blocks, run once with --headed to seed clearance.");
+    }
+    context = await launchContext(headed);
+    page = context.pages()[0] || (await context.newPage());
+  }
+
+  async function close() {
+    if (context) await context.close().catch(() => {});
+    context = null;
+    page = null;
+  }
+
+  async function scrape(opts = {}) {
+    await ensureReady();
+    try {
+      // Reuse the warm _px3 when it's still good; only pay the reload loop when
+      // a cheap probe says PerimeterX has re-challenged this session. On a
+      // fresh context the probe fails and this clears exactly like a cold run.
+      if ((await probePxStatus(page)) !== 200) {
+        if (!(await ensurePxCleared(page))) {
+          console.warn("  PerimeterX did not clear within budget — scrape will likely return 0 props. Re-seed with --headed if this persists.");
+        }
+      }
+      // Browser fetcher self-recovers PX per request, so the outer per-league
+      // retry cooldown is short (3s) instead of the HTTP path's 15s 429 wait.
+      return await scrapePrizePicksForToday({ ...opts, fetchJson: makeFetchJson(page), retryCooldownMs: 3000 });
+    } catch (err) {
+      // Page/context died mid-scrape — drop it so the next call relaunches clean.
+      await close();
+      throw err;
+    }
+  }
+
+  return { scrape, close };
+}
+
 // opts: { headed?, write?, outputPath?, leagues? } — write/outputPath/leagues
-// pass straight through to scrapePrizePicksForToday.
+// pass straight through to scrapePrizePicksForToday. One-shot: launches a
+// browser, scrapes once, closes. Used by the CLI + refresh-prizepicks.mjs.
 export async function scrapePrizePicksViaBrowser(opts = {}) {
   const { headed = false, ...rest } = opts;
-  if (!fssync.existsSync(PROFILE_DIR)) {
-    console.warn("  No .prizepicks-profile yet — if PerimeterX hard-blocks, run once with --headed to seed clearance.");
-  }
-  const context = await launchContext(headed);
-  const page = context.pages()[0] || (await context.newPage());
+  const session = createBrowserSession({ headed });
   try {
-    // Earn a cleared _px3 on .prizepicks.com (shared with the api. subdomain)
-    // BEFORE scraping — verified by a 200 probe, with reloads. Without this the
-    // run is a coin flip: when PX doesn't clear on the first load, every league
-    // fetch returns 403 / "Failed to fetch" and the scrape yields 0 props.
-    if (!(await ensurePxCleared(page))) {
-      console.warn("  PerimeterX did not clear within budget — scrape will likely return 0 props. Re-seed with --headed if this persists.");
-    }
-    return await scrapePrizePicksForToday({ ...rest, fetchJson: makeFetchJson(page) });
+    return await session.scrape(rest);
   } finally {
-    await context.close();
+    await session.close();
   }
 }
 

@@ -18,6 +18,10 @@ export const OUTPUT = path.join(ROOT, "data/prizepicks-lines.json");
 const PLAYERS_JSON = path.join(ROOT, "data/players.json");
 
 const PRIZEPICKS_API = "https://api.prizepicks.com/projections";
+// PP currently ignores this cap and returns the full slate in one response, so
+// we don't paginate. PER_PAGE is kept as a constant so the truncation guard in
+// scrapePrizePicksForLeague can detect PP starting to honor it (page-1 caps).
+const PER_PAGE = 250;
 
 // PrizePicks league IDs. Add more entries here if PrizePicks publishes more
 // leagues we want to cover; everything downstream is league-aware.
@@ -78,15 +82,16 @@ const defaultFetchJson = (url) => jsonFetch(url, { headers: HEADERS });
 
 // ─── Scrape PrizePicks ─────────────────────────────────────────────────────
 
-async function scrapePrizePicksForLeague(leagueId, fetchJson = defaultFetchJson) {
-  const url = `${PRIZEPICKS_API}?league_id=${leagueId}&per_page=250&single_stat=true`;
-  // PP rate-limits bursts (429) — with three leagues scraped back-to-back a
-  // single retry after a cooldown recovers the slate instead of dropping a
-  // whole league from the snapshot.
+async function scrapePrizePicksForLeague(leagueId, fetchJson = defaultFetchJson, retryCooldownMs = 15000) {
+  const url = `${PRIZEPICKS_API}?league_id=${leagueId}&per_page=${PER_PAGE}&single_stat=true`;
+  // One retry after a cooldown recovers a league whose first fetch failed
+  // instead of dropping it from the snapshot. The browser fetcher self-recovers
+  // PerimeterX per request and passes a short cooldown; the default HTTP path
+  // keeps the longer 15s wait for PP's burst 429s.
   let data = await fetchJson(url);
   if (!data) {
-    console.log(`  league_id=${leagueId} fetch failed — retrying in 15s...`);
-    await new Promise((r) => setTimeout(r, 15000));
+    console.log(`  league_id=${leagueId} fetch failed — retrying in ${Math.round(retryCooldownMs / 1000)}s...`);
+    await new Promise((r) => setTimeout(r, retryCooldownMs));
     data = await fetchJson(url);
   }
   if (!data) throw new Error(`Failed to fetch PrizePicks API (league_id=${leagueId})`);
@@ -109,8 +114,15 @@ async function scrapePrizePicksForLeague(leagueId, fetchJson = defaultFetchJson)
   }
 
   // Parse projections from "data" array
-  const projections = (data.data || [])
-    .filter((d) => d.type === "projection")
+  const rawProjections = (data.data || []).filter((d) => d.type === "projection");
+  // Truncation guard: PP currently returns the whole slate in one response, so
+  // there's no pagination. A response that comes back exactly at the page cap
+  // means PP may have started honoring per_page and we're only seeing page 1 —
+  // surface it loudly rather than silently shipping a thinned slate.
+  if (rawProjections.length === PER_PAGE) {
+    console.warn(`  ! league_id=${leagueId}: exactly ${PER_PAGE} projections (per_page cap) — PP may now paginate; slate could be truncated.`);
+  }
+  const projections = rawProjections
     .map((d) => {
       const attrs = d.attributes || {};
       const playerId = d.relationships?.new_player?.data?.id;
@@ -189,7 +201,20 @@ export function salvageLeagueFromSnapshot(previous, league, nowMs) {
 // opts.outputPath — override OUTPUT (e.g. "/tmp/prizepicks-lines.json").
 // opts.leagues — override LEAGUES (e.g. scrape just one league).
 export async function scrapePrizePicksForToday(opts = {}) {
-  const { write = true, outputPath = OUTPUT, leagues = LEAGUES, fetchJson = defaultFetchJson } = opts;
+  const { write = true, outputPath = OUTPUT, leagues = LEAGUES, fetchJson = defaultFetchJson, retryCooldownMs = 15000 } = opts;
+
+  // Optional PP_LEAGUES override (comma-separated names, e.g. "WNBA,WC") skips
+  // a dormant league — e.g. NBA in the summer offseason — without a code edit,
+  // saving a full fetch+retry cycle for a league that has no games. Unknown
+  // names in the list are simply ignored.
+  const only = (process.env.PP_LEAGUES || "")
+    .split(",")
+    .map((s) => s.trim().toUpperCase())
+    .filter(Boolean);
+  const activeLeagues = only.length ? leagues.filter((l) => only.includes(l.league.toUpperCase())) : leagues;
+  if (only.length) {
+    console.log(`  PP_LEAGUES=${only.join(",")} → scraping ${activeLeagues.map((l) => l.league).join(", ") || "(none matched)"}`);
+  }
 
   // Load players.json and build normalized lookup. Lookup carries the league
   // so we don't accidentally match an NBA player to a WNBA prop (or vice
@@ -229,7 +254,7 @@ export async function scrapePrizePicksForToday(opts = {}) {
   const perLeague = {};
 
   let firstLeague = true;
-  for (const { league, league_id, stats } of leagues) {
+  for (const { league, league_id, stats } of activeLeagues) {
     // Courtesy gap between league fetches — see 429 note in
     // scrapePrizePicksForLeague.
     if (!firstLeague) await new Promise((r) => setTimeout(r, 3000));
@@ -237,7 +262,7 @@ export async function scrapePrizePicksForToday(opts = {}) {
     console.log(`  Fetching PrizePicks ${league} (league_id=${league_id}) projections...`);
     let projections;
     try {
-      projections = await scrapePrizePicksForLeague(league_id, fetchJson);
+      projections = await scrapePrizePicksForLeague(league_id, fetchJson, retryCooldownMs);
     } catch (err) {
       console.error(`  ! ${league} scrape failed: ${err.message}`);
       perLeague[league] = { total_props: 0, error: err.message };
@@ -331,7 +356,7 @@ export async function scrapePrizePicksForToday(opts = {}) {
   const failedLeagues = Object.keys(perLeague).filter(
     (l) => perLeague[l].error || !perLeague[l].total_props
   );
-  if (failedLeagues.length > 0 && failedLeagues.length < leagues.length) {
+  if (failedLeagues.length > 0 && failedLeagues.length < activeLeagues.length) {
     let previous = null;
     try {
       previous = await readLines();
