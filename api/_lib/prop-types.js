@@ -19,57 +19,23 @@ export const BASKETBALL_STATS = [
   "Fantasy Score",
 ];
 
-// World Cup (soccer) — v1 Shots/SOT plus the v2 expansion
-// (WC_FRAMEWORK_SPEC.md §10). Still-excluded stats are listed in §9.
-export const SOCCER_STATS = [
-  "Shots",
-  "Shots On Target",
-  "Tackles",
-  "Goalie Saves",
-  "Clearances",
-  "Passes Attempted",
-  "Outfield Fantasy Score",
-];
-
-// Per-stat WC model config (spec §10.1) — the single switchboard the
-// scrapers, ground truth, projection, and rules all key off:
-//   dist        "poisson" | "normal_od" (overdispersed count, Var = φλ) |
-//               "normal" (composite via moment matching)
-//   field       key inside groundTruth.soccer.lambda (and PROP_TO_FIELD)
-//   modelLed    true ⇒ no sharp anchor exists for this stat — market-edge
-//               applies a B-tier cap instead of the no-ladder hard SKIP,
-//               and wc-projection becomes the spine (spec §10.2)
-//   gk          "only" (non-GK SKIP) | "allowed" | "skip" (GK SKIP; default)
-export const WC_STAT_MODEL = {
-  Shots: { dist: "poisson", field: "shots", modelLed: false, gk: "skip" },
-  "Shots On Target": { dist: "poisson", field: "sot", modelLed: false, gk: "skip" },
-  Tackles: { dist: "poisson", field: "tackles", modelLed: false, gk: "skip" },
-  "Goalie Saves": { dist: "poisson", field: "saves", modelLed: false, gk: "only" },
-  Clearances: { dist: "poisson", field: "clearances", modelLed: true, gk: "skip" },
-  "Passes Attempted": { dist: "normal_od", field: "passes_att", phi: 3.5, modelLed: true, gk: "allowed" },
-  "Outfield Fantasy Score": { dist: "normal", field: "fantasy", composite: true, modelLed: true, gk: "skip" },
-};
-
 // Full whitelist (cross-league). League-aware callers (UI stat picker,
-// slate filters) should use STATS_BY_LEAGUE instead so basketball lists
-// don't grow soccer entries and vice versa.
-export const STATS = [...BASKETBALL_STATS, ...SOCCER_STATS];
+// slate filters) should use STATS_BY_LEAGUE so per-league lists stay
+// independent if a non-basketball league ever returns.
+export const STATS = [...BASKETBALL_STATS];
 
 export const STATS_BY_LEAGUE = {
   NBA: BASKETBALL_STATS,
   WNBA: BASKETBALL_STATS,
-  WC: SOCCER_STATS,
 };
 
 // Slate-builder calibration gate (shared by the API + UI so they agree).
 // A league only publishes a slate EV once its standard-line calibration is
 // validated — otherwise the market-fair probs are trusted blind and read as
-// wildly +EV (see slate-builder-pivot). WC is mid-tournament and ungraded, so
-// the builder pauses it; the value is the target checkpoint surfaced to users.
-// Move "WC" from PENDING into CALIBRATED once its outcomes are graded
-// (world-cup-framework checkpoint).
+// wildly +EV (see slate-builder-pivot). PENDING maps league → the target
+// checkpoint surfaced to users while its outcomes are still ungraded.
 export const SLATE_CALIBRATED_LEAGUES = ["NBA", "WNBA"];
-export const SLATE_PENDING_LEAGUES = { WC: "~2026-06-20" };
+export const SLATE_PENDING_LEAGUES = {};
 
 // Stat name → key inside an averages object (groundTruth.season.averages,
 // groundTruth.l5.averages). pra/pr/pa/ra are computed in ground-truth.js.
@@ -86,14 +52,6 @@ export const PROP_TO_FIELD = {
   "FG Attempted": "fga",
   "Blocks+Steals": "bs",
   "Fantasy Score": "fs",
-  // Soccer (WC): keys inside soccer ground-truth averages objects.
-  Shots: "shots",
-  "Shots On Target": "sot",
-  Tackles: "tackles",
-  "Goalie Saves": "saves",
-  Clearances: "clearances",
-  "Passes Attempted": "passes_att",
-  "Outfield Fantasy Score": "fantasy",
 };
 
 // PrizePicks publishes stat types under abbreviated lowercase labels; map
@@ -111,15 +69,6 @@ const PRIZEPICKS_TO_CANONICAL = {
   "assists": "Assists",
   "blks+stls": "Blocks+Steals",
   "fantasy score": "Fantasy Score",
-  // Soccer (WC). PrizePicks publishes these capitalized; keys here are
-  // lowercase because mapPrizePicksStatType lowercases before lookup.
-  "shots": "Shots",
-  "shots on target": "Shots On Target",
-  "tackles": "Tackles",
-  "goalie saves": "Goalie Saves",
-  "clearances": "Clearances",
-  "passes attempted": "Passes Attempted",
-  "outfield fantasy score": "Outfield Fantasy Score",
 };
 
 export function mapPrizePicksStatType(statType) {

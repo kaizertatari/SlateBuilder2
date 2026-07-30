@@ -20,8 +20,6 @@
 
 import { getBaselines, computeOverBufferCheck } from "./rules/_helpers.js";
 import { slopeFor } from "./odds.js";
-import { poissonFairOver, poissonMixtureTail, mixtureMoments } from "./poisson.js";
-import { PROP_TO_FIELD, WC_STAT_MODEL } from "./prop-types.js";
 
 // Standard normal CDF — Abramowitz & Stegun 26.2.17 (|error| < 7.5e-8).
 export function normCdf(z) {
@@ -70,61 +68,6 @@ export function probOver({ mean, sigma, line }) {
  */
 export function projectProb({ groundTruth, statType, direction, line, mean }) {
   const league = groundTruth?.league ?? "NBA";
-
-  // World Cup (soccer): per-stat distributions (WC_FRAMEWORK_SPEC.md §10.1).
-  // Low-count stats (shots/SOT/tackles/saves/clearances, means 0.5–4) are
-  // Poisson — the Normal crossing is wrong exactly in the tails PrizePicks
-  // prices (spec §4). High-count passes are an overdispersed count
-  // (Var = φλ; Poisson σ is far too small at λ 15–70), and the fantasy
-  // composite is Normal via moment matching (§10.5). λ_model comes
-  // pre-composed from the soccer ground truth (per-90 rate × expected
-  // minutes × per-stat environment driver).
-  if (String(league).toUpperCase() === "WC") {
-    if (typeof line !== "number") return null;
-    const cfg = WC_STAT_MODEL[statType];
-    const field = cfg?.field ?? PROP_TO_FIELD[statType];
-
-    let model_prob = null;
-    let mean = null;
-    let sigma = null;
-    let model_prob_point = null; // v1 point-Poisson over-prob — telemetry only
-    if (cfg?.composite) {
-      const fm = groundTruth?.soccer?.fantasy;
-      if (!(typeof fm?.mean === "number" && typeof fm?.sd === "number" && fm.sd > 0)) return null;
-      mean = fm.mean;
-      sigma = fm.sd;
-      model_prob = probOver({ mean, sigma, line }); // quasi-continuous: half-line needs no correction
-    } else if (cfg?.dist === "normal_od") {
-      const lam = groundTruth?.soccer?.lambda?.[field];
-      if (!(typeof lam === "number" && lam > 0)) return null;
-      mean = lam;
-      sigma = Math.sqrt((cfg.phi ?? 3.5) * lam);
-      // PP half-lines double as the integer continuity correction.
-      model_prob = probOver({ mean, sigma, line });
-    } else {
-      // Poisson low-count stat. Integrate the tail over the minutes mixture
-      // (spec §4.2) so the predictive is overdispersed and minutes-aware; the
-      // point λ is the fallback and the v1 comparison value.
-      const lam = groundTruth?.soccer?.lambda?.[field];
-      if (!(typeof lam === "number" && lam > 0)) return null;
-      model_prob_point = poissonFairOver(lam, line); // v1 point Poisson (telemetry)
-      const scenarios = groundTruth?.soccer?.lambda_scenarios?.[field];
-      const mm = Array.isArray(scenarios) && scenarios.length ? mixtureMoments(scenarios) : null;
-      const p = mm ? poissonMixtureTail(scenarios, line) : model_prob_point;
-      if (p == null) return null;
-      mean = mm ? mm.mean : lam;
-      sigma = mm ? mm.sd : Math.sqrt(lam); // mixture sd (overdispersed) or Poisson √λ
-      model_prob = Math.max(0.01, Math.min(0.99, p));
-    }
-    if (model_prob == null) return null;
-    return {
-      model_prob: Number(model_prob.toFixed(4)),
-      dir_prob: Number((direction === "UNDER" ? 1 - model_prob : model_prob).toFixed(4)),
-      mean: Number(mean.toFixed(4)),
-      sigma: Number(sigma.toFixed(4)),
-      model_prob_point: model_prob_point == null ? null : Number(model_prob_point.toFixed(4)),
-    };
-  }
 
   let m = typeof mean === "number" ? mean : null;
   if (m == null) {

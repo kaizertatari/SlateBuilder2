@@ -42,7 +42,7 @@ export function collectMarketCandidates(linesData, { league = null, allowedLeagu
   const oddsSet = Array.isArray(oddsTypes) && oddsTypes.length ? new Set(oddsTypes) : null;
   const gameSet = Array.isArray(games) && games.length ? new Set(games) : null;
   // Calibration allow-list: even with no explicit `league` filter, never price
-  // a league that isn't slate-enabled (e.g. WC via the no-league API path).
+  // a league that isn't slate-enabled (guards the no-league API path).
   const leagueAllow = allowedLeagues instanceof Set ? allowedLeagues : null;
 
   const candidates = [];
@@ -88,8 +88,7 @@ export function collectMarketCandidates(linesData, { league = null, allowedLeagu
         game,
         // Join keys carried from the lines snapshot so the priced leg can be
         // logged as a gradeable verdict (verdict-logger.logSlateLegs): the
-        // grader settles on game_start_time + espn_id (basketball) or
-        // game_start_time + league=WC (soccer, FBref-by-name).
+        // grader settles on game_start_time + espn_id.
         league: propLeague,
         game_start_time: p.start_time ?? null,
         espn_id: p.espn_id ?? null,
@@ -125,7 +124,7 @@ async function handlePost(req, reqId) {
     }
 
     // Calibration gate. A league whose standard-line calibration isn't
-    // validated yet (WC, mid-tournament) still gets PRICED + its legs LOGGED
+    // validated yet still gets PRICED + its legs LOGGED
     // for calibration telemetry — we just don't publish a slate, returning a
     // clear "pending" abstain instead of fake-+EV picks. (Pricing the pending
     // league here is exactly what accrues the data that lets us un-gate it.)

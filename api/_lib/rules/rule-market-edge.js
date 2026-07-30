@@ -15,7 +15,6 @@
 // don't cover, and the existing smokes, are unaffected.
 
 import { lookupMarket } from "../odds.js";
-import { WC_STAT_MODEL } from "../prop-types.js";
 
 // Stage 5 — WNBA is a softer market: PrizePicks lines lag the sharp consensus
 // more, books disagree more, and a 3-pt line gap is real edge (vs noise in the
@@ -26,49 +25,15 @@ import { WC_STAT_MODEL } from "../prop-types.js";
 const MARKET_TUNING = {
   NBA: { sig1: 0.56, sig2: 0.62, bigShiftPts: 3 },
   WNBA: { sig1: 0.54, sig2: 0.60, bigShiftPts: 4 },
-  // WC (soccer): pricing comes from the ladder-fitted Poisson, so there is no
-  // line-shift error — bigShiftPts effectively disabled. Signal thresholds
-  // per WC_FRAMEWORK_SPEC.md §5 (edge ≥5pts → 1 signal, ≥8pts → 2).
-  WC: { sig1: 0.55, sig2: 0.58, bigShiftPts: 99 },
 };
 
 export function apply(ctx) {
   const { groundTruth, statType, direction, line } = ctx;
   const player = groundTruth?.info?.full_name ?? groundTruth?.player;
   if (!player) return { fired: false, rule_id: "market-edge" };
-  const isWC = String(groundTruth?.league ?? "").toUpperCase() === "WC";
 
   const m = lookupMarket({ player, stat: statType, line, league: groundTruth?.league });
-  if (!m) {
-    if (isWC) {
-      // Model-led WC stats (spec §10.2): no sharp anchor EXISTS for these
-      // (Passes Attempted / Clearances / Fantasy have no DK market at all),
-      // so absence of a ladder isn't disqualifying — cap at B and hand the
-      // spine to wc-projection. S/A stay unreachable until the model-led
-      // slice proves out at the calibration checkpoint.
-      if (WC_STAT_MODEL[statType]?.modelLed) {
-        return {
-          fired: true,
-          rule_id: "market-edge",
-          tier_cap: "B",
-          flag: "ℹ️ Model-led prop — no sharp anchor exists for this stat, B-tier cap",
-          justification_part: "Market: no sharp market exists for this stat — model-led path, capped at B (spec §10.2).",
-        };
-      }
-      // Anchored WC stats are market-LED (spec §6.1): no sharp ladder for
-      // this player ⇒ nothing to price the pick against ⇒ hard abstain.
-      // Basketball keeps its no-op (the box-score rules carry those picks).
-      return {
-        fired: true,
-        rule_id: "market-edge",
-        hard_skip: true,
-        tier_cap: "SKIP",
-        flag: "⛔ No DK ladder for this prop — WC framework is market-led, abstaining",
-        justification_part: "No sharp ladder covers this player-stat; WC v1 abstains without a market spine.",
-      };
-    }
-    return { fired: false, rule_id: "market-edge" };
-  }
+  if (!m) return { fired: false, rule_id: "market-edge" };
 
   // Stage 5 — per-league market tuning (WNBA looser; see MARKET_TUNING).
   const league = String(groundTruth?.league ?? m.league ?? "NBA").toUpperCase();
@@ -92,24 +57,7 @@ export function apply(ctx) {
   let suppressor = false;
   let signals_added = 0;
 
-  if (isWC) {
-    // Market-led tiering (spec §5): the fair edge at the PP line IS the
-    // pick. <3pts edge → abstain (PP's 0.5-implied pricing leaves nothing);
-    // 3–5pts → B-grade; 5–8pts → A-grade; ≥8pts → S reachable (wc-projection
-    // and wc-minutes still must not cap it).
-    if (pDir < 0.53) {
-      hard_skip = true;
-      tier_cap = "SKIP";
-    } else if (pDir < tune.sig1) {
-      tier_cap = "B";
-      signals_added = 1;
-    } else if (pDir < tune.sig2) {
-      tier_cap = "A";
-      signals_added = 1;
-    } else {
-      signals_added = 2;
-    }
-  } else if (pDir < 0.40) {
+  if (pDir < 0.40) {
     // Market says the bet side is a clear dog — don't issue a −EV pick.
     hard_skip = true;
     tier_cap = "SKIP";
@@ -153,9 +101,6 @@ export function apply(ctx) {
       book_line: m.book_line,
       books: m.books,
       source: m.source,
-      // WC ladder diagnostics (null/absent for basketball) — calibration
-      // slices the reliability curve by fit quality.
-      ...(m.lambda_fair != null ? { lambda_fair: m.lambda_fair, ladder_rmse: m.ladder_rmse } : {}),
     },
   };
 }

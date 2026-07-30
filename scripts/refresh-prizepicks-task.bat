@@ -1,15 +1,13 @@
 @echo off
 REM Wrapper invoked by Windows Task Scheduler to refresh PrizePicks lines.
-REM Scrapes NBA + WNBA + World Cup (league 241) from this machine's residential
-REM IP (Vercel's iad1 is 403'd) and pushes to Vercel Blob; deployed Fluid
-REM Compute instances read the blob.
+REM Scrapes NBA + WNBA from this machine's residential IP (Vercel's iad1 is
+REM 403'd) and pushes to Vercel Blob; deployed Fluid Compute instances read
+REM the blob.
 REM
 REM Path is derived from the .bat's own location (%~dp0 = scripts\), so this
 REM runs against whichever checkout the .bat lives in (Slate Builder), matching
-REM refresh-odds-task.bat. This was previously HARDCODED to the retired
-REM Props_Generator checkout, whose pre-WC scraper fetched only NBA + WNBA and
-REM pushed WC(0) to the shared blob on every scheduled run (manual REFRESH LINES
-REM still worked because it routes through the Slate Builder refresh-bridge).
+REM refresh-odds-task.bat. (It was previously HARDCODED to the retired
+REM Props_Generator checkout — a scheduled run silently executing stale code.)
 REM Output is appended to logs\refresh.log for postmortem.
 
 setlocal

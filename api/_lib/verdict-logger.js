@@ -120,10 +120,6 @@ export function logVerdict({
     model_mean: result?.projection?.mean ?? null,
     model_sigma: result?.projection?.sigma ?? null,
     model_market_agree: result?.projection?.market_agree ?? null,
-    // WC only: the v1 point-Poisson over-prob, logged beside the live
-    // minutes-mixture model_prob so the ~06-20 checkpoint can compare v1 vs v2
-    // tail calibration. Null for basketball / non-Poisson WC stats.
-    model_prob_point: result?.projection?.model_prob_point ?? null,
     // Stage-4 rest / schedule density (rule-rest). Null without gamelog dates.
     rest_days: result?.rest?.rest_days ?? null,
     back_to_back: result?.rest?.back_to_back ?? null,
@@ -209,10 +205,10 @@ export function logVerdict({
  * Batched into a single ingest call (a board can price 100+ legs/request).
  * Fire-and-forget; no-ops without AXIOM_TOKEN.
  *
- * Only GRADEABLE legs are emitted: a leg needs game_start_time, plus either an
- * espn_id (basketball gamelog grading) or league==="WC" (soccer FBref-by-name).
+ * Only GRADEABLE legs are emitted: a leg needs game_start_time plus an
+ * espn_id (basketball gamelog grading).
  * NOTE: is_playoff is intentionally absent — the lines snapshot doesn't carry
- * it, so the grader treats these as regular-season. WNBA + WC grade cleanly;
+ * it, so the grader treats these as regular-season. WNBA grades cleanly;
  * NBA *playoff* legs won't match until is_playoff is sourced (known gap).
  *
  * @param {Array<Object>} legs  build-slate candidates (player, stat_type,
@@ -240,7 +236,7 @@ export function buildSlateLegEvent(l, source = "build-slate") {
   const league = l.league ?? null;
   // Gradeable only: need a start time, and an identity the grader can resolve.
   if (!gameStart) return null;
-  if (!l.espn_id && league !== "WC") return null;
+  if (!l.espn_id) return null;
   const stat = l.stat_type ?? null;
   const direction = l.direction ?? null;
   return {

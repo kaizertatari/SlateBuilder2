@@ -31,8 +31,6 @@ loadEnvLocal();
 
 import { getLastNGames } from "../api/_lib/espn-stats.js";
 import { currentSeason } from "../api/_lib/nba-stats.js";
-import { normalizeName } from "../api/_lib/string-utils.js";
-import { loadWcMatchStats, indexWcMatchStatsByDate, mergeWcEntry, pickWcStat, wcActualFor, WC_FOTMOB_STATS_PATH, buildSoccerAccrual, writeSoccerAccrual, SOCCER_ACCRUAL_PATH } from "./_wc-actuals.mjs";
 
 const AXIOM_INGEST_URL_BASE = "https://api.axiom.co/v1/datasets";
 const AXIOM_QUERY_URL = "https://api.axiom.co/v1/datasets/_apl?format=tabular";
@@ -106,9 +104,9 @@ async function main() {
   // events (without game_start_time / espn_id) drop out naturally.
   // `| limit 100000` is REQUIRED: Axiom returns only 1000 rows when no limit is
   // given, silently truncating the window. A busy slate logs >1000 verdicts in a
-  // few days, so without this the grader (and its WC leg, which reads verdictsRaw
-  // below) only ever sees an arbitrary 1000-row slice and leaves the rest
-  // ungraded — starving calibration of outcomes. Mirrors _axiom.mjs.
+  // few days, so without this the grader only ever sees an arbitrary 1000-row
+  // slice and leaves the rest ungraded — starving calibration of outcomes.
+  // Mirrors _axiom.mjs.
   const verdictsRaw = await queryAxiom(token, dataset, {
     apl: `['${dataset}'] | where event_type == "verdict" | limit 100000`,
     startTime: iso(windowStart),
@@ -248,121 +246,6 @@ async function main() {
     }
   }
 
-  // ── World Cup (soccer) leg — WC_FRAMEWORK_SPEC.md §7 ──────────────────────
-  // WC verdicts carry no espn_id (soccer identity never touches players.json),
-  // so the basketball gamelog join above filtered them out. Actuals come from
-  // ESPN fifa.world match summaries (per-player shots / shots on target),
-  // matched by normalized player name on the verdict's match date.
-  const wcUngradedByKey = new Map();
-  for (const v of verdictsRaw) {
-    if (v.league !== "WC" || !v.game_start_time) continue;
-    const k = joinKey(v);
-    if (graded.has(k) || wcUngradedByKey.has(k)) continue;
-    wcUngradedByKey.set(k, v);
-  }
-  const wcUngraded = [...wcUngradedByKey.values()];
-  let wcHits = 0, wcMisses = 0, wcPushes = 0, wcVoids = 0, wcPostponed = 0, wcUnmatched = 0;
-  const wcUngradeableByStat = new Map();
-  let wcFbFilled = 0;
-  // Snapshot fallbacks — fill the stats ESPN rosters don't carry
-  // (tk/clr/pa/kp/cr/drb → Tackles/Clearances/Passes Attempted/fantasy).
-  // FotMob is preferred (it carries the advanced Opta stats; FBref has
-  // posted none this tournament), FBref fills any gap, ESPN wins overall.
-  // Loaded outside the ungraded-verdicts guard: the tournament-accrual
-  // write below needs them even when nothing is left to grade.
-  const fbSnap = await loadWcMatchStats();
-  const fbByDate = indexWcMatchStatsByDate(fbSnap);
-  const fmSnap = await loadWcMatchStats(WC_FOTMOB_STATS_PATH);
-  const fmByDate = indexWcMatchStatsByDate(fmSnap);
-  if (wcUngraded.length) {
-    console.log(`\n=== World Cup leg: ${wcUngraded.length} ungraded WC verdicts ===`);
-    const snapDesc = (label, snap, hint) => snap
-      ? `  ${label}: ${snap.total_matches ?? Object.keys(snap.matches).length} match reports (fetched ${snap.fetched_at})`
-      : `  ${label}: none — ${hint}`;
-    console.log(snapDesc("FotMob fallback", fmSnap, "node scripts/refresh-wc-fotmob-stats.mjs --headed"));
-    console.log(snapDesc("FBref fallback", fbSnap, "node scripts/refresh-wc-match-stats.mjs --headed"));
-    const byDate = new Map();
-    for (const v of wcUngraded) {
-      const d = v.game_start_time.slice(0, 10);
-      if (!byDate.has(d)) byDate.set(d, []);
-      byDate.get(d).push(v);
-    }
-    for (const [date, vs] of byDate) {
-      let actuals;
-      try {
-        actuals = await fetchWorldCupActuals(date);
-      } catch (err) {
-        console.warn(`  WC actuals fetch failed for ${date}: ${err.message}`);
-        wcPostponed += vs.length;
-        continue;
-      }
-      const fbDay = fbByDate.get(date);
-      const fmDay = fmByDate.get(date);
-      for (const v of vs) {
-        const espnEntry = actuals.players.get(normalizeName(v.player)) ?? null;
-        const fbEntry = fbDay?.get(normalizeName(v.player)) ?? null;
-        const fmEntry = fmDay?.get(normalizeName(v.player)) ?? null;
-        // FotMob preferred over FBref, then ESPN wins over both.
-        const snapEntry = mergeWcEntry(fmEntry, fbEntry);
-        const entry = mergeWcEntry(espnEntry, snapEntry);
-        if (!entry) {
-          // Not on any completed match's roster that day: match still in
-          // progress/postponed (retry within the lookback window) or a
-          // PP↔ESPN name mismatch (counted, surfaced, never auto-graded).
-          if (actuals.completed_events === 0) wcPostponed++;
-          else wcUnmatched++;
-          continue;
-        }
-        if (!entry.played) {
-          outcomeEvents.push(buildWcOutcomeEvent(v, entry, { hit_or_miss: "void", reason: "dnp", actual_value: null }));
-          wcVoids++;
-          continue;
-        }
-        const stat = canonicalStat(v.prop_type);
-        const actual = wcActualFor(stat, entry);
-        if (actual == null) {
-          wcUnmatched++;
-          wcUngradeableByStat.set(stat, (wcUngradeableByStat.get(stat) || 0) + 1);
-          continue;
-        }
-        // FBref provided what ESPN couldn't (or the whole entry) — telemetry
-        // for how load-bearing the fallback is per slate.
-        if (espnEntry == null || wcActualFor(stat, espnEntry) == null) wcFbFilled++;
-        const r = gradeRaw(actual, num(v.line), v.direction);
-        outcomeEvents.push(buildWcOutcomeEvent(v, entry, { hit_or_miss: r, reason: null, actual_value: actual }));
-        if (r === "hit") wcHits++;
-        else if (r === "miss") wcMisses++;
-        else wcPushes++;
-      }
-    }
-    console.log(`WC result: hits=${wcHits}  misses=${wcMisses}  pushes=${wcPushes}  voids=${wcVoids}  postponed=${wcPostponed}  unmatched=${wcUnmatched}  snap_filled=${wcFbFilled}`);
-    if (wcUngradeableByStat.size) {
-      // Neither ESPN nor the FBref snapshot resolved these — spec §10.6:
-      // surface, never guess. Usually means data/wc-match-stats.json is
-      // stale for the date: run refresh-wc-match-stats and re-grade (the
-      // lookback window retries automatically).
-      for (const [stat, n] of wcUngradeableByStat) {
-        console.warn(`  UNGRADEABLE: ${stat} ×${n} — no stat resolved from ESPN or FBref snapshot`);
-      }
-    }
-  }
-
-  // ── Tournament accrual (spec §4.4) — per-player WC totals for the λ blend
-  // in api/_lib/soccer-truth.js (WC matches at 3× club weight). Rebuilt
-  // idempotently from the merged snapshots on every run so the model stands
-  // on tournament data by the knockouts. Commit the refreshed file like any
-  // other data snapshot — prod reads it via includeFiles data/**.
-  const accrual = buildSoccerAccrual(fmSnap, fbSnap);
-  const accrualPlayers = Object.keys(accrual.players).length;
-  if (!accrualPlayers) {
-    console.log("\nTournament accrual: no WC snapshot rows — data/soccer-accrual.json left untouched");
-  } else if (dryRun) {
-    console.log(`\nDRY RUN — would write tournament accrual for ${accrualPlayers} players to ${SOCCER_ACCRUAL_PATH}`);
-  } else {
-    await writeSoccerAccrual(accrual);
-    console.log(`\nTournament accrual: ${accrualPlayers} players → ${SOCCER_ACCRUAL_PATH}`);
-  }
-
   console.log(`\nResult: hits=${hits}  misses=${misses}  pushes=${pushes}  voids=${voids}`);
   console.log(`Ungraded (postponed / no gamelog yet): ${postponed}`);
   if (unmatched) console.log(`Unknown stat type: ${unmatched}`);
@@ -494,114 +377,10 @@ function joinKey(e) {
   ].join("|");
 }
 
-// ─── World Cup (soccer) helpers ─────────────────────────────────────────────
-
-const WC_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
-const WC_SUMMARY = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary";
-
-// ESPN soccer ships stats as abbreviation/name pairs; both are indexed
-// into the stat map. Keys were validated 2026-06-12 against event 760415
-// (Mexico–South Africa) — fifa.world rosters carry only: SHOT, SOG, SV, G,
-// A, FC, FA, YC, RC, OF, OG, GA, SHF, SUB, APP (appearances — NOT passes).
-// Tackles/clearances/key passes/crosses/dribbles/passes are absent → those
-// fields stay null here and the FBref match-stats snapshot fills them
-// (mergeWcEntry in _wc-actuals.mjs; refreshed by refresh-wc-match-stats).
-
-// Per-player actuals for every COMPLETED fifa.world match on a UTC date.
-// Returns { completed_events, players: Map<normName, { name, team, played,
-// sh, st, event_id }> }. "played" = started or subbed in (or has stats);
-// rostered-but-unused → void/dnp.
-async function fetchWorldCupActuals(dateYmd) {
-  const dates = dateYmd.replace(/-/g, "");
-  const sbRes = await fetch(`${WC_SCOREBOARD}?dates=${dates}`, { signal: AbortSignal.timeout(15000) });
-  if (!sbRes.ok) throw new Error(`scoreboard HTTP ${sbRes.status}`);
-  const sb = await sbRes.json();
-  const players = new Map();
-  let completedEvents = 0;
-  for (const ev of sb?.events ?? []) {
-    if (ev?.status?.type?.completed !== true) continue;
-    completedEvents++;
-    const sumRes = await fetch(`${WC_SUMMARY}?event=${ev.id}`, { signal: AbortSignal.timeout(15000) });
-    if (!sumRes.ok) continue;
-    const sum = await sumRes.json();
-    for (const side of sum?.rosters ?? []) {
-      const teamName = side?.team?.displayName ?? null;
-      for (const slot of side?.roster ?? []) {
-        const name = slot?.athlete?.displayName;
-        if (!name) continue;
-        const statMap = {};
-        for (const s of slot?.stats ?? []) {
-          const val = Number(s?.value ?? s?.displayValue);
-          if (!Number.isFinite(val)) continue;
-          // Index abbreviation AND name — candidates reference both forms.
-          if (s?.abbreviation != null) statMap[s.abbreviation] = val;
-          if (s?.name != null) statMap[s.name] = val;
-        }
-        const played = slot?.starter === true || slot?.subbedIn === true || Object.keys(statMap).length > 0;
-        players.set(normalizeName(name), {
-          name,
-          team: teamName,
-          played,
-          sh: pickWcStat(statMap, ["SHOT", "totalShots", "SH", "shotsTotal"]),
-          st: pickWcStat(statMap, ["SOG", "shotsOnTarget", "ST", "SOT"]),
-          // v2 stats (spec §10.6) — a missing key returns null and the
-          // verdict counts as ungradeable (surfaced per stat below), never
-          // guessed. Validated 2026-06-12: ESPN rosters carry NONE of
-          // tk/clr/pa — kept as forward-compat candidates only. APP is
-          // appearances, never a passes key (was a silent mis-grade).
-          tk: pickWcStat(statMap, ["TKL", "TCK", "totalTackles", "tacklesTotal"]),
-          sv: pickWcStat(statMap, ["SV", "SVS", "saves", "goalkeeperSaves"]),
-          clr: pickWcStat(statMap, ["CLR", "totalClearance", "clearances"]),
-          pa: pickWcStat(statMap, ["totalPasses", "passesAttempted", "totalPassesAttempted"]),
-          // Fantasy components beyond the above (goals/assists usually ship;
-          // key passes/crosses/dribbles/fouls/cards spotty on ESPN rosters).
-          g: pickWcStat(statMap, ["G", "totalGoals", "goals", "Goals"]),
-          a: pickWcStat(statMap, ["A", "goalAssists", "assists", "Assists"]),
-          kp: pickWcStat(statMap, ["KP", "keyPasses", "shotAssists"]),
-          cr: pickWcStat(statMap, ["CR", "crosses", "totalCrosses"]),
-          drb: pickWcStat(statMap, ["DRB", "takeOns", "dribblesAttempted"]),
-          fc: pickWcStat(statMap, ["FC", "foulsCommitted", "fouls"]),
-          yc: pickWcStat(statMap, ["YC", "yellowCards"]),
-          rc: pickWcStat(statMap, ["RC", "redCards"]),
-          event_id: ev.id,
-        });
-      }
-    }
-  }
-  return { completed_events: completedEvents, players };
-}
-
-// Mirrors buildOutcomeEvent with soccer context: no espn_id/nba_id identity
-// (the join key never includes them), matchup = the player's country.
-function buildWcOutcomeEvent(verdict, entry, outcome) {
-  return {
-    _time: new Date().toISOString(),
-    event_type: "outcome",
-    source: "grade-outcomes",
-    player: verdict.player,
-    prop_type: verdict.prop_type,
-    line: verdict.line,
-    direction: verdict.direction,
-    game_start_time: verdict.game_start_time,
-    espn_id: null,
-    nba_id: null,
-    league: "WC",
-    is_playoff: false,
-    actual_value: outcome.actual_value,
-    hit_or_miss: outcome.hit_or_miss,
-    reason: outcome.reason,
-    game_id: entry?.event_id ?? null,
-    matchup: entry?.team ?? null,
-  };
-}
-
 function canonicalStat(propType) {
   if (!propType) return null;
   return String(propType).replace(/\s+(OVER|UNDER)\s*$/i, "").trim();
 }
-
-// wcActualFor / WC_FANTASY_COMPONENTS / pickWcStat live in _wc-actuals.mjs
-// (shared with the FBref match-stats fallback and its smoke).
 
 function gradeRaw(actual, line, direction) {
   if (!Number.isFinite(actual) || !Number.isFinite(line)) return "miss";

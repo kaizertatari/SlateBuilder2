@@ -212,38 +212,6 @@ function brierOf(picks, valueFn) {
   return { brier: s / ps.length, n: ps.length };
 }
 
-// World Cup group-stage checkpoint slice (WC_FRAMEWORK_SPEC.md §7). Market-led:
-// the DK-ladder fair_over is the spine, model_dir_prob (v2 minutes-mixture) the
-// confirmer, model_prob_point (v1 point-Poisson) logged alongside so this
-// checkpoint can compare v1 vs v2 tail calibration (spec calibration item).
-// Only Shots/SOT/Goalie Saves grade off ESPN; Tackles/Clearances/Passes/Fantasy
-// need the FBref match-stats enrichment grade (see RUNBOOK "Refresh WC match
-// stats") before they appear here. The headline question (§7): is the market
-// curve flat at PP's 0.5 pricing? If so, tighten S/A thresholds or abstain.
-function wcCalibration(graded) {
-  const wc = graded.filter((p) => p.league === "WC");
-  console.log(`\n=== WORLD CUP calibration slice (spec §7 checkpoint) ===`);
-  if (!wc.length) {
-    console.log("  (no graded WC verdicts in window — verify verdict logging is live and that the");
-    console.log("   FBref match-stats grade has run for Tackles/Clearances/Passes/Fantasy)");
-    return;
-  }
-  console.log(`WC graded: ${fmtRate(stat(wc))}`);
-  section("WC by stat", wc, (p) => p.stat);
-  section("WC by tier", wc, (p) => p.tier, { sortKey: true });
-  section("WC by direction", wc, (p) => p.direction, { sortKey: true });
-  const bins = [[35, 46], [46, 50], [50, 54], [54, 58], [58, 64], [64, 100]];
-  reliability("WC market fair_over (ladder) → realized", wc, (p) => (p.marketFair != null ? p.marketFair * 100 : null), bins);
-  reliability("WC model v2 (minutes-mix) dir_prob → realized", wc, (p) => (p.modelP != null ? p.modelP * 100 : null), bins);
-  reliability("WC model v1 (point-Poisson) → realized", wc, (p) => (p.modelPoint != null ? p.modelPoint * 100 : null), bins);
-  const bm = brierOf(wc, (p) => p.marketFair), b2 = brierOf(wc, (p) => p.modelP), b1 = brierOf(wc, (p) => p.modelPoint);
-  console.log(`\n— WC Brier (lower=better), bet-side prob vs outcome —`);
-  const bl = (lbl, b) => console.log(`  ${lbl.padEnd(22)} ${b ? `${b.brier.toFixed(4)} (n=${b.n})` : "(no data)"}`);
-  bl("market fair_over", bm); bl("model v2 (mix)", b2); bl("model v1 (point)", b1);
-  section("WC model × market", wc, (p) => (p.agree == null ? null : p.agree ? "agree" : "conflict"), { sortKey: true });
-  section("WC market_edge bucket", wc, (p) => (p.edge == null ? null : p.edge < 0 ? "edge<0" : p.edge < 0.05 ? "0-5%" : p.edge < 0.08 ? "5-8%" : "8%+"), { sortKey: true });
-}
-
 async function main() {
   const token = process.env.AXIOM_TOKEN;
   if (!token) { console.error("AXIOM_TOKEN not set in .env.local"); process.exit(1); }
@@ -258,7 +226,7 @@ async function main() {
   // appear over time — pulling full rows is schema-proof.
   // `| limit 100000` is REQUIRED: Axiom defaults to 1000 rows when no limit is
   // given, which silently truncates both pulls (the join then drops most of the
-  // window — and whole leagues, e.g. WC, vanish). Mirrors _axiom.mjs.
+  // window — whole leagues can vanish). Mirrors _axiom.mjs.
   const verdicts = (await queryAxiom(token, `['${dataset}'] | where event_type == "verdict" | limit 100000`, startISO, endISO))
     .filter((v) => v.engine_mode === "rules");
   const outcomes = await queryAxiom(token, `['${dataset}'] | where event_type == "outcome" | project player, prop_type, line, direction, game_start_time, hit_or_miss | limit 100000`, startISO, endISO);
@@ -285,9 +253,6 @@ async function main() {
       // Stage 1–5 signal telemetry (null on verdicts logged before each stage).
       marketFair: num(v.market_fair_at_line), edge: num(v.market_edge),
       modelP: num(v.model_dir_prob), agree: tri(v.model_market_agree),
-      // WC v1 point-Poisson over-prob, logged beside v2 minutes-mix model_dir_prob
-      // so the group-stage checkpoint can compare v1 vs v2 tail calibration.
-      modelPoint: num(v.model_prob_point),
       blowout: tri(v.vegas_blowout), b2b: tri(v.back_to_back), t34: tri(v.three_in_four),
       teammateOut: v.usage_teammate_out ?? null,
     });
@@ -319,7 +284,6 @@ async function main() {
   ruleLift("A+B only", graded.filter((p) => p.tier === "A" || p.tier === "B"));
   shadowSection(graded);
   signalCalibration(graded);
-  wcCalibration(graded);
 
   console.log(`\n* small-n: a side has <8 decided picks — treat as noise.`);
   console.log(`This report proposes nothing. Weight changes go through rule-weights.js`);

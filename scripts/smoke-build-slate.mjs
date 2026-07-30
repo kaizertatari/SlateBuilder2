@@ -140,21 +140,21 @@ function scenario(fairs) {
   ok(!r.abstained, "I: maxPerGame=2 builds a 2-leg slate from one game");
 }
 
-// J) calibration allow-list: a paused league (WC) is never priced, even with
-// no explicit `league` filter (the no-league API path must not leak WC props).
+// J) calibration allow-list: an un-calibrated league is never priced, even with
+// no explicit `league` filter (the no-league API path must not leak its props).
 {
   const odds = { source: "dk+fd", fetched_at: "t", by_player: {}, games: {} };
   const lines = { fetched_at: "t", by_player: {} };
   odds.by_player.Hoops = [{ stat: "Points", line: 15.5, over_american: -110, under_american: -110, fair_over: 0.8 }];
   lines.by_player.Hoops = [{ stat_type: "Points", line: 15.5, odds_type: "standard", league: "WNBA", player_team: "AAA", opponent: "BBB" }];
-  odds.by_player.Striker = [{ stat: "Shots", line: 1.5, lambda_fair: 3.0, fair_over: 0.8 }];
-  lines.by_player.Striker = [{ stat_type: "Shots", line: 1.5, odds_type: "standard", league: "WC", player_team: "USA", opponent: "MEX" }];
+  odds.by_player.Slugger = [{ stat: "Points", line: 15.5, over_american: -110, under_american: -110, fair_over: 0.8 }];
+  lines.by_player.Slugger = [{ stat_type: "Points", line: 15.5, odds_type: "standard", league: "MLB", player_team: "CCC", opponent: "DDD" }];
   setOdds(odds);
-  // no `league` filter, but allowedLeagues excludes WC
-  const { candidates } = collectMarketCandidates(lines, { allowedLeagues: new Set(["NBA", "WNBA"]), allowedStats: new Set(["Points", "Shots"]) });
-  ok(candidates.length === 1 && candidates[0].player === "Hoops", `J: WC prop excluded by calibration allow-list (got ${candidates.map((c) => c.player).join(",") || "none"})`);
-  // without the allow-list, the WC prop IS collected (proves the gate is what filters it, not a stat/pricing miss)
-  const { candidates: all } = collectMarketCandidates(lines, { allowedStats: new Set(["Points", "Shots"]) });
+  // no `league` filter, but allowedLeagues excludes MLB
+  const { candidates } = collectMarketCandidates(lines, { allowedLeagues: new Set(["NBA", "WNBA"]), allowedStats: new Set(["Points"]) });
+  ok(candidates.length === 1 && candidates[0].player === "Hoops", `J: un-calibrated league excluded by allow-list (got ${candidates.map((c) => c.player).join(",") || "none"})`);
+  // without the allow-list, the prop IS collected (proves the gate is what filters it, not a stat/pricing miss)
+  const { candidates: all } = collectMarketCandidates(lines, { allowedStats: new Set(["Points"]) });
   ok(all.length === 2, `J: both leagues priced when no allow-list (got ${all.length})`);
 }
 
@@ -177,19 +177,16 @@ function scenario(fairs) {
 }
 
 // L) gradeable-leg filter: build a verdict event only for legs the grader can
-// settle (game_start_time + espn_id for basketball, or league==='WC').
+// settle (game_start_time + espn_id).
 {
   const base = { player: "P", stat_type: "Points", direction: "OVER", line: 15.5, odds_type: "standard", market_fair_at_line: 0.7, game_start_time: "2026-06-13T23:00:00Z", espn_id: 99, league: "WNBA" };
   const ev = buildSlateLegEvent(base);
   ok(ev && ev.event_type === "verdict" && ev.prop_type === "Points OVER" && ev.verdict === "OVER", "L: basketball leg → gradeable verdict event");
   ok(ev && ev.market_fair_at_line === 0.7 && ev.pre_filtered === false, "L: event carries market prob + non-SKIP");
-  // WC leg with no espn_id is still gradeable (FBref-by-name path)
-  const wc = buildSlateLegEvent({ ...base, league: "WC", espn_id: null, stat_type: "Shots" });
-  ok(wc && wc.prop_type === "Shots OVER" && wc.league === "WC", "L: WC leg gradeable without espn_id");
   // missing start time → not gradeable
   ok(buildSlateLegEvent({ ...base, game_start_time: null }) === null, "L: no game_start_time → null");
-  // basketball missing espn_id → not gradeable
-  ok(buildSlateLegEvent({ ...base, espn_id: null }) === null, "L: basketball leg without espn_id → null");
+  // missing espn_id → not gradeable
+  ok(buildSlateLegEvent({ ...base, espn_id: null }) === null, "L: leg without espn_id → null");
 }
 
 setOdds(null);

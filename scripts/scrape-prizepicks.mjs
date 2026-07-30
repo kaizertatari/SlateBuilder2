@@ -31,22 +31,13 @@ const PER_PAGE = 10;
 // leagues we want to cover; everything downstream is league-aware.
 //
 // NOTE: PrizePicks' league IDs are unrelated to stats.wnba.com's LeagueID
-// ("10" there). Verified against api.prizepicks.com/leagues: WNBA=3, NBA=7,
-// WORLD CUP=241 (the per-match board; 457 "WORLD CUP TRNY" is tournament-long
-// futures and out of scope — WC_FRAMEWORK_SPEC.md §9).
+// ("10" there). Verified against api.prizepicks.com/leagues: WNBA=3, NBA=7.
 //
 // `stats` (optional) — canonical stat whitelist for the league; projections
-// whose stat_type doesn't map into it are dropped at scrape time. WC covers
-// the v1 pair plus the v2 expansion (WC_FRAMEWORK_SPEC.md §10); the
-// whitelist still keeps ~4k fouls/cards/offsides projections out of the
-// snapshot.
+// whose stat_type doesn't map into it are dropped at scrape time.
 const LEAGUES = [
   { league: "NBA", league_id: 7 },
   { league: "WNBA", league_id: 3 },
-  { league: "WC", league_id: 241, stats: [
-    "Shots", "Shots On Target", "Tackles", "Goalie Saves", "Clearances",
-    "Passes Attempted", "Outfield Fantasy Score",
-  ] },
 ];
 
 const HEADERS = {
@@ -109,9 +100,7 @@ async function scrapePrizePicksForLeague(leagueId, fetchJson = defaultFetchJson,
         name: item.attributes.name,
         team: item.attributes.team || null,
         team_name: item.attributes.team_name || null,
-        // Soccer carries a useful position label (Forward/Midfielder/
-        // Defender/Goalkeeper) — basketball sometimes has one too; passed
-        // through for league-aware consumers (WC position priors + GK gate).
+        // Position label — passed through for league-aware consumers.
         position: item.attributes.position || null,
       };
     }
@@ -142,9 +131,7 @@ async function scrapePrizePicksForLeague(leagueId, fetchJson = defaultFetchJson,
         start_time: attrs.start_time || null,
         status: attrs.status || null,
         odds_type: attrs.odds_type || null,
-        // Promo rows (free squares / flash sales) aren't real lines. NOTE:
-        // event_type is NOT a usable filter — PP marks every soccer
-        // projection event_type:"team", including ordinary player props.
+        // Promo rows (free squares / flash sales) aren't real lines.
         is_promo: attrs.is_promo === true,
       };
     })
@@ -172,9 +159,9 @@ function resolvePlayer(rawName, nameLookup, league) {
 // ─── League Salvage ────────────────────────────────────────────────────────
 
 // Extract one league's still-upcoming props from a previous snapshot so a
-// failed league fetch (PP rate-limits league 241 aggressively) keeps the
-// prior good data instead of thinning the snapshot. Props whose game has
-// already started are dropped — salvage never resurrects a tipped slate.
+// failed league fetch keeps the prior good data instead of thinning the
+// snapshot. Props whose game has already started are dropped — salvage
+// never resurrects a tipped slate.
 export function salvageLeagueFromSnapshot(previous, league, nowMs) {
   const games = {};
   const byPlayer = {};
@@ -207,7 +194,7 @@ export function salvageLeagueFromSnapshot(previous, league, nowMs) {
 export async function scrapePrizePicksForToday(opts = {}) {
   const { write = true, outputPath = OUTPUT, leagues = LEAGUES, fetchJson = defaultFetchJson, retryCooldownMs = 15000 } = opts;
 
-  // Optional PP_LEAGUES override (comma-separated names, e.g. "WNBA,WC") skips
+  // Optional PP_LEAGUES override (comma-separated names, e.g. "WNBA") skips
   // a dormant league — e.g. NBA in the summer offseason — without a code edit,
   // saving a full fetch+retry cycle for a league that has no games. Unknown
   // names in the list are simply ignored.
@@ -296,7 +283,7 @@ export async function scrapePrizePicksForToday(opts = {}) {
       if (!playerTeam || !opponent) continue;
 
       // Prefix non-NBA games to disambiguate cross-league key clashes
-      // (WNBA keys keep their existing "WNBA:" form; WC gets "WC:").
+      // (WNBA keys keep their existing "WNBA:" form).
       const gameKey = league === "NBA"
         ? `${opponent}@${playerTeam}`
         : `${league}:${opponent}@${playerTeam}`;
@@ -315,8 +302,7 @@ export async function scrapePrizePicksForToday(opts = {}) {
         player_key: matched?.name ?? null,
         nba_id: matched?.nba ?? null,
         espn_id: matched?.espn ?? null,
-        // Soccer-only (null for basketball): PP position label, used by the
-        // WC gatherer for position priors and the goalkeeper gate.
+        // PP position label (often null for basketball).
         player_position: proj.player_position ?? null,
       };
 
@@ -340,19 +326,18 @@ export async function scrapePrizePicksForToday(opts = {}) {
   }
 
   // Salvage guard: a league whose scrape yielded nothing — a thrown fetch
-  // error OR a successful-but-empty response (PP soft-blocks league 241 with a
-  // 200/empty body about as often as a 429/throw) — would otherwise vanish
+  // error OR a successful-but-empty response — would otherwise vanish
   // from the snapshot ("thinning"): the next write wipes its props from the
   // blob until a later scrape succeeds. Backfill those leagues, keeping only
   // props for games that haven't started.
   //
   // Source order matters. We salvage from the previous blob first, but the
   // blob may ITSELF already be missing the failed league — a prior partial
-  // refresh wiped it, so salvaging from a blob that already lost WC recovers
-  // nothing. That is the death-spiral that strands WC at 0 across every
-  // refresh. When the blob yields no upcoming props for a league, fall through
-  // to the deploy-bundled snapshot (data/prizepicks-lines.json) as a durable
-  // floor, which a fresh deploy keeps stocked.
+  // refresh wiped it, so salvaging from a blob that already lost the league
+  // recovers nothing (the death-spiral that strands a league at 0 across
+  // every refresh). When the blob yields no upcoming props for a league, fall
+  // through to the deploy-bundled snapshot (data/prizepicks-lines.json) as a
+  // durable floor, which a fresh deploy keeps stocked.
   //
   // Partial failure only: when EVERY league came up empty (cloud-IP block, PP
   // outage) the result stays total_props=0 so the refuse-write /

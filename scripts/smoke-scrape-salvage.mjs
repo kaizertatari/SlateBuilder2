@@ -28,17 +28,17 @@ const NOW = Date.parse("2026-06-12T12:00:00Z");
 const FUTURE = "2026-06-12T18:00:00Z";
 const PAST = "2026-06-12T06:00:00Z";
 
-function wcProp(overrides = {}) {
+function wnbaProp(overrides = {}) {
   return {
-    player: "Kylian Mbappé",
-    league: "WC",
-    stat_type: "Shots",
-    line: 2.5,
+    player: "A'ja Wilson",
+    league: "WNBA",
+    stat_type: "Points",
+    line: 22.5,
     odds_type: "standard",
-    player_team: "FRA",
-    opponent: "BRA",
+    player_team: "LVA",
+    opponent: "NYL",
     start_time: FUTURE,
-    player_key: "Kylian Mbappé",
+    player_key: "A'ja Wilson",
     ...overrides,
   };
 }
@@ -46,63 +46,63 @@ function wcProp(overrides = {}) {
 const previous = {
   fetched_at: "2026-06-12T02:34:38.940Z",
   games: {
-    "WC:BRA@FRA": {
-      league: "WC",
-      home: "FRA",
-      away: "BRA",
+    "WNBA:NYL@LVA": {
+      league: "WNBA",
+      home: "LVA",
+      away: "NYL",
       props: [
-        wcProp(),
-        wcProp({ stat_type: "Shots On Target", line: 1.5 }),
+        wnbaProp(),
+        wnbaProp({ stat_type: "Rebounds", line: 9.5 }),
         // Unmatched player — no player_key, falls back to raw name.
-        wcProp({ player: "Unknown Striker", player_key: null }),
+        wnbaProp({ player: "Unknown Rookie", player_key: null }),
         // Tipped game-leg: started in the past, must be dropped.
-        wcProp({ player: "Early Bird", start_time: PAST }),
+        wnbaProp({ player: "Early Bird", start_time: PAST }),
       ],
     },
     // Whole game in the past — must vanish from the salvage.
-    "WC:GER@ESP": {
-      league: "WC",
-      home: "ESP",
-      away: "GER",
-      props: [wcProp({ player: "Stale Player", player_team: "ESP", opponent: "GER", start_time: PAST })],
+    "WNBA:CHI@CON": {
+      league: "WNBA",
+      home: "CON",
+      away: "CHI",
+      props: [wnbaProp({ player: "Stale Player", player_team: "CON", opponent: "CHI", start_time: PAST })],
     },
-    // Different league — never salvaged when asking for WC.
+    // Different league — never salvaged when asking for WNBA.
     "NYK@SAS": {
       league: "NBA",
       home: "SAS",
       away: "NYK",
-      props: [wcProp({ league: "NBA", player: "Some Guard", start_time: FUTURE })],
+      props: [wnbaProp({ league: "NBA", player: "Some Guard", start_time: FUTURE })],
     },
   },
 };
 
 console.log("=== smoke-scrape-salvage ===\n");
 
-const wc = salvageLeagueFromSnapshot(previous, "WC", NOW);
+const wnba = salvageLeagueFromSnapshot(previous, "WNBA", NOW);
 
-assert("salvages the upcoming WC props", wc.count === 3, `count=${wc.count}`);
-assert("keeps only the live game", Object.keys(wc.games).join(",") === "WC:BRA@FRA",
-  Object.keys(wc.games).join(","));
+assert("salvages the upcoming WNBA props", wnba.count === 3, `count=${wnba.count}`);
+assert("keeps only the live game", Object.keys(wnba.games).join(",") === "WNBA:NYL@LVA",
+  Object.keys(wnba.games).join(","));
 assert("drops the tipped prop inside the live game",
-  wc.games["WC:BRA@FRA"]?.props.length === 3,
-  `props=${wc.games["WC:BRA@FRA"]?.props.length}`);
+  wnba.games["WNBA:NYL@LVA"]?.props.length === 3,
+  `props=${wnba.games["WNBA:NYL@LVA"]?.props.length}`);
 assert("does not touch other leagues",
-  !Object.keys(wc.games).includes("NYK@SAS") && !("Some Guard" in wc.byPlayer));
-assert("by_player keyed on player_key", Array.isArray(wc.byPlayer["Kylian Mbappé"])
-  && wc.byPlayer["Kylian Mbappé"].length === 2,
-  JSON.stringify(Object.keys(wc.byPlayer)));
-assert("unmatched player falls back to raw name", wc.byPlayer["Unknown Striker"]?.length === 1);
+  !Object.keys(wnba.games).includes("NYK@SAS") && !("Some Guard" in wnba.byPlayer));
+assert("by_player keyed on player_key", Array.isArray(wnba.byPlayer["A'ja Wilson"])
+  && wnba.byPlayer["A'ja Wilson"].length === 2,
+  JSON.stringify(Object.keys(wnba.byPlayer)));
+assert("unmatched player falls back to raw name", wnba.byPlayer["Unknown Rookie"]?.length === 1);
 assert("salvaged game entry preserves metadata",
-  wc.games["WC:BRA@FRA"]?.home === "FRA" && wc.games["WC:BRA@FRA"]?.league === "WC");
+  wnba.games["WNBA:NYL@LVA"]?.home === "LVA" && wnba.games["WNBA:NYL@LVA"]?.league === "WNBA");
 
 const nba = salvageLeagueFromSnapshot(previous, "NBA", NOW);
 assert("NBA salvage picks up only NBA", nba.count === 1 && "NYK@SAS" in nba.games,
   `count=${nba.count}`);
 
-assert("null snapshot salvages nothing", salvageLeagueFromSnapshot(null, "WC", NOW).count === 0);
-assert("empty snapshot salvages nothing", salvageLeagueFromSnapshot({}, "WC", NOW).count === 0);
+assert("null snapshot salvages nothing", salvageLeagueFromSnapshot(null, "WNBA", NOW).count === 0);
+assert("empty snapshot salvages nothing", salvageLeagueFromSnapshot({}, "WNBA", NOW).count === 0);
 assert("league absent from snapshot salvages nothing",
-  salvageLeagueFromSnapshot(previous, "WNBA", NOW).count === 0);
+  salvageLeagueFromSnapshot(previous, "MLB", NOW).count === 0);
 
 console.log(`\nsmoke-scrape-salvage: ${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);

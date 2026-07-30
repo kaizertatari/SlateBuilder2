@@ -55,31 +55,19 @@ sole keeper. To verify a task launches
 cleanly after editing: `Start-ScheduledTask -TaskName <name>` then check
 `logs\grade.log` / `Get-ScheduledTaskInfo` for `LastTaskResult 0`.
 
-**WC(0) on the scheduled lines refresh (fixed 2026-06-13):** `PrizePicks
-Refresh Lines` runs `scripts/refresh-prizepicks-task.bat`, which had a
-HARDCODED `cd /d ...\Props_Generator` — so every scheduled run executed the
-RETIRED checkout's pre-WC scraper (NBA + WNBA only, league 241 absent, no
-salvage guard) and pushed WC(0) to the shared blob. Manual REFRESH LINES was
-unaffected because it routes through the Slate Builder `refresh-bridge`. Fix:
-the wrapper now self-locates with `cd /d "%~dp0.."` like
-`refresh-odds-task.bat`. Verified by a triggered run — scraped NBA+WNBA+WC and
-salvaged WC to 2160 props on the expected 429. **Lesson:** a self-locating
-`.bat` only helps if the task's *Task To Run* points at the right copy — when
-auditing, check BOTH the bat body AND the registered Task-To-Run path
-(`schtasks /Query /TN <name> /V /FO LIST`).
+**Stale-checkout lesson (2026-06-13):** `PrizePicks Refresh Lines` once ran a
+`.bat` with a HARDCODED `cd /d ...\Props_Generator`, so every scheduled run
+executed the RETIRED checkout's scraper while manual REFRESH LINES (which
+routes through the refresh-bridge) worked fine. The wrapper now self-locates
+with `cd /d "%~dp0.."` like `refresh-odds-task.bat`. **Lesson:** a
+self-locating `.bat` only helps if the task's *Task To Run* points at the
+right copy — when auditing, check BOTH the bat body AND the registered
+Task-To-Run path (`schtasks /Query /TN <name> /V /FO LIST`).
 
 ## Daily grader
 
 Manual: `npm run grade-outcomes`. Options: `--date YYYY-MM-DD`,
 `--lookback N` (default 7 days), `--dry-run`.
-
-Side effect (WC only): every non-dry run rebuilds `data/soccer-accrual.json`
-— per-player tournament totals from the merged FotMob+FBref snapshots
-(`buildSoccerAccrual` in `scripts/_wc-actuals.mjs`). `soccer-truth.js` blends
-it into λ at 3× club-match weight (spec §4.4), so refresh FotMob first
-(`npm run refresh-wc-fotmob-stats`), then grade, then COMMIT the refreshed
-accrual file — prod reads it from the deployed bundle (`includeFiles data/**`),
-so an uncommitted accrual never reaches the live model.
 
 ## Refresh lines
 
@@ -94,7 +82,7 @@ PerimeterX/HUMAN bot management — plain fetch (and curl/.NET) gets HTTP 403
 with a challenge body (`appId "PXZNeitfzP"`). The scrape therefore runs
 through a real browser: `scripts/scrape-prizepicks-browser.mjs` drives a
 Playwright persistent context (`.prizepicks-profile`, same recipe as
-fetch-prizepicks-entries / soccer-rates) that loads `app.prizepicks.com` to
+fetch-prizepicks-entries) that loads `app.prizepicks.com` to
 earn a cleared `_px3` cookie, then in-page-`fetch`es the projections API.
 `refresh-prizepicks` and the `refresh-bridge` both call it. **Headless works**
 — the decisive bit is the `addInitScript` fingerprint patch (navigator.webdriver
@@ -114,7 +102,7 @@ rate-limit, cookie fine) still take a plain cooldown, not a re-clear. If one
 run now leaves a league at 0, it's a real block/outage or a poisoned profile —
 not per-request flakiness — so go to the re-seed recipe below.
 
-**Offseason league skip:** set `PP_LEAGUES=WNBA,WC` (comma-separated, matched
+**Offseason league skip:** set `PP_LEAGUES=WNBA` (comma-separated, matched
 case-insensitively against the league names in `scrape-prizepicks.mjs`
 `LEAGUES`) to skip a dormant league without a code edit — e.g. NBA over the
 summer, which otherwise burns a fetch+retry cycle for a slate with no games.
@@ -151,16 +139,15 @@ bridge IS reachable but burns minutes on 403 retries until the Vercel-side
 fetch aborts, so don't chase the funnel zombie (`?ping=1` distinguishes
 them: `bridge_reachable: true` = not a funnel problem).
 
-**WC-leg thinning:** PrizePicks rate-limits league 241 (World Cup)
-aggressively. Since 2026-06-12 the scraper has a salvage guard
-(`salvageLeagueFromSnapshot` in `scripts/scrape-prizepicks.mjs`, smoke
+**League thinning / salvage:** since 2026-06-12 the scraper has a salvage
+guard (`salvageLeagueFromSnapshot` in `scripts/scrape-prizepicks.mjs`, smoke
 `smoke:scrape-salvage`): a league whose fetch fails after retry is
 backfilled from the previous snapshot (blob first), keeping only
 not-yet-started games — output shows `salvaged from <ts>`. Salvage is
 partial-failure only; an all-league failure still returns 0 props so the
-refuse-write / forward-to-bridge guards fire. Verify WC>0 via
+refuse-write / forward-to-bridge guards fire. Verify per-league counts via
 `node scripts/peek-lines.mjs` after a refresh; a salvaged count only
-shrinks as games kick off.
+shrinks as games tip off.
 
 ## Refresh odds
 
@@ -278,79 +265,6 @@ snapshot's `season` field after refresh.
 ## Refresh team defense
 
 `npm run refresh-team-defense`.
-
-## Refresh soccer rates (World Cup)
-
-`npm run refresh-soccer-rates -- --headed` — MUST be headed: headless
-gets Cloudflare's "Just a moment..." on every FBref page; the headed
-system-Chrome run passes it unattended (~12 min, 12 comps × 7 pages:
-shooting/passing/defense/possession/misc/keepers/playingtime). Weekly
-during the tournament is plenty (club seasons are over; in-tournament
-signal accrues via the grader). Missing players degrade to position
-priors + A-tier cap; rows missing a v2 field degrade per-stat (model-led
-props SKIP on prior-only) — a partial snapshot is safe.
-
-## Refresh WC FotMob stats (PRIMARY grader fallback for model-led stats)
-
-`node scripts/refresh-wc-fotmob-stats.mjs --headed` → `data/wc-fotmob-stats.json`.
-This is the working source for the stats ESPN doesn't carry (Tackles /
-Clearances / Passes Attempted / key passes / crosses / dribbles → and the
-Outfield Fantasy composite), because **FBref posted no advanced Opta tables at
-all this tournament** (see below — its reports stayed "basic only"). FotMob's
-`/api/data/*` endpoints are gated by a signed, rotating header (`x-mas` /
-`x-fm-req`) so a plain fetch 401s; the scraper instead drives a real browser
-(Playwright, persistent `.fotmob-profile`, same recipe as the FBref/soccer-rates
-scrapers) to the WC match pages — the browser signs its own requests and the
-scraper intercepts the `matchDetails` JSON response. MUST be `--headed` (the
-headless run gets bot-challenged). Incremental: it reads the finished-match list
-from `/api/data/leagues?id=77` and scrapes only matches missing from the
-snapshot (~4s apart, ~3–5 min for a full group stage). `--all` rescrapes all.
-
-The grader merges this snapshot AND the FBref one (FotMob preferred, FBref fills,
-ESPN wins) via `scripts/_wc-actuals.mjs`. Dates are stored in America/New_York to
-match ESPN's ET `game_start_time` (the grader keys on `game_start_time.slice(0,10)`).
-
-**Cadence:** run it after WC matches have been played, then
-`node scripts/grade-outcomes.mjs --lookback 30`. Unlike the FBref fallback there
-is NO enrichment-lag rescrape — FotMob's `matchDetails` is complete the moment a
-match ends, so each match is scraped exactly once (the run skips matches already
-in the snapshot). So the only thing that warrants a re-run is *new finished
-matches*: roughly daily during the group stage (matches most days through
-2026-06-27), only on match days through the knockouts. It is not time-critical —
-the grader's 30-day lookback auto-retries ungraded verdicts, so a skipped day
-backfills on the next refresh + grade. In practice: refresh once before any
-calibration check and one incremental pass grabs every match since last time.
-Residual `UNGRADEABLE` counts after a fresh run are PP↔FotMob name mismatches,
-not a staleness bug. Not wired to Task Scheduler (it's a headed run) — schedule
-it like the FBref one if you want it automated.
-
-## Refresh WC match stats (FBref grader fallback)
-
-`node scripts/refresh-wc-match-stats.mjs --headed` (same Cloudflare
-constraint as soccer-rates). Incremental: scrapes only completed matches
-missing from `data/wc-match-stats.json`, PLUS any stored match that is
-still "basic only" — FBref posts day-after reports with just the basic
-summary table (no tackles/clearances/passes; seen 2026-06-12) and
-enriches to full Opta tables later, so basic matches auto-rescrape every
-run until they upgrade. The grader merges this snapshot over ESPN rosters
-(`fbref_filled` counter in the WC result line). Tackles / Clearances /
-Passes Attempted / Outfield Fantasy Score CANNOT grade until enrichment
-lands — if FBref lags past the grader's 7-day window, backfill with
-`node scripts/grade-outcomes.mjs --lookback 30` after a refresh. Run
-every day or two during the tournament.
-
-## World Cup coverage
-
-Rides the existing refreshes: the lines scrape adds PP league 241
-(7 stats: Shots / SOT / Tackles / Goalie Saves / Clearances / Passes
-Attempted / Outfield Fantasy Score, promos dropped; the WC leg 429s
-easily — it retries once, and a dropped league is salvaged from the
-previous snapshot). The odds scrape adds DK league 209533
-(ladder → Poisson fit at scrape time; entries carry `lambda_fair`). The
-grader has a WC leg (ESPN fifa.world summaries, name-matched; stat keys
-validated 2026-06-12 against event 760415 — ESPN carries only
-SHOT/SOG/SV plus goals/assists/fouls/cards, hence the FBref fallback
-above). PrizePicks settles soccer on 90'+stoppage, NO extra time.
 
 ## Query Axiom
 

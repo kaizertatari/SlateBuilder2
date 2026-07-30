@@ -46,7 +46,7 @@ const PLAYERS_BY_LEAGUE = (() => {
   return grouped;
 })();
 
-const LEAGUES = ["NBA", "WNBA", "WC"];
+const LEAGUES = ["NBA", "WNBA"];
 
 const REFRESH_STATUS_COLORS = {
   success: { fg: "#00FF88", bg: "#002218", border: "#00FF8844" },
@@ -77,7 +77,7 @@ export default function App() {
   // Default to WNBA: it's slate-calibrated and reliably has a multi-game board,
   // so the builder produces a slate out of the box. (NBA is calibrated too but
   // off-season/Finals nights often have a single game → diversification can't
-  // fill a slate; WC is paused pending calibration — SLATE_PENDING_LEAGUES.)
+  // fill a slate.)
   const [league, setLeague] = useState("WNBA");
   // Multi-player selection. Order preserved so the chip row is stable;
   // togglePlayer is the single mutation site so duplicates can't accrete.
@@ -103,8 +103,8 @@ export default function App() {
   // Date filter — narrows the Games list (and through it the player picker
   // and slate builder) to slates on the chosen local dates. Keys are local
   // YYYY-MM-DD strings derived from prop start_time; useful because the
-  // snapshot can span several days (WC group stage / NBA Finals post
-  // early). Empty selection = no filter.
+  // snapshot can span several days (NBA Finals post early). Empty
+  // selection = no filter.
   const [selectedDates, setSelectedDates] = useState([]);
   const [datesOpen, setDatesOpen] = useState(false);
   // Odds-type filter for the displayed top picks. Default: all three.
@@ -148,8 +148,8 @@ export default function App() {
   const [buildingSlate, setBuildingSlate] = useState(false);
   const [slateError, setSlateError] = useState(null);
 
-  // League-scoped stat catalog: basketball leagues share one list; WC shows
-  // only the soccer stats. selectedStats resets on league change.
+  // League-scoped stat catalog: basketball leagues share one list.
+  // selectedStats resets on league change.
   const leagueStats = STATS_BY_LEAGUE[league] ?? STATS;
   const allStatsSelected = selectedStats.length === leagueStats.length;
   const allOddsSelected = selectedOdds.length === ODDS_TYPES.length;
@@ -211,7 +211,7 @@ export default function App() {
     const byCanonical = new Map();
     for (const [gameKey, info] of Object.entries(games)) {
       if (!info || info.league !== league) continue;
-      const cleanKey = gameKey.replace(/^(WNBA|WC):/, "");
+      const cleanKey = gameKey.replace(/^WNBA:/, "");
       const parts = cleanKey.split("@");
       if (parts.length !== 2) continue;
       const [a, b] = parts;
@@ -251,24 +251,13 @@ export default function App() {
     return out.sort((a, b) => a.label.localeCompare(b.label));
   }, [linesData, league]);
 
-  // Per-league badge counts for the League toggle. NBA/WNBA come from the
-  // players.json roster; WC players aren't in players.json (the roster IS the
-  // lines snapshot), so count unique slate names — same source the picker uses.
+  // Per-league badge counts for the League toggle, from the players.json
+  // roster.
   const leagueCounts = useMemo(() => {
     const counts = {};
     for (const l of LEAGUES) counts[l] = PLAYERS_BY_LEAGUE[l]?.length ?? 0;
-    const games = linesData?.data?.games || {};
-    const wcPlayers = new Set();
-    for (const info of Object.values(games)) {
-      if (info?.league !== "WC") continue;
-      for (const prop of info.props || []) {
-        const name = prop.player_key || prop.player;
-        if (name) wcPlayers.add(name);
-      }
-    }
-    counts.WC = wcPlayers.size;
     return counts;
-  }, [linesData]);
+  }, []);
 
   // Distinct local dates across the league's games, chronological, each with
   // its game count. Drives the Date dropdown.
@@ -294,11 +283,7 @@ export default function App() {
   // Players visible in the picker — narrowed to selected games when at
   // least one game is picked. Empty selection means "no game filter".
   const leaguePlayers = useMemo(() => {
-    // WC (soccer) players aren't in players.json — the roster IS the lines
-    // snapshot, so derive the picker list from the slate's games.
-    const all = league === "WC"
-      ? [...new Set(dateFilteredGames.flatMap((g) => [...g.players]))].sort()
-      : PLAYERS_BY_LEAGUE[league] ?? [];
+    const all = PLAYERS_BY_LEAGUE[league] ?? [];
     // With dates narrowed but no explicit game picks, the date pool IS the
     // game filter; explicit game picks narrow further within it.
     if (selectedGames.length === 0 && selectedDates.length === 0) return all;
@@ -694,9 +679,9 @@ export default function App() {
   const buildSlateNow = useCallback(async () => {
     setSlateError(null);
     setSlate(null);
-    // A paused league (WC) still round-trips to /api/build-slate: the server
-    // prices + logs its legs for calibration telemetry, then returns the
-    // "pending" abstain, which the abstain card renders (calibration_pending).
+    // A calibration-pending league still round-trips to /api/build-slate: the
+    // server prices + logs its legs for telemetry, then returns the "pending"
+    // abstain, which the abstain card renders (calibration_pending).
     setBuildingSlate(true);
     try {
       // Date filter constrains the board even without explicit game picks;
@@ -707,7 +692,7 @@ export default function App() {
         ? dateFilteredGames
         : null;
       const gameKeys = pool
-        ? pool.flatMap((g) => g.gameKeys.map((k) => k.replace(/^(WNBA|WC):/, "")))
+        ? pool.flatMap((g) => g.gameKeys.map((k) => k.replace(/^WNBA:/, "")))
         : null;
       const body = { league, statTypes: selectedStats, targetMultiplier, mode: slateMode, size: 3 };
       if (gameKeys && gameKeys.length) body.games = gameKeys;
@@ -1092,8 +1077,8 @@ export default function App() {
 
           {/* Date Multi-Select — narrows the Games list (and through it the
               player picker + slate builder) to slates on the chosen local
-              dates. The snapshot can span several days (WC group stage /
-              NBA Finals post early). Empty selection = all dates. */}
+              dates. The snapshot can span several days (NBA Finals post
+              early). Empty selection = all dates. */}
           <div ref={datesRef} style={{ position: "relative" }}>
             <div
               onClick={() => setDatesOpen(!datesOpen)}
