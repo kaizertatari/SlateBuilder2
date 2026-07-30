@@ -21,7 +21,11 @@ const PRIZEPICKS_API = "https://api.prizepicks.com/projections";
 // PP currently ignores this cap and returns the full slate in one response, so
 // we don't paginate. PER_PAGE is kept as a constant so the truncation guard in
 // scrapePrizePicksForLeague can detect PP starting to honor it (page-1 caps).
-const PER_PAGE = 250;
+// MUST stay 10: since ~2026-07 PerimeterX rejects any /projections query whose
+// per_page differs from the web app's own value (10) — 250 gets a thrown
+// "Failed to fetch" on every attempt while 10 returns the full board (verified
+// 2026-07-28: per_page=10 → 200/2941 items; 25/50/100/150/250 → blocked).
+const PER_PAGE = 10;
 
 // PrizePicks league IDs. Add more entries here if PrizePicks publishes more
 // leagues we want to cover; everything downstream is league-aware.
