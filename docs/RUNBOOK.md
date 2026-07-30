@@ -18,7 +18,7 @@ home-bridge daemon that the deployed UI forwards to.
 | `PrizePicks Refresh Lines` | 00:00 / 06:00 / 12:00 / 18:00 | PrizePicks lines scrape → `data/prizepicks-lines.json` + blob |
 | `PrizePicks Refresh Odds` | 00:10 / 06:10 / 12:10 / 18:10 | `scripts/refresh-odds-task.bat` → DK+FD no-vig consensus → `data/odds.json` + blob (+10 min after lines so they stay in sync) |
 | `Funnel Watchdog` | every 15 min | `scripts/funnel-watchdog-task.bat` → self-heals the Tailscale funnel zombie (see below) |
-| `Refresh Bridge` | at logon (daemon) | `wscript.exe scripts/refresh-bridge-task.vbs` → hidden, self-restarting `scripts/refresh-bridge.mjs`. Replaced the NSSM service 2026-07-07 — see "Refresh-bridge daemon" |
+| `Refresh Bridge` | at logon (daemon) | `powershell.exe -WindowStyle Hidden -File scripts/refresh-bridge-task.ps1` → job-object-wrapped, self-restarting `scripts/refresh-bridge.mjs`. Replaced the NSSM service 2026-07-07; launcher rewritten from `.vbs` 2026-07-30 — see "Refresh-bridge daemon" |
 
 **Migration audit (2026-07-07):** after the 06-17 move to `Slate Builder2`,
 `PrizePicks Refresh Lines` and `PrizePicks Refresh Odds` still executed the
@@ -187,18 +187,32 @@ because PerimeterX now hard-403s headless Chrome launched from session 0
 (any Windows service), and each failed session-0 scrape poisons the shared
 `.prizepicks-profile` for every other scrape. The bridge now runs as
 Scheduled Task **`Refresh Bridge`**: at-logon trigger, Interactive as the
-operator (same session as the other PP scrapes), `wscript.exe
-scripts/refresh-bridge-task.vbs` → launches `refresh-bridge-task.bat`
-hidden (a visible console invites an accidental close — 0xC000013A killed
-the first attempt) → self-restart loop around `node
-scripts/refresh-bridge.mjs` (5s backoff, replaces NSSM `AppExit=Restart`).
+operator (same session as the other PP scrapes), `powershell.exe
+-WindowStyle Hidden -File scripts/refresh-bridge-task.ps1` → wraps
+`refresh-bridge-task.bat` (self-restart loop around `node
+scripts/refresh-bridge.mjs`, 5s backoff, replaces NSSM `AppExit=Restart`)
+in a **kill-on-close Job Object** and waits on it.
 
-- Status: `Get-ScheduledTaskInfo -TaskName "Refresh Bridge"` + `curl
+**Launcher changed 2026-07-30** — the original `wscript.exe
+refresh-bridge-task.vbs` launcher fired-and-forgot, so (a) the task
+instance "completed" in <1s and every logon stacked another orphaned
+restart loop (three found running at once), and (b) `Stop-ScheduledTask`
+had nothing to kill — Windows never terminates a task's process TREE, only
+its direct process. The `.ps1` fixes both: the task instance now reads
+**Running** for the daemon's lifetime (so the IgnoreNew instance policy
+blocks duplicate logon launches), and stopping the task terminates the
+launcher, whose closing job handle makes the kernel reap cmd + node + the
+warm Chrome. The `.bat` also gained a port-4000 duplicate guard (a second
+copy exits instead of crash-looping on EADDRINUSE).
+
+- Status: `Get-ScheduledTask -TaskName "Refresh Bridge"` (State should be
+  **Running** — `Ready` means the daemon is NOT up) + `curl
   http://127.0.0.1:4000/health` (`GET /health`, unauthenticated →
   `{ok:true}`).
 - Restart (no elevation): `Stop-ScheduledTask -TaskName "Refresh Bridge"`
-  (kills the loop), kill any orphan `node` on port 4000
-  (`Get-NetTCPConnection -LocalPort 4000`), then `Start-ScheduledTask`.
+  then `Start-ScheduledTask -TaskName "Refresh Bridge"`. Since 2026-07-30
+  Stop reliably kills the whole tree (verify: port 4000 free) — no manual
+  orphan hunt needed.
 - Logs: `logs/refresh-bridge.out.log` + `logs/refresh-bridge.err.log`
   (append-only now — NSSM's 10 MB rotation is gone; trim occasionally).
 - Public route: the `HOME_REFRESH_URL` Vercel env points at the Tailscale

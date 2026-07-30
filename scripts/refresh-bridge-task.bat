@@ -16,6 +16,15 @@ setlocal
 cd /d "%~dp0.."
 if not exist "logs" mkdir "logs"
 
+REM Duplicate guard: if another bridge already owns port 4000, exit instead of
+REM crash-looping against EADDRINUSE (stacked at-logon launches did exactly
+REM that until the .vbs launcher started waiting on this script).
+netstat -ano | findstr /C:":4000" | findstr /C:"LISTENING" > NUL
+if not errorlevel 1 (
+  echo === %date% %time% bridge already listening on :4000 — duplicate launch, exiting === >> "logs\refresh-bridge.out.log"
+  exit /b 0
+)
+
 REM Self-restart loop — replaces NSSM's AppExit=Restart. The 5s pause keeps a
 REM crash-loop from spinning hot. Launched hidden via refresh-bridge-task.vbs
 REM (a visible console window gets closed by accident, which killed the bridge
