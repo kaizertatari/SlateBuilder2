@@ -139,6 +139,24 @@ bridge IS reachable but burns minutes on 403 retries until the Vercel-side
 fetch aborts, so don't chase the funnel zombie (`?ping=1` distinguishes
 them: `bridge_reachable: true` = not a funnel problem).
 
+**Slider captcha regime (steady-state since 2026-08-02):** PX now serves a
+"Let's confirm you're human" slider that needs ONE human slide per fresh
+clearance, and the clearance does not survive ~12h idle — so unattended
+scheduled refreshes fail gracefully (refuse-write keeps the stale snapshot)
+and every operator-requested refresh may need a slide. Do NOT use `--headed`
+for this: its clearance loop reloads the page every ~12s, which resets the
+slider mid-drag (2026-08-01). Routine:
+1. `Stop-ScheduledTask "Refresh Bridge"` (shared-profile collision).
+2. Delete `.prizepicks-profile`.
+3. `node scripts/px-seed-assist.mjs` — opens a headed window that NEVER
+   reloads and probes the API in-page every 5s; operator slides once; the
+   script exits 0 on a 200 probe (exit 1 = budget/window closed).
+4. Headless `npm run refresh-prizepicks:guarded` immediately after.
+5. `Start-ScheduledTask "Refresh Bridge"`; verify
+   `curl 127.0.0.1:4000/health`.
+NBA and WC boards may error ("Failed to fetch") even when cleared — WNBA is
+the only health signal.
+
 **League thinning / salvage:** since 2026-06-12 the scraper has a salvage
 guard (`salvageLeagueFromSnapshot` in `scripts/scrape-prizepicks.mjs`, smoke
 `smoke:scrape-salvage`): a league whose fetch fails after retry is
