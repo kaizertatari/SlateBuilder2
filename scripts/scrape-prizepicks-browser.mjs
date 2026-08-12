@@ -31,10 +31,37 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PROFILE_DIR = path.join(ROOT, ".prizepicks-profile");
 const APP_URL = "https://app.prizepicks.com/";
 // A real Chrome UA — headless Chrome's default UA carries a "HeadlessChrome"
-// token that PX flags; override it to the stable desktop string.
-const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36";
+// token that PX flags; override it to the desktop string. The major version
+// must track the INSTALLED Chrome (PX cross-checks UA against client hints /
+// engine behavior — a pinned stale version is a mismatch signal; the hardcoded
+// 137 had drifted 13 majors behind by 2026-08-01 and PX escalated to a slider
+// captcha). Detect it from the Chrome install dir; fall back to a recent major.
+function detectChromeMajor() {
+  const bases = [
+    "C:\\Program Files\\Google\\Chrome\\Application",
+    "C:\\Program Files (x86)\\Google\\Chrome\\Application",
+    path.join(process.env.LOCALAPPDATA ?? "", "Google\\Chrome\\Application"),
+  ];
+  for (const base of bases) {
+    try {
+      const v = fssync.readdirSync(base).find((d) => /^\d+\.\d+\./.test(d));
+      if (v) return v.split(".")[0];
+    } catch {
+      /* not installed here */
+    }
+  }
+  return null;
+}
+const UA = `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${detectChromeMajor() ?? 150}.0.0.0 Safari/537.36`;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// PX can hold an in-page fetch open indefinitely (observed 2026-08-01: a probe
+// hung >20min and silently froze the whole scrape), and page.evaluate has no
+// default timeout. Race every evaluate against a deadline; the loser resolves
+// to `fallback` and the caller treats it like a failed probe/fetch.
+const raceTimeout = (promise, ms, fallback) =>
+  Promise.race([promise, sleep(ms).then(() => fallback)]);
 
 async function launchContext(headed) {
   let chromium;
@@ -80,14 +107,20 @@ async function launchContext(headed) {
 function makeFetchJson(page) {
   return async function fetchJson(url) {
     for (let attempt = 0; attempt < 4; attempt++) {
-      const r = await page.evaluate(async (u) => {
-        try {
-          const res = await fetch(u, { headers: { Accept: "application/json" } });
-          return { status: res.status, text: await res.text() };
-        } catch (e) {
-          return { status: 0, text: "", error: String(e) };
-        }
-      }, url);
+      const r = await raceTimeout(
+        page
+          .evaluate(async (u) => {
+            try {
+              const res = await fetch(u, { headers: { Accept: "application/json" } });
+              return { status: res.status, text: await res.text() };
+            } catch (e) {
+              return { status: 0, text: "", error: String(e) };
+            }
+          }, url)
+          .catch((e) => ({ status: 0, text: "", error: `evaluate: ${String(e).slice(0, 120)}` })),
+        30000,
+        { status: 0, text: "", error: "in-page fetch hung (30s timeout)" },
+      );
       if (r.status === 200) {
         try {
           return JSON.parse(r.text);
@@ -119,14 +152,20 @@ function makeFetchJson(page) {
 // the app page is a PX block, not the real app) means not yet cleared.
 const PROBE_URL = "https://api.prizepicks.com/projections?league_id=3&per_page=10&single_stat=true";
 async function probePxStatus(page) {
-  return page.evaluate(async (u) => {
-    try {
-      const r = await fetch(u, { headers: { Accept: "application/json" } });
-      return r.status;
-    } catch {
-      return 0;
-    }
-  }, PROBE_URL);
+  return raceTimeout(
+    page
+      .evaluate(async (u) => {
+        try {
+          const r = await fetch(u, { headers: { Accept: "application/json" } });
+          return r.status;
+        } catch {
+          return 0;
+        }
+      }, PROBE_URL)
+      .catch(() => 0),
+    15000,
+    0,
+  );
 }
 
 // Load the app and wait for PerimeterX to issue a cleared _px3, CONFIRMED by a
