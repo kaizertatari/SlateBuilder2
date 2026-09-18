@@ -105,6 +105,9 @@ export function composeGroundTruth(params) {
     l5: l5 ? {
       type: l5.season_type,
       n: l5.n,
+      // Playoff games in the sample — < n when a thin WNBA playoff L5 was
+      // padded with regular-season games (espn-stats.padPlayoffL5).
+      playoff_n: l5.playoff_n ?? (l5.season_type === "Playoffs" ? l5.n : 0),
       is_prior_season: !!l5.is_prior_season,
       games: l5.games,
       averages: enrichL5Averages(l5.averages),
@@ -426,7 +429,7 @@ function deriveSeriesFromL5(games, oppAbbr) {
   const upper = oppAbbr.toUpperCase();
   const re = new RegExp(`(^|[^A-Z])${upper}([^A-Z]|$)`);
   const vs = games.filter(
-    (g) => g.matchup && re.test(g.matchup.toUpperCase())
+    (g) => !g.regular_season && g.matchup && re.test(g.matchup.toUpperCase())
   );
   let pw = 0, ow = 0;
   for (const g of vs) {

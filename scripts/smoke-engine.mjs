@@ -924,5 +924,51 @@ console.log("\n[z3] rule 5f WNBA closeout by round");
   assert("[z3] Finals 3-1 → closeout engaged", fin3.fired && fin3.suppressor === true, JSON.stringify(fin3));
 }
 
+// (z4) WNBA thin playoff sample. Best-of-3 R1 leaves 1–2 playoff games; the
+// L5 is padded with recent regular-season games, labeled so the playoff-L5
+// override can't govern on it, and padded games never count as series games.
+console.log("\n[z4] thin playoff L5 padding");
+{
+  const { padPlayoffL5 } = await import("../api/_lib/espn-stats.js");
+  const { computeWeightedL5 } = await import("../api/_lib/weighted-l5.js");
+  const g = (matchup, pts) => ({ matchup, pts, reb: 5, ast: 3, stl: 1, blk: 0, tov: 2, minutes: 30, pra: pts + 8 });
+  const playoff1 = { season: "2026", season_type: "Playoffs", n: 1, games: [g("LV vs NY", 32)] };
+  const reg5 = {
+    season: "2026", season_type: "Regular Season", n: 5,
+    games: [g("LV @ NY", 20), g("LV vs NY", 22), g("LV @ NY", 18), g("LV vs SEA", 21), g("LV @ PHX", 19)],
+  };
+
+  const padded = padPlayoffL5(playoff1, reg5);
+  assert("[z4] 1 playoff game padded to n=5", padded.n === 5 && padded.playoff_n === 1, `n=${padded.n} playoff_n=${padded.playoff_n}`);
+  assert("[z4] mixed sample is not labeled Playoffs", padded.season_type === "Playoffs+Regular Season", padded.season_type);
+  assert("[z4] playoff game stays newest, pads tagged regular_season",
+    !padded.games[0].regular_season && padded.games.slice(1).every((x) => x.regular_season === true));
+  assert("[z4] averages span all 5 games (32+20+22+18+21)/5 = 22.6", padded.averages.ppg === 22.6, `got ${padded.averages.ppg}`);
+
+  const g1 = padPlayoffL5(null, reg5);
+  assert("[z4] Game 1 (no playoff games) → Regular Season L5", g1.season_type === "Regular Season" && g1.n === 5 && g1.playoff_n === 0,
+    `${g1.season_type} n=${g1.n} playoff_n=${g1.playoff_n}`);
+  const full = { season: "2026", season_type: "Playoffs", n: 5, games: reg5.games };
+  assert("[z4] full playoff L5 returned unchanged", padPlayoffL5(full, reg5) === full);
+
+  // 1 playoff + 3 regular-season games are all vs NY. Untagged, that's 4
+  // "series" games → playoff_series mode; tagged, only the playoff game counts.
+  const w = computeWeightedL5({
+    games: padded.games, seasonPpg: 20, ownAbbr: "LV",
+    series: { opponent_abbr: "NY", next_game_number: 2 },
+  });
+  assert("[z4] regular-season meetings are not series games", w.mode === "playoff_raw_fallback" && w.current_series_n === 0,
+    `mode=${w.mode} current_series_n=${w.current_series_n}`);
+
+  // Governance: padded sample follows the regular rule; a real 5-game
+  // playoff L5 still takes the playoff override.
+  const govern = (type) => computeOverBufferCheck({
+    groundTruth: gt({ l5: { type, n: 5, playoff_n: 1, averages: { ppg: 22.6 }, games: padded.games } }),
+    statType: "Points", line: 18.5, seasonAvg: 21, l5Avg: 22.6, l5WeightedUsed: false,
+  }).governing;
+  assert("[z4] padded L5 does not take the playoff override", !/playoff_override/.test(govern("Playoffs+Regular Season")), govern("Playoffs+Regular Season"));
+  assert("[z4] pure playoff L5 (n=5) still takes the override", /playoff_override/.test(govern("Playoffs")), govern("Playoffs"));
+}
+
 console.log(`\n=== smoke-engine: ${passed} pass, ${failed} fail ===`);
 process.exit(failed > 0 ? 1 : 0);

@@ -46,6 +46,11 @@ const OPPONENT_MATCH_WEIGHTS = {
 export const BLEND_CURRENT_SERIES_RATIO = 0.6;
 const CURRENT_SERIES_MIN_GAMES = 3;
 
+// Playoff games needed before a pure playoff L5 governs the baseline
+// (isPlayoffL5). Below it, WNBA playoff L5s are padded with recent
+// regular-season games (espn-stats.padPlayoffL5, analyze.js).
+export const PLAYOFF_L5_MIN_GAMES = 3;
+
 // Move 3 — regular-season H2H mini-baseline. computeH2HAverages takes a
 // deeper gamelog (typically last 50 reg-season games), filters to games
 // against the current opponent via matchup parsing, and returns an
@@ -143,6 +148,9 @@ function assignSeriesNumbers(games, opponentAbbr, ownAbbr) {
   const oldestFirst = [...games].reverse();
   let counter = 0;
   const numbersOldestFirst = oldestFirst.map((g) => {
+    // Regular-season games padded into a thin playoff L5 are never series
+    // games, even against the same opponent.
+    if (g?.regular_season) return null;
     const parsed = parseOpponentAbbr(g?.matchup, ownAbbr);
     if (parsed === opp) {
       counter += 1;

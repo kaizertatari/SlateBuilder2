@@ -291,28 +291,66 @@ export async function getLastNGames(athleteId, n = 5, { season, postseason = fal
     pra: g.pts + g.reb + g.ast,
   }));
   if (!games.length) return null;
-  const avg = (k) => Number((games.reduce((s, g) => s + (g[k] || 0), 0) / games.length).toFixed(2));
   return {
     season: seasonLabelFromEndYear(endYear, league),
     season_type: postseason ? "Playoffs" : "Regular Season",
     n: games.length,
     games,
-    averages: {
-      ppg: avg("pts"),
-      rpg: avg("reb"),
-      apg: avg("ast"),
-      fg3m: avg("fg3m"),
-      fg3a: avg("fg3a"),
-      fga: avg("fga"),
-      ftm: avg("ftm"),
-      fta: avg("fta"),
-      ft_pct: avg("ft_pct"),
-      pra: avg("pra"),
-      minutes: avg("minutes"),
-      // For Blks+Stls and Fantasy Score baselines on L5.
-      bpg: avg("blk"),
-      spg: avg("stl"),
-      topg: avg("tov"),
-    },
+    averages: summarizeGames(games),
+  };
+}
+
+function summarizeGames(games) {
+  const avg = (k) => Number((games.reduce((s, g) => s + (g[k] || 0), 0) / games.length).toFixed(2));
+  return {
+    ppg: avg("pts"),
+    rpg: avg("reb"),
+    apg: avg("ast"),
+    fg3m: avg("fg3m"),
+    fg3a: avg("fg3a"),
+    fga: avg("fga"),
+    ftm: avg("ftm"),
+    fta: avg("fta"),
+    ft_pct: avg("ft_pct"),
+    pra: avg("pra"),
+    minutes: avg("minutes"),
+    // For Blks+Stls and Fantasy Score baselines on L5.
+    bpg: avg("blk"),
+    spg: avg("stl"),
+    topg: avg("tov"),
+  };
+}
+
+/**
+ * Fill a thin playoff L5 up to `n` games with the most recent regular-season
+ * games (WNBA best-of-3 first round: 0–2 playoff games until the semis).
+ * Playoff games stay first (they're the newest), so the recency ramp still
+ * weights them most. Padded games carry `regular_season: true` so series
+ * matching never counts a regular-season meeting with the playoff opponent
+ * as a series game.
+ *
+ * season_type is "Playoffs+Regular Season" when the sample is mixed — NOT
+ * "Playoffs", so the playoff-L5 override (isPlayoffL5) can't govern on it —
+ * and "Regular Season" when there are no playoff games yet (Game 1).
+ *
+ * @param {Object|null} playoffL5  getLastNGames(..., { postseason: true })
+ * @param {Object|null} regularL5  getLastNGames(..., { postseason: false })
+ * @returns {Object|null} l5-shaped object with playoff_n, or playoffL5
+ *   unchanged when there's nothing to pad with.
+ */
+export function padPlayoffL5(playoffL5, regularL5, n = 5) {
+  const playoffGames = playoffL5?.games ?? [];
+  const pad = (regularL5?.games ?? [])
+    .slice(0, Math.max(0, n - playoffGames.length))
+    .map((g) => ({ ...g, regular_season: true }));
+  if (!pad.length) return playoffL5;
+  const games = [...playoffGames, ...pad];
+  return {
+    season: playoffL5?.season ?? regularL5.season,
+    season_type: playoffGames.length ? "Playoffs+Regular Season" : "Regular Season",
+    n: games.length,
+    playoff_n: playoffGames.length,
+    games,
+    averages: summarizeGames(games),
   };
 }

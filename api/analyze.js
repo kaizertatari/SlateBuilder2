@@ -20,7 +20,7 @@ import {
   opponentFor,
 } from "./_lib/espn.js";
 import { composeGroundTruth } from "./_lib/ground-truth.js";
-import { computeH2HAverages } from "./_lib/weighted-l5.js";
+import { computeH2HAverages, PLAYOFF_L5_MIN_GAMES } from "./_lib/weighted-l5.js";
 import { rateLimit } from "./_lib/rate-limit.js";
 import { runWithRequestContext } from "./_lib/request-context.js";
 import { PROP_TO_FIELD } from "./_lib/prop-types.js";
@@ -188,14 +188,19 @@ export async function gatherGroundTruth({ player, propType, line, teamAbbrHint =
     ? await espnStats.getLastNGames(espnId, 5, { season, postseason: isPlayoff, league })
     : null;
   trace.l5 = l5?.games?.length ? "espn_gamelog" : null;
-  // WNBA early-playoff: if the playoff gamelog is empty (G1 not yet logged),
-  // retry against current-season regular-season games before falling through
-  // to stats edge. Stays in 2026 — no prior-season carry-over.
-  if (!trace.l5 && league === "WNBA" && isPlayoff && espnId) {
+  // WNBA thin playoff sample: the best-of-3 first round leaves 0–2 playoff
+  // games in the gamelog until the semis, and a 1-game "L5" could govern the
+  // baseline on its own. Below PLAYOFF_L5_MIN_GAMES (where the playoff-L5
+  // override starts governing) fill the window with the most recent
+  // current-season regular-season games; with no playoff games yet (Game 1)
+  // that's a plain regular-season L5. Stays in 2026 — no prior-season
+  // carry-over.
+  const playoffN = l5?.games?.length ?? 0;
+  if (league === "WNBA" && isPlayoff && espnId && playoffN < PLAYOFF_L5_MIN_GAMES) {
     const reg = await espnStats.getLastNGames(espnId, 5, { season, postseason: false, league });
     if (reg?.games?.length) {
-      l5 = reg;
-      trace.l5 = "espn_gamelog_regular_fallback";
+      l5 = espnStats.padPlayoffL5(l5, reg);
+      trace.l5 = playoffN ? `espn_gamelog_playoff_padded(playoff_n=${playoffN})` : "espn_gamelog_regular_fallback";
     }
   }
   if (!trace.l5) {

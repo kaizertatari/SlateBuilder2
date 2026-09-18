@@ -152,6 +152,7 @@ export function logVerdict({
     l5_avg: pickAvg(groundTruth?.l5?.averages, input?.propType),
     l5_type: groundTruth?.l5?.type ?? null,
     l5_n: groundTruth?.l5?.n ?? null,
+    l5_playoff_n: groundTruth?.l5?.playoff_n ?? null,
     // Move 2 — current-series mini-baseline (playoff_series mode only).
     // Lets grade-outcomes correlate hit rate against the blend ratio
     // (BLEND_CURRENT_SERIES_RATIO in weighted-l5.js) so we can recalibrate

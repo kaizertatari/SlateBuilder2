@@ -9,7 +9,7 @@
 
 import { PROP_TO_FIELD } from "../prop-types.js";
 import { FRAMEWORK_SCALING, ftFloorBaseline } from "../framework.js";
-import { BLEND_CURRENT_SERIES_RATIO, BLEND_H2H_RATIO, H2H_MIN_GAMES } from "../weighted-l5.js";
+import { BLEND_CURRENT_SERIES_RATIO, BLEND_H2H_RATIO, H2H_MIN_GAMES, PLAYOFF_L5_MIN_GAMES } from "../weighted-l5.js";
 
 export { PROP_TO_FIELD, FRAMEWORK_SCALING, ftFloorBaseline };
 
@@ -52,8 +52,9 @@ export function scaleFor(groundTruth) {
 }
 
 // l5.type === "Playoffs" + n≥3 = playoff sample size large enough to govern.
+// A padded "Playoffs+Regular Season" L5 never qualifies.
 export function isPlayoffL5(groundTruth) {
-  return groundTruth?.l5?.type === "Playoffs" && (groundTruth?.l5?.n ?? 0) >= 3;
+  return groundTruth?.l5?.type === "Playoffs" && (groundTruth?.l5?.n ?? 0) >= PLAYOFF_L5_MIN_GAMES;
 }
 
 export function isPlayoffGame(groundTruth) {
