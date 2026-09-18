@@ -194,14 +194,23 @@ async function main() {
   }
 
   console.log(`\n[3/4] aggregating players across box scores...`);
-  // Keep the max-minutes appearance per player to capture their current team
-  // (most recent stint = highest minute count over the 30-day window).
+  // team_abbr comes from the player's MOST RECENT appearance (current team);
+  // `minutes` keeps the max across the window for the eligibility filter.
+  // Max-minutes alone pinned traded players to their old team whenever
+  // their biggest game in the window predated the trade (DeWanna Bonner
+  // PHX→ATL, 2026-09-18).
   const byEspnId = new Map();
   for (const ev of events) {
     const players = await extractPlayersFromEvent(ev.id);
+    const evTime = new Date(ev.date).getTime();
     for (const p of players) {
       const prior = byEspnId.get(p.espn_id);
-      if (!prior || prior.minutes < p.minutes) byEspnId.set(p.espn_id, p);
+      const latest = !prior || evTime > prior.lastSeen;
+      byEspnId.set(p.espn_id, {
+        ...(latest ? p : prior),
+        lastSeen: latest ? evTime : prior.lastSeen,
+        minutes: Math.max(p.minutes, prior?.minutes ?? 0),
+      });
     }
     await sleep(80);
   }
@@ -237,19 +246,40 @@ async function main() {
   let updated = 0;
   let withWnbaId = 0;
 
+  // Name-change aliases: ESPN renames a player in place (same athlete id —
+  // e.g. Megan Gustafson → Megan DiLeo, Nia Coffey → Nia Brodie) while
+  // PrizePicks may still publish the old name, so both keys stay. The new
+  // name inherits the alias's IDs, and the alias follows her team.
+  const namesByEspn = new Map();
+  for (const [name, info] of Object.entries(merged)) {
+    if (info?.league !== "WNBA" || info.espn == null) continue;
+    const key = String(info.espn);
+    if (!namesByEspn.has(key)) namesByEspn.set(key, []);
+    namesByEspn.get(key).push(name);
+  }
+  let aliasSynced = 0;
+
   for (const p of eligible) {
     const wnbaHit = wnbaIdByName.get(normName(p.name));
     const wnbaId = wnbaHit?.id ?? null;
     if (wnbaId) withWnbaId++;
 
     const existing = merged[p.name];
+    const aliasNames = (namesByEspn.get(p.espn_id) ?? []).filter((n) => n !== p.name);
+    const alias = aliasNames.map((n) => merged[n]).find(Boolean);
     const next = {
-      nba: wnbaId ?? existing?.nba ?? null,
+      nba: wnbaId ?? existing?.nba ?? alias?.nba ?? null,
       espn: Number(p.espn_id),
-      bbref: existing?.bbref ?? null,
+      bbref: existing?.bbref ?? alias?.bbref ?? null,
       team_abbr: p.team_abbr ?? existing?.team_abbr ?? null,
       league: "WNBA",
     };
+    for (const n of aliasNames) {
+      const a = merged[n];
+      const synced = { ...a, nba: a.nba ?? next.nba, bbref: a.bbref ?? next.bbref, team_abbr: next.team_abbr };
+      if (JSON.stringify(synced) !== JSON.stringify(a)) aliasSynced++;
+      merged[n] = synced;
+    }
 
     if (existing) {
       if (existing.nba !== next.nba || existing.espn !== next.espn ||
@@ -266,6 +296,7 @@ async function main() {
 
   console.log(`\n  added: ${added}`);
   console.log(`  updated: ${updated}`);
+  console.log(`  name-change aliases synced: ${aliasSynced}`);
   console.log(`  with stats.wnba.com PERSON_ID: ${withWnbaId}/${eligible.length}`);
   console.log(`\nFinal total: ${Object.keys(merged).length} players (NBA + WNBA combined)`);
 }

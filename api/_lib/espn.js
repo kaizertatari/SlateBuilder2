@@ -63,6 +63,12 @@ async function jsonFetch(url) {
   }
 }
 
+function roundNameFromNotes(notes) {
+  const headline = Array.isArray(notes) ? notes.find((n) => n?.headline)?.headline : null;
+  if (!headline) return null;
+  return headline.split(" - ")[0].trim() || null;
+}
+
 function parseEvent(event) {
   const comp = event.competitions?.[0];
   if (!comp) return null;
@@ -79,6 +85,11 @@ function parseEvent(event) {
     // ground-truth uses this to avoid reconstructing series from gamelog.
     series: comp.series ?? null,
     round: comp.type?.abbreviation ?? null, // e.g. "RD16" | "RD8" | "RD4" | "RD2"
+    // Human round name from the event note ("Semifinals - Game 1" →
+    // "Semifinals"). Needed because ESPN tags WNBA semifinal events with the
+    // regular-season "STD" type abbreviation, so `round` alone can't tell
+    // a best-of-5 semi from a best-of-7 Finals.
+    round_name: roundNameFromNotes(comp.notes),
     home: {
       team_id: home.team.id,
       name: home.team.displayName,

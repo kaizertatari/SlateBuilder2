@@ -22,7 +22,10 @@ function isCloseoutThreshold(series, isWnba) {
   if (!series) return false;
   const playerWins = series.player_team_wins ?? 0;
   const oppWins = series.opponent_wins ?? 0;
-  const round = String(series.round || "").toLowerCase();
+  // round_name ("Semifinals") first: ESPN tags WNBA semifinal events with
+  // the regular-season "STD" abbreviation, so `round` alone misreads a
+  // best-of-5 semi as best-of-7.
+  const round = `${series.round_name || ""} ${series.round || ""}`.toLowerCase();
   // Player at closeout threshold = within one win of clinching.
   // WNBA R1 = best-of-3, semis/conf = best-of-5, finals = best-of-7.
   if (isWnba) {
@@ -42,7 +45,7 @@ function isOpponentCloseout(series, isWnba) {
   if (!series) return false;
   // Mirror logic with sides reversed.
   return isCloseoutThreshold(
-    { ...series, player_team_wins: series.opponent_wins, opponent_wins: series.player_team_wins, round: series.round },
+    { ...series, player_team_wins: series.opponent_wins, opponent_wins: series.player_team_wins },
     isWnba
   );
 }

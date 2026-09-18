@@ -13,8 +13,9 @@
 
 import { applyEngine } from "../api/_lib/engine.js";
 import { computeOverBufferCheck } from "../api/_lib/rules/_helpers.js";
-import { shadowTierFor, TIER_RANK } from "../api/_lib/rule-weights.js";
+import { shadowTierFor, TIER_RANK, RULE_WEIGHTS } from "../api/_lib/rule-weights.js";
 import { setOdds } from "../api/_lib/odds.js";
+import { apply as rule5f } from "../api/_lib/rules/rule5f.js";
 
 // Hermetic odds: the engine's market rules (market-edge / game-script /
 // projection) lazy-load data/odds.json on first lookup, and the fixtures
@@ -894,6 +895,33 @@ console.log("\n[z2] snapToBand-fix shadow");
   const pv = applyEngine({ groundTruth: gt(), statType: "Points", direction: "OVER", line: 19.5 });
   assert("[z2] engine sets shadow_tier", typeof pv.shadow_tier === "string", `got ${pv.shadow_tier}`);
   assert("[z2] shadow never out-ranks live", TIER_RANK[pv.shadow_tier] <= TIER_RANK[pv.tier], `${pv.shadow_tier} vs ${pv.tier}`);
+}
+
+// (z3) Rule 5f WNBA closeout by round. ESPN tags WNBA semifinal events with
+// the regular-season "STD" abbreviation — the series length must come from
+// round_name, or a 2-0 semi lead (best-of-5 closeout) reads as best-of-7.
+console.log("\n[z3] rule 5f WNBA closeout by round");
+{
+  const wnbaSeries = (round, round_name, pw, ow) => ({
+    league: "WNBA",
+    win_prob: { player_team_pct: 0.6 },
+    series: {
+      round, round_name, player_team_wins: pw, opponent_wins: ow,
+      next_game_number: pw + ow + 1, series_record: `${pw}-${ow}`,
+      leading_team_abbr: pw > ow ? "LV" : ow > pw ? "NY" : null,
+    },
+  });
+  const run = (g) => rule5f({ groundTruth: g, direction: "OVER", weights: RULE_WEIGHTS });
+  const r1 = run(wnbaSeries("RD16", "First Round", 1, 0));
+  assert("[z3] R1 1-0 (Bo3) → closeout engaged", r1.fired && r1.suppressor === true, JSON.stringify(r1));
+  const semi = run(wnbaSeries("STD", "Semifinals", 2, 0));
+  assert("[z3] semis 2-0 on STD (Bo5) → closeout engaged", semi.fired && semi.suppressor === true, JSON.stringify(semi));
+  const semiOpp = run(wnbaSeries("STD", "Semifinals", 0, 2));
+  assert("[z3] semis 0-2 → opponent closeout, suppressor off", !semiOpp.fired, JSON.stringify(semiOpp));
+  const fin = run(wnbaSeries("FINAL", "WNBA Finals", 2, 0));
+  assert("[z3] Finals 2-0 (Bo7) → not a closeout", !(fin.fired && fin.suppressor), JSON.stringify(fin));
+  const fin3 = run(wnbaSeries("FINAL", "WNBA Finals", 3, 1));
+  assert("[z3] Finals 3-1 → closeout engaged", fin3.fired && fin3.suppressor === true, JSON.stringify(fin3));
 }
 
 console.log(`\n=== smoke-engine: ${passed} pass, ${failed} fail ===`);

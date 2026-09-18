@@ -184,6 +184,8 @@ export function logVerdict({
     primary_defender: groundTruth?.opponent_defense?.primary_defender?.player ?? null,
     is_playoff: !!groundTruth?.series,
     series_round: groundTruth?.series?.round ?? null,
+    // WNBA semis carry round "STD" (same as regular season) — slice on this.
+    series_round_name: groundTruth?.series?.round_name ?? null,
     game_number: groundTruth?.series?.next_game_number ?? null,
     days_out: groundTruth?.game?.days_out ?? null,
     is_listed_injured: !!groundTruth?.player_recent?.is_listed_injured,
@@ -208,8 +210,9 @@ export function logVerdict({
  * Only GRADEABLE legs are emitted: a leg needs game_start_time plus an
  * espn_id (basketball gamelog grading).
  * NOTE: is_playoff is intentionally absent — the lines snapshot doesn't carry
- * it, so the grader treats these as regular-season. WNBA grades cleanly;
- * NBA *playoff* legs won't match until is_playoff is sourced (known gap).
+ * it. The grader looks in the regular-season gamelog first and falls back to
+ * the postseason bucket on a date miss, so playoff legs (NBA and WNBA) still
+ * settle.
  *
  * @param {Array<Object>} legs  build-slate candidates (player, stat_type,
  *   direction, line, odds_type, league, game_start_time, espn_id, nba_id,

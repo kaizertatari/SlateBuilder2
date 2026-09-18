@@ -177,6 +177,11 @@ async function main() {
       continue;
     }
     const games = gamelog?.games ?? [];
+    // Other season-type bucket, fetched lazily on the first date miss. Slate
+    // legs (logSlateLegs) carry no is_playoff, so their playoff games live
+    // only in the postseason bucket; a verdict tagged playoff can likewise
+    // be a play-in/regular game. Null until needed; [] if the fetch fails.
+    let otherGames = null;
 
     for (const v of g.verdicts) {
       // Audit counters — tally regardless of whether the actual game is
@@ -193,10 +198,22 @@ async function main() {
       // claimed direct equality; that contract changed but this matcher
       // was never updated.
       const targetDay = v.game_start_time ? v.game_start_time.slice(0, 10) : null;
-      const entry = games.find((x) => {
+      const onTargetDay = (x) => {
         const d = new Date(x.date);
         return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === targetDay;
-      });
+      };
+      let entry = games.find(onTargetDay);
+      if (!entry && targetDay) {
+        if (otherGames == null) {
+          const alt = await getLastNGames(g.espn_id, 50, {
+            season: g.season,
+            postseason: !g.is_playoff,
+            league: g.league,
+          }).catch(() => null);
+          otherGames = alt?.games ?? [];
+        }
+        entry = otherGames.find(onTargetDay);
+      }
       if (!entry) {
         postponed++;
         continue;

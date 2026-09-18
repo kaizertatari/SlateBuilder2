@@ -393,6 +393,7 @@ function buildSeriesState({ game, playerSide, opponentSide, l5, seasonType }) {
       series_summary: espn.summary ?? null,
       leading_team_abbr: leadingTeamAbbr({ playerWins, opponentWins, playerSide, opponentSide }),
       round: game.round ?? null,
+      round_name: game.round_name ?? null,
       source: "espn_event",
     };
   }
