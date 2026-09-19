@@ -357,6 +357,38 @@ Order before an EPL slate: `refresh-epl-data` → `build-epl-model` →
   the per-leg break-even (2-pick power reference; goblin/demon approximate,
   over-only). Analysis only — no tiers.
 
+## EPL in the app (verdicts, slate builder, lineups)
+
+The UI's **EPL** tab reads its own board (`GET /api/lines?league=EPL` →
+`epl-pp-lines.json`); Analyze posts `league: "EPL"` to `/api/analyze-all`,
+which routes to the EPL verdict engine (`api/_lib/epl/verdict.js`, policy in
+`EPL_POLICY`) instead of the basketball ground truth. Same response shape.
+
+- **Data at runtime** (`api/_lib/epl/store.js`): model, registry, odds and
+  board are Blob-first with the committed `data/epl-*.json` as floor. Run
+  the refreshes with `--push` to update the deployed app without a deploy
+  (`refresh-epl-data --push` → registry, `build-epl-model --push`,
+  `scrape-epl-odds --push`, `refresh-epl-prizepicks --push`).
+- **Lineups**: fetched live from FotMob per fixture (next 36h, 5-min
+  cache). Before the team sheet: FotMob's predicted XI nudges P(start) and
+  its injury list SKIPs the absentees. ~1h before kickoff the confirmed
+  sheet lands: starters → 100% to start, bench → sub-or-DNP, not in squad →
+  SKIP. **Re-run after lineups = click Analyze again** (EPL bypasses the
+  browser result cache; the server caches EPL for 5 minutes).
+- **Policy (priors until graded)**: book-priced stats pool model + level-
+  matched ladder 50/50 in log-odds; model-only stats (passes, clearances,
+  crosses, dribbles, fantasy, goals allowed) halve their log-odds toward the
+  line and cap at B; goblin/demon cap at B (approximate payouts, over-only);
+  unconfirmed lineup with P(start) < 70% caps at B; < 2 appearances caps at
+  B; P(play) < 50% SKIPs; no S-tier. Tiers: blended P − break-even ≥ 5 pts →
+  A, ≥ 1.5 pts → B (standard break-even 57.7%, 2-pick power).
+- **Slate builder**: `SLATE_PENDING_LEAGUES.EPL` — shadow mode. Every priced
+  leg is logged (`logEplVerdicts`, `engine_mode: "epl-v1"`, FotMob player/
+  match ids, no espn_id so the basketball grader skips them) and the slate is
+  withheld; the response carries a would-be `preview` (legs + probabilities,
+  no EV) that the UI labels uncalibrated. Unlock once the EPL grader has
+  ~150 graded picks and calibration holds.
+
 First read (2026-09-19, 2,371 lines, 2,152 priced): book ladders sit above
 the model by ×1.06 (goals) … ×1.3 (shots) … ×1.45 (SOT) … ×1.54 (tackles) …
 ×1.72 (assists), i.e. shaded as the World Cup found, while ranking players

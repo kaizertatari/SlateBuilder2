@@ -335,3 +335,44 @@ export function parseFixtures(pageProps) {
     page_url: m.pageUrl ?? null,
   }));
 }
+
+/**
+ * Pre-match lineup for the minutes model. FotMob serves a PREDICTED XI
+ * (lineupType "predicted": starters + unavailable list, no bench) until the
+ * clubs publish the CONFIRMED team sheet ~1h before kickoff (lineupType
+ * "standard": starters + bench). Unavailable = injured/suspended.
+ * @returns {{ type: "confirmed"|"predicted"|null, starters: Set<string>,
+ *   bench: Set<string>, unavailable: Map<string, Object> } | null}
+ */
+export function parseLineup(pageProps) {
+  const lineup = pageProps?.content?.lineup;
+  if (!lineup?.homeTeam && !lineup?.awayTeam) return null;
+  const type = lineup.lineupType === "standard" ? "confirmed" : lineup.lineupType === "predicted" ? "predicted" : null;
+  const starters = new Set();
+  const bench = new Set();
+  const unavailable = new Map();
+  for (const side of ["homeTeam", "awayTeam"]) {
+    const t = lineup[side];
+    for (const p of t?.starters || []) starters.add(String(p.id));
+    for (const p of t?.subs || []) bench.add(String(p.id));
+    for (const p of t?.unavailable || []) {
+      unavailable.set(String(p.id), { type: p.unavailability?.type ?? null, expected_return: p.unavailability?.expectedReturn ?? null });
+    }
+  }
+  return { type, starters, bench, unavailable };
+}
+
+// Minutes override for one player from a parsed lineup (see model.js
+// minutesScenarios). Confirmed sheets are decisive; a predicted XI only
+// nudges the start probability; unavailable players cannot play.
+export function lineupOverride(lineup, playerId) {
+  if (!lineup) return null;
+  const id = String(playerId);
+  if (lineup.unavailable.has(id)) return { unavailable: true };
+  if (lineup.type === "confirmed") {
+    if (lineup.starters.has(id)) return { started: true };
+    return { started: false, bench: lineup.bench.has(id) };
+  }
+  if (lineup.type === "predicted" && lineup.starters.size) return { predicted: lineup.starters.has(id) };
+  return null;
+}

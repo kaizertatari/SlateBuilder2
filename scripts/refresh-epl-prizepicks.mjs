@@ -11,7 +11,7 @@
 // The profile is shared with the Refresh Bridge daemon — stop it first
 // (Stop-ScheduledTask "Refresh Bridge"), restart after (RUNBOOK).
 //
-// Usage: npm run refresh-epl-prizepicks  [-- --headed]
+// Usage: npm run refresh-epl-prizepicks  [-- --headed] [-- --push]
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -50,6 +50,16 @@ async function main() {
   console.log(`  by stat: ${JSON.stringify(byStat)}`);
   console.log(`  by odds type: ${JSON.stringify(byType)}`);
   console.log(`  wrote ${path.relative(ROOT, OUT)}`);
+  if (process.argv.includes("--push")) {
+    // Blob copy for the deployed app (api/_lib/epl/store.js eplLinesStore).
+    const { loadEnvLocal } = await import("./_env.mjs");
+    loadEnvLocal();
+    if (!process.env.BLOB_READ_WRITE_TOKEN) console.warn("  --push: BLOB_READ_WRITE_TOKEN not set — skipped");
+    else {
+      const { eplLinesStore } = await import("../api/_lib/epl/store.js");
+      console.log(`  pushed to blob: ${await eplLinesStore.write(result)}`);
+    }
+  }
 }
 
 main().catch((e) => {

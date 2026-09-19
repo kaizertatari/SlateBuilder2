@@ -7,7 +7,7 @@
 // round's fixtures with the model's expected team totals — the numbers step 3
 // compares against DraftKings / FanDuel.
 //
-// Usage: npm run build-epl-model  [-- --dry-run]
+// Usage: npm run build-epl-model  [-- --dry-run] [-- --push]
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -33,6 +33,11 @@ async function main() {
   const model = fitModel(snapshot, { registry });
   model.fitted_at = new Date().toISOString();
   model.teams = Object.fromEntries(Object.entries(registry.teams || {}).map(([tid, t]) => [tid, { abbr: t.abbr, name: t.name }]));
+  // Upcoming fixtures ride in the artifact so the runtime verdict engine can
+  // resolve venue / match id without the 1.2 MB match history.
+  model.fixtures = snapshot.fixtures
+    .filter((f) => !f.finished && !f.cancelled)
+    .map((f) => ({ match_id: f.match_id, round: f.round, kickoff: f.kickoff_utc, home_id: f.home.team_id, away_id: f.away.team_id }));
 
   const players = Object.values(model.players);
   const priorOnly = players.filter((p) => p.prior_only).length;
@@ -64,6 +69,16 @@ async function main() {
     return;
   }
   await fs.writeFile(OUT, json);
+  if (process.argv.includes("--push")) {
+    // Blob copy for the deployed app (api/_lib/epl/store.js).
+    const { loadEnvLocal } = await import("./_env.mjs");
+    loadEnvLocal();
+    if (!process.env.BLOB_READ_WRITE_TOKEN) console.warn("  --push: BLOB_READ_WRITE_TOKEN not set — skipped");
+    else {
+      const { eplModelStore } = await import("../api/_lib/epl/store.js");
+      console.log(`  pushed to blob: ${await eplModelStore.write(model)}`);
+    }
+  }
   console.log("  done.");
 }
 

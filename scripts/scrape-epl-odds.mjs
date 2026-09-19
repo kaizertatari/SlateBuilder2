@@ -13,13 +13,14 @@
 // until the EPL engine ships. Needs data/epl-players.json + data/epl-model.json
 // (player/team resolution, starting keepers for FanDuel's "<Team> Goalkeeper").
 //
-// Usage: npm run scrape-epl-odds  [-- --dry-run] [-- --days 8]
+// Usage: npm run scrape-epl-odds  [-- --dry-run] [-- --days 8] [-- --push]
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { americanToProb, devig, fitLadder, fitTeamLambdas } from "../api/_lib/epl/market.js";
 import { buildTeamResolver, buildPlayerResolver } from "../api/_lib/epl/names.js";
+import { projectPlayer, priceLine } from "../api/_lib/epl/model.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = path.join(ROOT, "data/epl-odds.json");
@@ -317,6 +318,30 @@ async function main() {
     }
   }
 
+  // Shading: the books' one-sided ladders sit above reality. Per stat, the
+  // median ratio of ladder λ̂ to the model's starter mean for the same
+  // fixture (market team goals as game script). The verdict engine divides
+  // λ̂ by it — the books then contribute who is high/low, the calibrated
+  // model the level.
+  const tidByAbbr = Object.fromEntries(Object.entries(model.teams || {}).map(([tid, t]) => [t.abbr, tid]));
+  const ratios = {};
+  for (const [id, p] of Object.entries(players)) {
+    const m = matches[p.match];
+    if (!m || !model.players[id] || model.players[id].prior_only) continue;
+    const venue = p.team === m.home ? "home" : p.team === m.away ? "away" : null;
+    if (!venue) continue;
+    const opp = venue === "home" ? m.away : m.home;
+    const ctxTeam = m.lambda ? { xg_for: venue === "home" ? m.lambda.home : m.lambda.away, xg_against: venue === "home" ? m.lambda.away : m.lambda.home } : null;
+    const proj = projectPlayer(model, { playerId: id, opponentTeamId: tidByAbbr[opp], venue, teamContext: ctxTeam, minutes: { started: true } });
+    for (const [stat, byBook] of Object.entries(p.props)) {
+      const mean = priceLine(proj, stat, 0.5)?.mean;
+      if (byBook.lambda_hat > 0 && mean > 0) (ratios[stat] ??= []).push(byBook.lambda_hat / mean);
+    }
+  }
+  const median = (xs) => { const a = [...xs].sort((x, y) => x - y); return a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2; };
+  const shading = Object.fromEntries(Object.entries(ratios).filter(([, v]) => v.length >= 8).map(([s, v]) => [s, Number(median(v).toFixed(3))]));
+  console.log(`  shading (ladder λ̂ ÷ model): ${JSON.stringify(shading)}`);
+
   const statCounts = {};
   for (const p of Object.values(players)) for (const s of Object.keys(p.props)) statCounts[s] = (statCounts[s] || 0) + 1;
   const withLambda = Object.values(matches).filter((m) => m.lambda).length;
@@ -334,6 +359,7 @@ async function main() {
   const out = {
     fetched_at: new Date().toISOString(),
     sources: ["draftkings", "fanduel"],
+    shading,
     matches,
     players,
     unresolved: { teams: [...ctx.unresolvedTeams], players: [...ctx.unresolvedPlayers] },
@@ -344,6 +370,21 @@ async function main() {
   }
   await fs.writeFile(OUT, JSON.stringify(out) + "\n");
   console.log(`  wrote data/epl-odds.json (${(JSON.stringify(out).length / 1024).toFixed(0)} KB)`);
+  await pushIfRequested("eplOddsStore", out);
+}
+
+// --push: also write the Blob copy the deployed app reads (api/_lib/epl/
+// store.js); without it the app serves the deploy-bundled file.
+async function pushIfRequested(storeName, data) {
+  if (!process.argv.includes("--push")) return;
+  const { loadEnvLocal } = await import("./_env.mjs");
+  loadEnvLocal();
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    console.warn("  --push: BLOB_READ_WRITE_TOKEN not set — skipped");
+    return;
+  }
+  const stores = await import("../api/_lib/epl/store.js");
+  console.log(`  pushed to blob: ${await stores[storeName].write(data)}`);
 }
 
 main().catch((e) => {

@@ -19,7 +19,7 @@
 // revises post-match stats. --full re-fetches everything.
 //
 // Usage: npm run refresh-epl-data
-//        node scripts/refresh-epl-data.mjs [--full] [--refetch-days N] [--dry-run]
+//        node scripts/refresh-epl-data.mjs [--full] [--refetch-days N] [--dry-run] [--push]
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -262,6 +262,17 @@ async function main() {
   }
   await fs.writeFile(MATCHES_PATH, mJson + "\n");
   await fs.writeFile(PLAYERS_PATH, pJson + "\n");
+  if (args.includes("--push")) {
+    // The runtime reads the registry (names, FPL availability) from Blob;
+    // the match history is build-time only (build-epl-model).
+    const { loadEnvLocal } = await import("./_env.mjs");
+    loadEnvLocal();
+    if (!process.env.BLOB_READ_WRITE_TOKEN) console.warn("  --push: BLOB_READ_WRITE_TOKEN not set — skipped");
+    else {
+      const { eplRegistryStore } = await import("../api/_lib/epl/store.js");
+      console.log(`  pushed registry to blob: ${await eplRegistryStore.write(playersOut)}`);
+    }
+  }
   console.log("  done.");
 }
 

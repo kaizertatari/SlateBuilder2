@@ -534,6 +534,10 @@ export function fitModel(snapshot, { beforeRound = null, registry = null, teamSh
 //   { started: true }                confirmed in the XI (lineup re-run)
 //   { started: false, bench: true }  confirmed on the bench
 //   { started: false, bench: false } not in the squad → cannot play
+//   { unavailable: true }            injured / suspended → cannot play
+//   { predicted: true|false }        FotMob's predicted XI: pulls the start
+//                                    chance halfway toward 0.9 (in the XI)
+//                                    or 0.15 (left out) — a hint, not a sheet
 // Without an override, FPL availability scales the start/sub chances:
 // injured/suspended/unavailable → 0; doubtful → chance_next%.
 export function minutesScenarios(player, override = null) {
@@ -542,6 +546,7 @@ export function minutesScenarios(player, override = null) {
   const early = { kind: "early", m: m.m_early };
   const sub = { kind: "sub", m: m.m_sub };
   if (override?.minutes != null) return [{ kind: "exact", m: override.minutes, p: override.minutes > 0 ? 1 : 0 }];
+  if (override?.unavailable) return [{ kind: "dnp", m: 0, p: 1 }];
   if (override?.started === true) {
     return [{ ...full, p: m.q_full }, { ...early, p: 1 - m.q_full }];
   }
@@ -554,8 +559,18 @@ export function minutesScenarios(player, override = null) {
   const st = player.status;
   if (st?.fpl && ["i", "s", "u", "n"].includes(st.fpl)) scale = st.chance_next != null ? st.chance_next / 100 : 0;
   else if (st?.fpl === "d") scale = st.chance_next != null ? st.chance_next / 100 : 0.5;
-  const pS = m.p_start * scale;
-  const pB = m.p_sub * scale;
+  let pStart = m.p_start;
+  let pSub = m.p_sub;
+  if (typeof override?.predicted === "boolean") {
+    const target = override.predicted ? 0.9 : 0.15;
+    const next = 0.5 * pStart + 0.5 * target;
+    // Keep the player's sub share of the non-start mass.
+    const subShare = pStart < 1 ? pSub / (1 - pStart) : 0.3;
+    pStart = next;
+    pSub = Math.min(1 - pStart, subShare * (1 - pStart));
+  }
+  const pS = pStart * scale;
+  const pB = pSub * scale;
   return [
     { ...full, p: pS * m.q_full },
     { ...early, p: pS * (1 - m.q_full) },

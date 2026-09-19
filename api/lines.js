@@ -4,10 +4,14 @@
 //   ?stat=Points              — filter by stat type
 //   ?opponent=LAL             — filter by opponent abbreviation
 //   ?game=LAL@BOS             — filter by game key
+//   ?league=EPL               — serve the Premier League board (its own
+//                               snapshot, epl-pp-lines.json) instead of the
+//                               basketball one
 //
 // Usage: GET /api/lines
 
 import { readLines } from "./_lib/lines-store.js";
+import { readEplLines } from "./_lib/epl/store.js";
 
 export const runtime = "nodejs";
 
@@ -18,9 +22,10 @@ export async function GET(req) {
   const opponentFilter = url.searchParams.get("opponent");
   const gameFilter = url.searchParams.get("game");
 
+  const isEpl = String(url.searchParams.get("league") || "").toUpperCase() === "EPL";
   let lines;
   try {
-    lines = await readLines();
+    lines = isEpl ? await readEplLines() : await readLines();
   } catch (err) {
     return Response.json(
       { error: `Failed to read lines data: ${err.message}` },
