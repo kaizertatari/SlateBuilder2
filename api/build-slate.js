@@ -24,7 +24,8 @@ import { ALL_ODDS_TYPES } from "./_lib/select-lines.js";
 import { lookupMarket, setOdds } from "./_lib/odds.js";
 import { readOdds } from "./_lib/odds-store.js";
 import { buildSlate } from "./_lib/slate-builder.js";
-import { logSlateLegs } from "./_lib/verdict-logger.js";
+import { logSlateLegs, logEplVerdicts } from "./_lib/verdict-logger.js";
+import { collectEplCandidates } from "./_lib/epl/slate.js";
 import { randomUUID } from "node:crypto";
 
 export const runtime = "nodejs";
@@ -142,6 +143,40 @@ async function handlePost(req, reqId) {
     // until real PrizePicks per-pick multipliers are scraped (Stage 3).
     const oddsTypes = Array.isArray(rawOdds) ? rawOdds.map((t) => String(t).toLowerCase()).filter((t) => ALL_ODDS_TYPES.includes(t)) : ["standard"];
     const allowedStats = Array.isArray(statTypes) && statTypes.length ? new Set(statTypes) : new Set(STATS);
+
+    // Premier League: its own board, priced by the EPL verdict engine (model +
+    // market blend). Shadow mode — calibration pending — so the slate is
+    // withheld, but the would-be slate is returned as a clearly-labelled
+    // PREVIEW and every priced leg is logged for the EPL grader.
+    if (reqLeague === "EPL") {
+      const epl = await collectEplCandidates({
+        allowedStats: Array.isArray(statTypes) && statTypes.length ? new Set(statTypes) : null,
+        oddsTypes,
+        games,
+        direction,
+      });
+      logEplVerdicts(epl.verdicts, { source: "build-slate" });
+      const preview = buildSlate(epl.candidates, { targetMultiplier, mode, size, maxPerGame });
+      return Response.json({
+        request_id: reqId,
+        league: "EPL",
+        lines_fetched_at: epl.lines_fetched_at,
+        odds_fetched_at: epl.odds_fetched_at,
+        odds_sources: epl.odds_sources,
+        abstained: true,
+        calibration_pending: true,
+        reason: `EPL slates are paused pending calibration (target ${SLATE_PENDING_LEAGUES.EPL}). Probabilities blend the player model with DK/FD ladders; not yet graded.`,
+        slate: null,
+        preview: preview.slate ? { ...preview.slate, uncalibrated: true } : null,
+        preview_reason: preview.slate ? null : preview.reason,
+        // No EV numbers while uncalibrated — a near-miss "EV" would be as
+        // fictitious as the preview's own.
+        best_rejected: null,
+        considered: epl.candidates.length,
+        props_examined: epl.considered,
+        props_priced: epl.candidates.length,
+      }, { headers: { "X-Cache": "MISS" } });
+    }
 
     let linesData;
     try { linesData = await readLines(); }

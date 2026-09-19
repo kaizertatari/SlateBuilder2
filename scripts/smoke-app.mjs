@@ -376,6 +376,57 @@ await test("demon lines in top_10 use the lowest published demon", () => {
   }
 });
 
+// ─── 8d. EPL end-to-end (own board, EPL verdict engine) ──────────────────
+
+header("8d. EPL end-to-end (analyze-all + build-slate, league=EPL)");
+let eplBody = null;
+let eplSample = null;
+await test("EPL board readable + analyze-all prices a player", async () => {
+  const { readEplLines } = await import("../api/_lib/epl/store.js");
+  const epl = await readEplLines();
+  const standard = Object.entries(epl.by_player || {})
+    .map(([name, props]) => ({ name, n: props.filter((p) => p.odds_type === "standard").length }))
+    .sort((a, b) => b.n - a.n);
+  if (!standard.length) return { skip: "no EPL board" };
+  eplSample = standard[0].name;
+  const { POST } = await import("../api/analyze-all.js");
+  const res = await POST(new Request("http://localhost/api/analyze-all", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-forwarded-for": "127.0.0.98" },
+    body: JSON.stringify({ player: eplSample, league: "EPL" }),
+  }));
+  eplBody = await res.json();
+  if (eplBody.error) throw new Error(eplBody.error);
+  const tc = eplBody.tier_counts || {};
+  const sum = (tc.S || 0) + (tc.A || 0) + (tc.B || 0) + (tc.SKIP || 0) + (tc.UNKNOWN || 0);
+  if (sum !== eplBody.total_analyzed) throw new Error(`tier_counts sum ${sum} ≠ total_analyzed ${eplBody.total_analyzed}`);
+  if (eplBody.league !== "EPL" || !eplBody.calibration_pending) throw new Error("EPL response not marked league/calibration_pending");
+  return { note: `${eplSample}: analyzed=${eplBody.total_analyzed} A=${tc.A} B=${tc.B} SKIP=${tc.SKIP} lineups=${(eplBody.lineup_states || []).join("/") || "none"}` };
+});
+await test("EPL picks: no S-tier, OVER-only on goblin/demon, probability + break-even present", () => {
+  if (!eplBody) return { skip: "no EPL body" };
+  for (const r of eplBody.top_10 || []) {
+    if (r.tier === "S") throw new Error(`${r.player} ${r.prop_type}: S-tier while EPL is uncalibrated`);
+    if (r.odds_type !== "standard" && r.direction !== "OVER") throw new Error(`${r.player} ${r.prop_type}: ${r.odds_type} UNDER`);
+    if (!(r.prob > 0 && r.prob < 1) || !(r.break_even > 0)) throw new Error(`${r.player} ${r.prop_type}: prob/break-even missing`);
+  }
+  return { note: `${eplBody.top_10?.length || 0} picks checked` };
+});
+await test("EPL build-slate: paused (shadow mode), preview without EV", async () => {
+  if (!eplSample) return { skip: "no EPL board" };
+  const { POST } = await import("../api/build-slate.js");
+  const res = await POST(new Request("http://localhost/api/build-slate", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-forwarded-for": "127.0.0.97" },
+    body: JSON.stringify({ league: "EPL" }),
+  }));
+  const b = await res.json();
+  if (b.error) throw new Error(b.error);
+  if (!b.abstained || !b.calibration_pending || b.slate) throw new Error("EPL slate must stay paused while calibration is pending");
+  if (b.best_rejected) throw new Error("no EV numbers while uncalibrated");
+  return { note: `priced ${b.props_priced}/${b.props_examined}; preview ${b.preview ? `${b.preview.legs.length} legs` : b.preview_reason}` };
+});
+
 // ─── 9. Blob roundtrip ───────────────────────────────────────────────────
 
 header("9. Blob roundtrip (writeLines)");

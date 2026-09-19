@@ -289,6 +289,59 @@ export function buildSlateLegEvent(l, source = "build-slate") {
  * @param {number|string} [args.errorStatus] HTTP status or numeric error code, if known
  * @param {Object} [args.context]      arbitrary JSON-safe extras (url, player, season, ...)
  */
+/**
+ * EPL verdicts (api/_lib/epl/verdict.js) as Axiom verdict events — the
+ * shadow-mode record the EPL grader (step 5) settles from FotMob. Carries the
+ * same join keys as basketball (player, prop_type "<Stat> <DIR>", line,
+ * direction, game_start_time) plus the FotMob player/match ids; deliberately
+ * NO espn_id, so the basketball ESPN grader skips them. Pre-filtered SKIPs
+ * are kept (gates are part of the audit). Fire-and-forget; no-op without
+ * AXIOM_TOKEN.
+ */
+export function logEplVerdicts(verdicts, { source = "analyze-all" } = {}) {
+  const token = process.env.AXIOM_TOKEN;
+  if (!token) return;
+  const now = new Date().toISOString();
+  const events = (verdicts || []).map((v) => ({
+    _time: now,
+    event_type: "verdict",
+    req_id: getReqId(),
+    source,
+    league: "EPL",
+    engine_mode: "epl-v1",
+    player: v.player ?? null,
+    prop_type: v.prop_type && v.direction ? `${v.prop_type} ${v.direction}` : v.prop_type ?? null,
+    line: v.line ?? null,
+    direction: v.direction ?? null,
+    odds_type: v.odds_type ?? null,
+    game_start_time: v.game_start_time ?? null,
+    fotmob_player_id: v.player_id ?? null,
+    fotmob_match_id: v.match_id ?? null,
+    epl_stat: v.stat ?? null,
+    verdict: v.verdict ?? null,
+    tier: v.tier ?? null,
+    confidence: v.confidence ?? null,
+    epl_prob: v.prob ?? null,
+    epl_break_even: v.break_even ?? null,
+    epl_edge: v.edge ?? null,
+    epl_p_model: v.detail?.p_model ?? null,
+    epl_p_market: v.detail?.p_market ?? null,
+    epl_p_play: v.detail?.p_play ?? null,
+    epl_p_start: v.detail?.p_start ?? null,
+    epl_mean: v.detail?.mean ?? null,
+    epl_lineup: v.detail?.lineup ?? null,
+    epl_model_only: v.detail?.model_only ?? null,
+    epl_policy_version: v.detail?.policy_version ?? null,
+    pre_filtered: !!v.pre_filtered,
+    skip_reason: v.skip_reason ?? null,
+    rules_fired: v.rules_fired ?? null,
+    flags: v.flags ?? null,
+  }));
+  // A board sweep logs thousands of verdicts — batch so no single ingest
+  // request outgrows the 5s timeout.
+  for (let i = 0; i < events.length; i += 500) ingestMany(token, events.slice(i, i + 500));
+}
+
 export function logEvent({ level, source, message, errorName, errorStatus, context } = {}) {
   const token = process.env.AXIOM_TOKEN;
   if (!token) return;

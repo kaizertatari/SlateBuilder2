@@ -19,14 +19,37 @@ export const BASKETBALL_STATS = [
   "Fantasy Score",
 ];
 
+// Premier League (PrizePicks league 14) — canonical names are PrizePicks'
+// own labels. Priced by the EPL verdict engine (api/_lib/epl/verdict.js),
+// not the basketball rule engine. "Goalie Fantasy Score" is deliberately
+// absent: PrizePicks' keeper scoring isn't modelled.
+export const EPL_STATS = [
+  "Shots",
+  "Shots On Target",
+  "Goals",
+  "Assists",
+  "Goal + Assist",
+  "Shots Assisted",
+  "Tackles",
+  "Fouls",
+  "Passes Attempted",
+  "Clearances",
+  "Crosses",
+  "Attempted Dribbles",
+  "Goalie Saves",
+  "Goals Allowed",
+  "Outfield Fantasy Score",
+];
+
 // Full whitelist (cross-league). League-aware callers (UI stat picker,
 // slate filters) should use STATS_BY_LEAGUE so per-league lists stay
-// independent if a non-basketball league ever returns.
-export const STATS = [...BASKETBALL_STATS];
+// independent ("Assists" is shared by name across sports).
+export const STATS = [...new Set([...BASKETBALL_STATS, ...EPL_STATS])];
 
 export const STATS_BY_LEAGUE = {
   NBA: BASKETBALL_STATS,
   WNBA: BASKETBALL_STATS,
+  EPL: EPL_STATS,
 };
 
 // Slate-builder calibration gate (shared by the API + UI so they agree).
@@ -35,7 +58,9 @@ export const STATS_BY_LEAGUE = {
 // wildly +EV (see slate-builder-pivot). PENDING maps league → the target
 // checkpoint surfaced to users while its outcomes are still ungraded.
 export const SLATE_CALIBRATED_LEAGUES = ["NBA", "WNBA"];
-export const SLATE_PENDING_LEAGUES = {};
+// EPL runs in shadow mode: verdicts + would-be slates are computed and
+// logged, but no slate EV is published until ~150 EPL picks are graded.
+export const SLATE_PENDING_LEAGUES = { EPL: "~150 graded EPL picks" };
 
 // Stat name → key inside an averages object (groundTruth.season.averages,
 // groundTruth.l5.averages). pra/pr/pa/ra are computed in ground-truth.js.
@@ -69,6 +94,21 @@ const PRIZEPICKS_TO_CANONICAL = {
   "assists": "Assists",
   "blks+stls": "Blocks+Steals",
   "fantasy score": "Fantasy Score",
+  // EPL (identity onto EPL_STATS; "assists" above is shared)
+  "shots": "Shots",
+  "shots on target": "Shots On Target",
+  "goals": "Goals",
+  "goal + assist": "Goal + Assist",
+  "shots assisted": "Shots Assisted",
+  "tackles": "Tackles",
+  "fouls": "Fouls",
+  "passes attempted": "Passes Attempted",
+  "clearances": "Clearances",
+  "crosses": "Crosses",
+  "attempted dribbles": "Attempted Dribbles",
+  "goalie saves": "Goalie Saves",
+  "goals allowed": "Goals Allowed",
+  "outfield fantasy score": "Outfield Fantasy Score",
 };
 
 export function mapPrizePicksStatType(statType) {

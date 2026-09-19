@@ -20,6 +20,8 @@ import { selectLinesForStat, ALL_ODDS_TYPES } from "./_lib/select-lines.js";
 import { setOdds } from "./_lib/odds.js";
 import { readOdds } from "./_lib/odds-store.js";
 import { logVerdict } from "./_lib/verdict-logger.js";
+import { analyzeEplPlayer } from "./_lib/epl/analyze.js";
+import { readEplLines } from "./_lib/epl/store.js";
 import { randomUUID } from "node:crypto";
 
 export const runtime = "nodejs";
@@ -30,6 +32,10 @@ export const runtime = "nodejs";
 // unreachable. The TTL is a defensive bound to keep the Map from growing
 // unbounded on a long-lived warm instance.
 const CACHE_TTL_MS = 13 * 60 * 60 * 1000;
+// EPL verdicts move with FotMob lineups (predicted XI → confirmed sheet ~1h
+// before kickoff) inside one lines snapshot, so they cache briefly — a
+// re-run after lineups drop must re-price.
+const EPL_CACHE_TTL_MS = 5 * 60 * 1000;
 
 function normalizePlayer(name) {
   return name.trim().toLowerCase();
@@ -115,7 +121,7 @@ async function handlePost(req, reqId) {
         { status: 400 }
       );
     }
-    const league = rawLeague && ["NBA", "WNBA"].includes(String(rawLeague).toUpperCase())
+    const league = rawLeague && ["NBA", "WNBA", "EPL"].includes(String(rawLeague).toUpperCase())
       ? String(rawLeague).toUpperCase()
       : null;
     // oddsTypes: optional subset of ["goblin", "standard", "demon"]. When
@@ -138,6 +144,29 @@ async function handlePost(req, reqId) {
           { status: 400 }
         );
       }
+    }
+
+    // Premier League: its own board snapshot, priced by the EPL verdict
+    // engine (model + market blend, lineup-aware minutes) instead of the
+    // basketball ground-truth fan-out. Same response shape for the UI.
+    if (league === "EPL") {
+      const eplLines = await readEplLines();
+      const fetchedAt = eplLines.fetched_at || null;
+      const sortedStats = (Array.isArray(statTypes) && statTypes.length > 0) ? [...statTypes].sort().join(",") : "ALL";
+      const eplKey = `epl:${buildCacheKey(player, fetchedAt, sortedStats, direction || "BOTH", oddsTypes ? oddsTypes.join(",") : "ALL")}`;
+      const hit = cacheGet(eplKey);
+      if (hit) return Response.json(hit, { headers: { "X-Cache": "HIT" } });
+      const eplBody = await analyzeEplPlayer({
+        player,
+        props: (eplLines.by_player || {})[player] || [],
+        allowedStats: Array.isArray(statTypes) && statTypes.length ? new Set(statTypes) : null,
+        directions: direction ? [direction] : ["OVER", "UNDER"],
+        oddsTypes,
+        maxLines: MAX_LINES,
+      });
+      const responseBody = { request_id: reqId, ...eplBody, lines_fetched_at: fetchedAt };
+      cacheSet(eplKey, responseBody, EPL_CACHE_TTL_MS);
+      return Response.json(responseBody, { headers: { "X-Cache": "MISS" } });
     }
 
     // Read PrizePicks lines (blob first, bundled-file fallback).

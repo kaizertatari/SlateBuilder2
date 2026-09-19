@@ -46,7 +46,9 @@ const PLAYERS_BY_LEAGUE = (() => {
   return grouped;
 })();
 
-const LEAGUES = ["NBA", "WNBA"];
+// EPL has no players.json roster — its players come from its own board
+// snapshot (/api/lines?league=EPL), priced by the EPL verdict engine.
+const LEAGUES = ["NBA", "WNBA", "EPL"];
 
 const REFRESH_STATUS_COLORS = {
   success: { fg: "#00FF88", bg: "#002218", border: "#00FF8844" },
@@ -186,14 +188,15 @@ export default function App() {
   // stays stale until a full page reload.
   const loadLines = useCallback(async () => {
     try {
-      const r = await fetch("/api/lines");
+      // EPL reads its own board snapshot (epl-pp-lines.json).
+      const r = await fetch(league === "EPL" ? "/api/lines?league=EPL" : "/api/lines");
       const d = r.ok ? await r.json() : null;
       setLinesData(d || null);
       if (d?.fetched_at) setLinesFetchedAt(d.fetched_at);
     } catch {
       setLinesData(null);
     }
-  }, []);
+  }, [league]);
 
   useEffect(() => {
     // loadLines() only setStates after an awaited fetch (not synchronously),
@@ -211,7 +214,7 @@ export default function App() {
     const byCanonical = new Map();
     for (const [gameKey, info] of Object.entries(games)) {
       if (!info || info.league !== league) continue;
-      const cleanKey = gameKey.replace(/^WNBA:/, "");
+      const cleanKey = gameKey.replace(/^[A-Z0-9]+:/, "");
       const parts = cleanKey.split("@");
       if (parts.length !== 2) continue;
       const [a, b] = parts;
@@ -255,9 +258,11 @@ export default function App() {
   // roster.
   const leagueCounts = useMemo(() => {
     const counts = {};
-    for (const l of LEAGUES) counts[l] = PLAYERS_BY_LEAGUE[l]?.length ?? 0;
+    for (const l of LEAGUES) counts[l] = PLAYERS_BY_LEAGUE[l]?.length ?? null;
+    // EPL's roster is its board, known once that snapshot is loaded.
+    if (league === "EPL") counts.EPL = Object.keys(linesData?.data?.by_player || {}).length;
     return counts;
-  }, []);
+  }, [league, linesData]);
 
   // Distinct local dates across the league's games, chronological, each with
   // its game count. Drives the Date dropdown.
@@ -283,7 +288,9 @@ export default function App() {
   // Players visible in the picker — narrowed to selected games when at
   // least one game is picked. Empty selection means "no game filter".
   const leaguePlayers = useMemo(() => {
-    const all = PLAYERS_BY_LEAGUE[league] ?? [];
+    const all = league === "EPL"
+      ? Object.keys(linesData?.data?.by_player || {}).sort()
+      : PLAYERS_BY_LEAGUE[league] ?? [];
     // With dates narrowed but no explicit game picks, the date pool IS the
     // game filter; explicit game picks narrow further within it.
     if (selectedGames.length === 0 && selectedDates.length === 0) return all;
@@ -294,7 +301,7 @@ export default function App() {
       }
     }
     return all.filter((name) => allowed.has(name));
-  }, [league, selectedGames, selectedDates, dateFilteredGames]);
+  }, [league, linesData, selectedGames, selectedDates, dateFilteredGames]);
 
   const filteredPlayers = useMemo(() => {
     const q = playerQuery.trim().toLowerCase();
@@ -542,7 +549,10 @@ export default function App() {
   // scoped to the filter that produced them.
   const analyzeOne = useCallback(async (playerName) => {
     const directionParam = selectedDirections.length === 1 ? selectedDirections[0] : undefined;
-    const cached = readNewestCached(playerName, selectedStats, directionParam, selectedOdds);
+    // EPL verdicts move with FotMob lineups inside one board snapshot, so
+    // they skip the session cache (the server caches them for 5 minutes) —
+    // re-running after lineups drop must re-price.
+    const cached = league === "EPL" ? null : readNewestCached(playerName, selectedStats, directionParam, selectedOdds);
     if (cached) {
       return { data: cached.data, cacheStatus: "HIT" };
     }
@@ -563,7 +573,7 @@ export default function App() {
     if (data.error) throw new Error(`${playerName}: ${data.error}`);
     if (!response.ok) throw new Error(data.error || "Request failed");
 
-    if (data.lines_fetched_at) {
+    if (data.lines_fetched_at && league !== "EPL") {
       const key = buildKey(playerName, data.lines_fetched_at, selectedStats, directionParam, selectedOdds);
       writeCached(key, data);
       clearStaleForPlayer(key, playerName);
@@ -692,7 +702,7 @@ export default function App() {
         ? dateFilteredGames
         : null;
       const gameKeys = pool
-        ? pool.flatMap((g) => g.gameKeys.map((k) => k.replace(/^WNBA:/, "")))
+        ? pool.flatMap((g) => g.gameKeys.map((k) => k.replace(/^[A-Z0-9]+:/, "")))
         : null;
       const body = { league, statTypes: selectedStats, targetMultiplier, mode: slateMode, size: 3 };
       if (gameKeys && gameKeys.length) body.games = gameKeys;
@@ -857,7 +867,7 @@ export default function App() {
           <div role="tablist" aria-label="League" style={{ display: "flex", gap: 0, border: "1px solid #1e3040" }}>
             {LEAGUES.map((l) => {
               const active = l === league;
-              const count = leagueCounts[l] ?? 0;
+              const count = leagueCounts[l];
               return (
                 <button
                   key={l}
@@ -877,7 +887,7 @@ export default function App() {
                     cursor: "pointer",
                   }}
                 >
-                  {l} ({count})
+                  {l}{count != null ? ` (${count})` : ""}
                 </button>
               );
             })}
@@ -1679,9 +1689,34 @@ export default function App() {
                 )}
                 <div style={{ marginTop: 8, fontSize: 10, color: "#665533" }}>
                   {slate.calibration_pending
-                    ? "EV is withheld until this league's standard-line calibration is validated — its market is single-book and ungraded, so a slate would read as falsely +EV."
+                    ? slate.league === "EPL"
+                      ? "EPL runs in shadow mode: every priced leg is logged and graded after the match; the slate unlocks once enough EPL picks are graded."
+                      : "EV is withheld until this league's standard-line calibration is validated — its market is single-book and ungraded, so a slate would read as falsely +EV."
                     : `Not betting is the correct call when nothing clears +EV at ≥${slate.params?.targetMultiplier ?? targetMultiplier}×.`}
                 </div>
+                {slate.preview?.legs?.length > 0 && (
+                  <div style={{ marginTop: 12, borderTop: "1px solid #332200", paddingTop: 10 }}>
+                    <div style={{ fontSize: 10, letterSpacing: 1, color: "#cc9944", marginBottom: 6 }}>
+                      PREVIEW — WHAT IT WOULD PICK (UNCALIBRATED · EV HIDDEN · NOT A RECOMMENDATION)
+                    </div>
+                    {slate.preview.legs.map((l, i) => (
+                      <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#120d00", border: "1px solid #2a2000", padding: "8px 12px", marginBottom: 4 }}>
+                        <div>
+                          <div style={{ fontWeight: "bold", color: "#e8d8b8" }}>{l.player}</div>
+                          <div style={{ color: "#aa8855", fontSize: 11 }}>
+                            {l.stat_type}{" "}
+                            <span style={{ color: l.direction === "OVER" ? "#00FF88" : "#FF8844" }}>{l.direction === "OVER" ? "▲" : "▼"} {l.line}</span>{" "}
+                            <span style={{ color: "#665533" }}>· {l.match || l.game}{l.odds_type && l.odds_type !== "standard" ? ` · ${l.odds_type}` : ""}</span>
+                          </div>
+                        </div>
+                        <div style={{ textAlign: "right", color: "#cc9944", fontSize: 11 }}>{(l.prob * 100).toFixed(1)}% model+books</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {slate.preview_reason && (
+                  <div style={{ marginTop: 8, fontSize: 10, color: "#665533" }}>Preview: {slate.preview_reason}</div>
+                )}
               </div>
             ) : slate.slate ? (
               <div>

@@ -18,7 +18,21 @@ home-bridge daemon that the deployed UI forwards to.
 | `PrizePicks Refresh Lines` | 00:00 / 06:00 / 12:00 / 18:00 | PrizePicks lines scrape → `data/prizepicks-lines.json` + blob |
 | `PrizePicks Refresh Odds` | 00:10 / 06:10 / 12:10 / 18:10 | `scripts/refresh-odds-task.bat` → DK+FD no-vig consensus → `data/odds.json` + blob (+10 min after lines so they stay in sync) |
 | `Funnel Watchdog` | every 15 min | `scripts/funnel-watchdog-task.bat` → self-heals the Tailscale funnel zombie (see below) |
+| `EPL Refresh Board` | 00:20 / 06:20 / 12:20 / 18:20 | `scripts/epl-board-task.bat` → PrizePicks EPL board (league 14) → `data/epl-pp-lines.json`; 20 min after `PrizePicks Refresh Lines` so the two browser scrapes never share the profile at once. Same PX slider exposure — refuses to write an empty board (the sweeps keep using the last good one). Log `logs\epl-board.log` |
+| `EPL Matchday Sweep` | every 30 min, 04:30–16:00 | `scripts/epl-matchday-task.bat` → `scripts/epl-matchday.mjs`: silent no-op unless an EPL fixture kicks off within 90 min; then `scrape-epl-odds` + `sweep-epl-board` (Axiom). No browser. Log `logs\epl-matchday.log` (only written when it acts) |
+| `EPL Daily` | 07:00 | `scripts/epl-daily-task.bat` → `refresh-epl-data` → `build-epl-model` → `grade-epl-outcomes` → `epl-calibration-report` (each step runs regardless of the previous). Logs `logs\epl-daily.log`, latest report alone in `logs\epl-calibration-latest.txt` |
 | `Refresh Bridge` | at logon (daemon) | `powershell.exe -WindowStyle Hidden -File scripts/refresh-bridge-task.ps1` → job-object-wrapped, self-restarting `scripts/refresh-bridge.mjs`. Replaced the NSSM service 2026-07-07; launcher rewritten from `.vbs` 2026-07-30 — see "Refresh-bridge daemon" |
+
+**EPL tasks (registered 2026-09-19):** actions are `conhost.exe --headless
+"<repo>\scripts\epl-*-task.bat"` (WorkingDirectory = repo) so the 30-minute
+sweep never flashes a console window. Consequence: `LastTaskResult` is the
+conhost exit (0), NOT the script's — read the logs above for real status
+(the `.bat`s log `exit=` per step). Principal = current user, Interactive
+(PerimeterX blocks session-0), battery conditions cleared, StartWhenAvailable,
+IgnoreNew. `Register-ScheduledTask -Principal (New-ScheduledTaskPrincipal
+-UserId aminu …)` failed here with "The parameter is incorrect (UserId)";
+omitting `-Principal` registers the identical current-user/Interactive
+principal. Remove with `Unregister-ScheduledTask -TaskName "EPL …"`.
 
 **Migration audit (2026-07-07):** after the 06-17 move to `Slate Builder2`,
 `PrizePicks Refresh Lines` and `PrizePicks Refresh Odds` still executed the
@@ -283,6 +297,151 @@ snapshot's `season` field after refresh.
 ## Refresh team defense
 
 `npm run refresh-team-defense`.
+
+## Refresh EPL data (Premier League model, this season)
+
+`npm run refresh-epl-data` — after each matchweek (and before any EPL
+analysis). Writes `data/epl-matches.json` (all fixtures + every finished
+match: team stats + one row per matchday-squad player) and
+`data/epl-players.json` (FotMob ↔ FPL registry joined on Opta ID, FPL
+availability/news). Both sources are free plain HTTP — FotMob pages embed
+their data as `__NEXT_DATA__`, FPL is its public API — so no browser or
+residential-IP constraint.
+
+- Incremental: stored matches are kept; only new ones plus anything kicked
+  off in the last 2 days (`--refetch-days N`) are fetched. `--full` rebuilds.
+  `--dry-run` fetches and reports without writing.
+- Guards: refuses to write 0 matches or fewer than the existing snapshot; a
+  page whose match id or league differs from the fixture is skipped (FotMob's
+  `/matches/<pair>/…` URLs serve the pair's LATEST meeting — a cup tie for
+  Forest v Leeds — so the script fetches `/match/<id>`).
+- Sanity checks that held on 2026-09-18 (41 matches): player sums equal team
+  totals for shots/SOT/passes/tackles/clearances/interceptions/saves/fouls,
+  and season tackles/saves equal FPL's exactly (FotMob = Opta definitions).
+- `npm run epl-team-report [-- --sort xga]` prints per-team style/"allowed"
+  profiles (possession, xG/xGA, shots/SOT against, passes for/against,
+  territory, pressing, crosses against, fouls) from the snapshot.
+
+## Build / backtest the EPL model
+
+After `refresh-epl-data`, run `npm run build-epl-model` → `data/epl-model.json`
+(the fitted artifact pricing reads; it previews the next round's expected
+team totals). `npm run backtest-epl-model` re-fits walk-forward (each round
+predicted from earlier rounds only) and prints CRPS / log loss per stat vs
+baselines (player raw per-90, role per-90, model without opponent or team
+factors), calibration buckets, and the minutes model's P(start) Brier. Re-run
+it whenever model code or `TEAM_SHRINK_FLOOR` changes; `--k-floor N` sweeps
+the team-factor shrinkage floor without editing code.
+
+Reference read (2026-09-18, rounds 2–5, 10,249 predictions): model log loss
+0.5563 vs 0.5589 no-opponent, 0.5611 no-team, 0.608 role-p90, 1.084 raw
+player-p90; calibration 31.3%→31.3%, 48.5%→46.5%; P(start) Brier 0.120 vs
+0.131 (started last match). The model's own team xG is heavily shrunk early
+in the season (Man City–Sunderland 1.70/1.36) — the market's match lines
+(step 3, `teamContext`) supply the game script.
+
+## EPL markets + PrizePicks board
+
+Order before an EPL slate: `refresh-epl-data` → `build-epl-model` →
+`scrape-epl-odds` → `refresh-epl-prizepicks` → `epl-board-report`.
+
+- `npm run scrape-epl-odds [-- --days 8]` → `data/epl-odds.json` (~30s,
+  residential IP, plain fetch). DraftKings league 40253 (every event in one
+  call per subcategory: player ladders for shots 16868, SOT 16861, assists
+  16863, score-or-assist 19814, tackles 18345, GK saves 18346, fouls 18348,
+  fouls won 19540, anytime goalscorer 16604; moneyline 4514; total goals
+  13171) + FanDuel competition 10932509 (per event × tab, next `--days`
+  only: `PLAYER_TO_HAVE_N_OR_MORE_SHOTS[_ON_TARGET]`,
+  `PLAYER_TO_CREATE_N_OR_MORE_SHOTS`, `GOALKEEPER_TO_MAKE_N_OR_MORE_SAVES`
+  ("<Team> Goalkeeper" → that team's starting keeper), `TO_SCORE`,
+  `ANYTIME_ASSIST`, `TO_SCORE_OR_ASSIST`, `WIN-DRAW-WIN`, `OVER_UNDER_xx`,
+  `HOME/AWAY_TEAM_OVER/UNDER_x.5`, `TEAM_TO_HAVE_N_OR_MORE_SHOTS[_ON_TARGET]`).
+  Match markets are two-sided → de-vigged → fitted to market team goal
+  expectations λ (rmse ≈ 0.01 on ~29 prices/match). Player ladders are
+  ONE-SIDED → raw λ̂ only (shaded; see the report's per-stat ratios).
+- `npm run refresh-epl-prizepicks` → `data/epl-pp-lines.json`. PrizePicks
+  league ids (from the app's own `/leagues`): **EPL = 14**, EPL1H 529, EPL2H
+  530, La Liga 531, SOCCER 82. Uses the production browser scraper but its
+  own snapshot (the basketball snapshot/Blob/bridge are untouched until the
+  EPL engine ships). **Stop the Refresh Bridge first** (shared profile);
+  same PX slider regime as the lines refresh — if PX won't clear, run the
+  seed-assist routine. Refuses to write an empty board.
+- `npm run epl-board-report [-- --top 25]`: every PrizePicks line vs model
+  P(over | plays) (market team λ as game script), level-matched book P, and
+  the per-leg break-even (2-pick power reference; goblin/demon approximate,
+  over-only). Analysis only — no tiers.
+
+## EPL in the app (verdicts, slate builder, lineups)
+
+The UI's **EPL** tab reads its own board (`GET /api/lines?league=EPL` →
+`epl-pp-lines.json`); Analyze posts `league: "EPL"` to `/api/analyze-all`,
+which routes to the EPL verdict engine (`api/_lib/epl/verdict.js`, policy in
+`EPL_POLICY`) instead of the basketball ground truth. Same response shape.
+
+- **Data at runtime** (`api/_lib/epl/store.js`): model, registry, odds and
+  board are Blob-first with the committed `data/epl-*.json` as floor. Run
+  the refreshes with `--push` to update the deployed app without a deploy
+  (`refresh-epl-data --push` → registry, `build-epl-model --push`,
+  `scrape-epl-odds --push`, `refresh-epl-prizepicks --push`).
+- **Lineups**: fetched live from FotMob per fixture (next 36h, 5-min
+  cache). Before the team sheet: FotMob's predicted XI nudges P(start) and
+  its injury list SKIPs the absentees. ~1h before kickoff the confirmed
+  sheet lands: starters → 100% to start, bench → sub-or-DNP, not in squad →
+  SKIP. **Re-run after lineups = click Analyze again** (EPL bypasses the
+  browser result cache; the server caches EPL for 5 minutes).
+- **Policy (priors until graded)**: book-priced stats pool model + level-
+  matched ladder 50/50 in log-odds; model-only stats (passes, clearances,
+  crosses, dribbles, fantasy, goals allowed) halve their log-odds toward the
+  line and cap at B; goblin/demon cap at B (approximate payouts, over-only);
+  unconfirmed lineup with P(start) < 70% caps at B; < 2 appearances caps at
+  B; P(play) < 50% SKIPs; no S-tier. Tiers: blended P − break-even ≥ 5 pts →
+  A, ≥ 1.5 pts → B (standard break-even 57.7%, 2-pick power).
+- **Slate builder**: `SLATE_PENDING_LEAGUES.EPL` — shadow mode. Every priced
+  leg is logged (`logEplVerdicts`, `engine_mode: "epl-v1"`, FotMob player/
+  match ids, no espn_id so the basketball grader skips them) and the slate is
+  withheld; the response carries a would-be `preview` (legs + probabilities,
+  no EV) that the UI labels uncalibrated. Unlock once the EPL grader has
+  ~150 graded picks and calibration holds.
+
+## EPL grading + calibration (shadow mode → unlock)
+
+The loop that earns the EPL slate its way out of shadow mode:
+
+1. **Sweep** — `npm run sweep-epl-board [-- --within-hours 3]` prices every
+   upcoming line on the EPL board (both sides where allowed) and logs it to
+   Axiom (`source: epl-sweep`, ~2k line-sides per matchweek). Best run within
+   ~1h of kickoff so the verdicts carry the confirmed lineups; repeat runs are
+   fine (the report keeps each line's LAST pre-kickoff verdict). Lines past
+   kickoff are never priced (`game_started` gate). Needs a current EPL board
+   (`refresh-epl-prizepicks`) and odds (`scrape-epl-odds`).
+2. **Grade** — `npm run grade-epl-outcomes [-- --lookback 10] [-- --dry-run]`
+   settles every logged, non-pre-filtered EPL verdict whose kickoff was ≥ 2.5h
+   ago against FotMob's final player row (`/match/<id>`): DNP / not in squad →
+   void, integer-line tie → push. One outcome per join key (same keys as the
+   basketball grader; `league: "EPL"`). Idempotent — already-graded lines are
+   skipped. Daily is enough.
+3. **Report** — `npm run epl-calibration-report [-- --lookback 120]`: pick hit
+   rates (tier / odds type / stat / lineup state / model-only vs blend, Wilson
+   intervals, vs break-even); reliability of the blended P; log loss + Brier
+   of model vs market vs blend on the same lines; a ridge-regularised refit of
+   `EPL_POLICY.blend` (≥ 50 book-priced lines) and `modelOnlyShrink` (≥ 50
+   model-only lines) — **suggest-only**, edit `api/_lib/epl/verdict.js` after
+   review and bump `EPL_POLICY.version`; and the unlock checklist: ≥ 150
+   graded standard picks, hitting ≥ 57.7%, predicted-vs-realized within 3
+   pts → move EPL from `SLATE_PENDING_LEAGUES` to `SLATE_CALIBRATED_LEAGUES`.
+
+First graded read (2026-09-19): Tottenham 2–3 Aston Villa, 7 lines, 3–4 —
+machinery verified, sample meaningless.
+
+First read (2026-09-19, 2,371 lines, 2,152 priced): book ladders sit above
+the model by ×1.06 (goals) … ×1.3 (shots) … ×1.45 (SOT) … ×1.54 (tackles) …
+×1.72 (assists), i.e. shaded as the World Cup found, while ranking players
+the same way (Spearman ρ 0.83–0.86 shots/SOT/goals/G+A; weaker for fouls
+0.34, tackles/assists 0.66). The largest model "edges" sit on stats with no
+book market (passes, dribbles, fantasy) — and the passes model's
+multiplicative team×opponent structure over-cuts possession sides facing
+another possession side (Arsenal at Brighton: ~369 team passes) — so
+model-only lines must be shrunk toward the line before any tier (step 4).
 
 ## Query Axiom
 
