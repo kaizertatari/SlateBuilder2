@@ -19,7 +19,7 @@ import {
   getAllInjuries,
   opponentFor,
 } from "./_lib/espn.js";
-import { composeGroundTruth } from "./_lib/ground-truth.js";
+import { composeGroundTruth, playoffExtendedGames } from "./_lib/ground-truth.js";
 import { computeH2HAverages, PLAYOFF_L5_MIN_GAMES } from "./_lib/weighted-l5.js";
 import { rateLimit } from "./_lib/rate-limit.js";
 import { runWithRequestContext } from "./_lib/request-context.js";
@@ -253,7 +253,7 @@ export async function gatherGroundTruth({ player, propType, line, teamAbbrHint =
   // filter has the deepest sample possible. Skipped on playoff games —
   // that path uses the current-series blend instead.
   const needsH2H = !isPlayoff && espnId && opponentSide;
-  const [espnSeasonAvg, statsSplits, winProb, opponentDefense, primaryDefender, defRankByAbbr, h2hGamelog, playoffExtended] = await Promise.all([
+  const [espnSeasonAvg, statsSplits, winProb, opponentDefense, primaryDefender, defRankByAbbr, h2hGamelog, playoffExtended, playoffRegular] = await Promise.all([
     espnId ? espnStats.getSeasonAverages(espnId, { season, league }) : null,
     bbrefSplits ? null : getHomeAwaySplits(playerId, { seasonType: "Regular Season", league }),
     getWinProbability(game.game_id, game.competition_id, { league }),
@@ -272,6 +272,12 @@ export async function gatherGroundTruth({ player, propType, line, teamAbbrHint =
     // fetch their own postseason window (H2H isn't fetched there).
     (isPlayoff && espnId)
       ? espnStats.getLastNGames(espnId, 20, { season, postseason: true, league }).catch(() => null)
+      : null,
+    // Regular-season log behind a thin postseason window, so σ stays real
+    // until the player has VARIANCE_MIN_GAMES postseason games
+    // (playoffExtendedGames). Parallel — an unused pull beats a serial one.
+    (isPlayoff && espnId)
+      ? espnStats.getLastNGames(espnId, 50, { season, postseason: false, league }).catch(() => null)
       : null,
     // Stage 4b — enrich own-team injuries with season ppg in parallel (mutates
     // ownInjuryList entries in place; result slot intentionally unused).
@@ -319,12 +325,14 @@ export async function gatherGroundTruth({ player, propType, line, teamAbbrHint =
   trace.h2h = (h2h && h2h.n > 0) ? `espn_gamelog(n=${h2h.n})` : (needsH2H ? "no_matches" : "n/a_playoff");
 
   // Stage 4 — longest gamelog available for this pick: the 50-game H2H pull
-  // (regular season) or the 20-game postseason pull. Feeds the variance block
+  // (regular season) or the postseason pull, backed by the regular-season
+  // log until it holds VARIANCE_MIN_GAMES games. Feeds the variance block
   // (real σ → projection + Rule 5a) and the rest/B2B block in composeGroundTruth.
   const extendedGames = h2hGamelog?.games?.length ? h2hGamelog.games
-    : playoffExtended?.games?.length ? playoffExtended.games
+    : isPlayoff ? playoffExtendedGames(playoffExtended?.games, playoffRegular?.games)
     : null;
   trace.extended_games = extendedGames?.length ?? 0;
+  if (isPlayoff) trace.extended_postseason_n = playoffExtended?.games?.length ?? 0;
 
   const { groundTruth, missing } = composeGroundTruth({
     player, propType, line, league,

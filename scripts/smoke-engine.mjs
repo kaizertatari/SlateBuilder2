@@ -970,5 +970,23 @@ console.log("\n[z4] thin playoff L5 padding");
   assert("[z4] pure playoff L5 (n=5) still takes the override", /playoff_override/.test(govern("Playoffs")), govern("Playoffs"));
 }
 
+// (z5) Postseason σ window. σ needs VARIANCE_MIN_GAMES scoring samples; a
+// thin postseason log is backed by the regular-season log until then.
+console.log("\n[z5] postseason variance window");
+{
+  const { playoffExtendedGames, VARIANCE_MIN_GAMES } = await import("../api/_lib/ground-truth.js");
+  const games = (n, tag) => Array.from({ length: n }, (_, i) => ({ date: `Sep ${28 - i}, 2026`, pts: 10 + i, tag }));
+  const w = playoffExtendedGames(games(2, "post"), games(10, "reg"));
+  assert("[z5] 2 postseason + 10 regular → 12-game window", w.length === 12, `len=${w?.length}`);
+  assert("[z5] postseason games first and untagged, regular games tagged",
+    w.slice(0, 2).every((x) => x.tag === "post" && !x.regular_season) && w.slice(2).every((x) => x.regular_season === true));
+  assert("[z5] window reaches VARIANCE_MIN_GAMES", w.length >= VARIANCE_MIN_GAMES);
+  const full = games(VARIANCE_MIN_GAMES, "post");
+  assert("[z5] 8 postseason games → postseason only (unchanged)", playoffExtendedGames(full, games(10, "reg")) === full);
+  assert("[z5] capped at 50 games", playoffExtendedGames(games(2, "post"), games(60, "reg")).length === 50);
+  assert("[z5] Game 1 (no postseason) → regular log", playoffExtendedGames(null, games(10, "reg"))?.length === 10);
+  assert("[z5] nothing available → null", playoffExtendedGames(null, null) === null);
+}
+
 console.log(`\n=== smoke-engine: ${passed} pass, ${failed} fail ===`);
 process.exit(failed > 0 ? 1 : 0);

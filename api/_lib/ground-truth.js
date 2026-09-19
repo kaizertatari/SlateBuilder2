@@ -322,13 +322,15 @@ function positionFromInfo(info) {
 // only L5 we punt to null. Once a longer per-game series is plumbed in,
 // drop it into l5.games (or a sibling) and this returns the live σ
 // without other code changes.
+export const VARIANCE_MIN_GAMES = 8;
+
 function computeVarianceBlock(games) {
   // Accepts a games array (Stage 4 extended window) or, defensively, an l5-ish
   // object. σ needs ≥8 game-level points; with fewer we punt to null (the
   // projection model then falls back to the slope-implied per-league σ).
   const arr = Array.isArray(games) ? games : (games?.games ?? []);
   const pts = arr.map((g) => g?.pts).filter((p) => p != null);
-  if (pts.length < 8) return { ppg_stddev: null, n: pts.length };
+  if (pts.length < VARIANCE_MIN_GAMES) return { ppg_stddev: null, n: pts.length };
   const mean = pts.reduce((a, b) => a + b, 0) / pts.length;
   const variance = pts.reduce((a, p) => a + (p - mean) ** 2, 0) / pts.length;
   return { ppg_stddev: Number(Math.sqrt(variance).toFixed(2)), n: pts.length };
@@ -338,6 +340,29 @@ function computeVarianceBlock(games) {
 // rest_days = days since the most recent played game; back_to_back when the
 // player played the day before; three_in_four when ≥2 prior games fall within
 // the 3 days before tip (2 prior + tonight = 3 games in 4 nights).
+/**
+ * Stage 4 extended window (variance σ + rest/B2B) for a playoff pick.
+ * A postseason log only reaches VARIANCE_MIN_GAMES deep into the playoffs
+ * (WNBA: the Finals; NBA: round 2), and below it σ falls back to the
+ * slope-implied league value. Until then the window is the postseason games
+ * (newest, so rest days still key off the latest game) followed by the
+ * regular-season log, tagged `regular_season: true`.
+ *
+ * @param {Array|null} postseasonGames  newest-first postseason gamelog games
+ * @param {Array|null} regularGames     newest-first regular-season games
+ * @param {number} [maxGames=50]        cap, matching the regular-season pull
+ * @returns {Array|null}
+ */
+export function playoffExtendedGames(postseasonGames, regularGames, maxGames = 50) {
+  const post = Array.isArray(postseasonGames) ? postseasonGames : [];
+  if (post.length >= VARIANCE_MIN_GAMES) return post;
+  const reg = (Array.isArray(regularGames) ? regularGames : [])
+    .slice(0, Math.max(0, maxGames - post.length))
+    .map((g) => ({ ...g, regular_season: true }));
+  const games = [...post, ...reg];
+  return games.length ? games : null;
+}
+
 function computeRestBlock(game, gamelogGames) {
   const gd = game?.date ? new Date(game.date) : null;
   const arr = Array.isArray(gamelogGames) ? gamelogGames : [];
