@@ -308,6 +308,24 @@ residential-IP constraint.
   profiles (possession, xG/xGA, shots/SOT against, passes for/against,
   territory, pressing, crosses against, fouls) from the snapshot.
 
+## Build / backtest the EPL model
+
+After `refresh-epl-data`, run `npm run build-epl-model` → `data/epl-model.json`
+(the fitted artifact pricing reads; it previews the next round's expected
+team totals). `npm run backtest-epl-model` re-fits walk-forward (each round
+predicted from earlier rounds only) and prints CRPS / log loss per stat vs
+baselines (player raw per-90, role per-90, model without opponent or team
+factors), calibration buckets, and the minutes model's P(start) Brier. Re-run
+it whenever model code or `TEAM_SHRINK_FLOOR` changes; `--k-floor N` sweeps
+the team-factor shrinkage floor without editing code.
+
+Reference read (2026-09-18, rounds 2–5, 10,249 predictions): model log loss
+0.5563 vs 0.5589 no-opponent, 0.5611 no-team, 0.608 role-p90, 1.084 raw
+player-p90; calibration 31.3%→31.3%, 48.5%→46.5%; P(start) Brier 0.120 vs
+0.131 (started last match). The model's own team xG is heavily shrunk early
+in the season (Man City–Sunderland 1.70/1.36) — the market's match lines
+(step 3, `teamContext`) supply the game script.
+
 ## Query Axiom
 
 Telemetry lives in Axiom dataset `props_verdict` (also the
