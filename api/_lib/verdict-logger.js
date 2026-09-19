@@ -337,7 +337,9 @@ export function logEplVerdicts(verdicts, { source = "analyze-all" } = {}) {
     rules_fired: v.rules_fired ?? null,
     flags: v.flags ?? null,
   }));
-  if (events.length) ingestMany(token, events);
+  // A board sweep logs thousands of verdicts — batch so no single ingest
+  // request outgrows the 5s timeout.
+  for (let i = 0; i < events.length; i += 500) ingestMany(token, events.slice(i, i + 500));
 }
 
 export function logEvent({ level, source, message, errorName, errorStatus, context } = {}) {

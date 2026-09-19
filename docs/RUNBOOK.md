@@ -389,6 +389,36 @@ which routes to the EPL verdict engine (`api/_lib/epl/verdict.js`, policy in
   no EV) that the UI labels uncalibrated. Unlock once the EPL grader has
   ~150 graded picks and calibration holds.
 
+## EPL grading + calibration (shadow mode → unlock)
+
+The loop that earns the EPL slate its way out of shadow mode:
+
+1. **Sweep** — `npm run sweep-epl-board [-- --within-hours 3]` prices every
+   upcoming line on the EPL board (both sides where allowed) and logs it to
+   Axiom (`source: epl-sweep`, ~2k line-sides per matchweek). Best run within
+   ~1h of kickoff so the verdicts carry the confirmed lineups; repeat runs are
+   fine (the report keeps each line's LAST pre-kickoff verdict). Lines past
+   kickoff are never priced (`game_started` gate). Needs a current EPL board
+   (`refresh-epl-prizepicks`) and odds (`scrape-epl-odds`).
+2. **Grade** — `npm run grade-epl-outcomes [-- --lookback 10] [-- --dry-run]`
+   settles every logged, non-pre-filtered EPL verdict whose kickoff was ≥ 2.5h
+   ago against FotMob's final player row (`/match/<id>`): DNP / not in squad →
+   void, integer-line tie → push. One outcome per join key (same keys as the
+   basketball grader; `league: "EPL"`). Idempotent — already-graded lines are
+   skipped. Daily is enough.
+3. **Report** — `npm run epl-calibration-report [-- --lookback 120]`: pick hit
+   rates (tier / odds type / stat / lineup state / model-only vs blend, Wilson
+   intervals, vs break-even); reliability of the blended P; log loss + Brier
+   of model vs market vs blend on the same lines; a ridge-regularised refit of
+   `EPL_POLICY.blend` (≥ 50 book-priced lines) and `modelOnlyShrink` (≥ 50
+   model-only lines) — **suggest-only**, edit `api/_lib/epl/verdict.js` after
+   review and bump `EPL_POLICY.version`; and the unlock checklist: ≥ 150
+   graded standard picks, hitting ≥ 57.7%, predicted-vs-realized within 3
+   pts → move EPL from `SLATE_PENDING_LEAGUES` to `SLATE_CALIBRATED_LEAGUES`.
+
+First graded read (2026-09-19): Tottenham 2–3 Aston Villa, 7 lines, 3–4 —
+machinery verified, sample meaningless.
+
 First read (2026-09-19, 2,371 lines, 2,152 priced): book ladders sit above
 the model by ×1.06 (goals) … ×1.3 (shots) … ×1.45 (SOT) … ×1.54 (tackles) …
 ×1.72 (assists), i.e. shaded as the World Cup found, while ranking players

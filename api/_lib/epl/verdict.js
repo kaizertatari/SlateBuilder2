@@ -79,7 +79,7 @@ export function breakEven(oddsType = "standard") {
  * @param {Object} [a.odds]    data/epl-odds.json
  * @param {Map<string,Object>} [a.lineups]  match_id → parseLineup()
  */
-export function buildEplContext({ model, registry, odds = null, lineups = new Map() }) {
+export function buildEplContext({ model, registry, odds = null, lineups = new Map(), now = Date.now() }) {
   const tidByAbbr = Object.fromEntries(Object.entries(model.teams || {}).map(([tid, t]) => [t.abbr, tid]));
   return {
     model, registry, odds, lineups,
@@ -88,6 +88,7 @@ export function buildEplContext({ model, registry, odds = null, lineups = new Ma
     tidByAbbr,
     abbrOf: (tid) => model.teams?.[tid]?.abbr ?? null,
     projections: new Map(),
+    now, // lines at/after kickoff are SKIPped (a stale board must not log in-play verdicts)
   };
 }
 
@@ -128,6 +129,8 @@ export function eplVerdict(prop, direction, ctx, policy = EPL_POLICY) {
     game: `${prop.player_team ?? "?"} vs ${prop.opponent ?? "?"}`,
   };
   if ((oddsType === "goblin" || oddsType === "demon") && direction !== "OVER") return skip(base, "over_only_line", "goblin/demon lines are OVER-only");
+  const kickoff = Date.parse(prop.start_time);
+  if (Number.isFinite(kickoff) && kickoff <= (ctx.now ?? Date.now())) return skip(base, "game_started", "kickoff has passed");
   const stat = PP_TO_STAT[prop.stat_type];
   if (!stat) return skip(base, "unsupported_stat", `${prop.stat_type} is not modelled`);
   const teamAbbr = ctx.team(prop.player_team);

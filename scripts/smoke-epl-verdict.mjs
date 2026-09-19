@@ -54,7 +54,9 @@ const odds = {
   matches: { "ALP-BET": { lambda: { home: 1.6, away: 1.1 } } },
   players: { "1-ST": { props: { shots: { lambda_hat: 4.0 } } } },
 };
-const ctx = (lineups = new Map()) => buildEplContext({ model, registry, odds, lineups });
+// Pinned clock before the synthetic kickoff, so the suite never ages out.
+const NOW = Date.parse("2026-09-15T12:00:00Z");
+const ctx = (lineups = new Map()) => buildEplContext({ model, registry, odds, lineups, now: NOW });
 const prop = (player, stat, line, extra = {}) => ({ player, stat_type: stat, line, odds_type: "standard", player_team: "Alpha", opponent: "Beta", start_time: KICKOFF, ...extra });
 
 console.log("[a] break-evens");
@@ -72,6 +74,8 @@ assert("unknown player", g(eplVerdict(prop("Nobody Here", "Shots", 2.5), "OVER",
 assert("prior-only player", g(eplVerdict(prop("Prior", "Shots", 0.5), "OVER", c0)) === "no_minutes_this_season");
 assert("never-plays bench player → DNP risk", g(eplVerdict(prop("Alpha Bench", "Shots", 0.5), "OVER", c0)) === "dnp_risk");
 assert("keeper stat on an outfielder", g(eplVerdict(prop("Alpha ST", "Goalie Saves", 2.5), "OVER", c0)) === "wrong_position_stat");
+const late = buildEplContext({ model, registry, odds, now: Date.parse(KICKOFF) + 60000 });
+assert("line after kickoff → game_started", g(eplVerdict(prop("Alpha ST", "Shots", 2.5), "OVER", late)) === "game_started");
 
 console.log("\n[c] lineups");
 const lineup = (type, starters, bench = [], unavailable = []) => parseLineup({ content: { lineup: {
