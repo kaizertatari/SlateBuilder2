@@ -87,6 +87,7 @@ export const PROP_STATS = {
   fouled: { base: "fouled" },
   goals: { base: "xg", poisson: true },
   assists: { base: "xa", poisson: true },
+  goal_assist: { base: ["xg", "xa"], poisson: true }, // PrizePicks "Goal + Assist"
   saves: { gk: true },
   goals_conceded: { gk: true, poisson: true },
 };
@@ -99,18 +100,26 @@ export const FANTASY_WEIGHTS = {
   yellow: -1, red: -2, fouls: -0.5,
 };
 
-// Market game-script elasticities (step 3 feeds bookmaker team goal
-// expectations). T_s *= (market / model)^e on the named driver:
-//   for      = own expected goals, against = opponent's expected goals,
-//   ratio    = own / opponent (possession proxy).
-// Initial priors (the WC build used 0.8/0.6/0.45/0.3 for similar drivers) —
-// recalibrate once graded EPL outcomes exist.
+// Market game-script elasticities: T_s *= (market / model)^e on the named
+// driver — for = own expected goals, against = opponent's expected goals,
+// ratio = own / opponent (possession proxy). Market goals come from the
+// books' match lines (scrape-epl-odds → teamContext).
+//
+// Scaled for DOUBLE COUNTING: the market ratio is taken against the model's
+// own xG, which is shrunk hard early in the season (EB k ≈ 13–30 → only
+// ~12–24% of a team's raw strength signal survives at 4 matches), while the
+// shot/pass/defensive team factors keep ~44% (k floor 5). Those factors
+// already carry part of the strength the market ratio re-applies, so their
+// elasticities are cut well below the pure-structure values (shots ≈ 0.8,
+// passes ≈ 0.3), and possession stats — whose team factors are the model's
+// strongest signal in the backtest — take (almost) none. xG/xA take the
+// market in full. Priors (2026-09-19): recalibrate from graded outcomes.
 export const MARKET_ELASTICITY = {
-  shots: { for: 0.8 }, sot: { for: 0.9 }, key_passes: { for: 0.7 },
-  xg: { for: 1 }, xa: { for: 1 }, crosses_att: { for: 0.5 },
-  dribbles_att: { ratio: 0.3 }, passes_att: { ratio: 0.3 },
-  tackles: { against: 0.4 }, clearances: { against: 0.5 },
-  fouls: {}, fouled: {}, sot_against: { against: 0.9 },
+  xg: { for: 1 }, xa: { for: 1 },
+  shots: { for: 0.5 }, sot: { for: 0.55 }, key_passes: { for: 0.45 }, crosses_att: { for: 0.3 },
+  passes_att: { ratio: 0.1 }, dribbles_att: {},
+  tackles: { against: 0.25 }, clearances: { against: 0.3 },
+  fouls: {}, fouled: {}, sot_against: { against: 0.55 },
 };
 
 const FULL_MATCH_MIN = 88; // a start with ≥88' counts as a full 90
@@ -610,9 +619,10 @@ export function projectPlayer(model, { playerId, opponentTeamId, venue, minutes 
       continue;
     }
     if (p.gk) continue; // keepers only get keeper props
+    const bases = Array.isArray(cfg.base) ? cfg.base : [cfg.base];
     props[stat] = {
-      per90: per90[cfg.base],
-      r: cfg.poisson ? Infinity : (model.dispersion[cfg.base] ?? Infinity),
+      per90: bases.reduce((a, b) => a + (per90[b] ?? 0), 0),
+      r: cfg.poisson ? Infinity : (model.dispersion[bases[0]] ?? Infinity),
     };
   }
 

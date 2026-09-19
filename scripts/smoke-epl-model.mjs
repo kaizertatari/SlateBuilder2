@@ -149,6 +149,7 @@ console.log("\n[e] projection + pricing");
   const gk = projectPlayer(model, { playerId: "T3-GK", opponentTeamId: "T1", venue: "home" });
   assert("keeper gets saves/goals conceded only", gk.props.saves && gk.props.goals_conceded && !gk.props.shots);
   assert("outfielder gets no keeper props", !vsNormal.props.saves);
+  assert("goal + assist = goals + assists (Poisson)", close(vsNormal.props.goal_assist.per90, vsNormal.props.goals.per90 + vsNormal.props.assists.per90, 1e-12) && vsNormal.props.goal_assist.r === Infinity);
   const gkVsT1 = gk.props.saves.per90, gkVsT2 = projectPlayer(model, { playerId: "T3-GK", opponentTeamId: "T2", venue: "home" }).props.saves.per90;
   assert("keeper projects more saves vs the heavy-shooting side", gkVsT1 > gkVsT2);
 }

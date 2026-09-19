@@ -326,6 +326,47 @@ player-p90; calibration 31.3%→31.3%, 48.5%→46.5%; P(start) Brier 0.120 vs
 in the season (Man City–Sunderland 1.70/1.36) — the market's match lines
 (step 3, `teamContext`) supply the game script.
 
+## EPL markets + PrizePicks board
+
+Order before an EPL slate: `refresh-epl-data` → `build-epl-model` →
+`scrape-epl-odds` → `refresh-epl-prizepicks` → `epl-board-report`.
+
+- `npm run scrape-epl-odds [-- --days 8]` → `data/epl-odds.json` (~30s,
+  residential IP, plain fetch). DraftKings league 40253 (every event in one
+  call per subcategory: player ladders for shots 16868, SOT 16861, assists
+  16863, score-or-assist 19814, tackles 18345, GK saves 18346, fouls 18348,
+  fouls won 19540, anytime goalscorer 16604; moneyline 4514; total goals
+  13171) + FanDuel competition 10932509 (per event × tab, next `--days`
+  only: `PLAYER_TO_HAVE_N_OR_MORE_SHOTS[_ON_TARGET]`,
+  `PLAYER_TO_CREATE_N_OR_MORE_SHOTS`, `GOALKEEPER_TO_MAKE_N_OR_MORE_SAVES`
+  ("<Team> Goalkeeper" → that team's starting keeper), `TO_SCORE`,
+  `ANYTIME_ASSIST`, `TO_SCORE_OR_ASSIST`, `WIN-DRAW-WIN`, `OVER_UNDER_xx`,
+  `HOME/AWAY_TEAM_OVER/UNDER_x.5`, `TEAM_TO_HAVE_N_OR_MORE_SHOTS[_ON_TARGET]`).
+  Match markets are two-sided → de-vigged → fitted to market team goal
+  expectations λ (rmse ≈ 0.01 on ~29 prices/match). Player ladders are
+  ONE-SIDED → raw λ̂ only (shaded; see the report's per-stat ratios).
+- `npm run refresh-epl-prizepicks` → `data/epl-pp-lines.json`. PrizePicks
+  league ids (from the app's own `/leagues`): **EPL = 14**, EPL1H 529, EPL2H
+  530, La Liga 531, SOCCER 82. Uses the production browser scraper but its
+  own snapshot (the basketball snapshot/Blob/bridge are untouched until the
+  EPL engine ships). **Stop the Refresh Bridge first** (shared profile);
+  same PX slider regime as the lines refresh — if PX won't clear, run the
+  seed-assist routine. Refuses to write an empty board.
+- `npm run epl-board-report [-- --top 25]`: every PrizePicks line vs model
+  P(over | plays) (market team λ as game script), level-matched book P, and
+  the per-leg break-even (2-pick power reference; goblin/demon approximate,
+  over-only). Analysis only — no tiers.
+
+First read (2026-09-19, 2,371 lines, 2,152 priced): book ladders sit above
+the model by ×1.06 (goals) … ×1.3 (shots) … ×1.45 (SOT) … ×1.54 (tackles) …
+×1.72 (assists), i.e. shaded as the World Cup found, while ranking players
+the same way (Spearman ρ 0.83–0.86 shots/SOT/goals/G+A; weaker for fouls
+0.34, tackles/assists 0.66). The largest model "edges" sit on stats with no
+book market (passes, dribbles, fantasy) — and the passes model's
+multiplicative team×opponent structure over-cuts possession sides facing
+another possession side (Arsenal at Brighton: ~369 team passes) — so
+model-only lines must be shrunk toward the line before any tier (step 4).
+
 ## Query Axiom
 
 Telemetry lives in Axiom dataset `props_verdict` (also the
