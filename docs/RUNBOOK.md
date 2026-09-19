@@ -284,6 +284,30 @@ snapshot's `season` field after refresh.
 
 `npm run refresh-team-defense`.
 
+## Refresh EPL data (Premier League model, this season)
+
+`npm run refresh-epl-data` — after each matchweek (and before any EPL
+analysis). Writes `data/epl-matches.json` (all fixtures + every finished
+match: team stats + one row per matchday-squad player) and
+`data/epl-players.json` (FotMob ↔ FPL registry joined on Opta ID, FPL
+availability/news). Both sources are free plain HTTP — FotMob pages embed
+their data as `__NEXT_DATA__`, FPL is its public API — so no browser or
+residential-IP constraint.
+
+- Incremental: stored matches are kept; only new ones plus anything kicked
+  off in the last 2 days (`--refetch-days N`) are fetched. `--full` rebuilds.
+  `--dry-run` fetches and reports without writing.
+- Guards: refuses to write 0 matches or fewer than the existing snapshot; a
+  page whose match id or league differs from the fixture is skipped (FotMob's
+  `/matches/<pair>/…` URLs serve the pair's LATEST meeting — a cup tie for
+  Forest v Leeds — so the script fetches `/match/<id>`).
+- Sanity checks that held on 2026-09-18 (41 matches): player sums equal team
+  totals for shots/SOT/passes/tackles/clearances/interceptions/saves/fouls,
+  and season tackles/saves equal FPL's exactly (FotMob = Opta definitions).
+- `npm run epl-team-report [-- --sort xga]` prints per-team style/"allowed"
+  profiles (possession, xG/xGA, shots/SOT against, passes for/against,
+  territory, pressing, crosses against, fouls) from the snapshot.
+
 ## Query Axiom
 
 Telemetry lives in Axiom dataset `props_verdict` (also the
