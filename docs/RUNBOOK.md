@@ -18,9 +18,9 @@ home-bridge daemon that the deployed UI forwards to.
 | `PrizePicks Refresh Lines` | 00:00 / 06:00 / 12:00 / 18:00 | PrizePicks lines scrape → `data/prizepicks-lines.json` + blob |
 | `PrizePicks Refresh Odds` | 00:10 / 06:10 / 12:10 / 18:10 | `scripts/refresh-odds-task.bat` → DK+FD no-vig consensus → `data/odds.json` + blob (+10 min after lines so they stay in sync) |
 | `Funnel Watchdog` | every 15 min | `scripts/funnel-watchdog-task.bat` → self-heals the Tailscale funnel zombie (see below) |
-| `EPL Refresh Board` | 00:20 / 06:20 / 12:20 / 18:20 | `scripts/epl-board-task.bat` → PrizePicks EPL board (league 14) → `data/epl-pp-lines.json`; 20 min after `PrizePicks Refresh Lines` so the two browser scrapes never share the profile at once. Same PX slider exposure — refuses to write an empty board (the sweeps keep using the last good one). Log `logs\epl-board.log` |
-| `EPL Matchday Sweep` | every 30 min, 04:30–16:00 | `scripts/epl-matchday-task.bat` → `scripts/epl-matchday.mjs`: silent no-op unless an EPL fixture kicks off within 90 min; then `scrape-epl-odds` + `sweep-epl-board` (Axiom). No browser. Log `logs\epl-matchday.log` (only written when it acts) |
-| `EPL Daily` | 07:00 | `scripts/epl-daily-task.bat` → `refresh-epl-data` → `build-epl-model` → `grade-epl-outcomes` → `epl-calibration-report` (each step runs regardless of the previous). Logs `logs\epl-daily.log`, latest report alone in `logs\epl-calibration-latest.txt` |
+| `EPL Refresh Board` | 00:20 / 06:20 / 12:20 / 18:20 | `scripts/epl-board-task.bat` → PrizePicks EPL board (league 14) → `data/epl-pp-lines.json`; 20 min after `PrizePicks Refresh Lines` so the two browser scrapes never share the profile at once. Same PX slider exposure — refuses to write an empty board (the sweeps keep using the last good one). Runs with `--push`, so the Blob copy the deployed app reads first is updated too. Log `logs\epl-board.log` |
+| `EPL Matchday Sweep` | every 30 min, 04:30–16:00 | `scripts/epl-matchday-task.bat` → `scripts/epl-matchday.mjs`: silent no-op unless an EPL fixture kicks off within 90 min; then `scrape-epl-odds --push` + `sweep-epl-board` (Axiom). No browser. Log `logs\epl-matchday.log` (only written when it acts) |
+| `EPL Daily` | 07:00 | `scripts/epl-daily-task.bat` → `refresh-epl-data --push` → `build-epl-model --push` → `grade-epl-outcomes` → `epl-calibration-report` (each step runs regardless of the previous). Logs `logs\epl-daily.log`, latest report alone in `logs\epl-calibration-latest.txt` |
 | `Refresh Bridge` | at logon (daemon) | `powershell.exe -WindowStyle Hidden -File scripts/refresh-bridge-task.ps1` → job-object-wrapped, self-restarting `scripts/refresh-bridge.mjs`. Replaced the NSSM service 2026-07-07; launcher rewritten from `.vbs` 2026-07-30 — see "Refresh-bridge daemon" |
 
 **EPL tasks (registered 2026-09-19):** actions are `conhost.exe --headless
@@ -382,7 +382,7 @@ which routes to the EPL verdict engine (`api/_lib/epl/verdict.js`, policy in
   board are Blob-first with the committed `data/epl-*.json` as floor. Run
   the refreshes with `--push` to update the deployed app without a deploy
   (`refresh-epl-data --push` → registry, `build-epl-model --push`,
-  `scrape-epl-odds --push`, `refresh-epl-prizepicks --push`).
+  `scrape-epl-odds --push`, `refresh-epl-prizepicks --push`). The scheduled tasks pass `--push` as of 2026-09-20 — before that they refreshed only the local snapshots, so the deployed app kept serving the `data/epl-*.json` bundled at the last deploy (the model/odds/registry blobs did not exist at all until they were seeded by hand on 2026-09-20).
 - **Lineups**: fetched live from FotMob per fixture (next 36h, 5-min
   cache). Before the team sheet: FotMob's predicted XI nudges P(start) and
   its injury list SKIPs the absentees. ~1h before kickoff the confirmed

@@ -41,7 +41,9 @@ async function main() {
     console.log("  DRY RUN — would refresh odds + sweep");
     return;
   }
-  const oddsRc = run("scrape-epl-odds.mjs");
+  // --push keeps the deployed app's Blob odds in step with the sweep;
+  // without it the app prices against the odds bundled at the last deploy.
+  const oddsRc = run("scrape-epl-odds.mjs", ["--push"]);
   if (oddsRc !== 0) console.warn(`  ! odds refresh exit ${oddsRc} — sweeping with the last odds snapshot`);
   const sweepRc = run("sweep-epl-board.mjs", ["--within-hours", String((WINDOW_MIN + 5) / 60)]);
   if (sweepRc !== 0) process.exitCode = sweepRc;

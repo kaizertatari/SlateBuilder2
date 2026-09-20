@@ -15,9 +15,9 @@ set "LOG=logs\epl-daily.log"
 set "NODE=C:\Program Files\nodejs\node.exe"
 echo. >> "%LOG%"
 echo === %date% %time% start === >> "%LOG%"
-"%NODE%" scripts\refresh-epl-data.mjs >> "%LOG%" 2>&1
+"%NODE%" scripts\refresh-epl-data.mjs --push >> "%LOG%" 2>&1
 echo --- refresh-epl-data exit=%ERRORLEVEL% >> "%LOG%"
-"%NODE%" scripts\build-epl-model.mjs >> "%LOG%" 2>&1
+"%NODE%" scripts\build-epl-model.mjs --push >> "%LOG%" 2>&1
 echo --- build-epl-model exit=%ERRORLEVEL% >> "%LOG%"
 "%NODE%" scripts\grade-epl-outcomes.mjs >> "%LOG%" 2>&1
 echo --- grade-epl-outcomes exit=%ERRORLEVEL% >> "%LOG%"
