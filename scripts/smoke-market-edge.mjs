@@ -51,13 +51,25 @@ setLeagueOne("NBA", 0.55);
 const nSig = apply(ctx("Test Player", "Points", "OVER", 16.5, "NBA")).signals_added;
 ok(wSig >= 1 && nSig === 0, `G WNBA acts on a 0.55 edge (WNBA ${wSig} sig, NBA ${nSig})`);
 
-// H) WNBA tolerates a larger line gap: a 2pt shift off an 18.5 book line is
-// priced in WNBA (shift ≈0.114 ≤ 0.12 cap) but discarded in NBA (≈0.094 > 0.08)
-setLeagueOne("WNBA", 0.50, 18.5);
+// H) WNBA tolerates a larger line gap: an 8pt gap off a 24.5 book line is
+// priced in WNBA (cap 1.25σ ≈ 8.8pt) but discarded in NBA (0.9σ ≈ 7.7pt)
+setLeagueOne("WNBA", 0.50, 24.5);
 const wPriced = apply(ctx("Test Player", "Points", "OVER", 16.5, "WNBA")).fired;
-setLeagueOne("NBA", 0.50, 18.5);
+setLeagueOne("NBA", 0.50, 24.5);
 const nPriced = apply(ctx("Test Player", "Points", "OVER", 16.5, "NBA")).fired;
-ok(wPriced && !nPriced, `H WNBA prices a 2pt gap, NBA discards it (WNBA ${wPriced}, NBA ${nPriced})`);
+ok(wPriced && !nPriced, `H WNBA prices an 8pt gap, NBA discards it (WNBA ${wPriced}, NBA ${nPriced})`);
+
+// I) goblin line 5pt under a 15.5 book line: priced from the fitted normal
+// (the old linear shift discarded it), saturating well short of the clamp
+setLeagueOne("WNBA", 0.52, 15.5);
+r = apply(ctx("Test Player", "Points", "OVER", 10.5, "WNBA"));
+ok(r.fired && r._market.fair_at_line > 0.72 && r._market.fair_at_line < 0.82 && r.signals_added === 2,
+  `I goblin 5pt below book priced ~0.77 (got ${r._market?.fair_at_line})`);
+
+// J) threes use Poisson: 2.5 book at 0.5765 → λ≈3 → P(≥2) ≈ 0.80
+setOdds({ source: "dk", league: "WNBA", by_player: { "Test Player": [{ stat: "3-Pointers Made", league: "WNBA", line: 2.5, fair_over: 0.5765, sources: [{ book: "dk", line: 2.5, over_american: -140, under_american: 110, fair_over: 0.5765 }] }] }, games: {} });
+r = apply(ctx("Test Player", "3-Pointers Made", "OVER", 1.5, "WNBA"));
+ok(r.fired && Math.abs(r._market.fair_at_line - 0.80) < 0.01, `J threes Poisson 2.5→1.5 ≈ 0.80 (got ${r._market?.fair_at_line})`);
 
 setOdds(null);
 console.log(`\nsmoke-market-edge: ${pass} passed, ${fail} failed`);

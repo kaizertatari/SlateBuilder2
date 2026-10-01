@@ -48,7 +48,8 @@ export function devigTwoWay(overAmerican, underAmerican) {
 // when they differ (~41% of props). APPROXIMATE: NBA σ runs larger than WNBA's
 // (more possessions, higher lines), so NBA slopes are ~15-20% smaller. Refine
 // per-league, or scrape DK alternate lines for an exact ladder (Stage-3).
-// Reliable only for small shifts (the MAX_PROB_SHIFT guard discards the rest).
+// fairProbAtLine turns each slope into a σ (0.4/slope) and prices off-book
+// lines from a fitted distribution; lookupMarket caps the gap in σ units.
 const PER_LEAGUE_STAT_SLOPE = {
   WNBA: {
     Points: 0.057,
@@ -80,17 +81,79 @@ export function slopeFor(stat, league) {
   return table[stat] ?? DEFAULT_SLOPE;
 }
 
+// Per-stat σ implied by the slope table (slope ≈ φ(0)/σ ≈ 0.4/σ).
+export function sigmaForStat(stat, league) {
+  return 0.4 / slopeFor(stat, league);
+}
+
+// Low-count stats priced as Poisson instead of normal: a normal curve is a
+// poor fit to a 0–5 count (a 2.5 → 1.5 move on threes is one whole outcome).
+const POISSON_STATS = new Set(["3-Pointers Made"]);
+
+// Standard normal CDF — Abramowitz & Stegun 26.2.17 (|error| < 7.5e-8).
+// Local copy: projection.js imports this module, so importing it back would
+// make a cycle.
+function normCdf(z) {
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const d = 0.3989422804014327 * Math.exp((-z * z) / 2);
+  const p = d * t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+  return z > 0 ? 1 - p : p;
+}
+
+// Inverse of normCdf by bisection (inputs are clamped probabilities, so ±8 is
+// ample and 60 halvings is far below the CDF's own error).
+function normInv(p) {
+  let lo = -8, hi = 8;
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2;
+    if (normCdf(mid) < p) lo = mid; else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+// P(X > line) for X ~ Poisson(λ). Over a half-point line that is
+// P(X ≥ floor(line)+1); a whole-number line ignores the push.
+function poissonOver(lambda, line) {
+  const k = Math.floor(line) + 1;
+  let term = Math.exp(-lambda), cdf = 0;
+  for (let i = 0; i < k; i++) { cdf += term; term *= lambda / (i + 1); }
+  return 1 - cdf;
+}
+
+// λ such that poissonOver(λ, line) = p (monotone increasing in λ).
+function poissonLambdaFor(p, line) {
+  let lo = 1e-6, hi = 50;
+  for (let i = 0; i < 80; i++) {
+    const mid = (lo + hi) / 2;
+    if (poissonOver(mid, line) < p) lo = mid; else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
 /**
  * Shift a book's fair P(over) from its posted line to a target line.
- * Lowering the line raises P(over): shifted = fair + slope·(bookLine − target).
+ * Fits a distribution to the book's quote and reads it at the target:
+ *   • normal (σ from the slope table): μ = bookLine + σ·Φ⁻¹(fair), then
+ *     P(over target) = 1 − Φ((target − μ)/σ);
+ *   • Poisson for low-count stats (POISSON_STATS): λ solved from the quote.
+ * For small moves this matches the old linear shift (slope = φ(0)/σ); unlike
+ * it, it stays sane for goblin/demon lines several points off the book.
  * Clamped to [0.02, 0.98]. Returns fairOver unchanged when lines match.
  * `league` selects the per-league σ; absent → WNBA (back-compat).
  */
 export function fairProbAtLine({ fairOver, bookLine, targetLine, stat, league }) {
   if (typeof fairOver !== "number") return null;
   if (typeof targetLine !== "number" || typeof bookLine !== "number") return fairOver;
-  const slope = slopeFor(stat, league);
-  const shifted = fairOver + slope * (bookLine - targetLine);
+  if (targetLine === bookLine) return fairOver;
+  const p = Math.max(0.02, Math.min(0.98, fairOver));
+  let shifted;
+  if (POISSON_STATS.has(stat)) {
+    shifted = poissonOver(poissonLambdaFor(p, bookLine), targetLine);
+  } else {
+    const sigma = sigmaForStat(stat, league);
+    const mu = bookLine + sigma * normInv(p);
+    shifted = 1 - normCdf((targetLine - mu) / sigma);
+  }
   return Math.max(0.02, Math.min(0.98, shifted));
 }
 
@@ -169,24 +232,23 @@ export function lookupMarket({ player, stat, line, league = null }) {
   // no-vig CONSENSUS at the line. (Returning fair-at-line keeps consumers
   // simple: no second shift downstream.)
   //
-  // RELIABILITY GUARD: the linear line-shift only holds for small moves. If a
-  // PrizePicks line sits far from a book's main line (a demon/goblin line, e.g.
-  // a 24.5 points line vs a 16.5 book line), extrapolating the de-vig that far
-  // yields garbage (→ a fake 98% UNDER). Only use a book's quote when the shift
-  // moves probability ≤ MAX_PROB_SHIFT; if no book is close enough, return null
-  // (we can't price this line without alternate-line ladders — Stage 3).
-  // Stage 5 — WNBA is a softer market: a larger PP-vs-book gap is more often
-  // real staleness edge than the noise it'd be in the efficient NBA market, so
-  // tolerate a bigger shift there before discarding a quote. Tunable.
+  // RELIABILITY GUARD: fairProbAtLine fits a distribution to the book's quote,
+  // so goblin/demon lines a few points off the book are priced (the old linear
+  // shift discarded them — ~every goblin had no market vote). The fitted σ is
+  // league-level, not per-player, so trust still fades with distance: discard
+  // a quote when the PP line sits more than MAX_SIGMA_GAP σ from the book
+  // line. Stage 5 — WNBA is a softer market (a bigger gap is more often
+  // staleness edge), so it tolerates a wider gap. Tunable.
   const lg = String(entry.league ?? league ?? "").toUpperCase();
-  const MAX_PROB_SHIFT = lg === "WNBA" ? 0.12 : 0.08; // ~1.5pt vs ~1pt on points
+  const MAX_SIGMA_GAP = lg === "WNBA" ? 1.25 : 0.9; // ≈8.8pt / 7.7pt on points
+  const maxGap = MAX_SIGMA_GAP * sigmaForStat(stat, entry.league ?? league);
   const target = typeof line === "number" ? line : entry.line;
   const usable = [];
   for (const s of sources) {
     if (typeof s.fair_over !== "number" || typeof s.line !== "number") continue;
+    if (typeof target === "number" && Math.abs(target - s.line) > maxGap) continue;
     const shifted = fairProbAtLine({ fairOver: s.fair_over, bookLine: s.line, targetLine: typeof target === "number" ? target : s.line, stat, league: entry.league ?? league });
     if (shifted == null) continue;
-    if (typeof target === "number" && Math.abs(shifted - s.fair_over) > MAX_PROB_SHIFT) continue;
     usable.push({ s, shifted });
   }
   if (!usable.length) return null;

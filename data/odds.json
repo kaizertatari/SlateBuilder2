@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-10-01T00:26:09.431Z",
+  "fetched_at": "2026-10-01T06:42:21.557Z",
   "leagues": [
     "WNBA",
     "NBA"
@@ -9,22 +9,6 @@
     "fanduel"
   ],
   "games": {
-    "ATL@WAS": {
-      "home": "WAS",
-      "away": "ATL",
-      "start_time": "2026-09-30T23:04:43.0000000Z",
-      "game_total": 158.5,
-      "home_spread": 6.5,
-      "away_spread": -6.5
-    },
-    "GS@DAL": {
-      "home": "DAL",
-      "away": "GS",
-      "start_time": "2026-10-01T01:10:00.0000000Z",
-      "game_total": 157.5,
-      "home_spread": 4.5,
-      "away_spread": -4.5
-    },
     "IND@LV": {
       "home": "LV",
       "away": "IND",
@@ -32,6 +16,22 @@
       "game_total": 181.5,
       "home_spread": -4.5,
       "away_spread": 4.5
+    },
+    "DAL@GS": {
+      "home": "GS",
+      "away": "DAL",
+      "start_time": "2026-10-03T01:00:00.0000000Z",
+      "game_total": 157.5,
+      "home_spread": -7.5,
+      "away_spread": 7.5
+    },
+    "NY@ATL": {
+      "home": "ATL",
+      "away": "NY",
+      "start_time": "2026-10-04T19:00:00.0000000Z",
+      "game_total": 172.5,
+      "home_spread": -3.5,
+      "away_spread": 3.5
     },
     "BOS@DET": {
       "home": "DET",
@@ -387,2030 +387,6 @@
     }
   },
   "by_player": {
-    "Paige Bueckers": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 19.5,
-        "fair_over": 0.4969,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 19.5,
-            "over_american": -120,
-            "under_american": -110,
-            "fair_over": 0.5101
-          },
-          {
-            "book": "fanduel",
-            "line": 19.5,
-            "over_american": -106,
-            "under_american": -122,
-            "fair_over": 0.4836
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 4.5,
-        "fair_over": 0.4463,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 4.5,
-            "over_american": 124,
-            "under_american": -170,
-            "fair_over": 0.4149
-          },
-          {
-            "book": "fanduel",
-            "line": 3.5,
-            "over_american": -172,
-            "under_american": 128,
-            "fair_over": 0.5905
-          }
-        ]
-      },
-      {
-        "stat": "Assists",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 5.5,
-        "fair_over": 0.4243,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 5.5,
-            "over_american": 111,
-            "under_american": -152,
-            "fair_over": 0.44
-          },
-          {
-            "book": "fanduel",
-            "line": 5.5,
-            "over_american": 128,
-            "under_american": -174,
-            "fair_over": 0.4085
-          }
-        ]
-      },
-      {
-        "stat": "3-Pointers Made",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 1.5,
-        "fair_over": 0.5121,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 1.5,
-            "over_american": -110,
-            "under_american": -124,
-            "fair_over": 0.4862
-          },
-          {
-            "book": "fanduel",
-            "line": 1.5,
-            "over_american": -136,
-            "under_american": 102,
-            "fair_over": 0.5379
-          }
-        ]
-      },
-      {
-        "stat": "PRA",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 29.5,
-        "fair_over": 0.495,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 29.5,
-            "over_american": -114,
-            "under_american": -119,
-            "fair_over": 0.495
-          }
-        ]
-      },
-      {
-        "stat": "PA",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 24.5,
-        "fair_over": 0.5226,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 24.5,
-            "over_american": -129,
-            "under_american": -106,
-            "fair_over": 0.5226
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 23.5,
-        "fair_over": 0.5218,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 23.5,
-            "over_american": -128,
-            "under_american": -106,
-            "fair_over": 0.5218
-          }
-        ]
-      },
-      {
-        "stat": "RA",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 9.5,
-        "fair_over": 0.4734,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 9.5,
-            "over_american": -104,
-            "under_american": -131,
-            "fair_over": 0.4734
-          }
-        ]
-      }
-    ],
-    "Gabby Williams": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 17.5,
-        "fair_over": 0.5092,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 17.5,
-            "over_american": -118,
-            "under_american": -112,
-            "fair_over": 0.5061
-          },
-          {
-            "book": "fanduel",
-            "line": 17.5,
-            "over_american": -120,
-            "under_american": -108,
-            "fair_over": 0.5123
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 3.5,
-        "fair_over": 0.5243,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 3.5,
-            "over_american": -133,
-            "under_american": -103,
-            "fair_over": 0.5294
-          },
-          {
-            "book": "fanduel",
-            "line": 3.5,
-            "over_american": -125,
-            "under_american": -106,
-            "fair_over": 0.5192
-          }
-        ]
-      },
-      {
-        "stat": "Assists",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 2.5,
-        "fair_over": 0.5816,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 2.5,
-            "over_american": -184,
-            "under_american": 134,
-            "fair_over": 0.6026
-          },
-          {
-            "book": "fanduel",
-            "line": 3.5,
-            "over_american": 132,
-            "under_american": -178,
-            "fair_over": 0.4023
-          }
-        ]
-      },
-      {
-        "stat": "3-Pointers Made",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 1.5,
-        "fair_over": 0.5842,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 1.5,
-            "over_american": -173,
-            "under_american": 127,
-            "fair_over": 0.5899
-          },
-          {
-            "book": "fanduel",
-            "line": 1.5,
-            "over_american": -162,
-            "under_american": 122,
-            "fair_over": 0.5785
-          }
-        ]
-      },
-      {
-        "stat": "PRA",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 24.5,
-        "fair_over": 0.5138,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 24.5,
-            "over_american": -124,
-            "under_american": -110,
-            "fair_over": 0.5138
-          }
-        ]
-      },
-      {
-        "stat": "PA",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 20.5,
-        "fair_over": 0.5198,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 20.5,
-            "over_american": -127,
-            "under_american": -107,
-            "fair_over": 0.5198
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 21.5,
-        "fair_over": 0.499,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 21.5,
-            "over_american": -116,
-            "under_american": -117,
-            "fair_over": 0.499
-          }
-        ]
-      },
-      {
-        "stat": "RA",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 6.5,
-        "fair_over": 0.5487,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 6.5,
-            "over_american": -144,
-            "under_american": 106,
-            "fair_over": 0.5487
-          }
-        ]
-      }
-    ],
-    "Arike Ogunbowale": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 13.5,
-        "fair_over": 0.5127,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 13.5,
-            "over_american": -120,
-            "under_american": -111,
-            "fair_over": 0.509
-          },
-          {
-            "book": "fanduel",
-            "line": 13.5,
-            "over_american": -122,
-            "under_american": -106,
-            "fair_over": 0.5164
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 2.5,
-        "fair_over": 0.5416,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 2.5,
-            "over_american": -148,
-            "under_american": 109,
-            "fair_over": 0.555
-          },
-          {
-            "book": "fanduel",
-            "line": 2.5,
-            "over_american": -130,
-            "under_american": -102,
-            "fair_over": 0.5282
-          }
-        ]
-      },
-      {
-        "stat": "Assists",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 3.5,
-        "fair_over": 0.4277,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 3.5,
-            "over_american": 120,
-            "under_american": -164,
-            "fair_over": 0.4225
-          },
-          {
-            "book": "fanduel",
-            "line": 3.5,
-            "over_american": 116,
-            "under_american": -154,
-            "fair_over": 0.433
-          }
-        ]
-      },
-      {
-        "stat": "3-Pointers Made",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 1.5,
-        "fair_over": 0.5308,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 1.5,
-            "over_american": -135,
-            "under_american": -101,
-            "fair_over": 0.5334
-          },
-          {
-            "book": "fanduel",
-            "line": 1.5,
-            "over_american": -130,
-            "under_american": -102,
-            "fair_over": 0.5282
-          }
-        ]
-      },
-      {
-        "stat": "PRA",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 20.5,
-        "fair_over": 0.4742,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 20.5,
-            "over_american": -104,
-            "under_american": -130,
-            "fair_over": 0.4742
-          }
-        ]
-      },
-      {
-        "stat": "PA",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 17.5,
-        "fair_over": 0.4782,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 17.5,
-            "over_american": -106,
-            "under_american": -128,
-            "fair_over": 0.4782
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 16.5,
-        "fair_over": 0.5149,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 16.5,
-            "over_american": -124,
-            "under_american": -109,
-            "fair_over": 0.5149
-          }
-        ]
-      },
-      {
-        "stat": "RA",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 6.5,
-        "fair_over": 0.4425,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 6.5,
-            "over_american": 110,
-            "under_american": -150,
-            "fair_over": 0.4425
-          }
-        ]
-      }
-    ],
-    "Veronica Burton": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 12.5,
-        "fair_over": 0.501,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 12.5,
-            "over_american": -112,
-            "under_american": -118,
-            "fair_over": 0.4939
-          },
-          {
-            "book": "fanduel",
-            "line": 12.5,
-            "over_american": -118,
-            "under_american": -110,
-            "fair_over": 0.5082
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 4.5,
-        "fair_over": 0.4462,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 4.5,
-            "over_american": 118,
-            "under_american": -160,
-            "fair_over": 0.4271
-          },
-          {
-            "book": "fanduel",
-            "line": 3.5,
-            "over_american": -162,
-            "under_american": 122,
-            "fair_over": 0.5785
-          }
-        ]
-      },
-      {
-        "stat": "Assists",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 6.5,
-        "fair_over": 0.456,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 6.5,
-            "over_american": 103,
-            "under_american": -140,
-            "fair_over": 0.4578
-          },
-          {
-            "book": "fanduel",
-            "line": 6.5,
-            "over_american": 106,
-            "under_american": -140,
-            "fair_over": 0.4542
-          }
-        ]
-      },
-      {
-        "stat": "3-Pointers Made",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 1.5,
-        "fair_over": 0.4193,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 1.5,
-            "over_american": 125,
-            "under_american": -170,
-            "fair_over": 0.4138
-          },
-          {
-            "book": "fanduel",
-            "line": 1.5,
-            "over_american": 120,
-            "under_american": -160,
-            "fair_over": 0.4248
-          }
-        ]
-      },
-      {
-        "stat": "PRA",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 23.5,
-        "fair_over": 0.4891,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 23.5,
-            "over_american": -111,
-            "under_american": -122,
-            "fair_over": 0.4891
-          }
-        ]
-      },
-      {
-        "stat": "PA",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 18.5,
-        "fair_over": 0.5218,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 18.5,
-            "over_american": -128,
-            "under_american": -106,
-            "fair_over": 0.5218
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 16.5,
-        "fair_over": 0.5129,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 16.5,
-            "over_american": -123,
-            "under_american": -110,
-            "fair_over": 0.5129
-          }
-        ]
-      },
-      {
-        "stat": "RA",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 10.5,
-        "fair_over": 0.501,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 10.5,
-            "over_american": -117,
-            "under_american": -116,
-            "fair_over": 0.501
-          }
-        ]
-      }
-    ],
-    "Jessica Shepard": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 11.5,
-        "fair_over": 0.4753,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 11.5,
-            "over_american": -104,
-            "under_american": -127,
-            "fair_over": 0.4768
-          },
-          {
-            "book": "fanduel",
-            "line": 10.5,
-            "over_american": -130,
-            "under_american": 100,
-            "fair_over": 0.5306
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 10.5,
-        "fair_over": 0.4684,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 10.5,
-            "over_american": 104,
-            "under_american": -141,
-            "fair_over": 0.4559
-          },
-          {
-            "book": "fanduel",
-            "line": 10.5,
-            "over_american": -106,
-            "under_american": -125,
-            "fair_over": 0.4808
-          }
-        ]
-      },
-      {
-        "stat": "Assists",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 4.5,
-        "fair_over": 0.5036,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 4.5,
-            "over_american": -113,
-            "under_american": -120,
-            "fair_over": 0.4931
-          },
-          {
-            "book": "fanduel",
-            "line": 4.5,
-            "over_american": -122,
-            "under_american": -108,
-            "fair_over": 0.5142
-          }
-        ]
-      },
-      {
-        "stat": "PRA",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 26.5,
-        "fair_over": 0.4822,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 26.5,
-            "over_american": -108,
-            "under_american": -126,
-            "fair_over": 0.4822
-          }
-        ]
-      },
-      {
-        "stat": "PA",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 15.5,
-        "fair_over": 0.5149,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 15.5,
-            "over_american": -124,
-            "under_american": -109,
-            "fair_over": 0.5149
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 21.5,
-        "fair_over": 0.4862,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 21.5,
-            "over_american": -110,
-            "under_american": -124,
-            "fair_over": 0.4862
-          }
-        ]
-      },
-      {
-        "stat": "RA",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 14.5,
-        "fair_over": 0.5266,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 14.5,
-            "over_american": -131,
-            "under_american": -104,
-            "fair_over": 0.5266
-          }
-        ]
-      }
-    ],
-    "Janelle Salaun": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 10.5,
-        "fair_over": 0.4592,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 10.5,
-            "over_american": 100,
-            "under_american": -133,
-            "fair_over": 0.4669
-          },
-          {
-            "book": "fanduel",
-            "line": 9.5,
-            "over_american": -118,
-            "under_american": -110,
-            "fair_over": 0.5082
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 3.5,
-        "fair_over": 0.5034,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 3.5,
-            "over_american": -123,
-            "under_american": -110,
-            "fair_over": 0.5129
-          },
-          {
-            "book": "fanduel",
-            "line": 3.5,
-            "over_american": -112,
-            "under_american": -118,
-            "fair_over": 0.4939
-          }
-        ]
-      },
-      {
-        "stat": "3-Pointers Made",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 1.5,
-        "fair_over": 0.55,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 1.5,
-            "over_american": -157,
-            "under_american": 115,
-            "fair_over": 0.5677
-          },
-          {
-            "book": "fanduel",
-            "line": 1.5,
-            "over_american": -132,
-            "under_american": 100,
-            "fair_over": 0.5323
-          }
-        ]
-      },
-      {
-        "stat": "PRA",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 14.5,
-        "fair_over": 0.5306,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 14.5,
-            "over_american": -133,
-            "under_american": -102,
-            "fair_over": 0.5306
-          }
-        ]
-      },
-      {
-        "stat": "PA",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 11.5,
-        "fair_over": 0.4742,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 11.5,
-            "over_american": -104,
-            "under_american": -130,
-            "fair_over": 0.4742
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 13.5,
-        "fair_over": 0.5198,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 13.5,
-            "over_american": -127,
-            "under_american": -107,
-            "fair_over": 0.5198
-          }
-        ]
-      },
-      {
-        "stat": "RA",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 4.5,
-        "fair_over": 0.5326,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 4.5,
-            "over_american": -134,
-            "under_american": -101,
-            "fair_over": 0.5326
-          }
-        ]
-      }
-    ],
-    "Tiffany Hayes": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 9.5,
-        "fair_over": 0.498,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 9.5,
-            "over_american": -114,
-            "under_american": -116,
-            "fair_over": 0.498
-          },
-          {
-            "book": "fanduel",
-            "line": 9.5,
-            "over_american": -113,
-            "under_american": -115,
-            "fair_over": 0.498
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 1.5,
-        "fair_over": 0.6107,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 1.5,
-            "over_american": -191,
-            "under_american": 139,
-            "fair_over": 0.6107
-          }
-        ]
-      },
-      {
-        "stat": "Assists",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 2.5,
-        "fair_over": 0.474,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 2.5,
-            "over_american": -103,
-            "under_american": -131,
-            "fair_over": 0.4722
-          },
-          {
-            "book": "fanduel",
-            "line": 2.5,
-            "over_american": -104,
-            "under_american": -128,
-            "fair_over": 0.4759
-          }
-        ]
-      },
-      {
-        "stat": "3-Pointers Made",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 0.5,
-        "fair_over": 0.663,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 0.5,
-            "over_american": -245,
-            "under_american": 177,
-            "fair_over": 0.663
-          }
-        ]
-      },
-      {
-        "stat": "PRA",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 14.5,
-        "fair_over": 0.4694,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 14.5,
-            "over_american": -102,
-            "under_american": -133,
-            "fair_over": 0.4694
-          }
-        ]
-      },
-      {
-        "stat": "PA",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 12.5,
-        "fair_over": 0.4666,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 12.5,
-            "over_american": -101,
-            "under_american": -135,
-            "fair_over": 0.4666
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 11.5,
-        "fair_over": 0.501,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 11.5,
-            "over_american": -117,
-            "under_american": -116,
-            "fair_over": 0.501
-          }
-        ]
-      },
-      {
-        "stat": "RA",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 4.5,
-        "fair_over": 0.495,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 4.5,
-            "over_american": -114,
-            "under_american": -119,
-            "fair_over": 0.495
-          }
-        ]
-      }
-    ],
-    "Cecilia Zandalasini": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 8.5,
-        "fair_over": 0.504,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 8.5,
-            "over_american": -120,
-            "under_american": -110,
-            "fair_over": 0.5101
-          },
-          {
-            "book": "fanduel",
-            "line": 8.5,
-            "over_american": -113,
-            "under_american": -115,
-            "fair_over": 0.498
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 1.5,
-        "fair_over": 0.5904,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 1.5,
-            "over_american": -174,
-            "under_american": 127,
-            "fair_over": 0.5904
-          }
-        ]
-      },
-      {
-        "stat": "Assists",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 1.5,
-        "fair_over": 0.4931,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 1.5,
-            "over_american": -113,
-            "under_american": -120,
-            "fair_over": 0.4931
-          }
-        ]
-      },
-      {
-        "stat": "3-Pointers Made",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 1.5,
-        "fair_over": 0.4088,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 1.5,
-            "over_american": 126,
-            "under_american": -173,
-            "fair_over": 0.4112
-          },
-          {
-            "book": "fanduel",
-            "line": 1.5,
-            "over_american": 130,
-            "under_american": -174,
-            "fair_over": 0.4064
-          }
-        ]
-      },
-      {
-        "stat": "PRA",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 12.5,
-        "fair_over": 0.4882,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 12.5,
-            "over_american": -111,
-            "under_american": -123,
-            "fair_over": 0.4882
-          }
-        ]
-      },
-      {
-        "stat": "PA",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 10.5,
-        "fair_over": 0.4802,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 10.5,
-            "over_american": -107,
-            "under_american": -127,
-            "fair_over": 0.4802
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 10.5,
-        "fair_over": 0.5149,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 10.5,
-            "over_american": -124,
-            "under_american": -109,
-            "fair_over": 0.5149
-          }
-        ]
-      },
-      {
-        "stat": "RA",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 3.5,
-        "fair_over": 0.499,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 3.5,
-            "over_american": -116,
-            "under_american": -117,
-            "fair_over": 0.499
-          }
-        ]
-      }
-    ],
-    "Maddy Siegrist": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 7.5,
-        "fair_over": 0.5106,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 7.5,
-            "over_american": -127,
-            "under_american": -104,
-            "fair_over": 0.5232
-          },
-          {
-            "book": "fanduel",
-            "line": 7.5,
-            "over_american": -113,
-            "under_american": -115,
-            "fair_over": 0.498
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 3.5,
-        "fair_over": 0.4288,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 3.5,
-            "over_american": 111,
-            "under_american": -151,
-            "fair_over": 0.4407
-          },
-          {
-            "book": "fanduel",
-            "line": 3.5,
-            "over_american": 124,
-            "under_american": -166,
-            "fair_over": 0.417
-          }
-        ]
-      },
-      {
-        "stat": "3-Pointers Made",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 0.5,
-        "fair_over": 0.6505,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 0.5,
-            "over_american": -236,
-            "under_american": 170,
-            "fair_over": 0.6547
-          },
-          {
-            "book": "fanduel",
-            "line": 0.5,
-            "over_american": -225,
-            "under_american": 164,
-            "fair_over": 0.6464
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 11.5,
-        "fair_over": 0.4762,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 11.5,
-            "over_american": -105,
-            "under_american": -129,
-            "fair_over": 0.4762
-          }
-        ]
-      }
-    ],
-    "Kayla Thornton": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 7.5,
-        "fair_over": 0.496,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 7.5,
-            "over_american": -112,
-            "under_american": -118,
-            "fair_over": 0.4939
-          },
-          {
-            "book": "fanduel",
-            "line": 7.5,
-            "over_american": -113,
-            "under_american": -115,
-            "fair_over": 0.498
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 4.5,
-        "fair_over": 0.505,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 4.5,
-            "over_american": -122,
-            "under_american": -112,
-            "fair_over": 0.5099
-          },
-          {
-            "book": "fanduel",
-            "line": 4.5,
-            "over_american": -114,
-            "under_american": -114,
-            "fair_over": 0.5
-          }
-        ]
-      },
-      {
-        "stat": "3-Pointers Made",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 1.5,
-        "fair_over": 0.4462,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 1.5,
-            "over_american": 104,
-            "under_american": -141,
-            "fair_over": 0.4559
-          },
-          {
-            "book": "fanduel",
-            "line": 1.5,
-            "over_american": 114,
-            "under_american": -152,
-            "fair_over": 0.4365
-          }
-        ]
-      },
-      {
-        "stat": "PRA",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 13.5,
-        "fair_over": 0.4734,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 13.5,
-            "over_american": -104,
-            "under_american": -131,
-            "fair_over": 0.4734
-          }
-        ]
-      },
-      {
-        "stat": "PA",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 8.5,
-        "fair_over": 0.4762,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 8.5,
-            "over_american": -105,
-            "under_american": -129,
-            "fair_over": 0.4762
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 12.5,
-        "fair_over": 0.4742,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 12.5,
-            "over_american": -104,
-            "under_american": -130,
-            "fair_over": 0.4742
-          }
-        ]
-      },
-      {
-        "stat": "RA",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 5.5,
-        "fair_over": 0.501,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 5.5,
-            "over_american": -117,
-            "under_american": -116,
-            "fair_over": 0.501
-          }
-        ]
-      }
-    ],
-    "Awak Kuier": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 7.5,
-        "fair_over": 0.4624,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 7.5,
-            "over_american": 103,
-            "under_american": -137,
-            "fair_over": 0.4601
-          },
-          {
-            "book": "fanduel",
-            "line": 6.5,
-            "over_american": -125,
-            "under_american": -104,
-            "fair_over": 0.5215
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 5.5,
-        "fair_over": 0.4431,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 5.5,
-            "over_american": 105,
-            "under_american": -143,
-            "fair_over": 0.4532
-          },
-          {
-            "book": "fanduel",
-            "line": 5.5,
-            "over_american": 116,
-            "under_american": -154,
-            "fair_over": 0.433
-          }
-        ]
-      },
-      {
-        "stat": "3-Pointers Made",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 0.5,
-        "fair_over": 0.6376,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 0.5,
-            "over_american": -217,
-            "under_american": 157,
-            "fair_over": 0.6376
-          }
-        ]
-      },
-      {
-        "stat": "PRA",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 13.5,
-        "fair_over": 0.5099,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 13.5,
-            "over_american": -122,
-            "under_american": -112,
-            "fair_over": 0.5099
-          }
-        ]
-      },
-      {
-        "stat": "PA",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 8.5,
-        "fair_over": 0.4734,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 8.5,
-            "over_american": -104,
-            "under_american": -131,
-            "fair_over": 0.4734
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 12.5,
-        "fair_over": 0.501,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 12.5,
-            "over_american": -117,
-            "under_american": -116,
-            "fair_over": 0.501
-          }
-        ]
-      },
-      {
-        "stat": "RA",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 6.5,
-        "fair_over": 0.4734,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 6.5,
-            "over_american": -104,
-            "under_american": -131,
-            "fair_over": 0.4734
-          }
-        ]
-      }
-    ],
-    "Aziaha James": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "team": "DAL",
-        "opponent": "GS",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 4.5,
-        "fair_over": 0.4515,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 4.5,
-            "over_american": 107,
-            "under_american": -142,
-            "fair_over": 0.4515
-          }
-        ]
-      }
-    ],
-    "Kiah Stokes": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 3.5,
-        "fair_over": 0.4641,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 3.5,
-            "over_american": 101,
-            "under_american": -135,
-            "fair_over": 0.4641
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 6.5,
-        "fair_over": 0.4911,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 6.5,
-            "over_american": -112,
-            "under_american": -121,
-            "fair_over": 0.4911
-          }
-        ]
-      },
-      {
-        "stat": "Assists",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 1.5,
-        "fair_over": 0.4138,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 1.5,
-            "over_american": 125,
-            "under_american": -170,
-            "fair_over": 0.4138
-          }
-        ]
-      },
-      {
-        "stat": "PRA",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 11.5,
-        "fair_over": 0.501,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 11.5,
-            "over_american": -117,
-            "under_american": -116,
-            "fair_over": 0.501
-          }
-        ]
-      },
-      {
-        "stat": "PA",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 4.5,
-        "fair_over": 0.5354,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 4.5,
-            "over_american": -136,
-            "under_american": 100,
-            "fair_over": 0.5354
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 10.5,
-        "fair_over": 0.4626,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 10.5,
-            "over_american": 101,
-            "under_american": -137,
-            "fair_over": 0.4626
-          }
-        ]
-      },
-      {
-        "stat": "RA",
-        "league": "WNBA",
-        "team": "GS",
-        "opponent": "DAL",
-        "game": "GS@DAL",
-        "start_time": "2026-10-01T01:10:00.0000000Z",
-        "line": 7.5,
-        "fair_over": 0.5402,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 7.5,
-            "over_american": -139,
-            "under_american": 102,
-            "fair_over": 0.5402
-          }
-        ]
-      }
-    ],
     "A'ja Wilson": [
       {
         "stat": "Points",
@@ -2420,7 +396,7 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 28.5,
-        "fair_over": 0.4864,
+        "fair_over": 0.4889,
         "books": 2,
         "sources": [
           {
@@ -2433,9 +409,9 @@
           {
             "book": "fanduel",
             "line": 27.5,
-            "over_american": -125,
-            "under_american": -104,
-            "fair_over": 0.5215
+            "over_american": -128,
+            "under_american": -102,
+            "fair_over": 0.5265
           }
         ]
       },
@@ -2447,7 +423,7 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 10.5,
-        "fair_over": 0.5055,
+        "fair_over": 0.5025,
         "books": 2,
         "sources": [
           {
@@ -2460,9 +436,9 @@
           {
             "book": "fanduel",
             "line": 10.5,
-            "over_american": -118,
-            "under_american": -112,
-            "fair_over": 0.5061
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
           }
         ]
       },
@@ -2474,15 +450,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 3.5,
-        "fair_over": 0.4095,
+        "fair_over": 0.4142,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 3.5,
-            "over_american": 118,
-            "under_american": -161,
-            "fair_over": 0.4265
+            "over_american": 113,
+            "under_american": -155,
+            "fair_over": 0.4358
           },
           {
             "book": "fanduel",
@@ -2588,15 +564,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 13.5,
-        "fair_over": 0.5334,
+        "fair_over": 0.5422,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
             "line": 13.5,
-            "over_american": -135,
-            "under_american": -101,
-            "fair_over": 0.5334
+            "over_american": -140,
+            "under_american": 103,
+            "fair_over": 0.5422
           }
         ]
       }
@@ -2610,22 +586,22 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 24.5,
-        "fair_over": 0.5035,
+        "fair_over": 0.4869,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 24.5,
-            "over_american": -119,
-            "under_american": -112,
-            "fair_over": 0.507
+            "over_american": -104,
+            "under_american": -128,
+            "fair_over": 0.4759
           },
           {
             "book": "fanduel",
             "line": 24.5,
-            "over_american": -114,
-            "under_american": -114,
-            "fair_over": 0.5
+            "over_american": -113,
+            "under_american": -115,
+            "fair_over": 0.498
           }
         ]
       },
@@ -2657,22 +633,22 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 2.5,
-        "fair_over": 0.4844,
+        "fair_over": 0.4829,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 2.5,
-            "over_american": -115,
-            "under_american": -118,
-            "fair_over": 0.497
+            "over_american": -109,
+            "under_american": -124,
+            "fair_over": 0.4851
           },
           {
             "book": "fanduel",
             "line": 2.5,
-            "over_american": -102,
-            "under_american": -130,
-            "fair_over": 0.4718
+            "over_american": -106,
+            "under_american": -125,
+            "fair_over": 0.4808
           }
         ]
       },
@@ -2684,22 +660,22 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 3.5,
-        "fair_over": 0.4118,
+        "fair_over": 0.4026,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 3.5,
-            "over_american": 122,
-            "under_american": -166,
-            "fair_over": 0.4192
+            "over_american": 131,
+            "under_american": -179,
+            "fair_over": 0.4029
           },
           {
             "book": "fanduel",
             "line": 3.5,
             "over_american": 132,
-            "under_american": -174,
-            "fair_over": 0.4043
+            "under_american": -178,
+            "fair_over": 0.4023
           }
         ]
       },
@@ -2710,16 +686,16 @@
         "opponent": "LV",
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
-        "line": 29.5,
-        "fair_over": 0.4851,
+        "line": 28.5,
+        "fair_over": 0.499,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
-            "line": 29.5,
-            "over_american": -109,
-            "under_american": -124,
-            "fair_over": 0.4851
+            "line": 28.5,
+            "over_american": -116,
+            "under_american": -117,
+            "fair_over": 0.499
           }
         ]
       },
@@ -2730,16 +706,16 @@
         "opponent": "LV",
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
-        "line": 27.5,
-        "fair_over": 0.497,
+        "line": 26.5,
+        "fair_over": 0.5109,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
-            "line": 27.5,
-            "over_american": -115,
-            "under_american": -118,
-            "fair_over": 0.497
+            "line": 26.5,
+            "over_american": -122,
+            "under_american": -111,
+            "fair_over": 0.5109
           }
         ]
       },
@@ -2750,16 +726,16 @@
         "opponent": "LV",
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
-        "line": 26.5,
-        "fair_over": 0.498,
+        "line": 25.5,
+        "fair_over": 0.5138,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
-            "line": 26.5,
-            "over_american": -116,
-            "under_american": -118,
-            "fair_over": 0.498
+            "line": 25.5,
+            "over_american": -124,
+            "under_american": -110,
+            "fair_over": 0.5138
           }
         ]
       },
@@ -2771,15 +747,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 4.5,
-        "fair_over": 0.4539,
+        "fair_over": 0.4388,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
             "line": 4.5,
-            "over_american": 105,
-            "under_american": -142,
-            "fair_over": 0.4539
+            "over_american": 112,
+            "under_american": -152,
+            "fair_over": 0.4388
           }
         ]
       }
@@ -2793,22 +769,22 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 22.5,
-        "fair_over": 0.5229,
+        "fair_over": 0.5178,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 22.5,
-            "over_american": -125,
-            "under_american": -106,
-            "fair_over": 0.5192
+            "over_american": -116,
+            "under_american": -115,
+            "fair_over": 0.501
           },
           {
             "book": "fanduel",
             "line": 22.5,
-            "over_american": -128,
-            "under_american": -102,
-            "fair_over": 0.5265
+            "over_american": -132,
+            "under_american": 102,
+            "fair_over": 0.5347
           }
         ]
       },
@@ -2820,15 +796,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 4.5,
-        "fair_over": 0.4817,
+        "fair_over": 0.4803,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 4.5,
-            "over_american": -102,
-            "under_american": -133,
-            "fair_over": 0.4694
+            "over_american": -101,
+            "under_american": -135,
+            "fair_over": 0.4666
           },
           {
             "book": "fanduel",
@@ -2847,15 +823,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 9.5,
-        "fair_over": 0.457,
+        "fair_over": 0.4537,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 9.5,
-            "over_american": 102,
-            "under_american": -139,
-            "fair_over": 0.4598
+            "over_american": 105,
+            "under_american": -143,
+            "fair_over": 0.4532
           },
           {
             "book": "fanduel",
@@ -2874,22 +850,22 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 3.5,
-        "fair_over": 0.4173,
+        "fair_over": 0.4153,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 3.5,
-            "over_american": 115,
-            "under_american": -157,
-            "fair_over": 0.4323
+            "over_american": 119,
+            "under_american": -163,
+            "fair_over": 0.4242
           },
           {
             "book": "fanduel",
             "line": 3.5,
-            "over_american": 132,
-            "under_american": -178,
-            "fair_over": 0.4023
+            "over_american": 130,
+            "under_american": -174,
+            "fair_over": 0.4064
           }
         ]
       },
@@ -2900,16 +876,16 @@
         "opponent": "LV",
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
-        "line": 37.5,
-        "fair_over": 0.4871,
+        "line": 36.5,
+        "fair_over": 0.5109,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
-            "line": 37.5,
-            "over_american": -110,
-            "under_american": -123,
-            "fair_over": 0.4871
+            "line": 36.5,
+            "over_american": -122,
+            "under_american": -111,
+            "fair_over": 0.5109
           }
         ]
       },
@@ -2920,16 +896,16 @@
         "opponent": "LV",
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
-        "line": 32.5,
-        "fair_over": 0.501,
+        "line": 31.5,
+        "fair_over": 0.5178,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
-            "line": 32.5,
-            "over_american": -117,
-            "under_american": -116,
-            "fair_over": 0.501
+            "line": 31.5,
+            "over_american": -126,
+            "under_american": -108,
+            "fair_over": 0.5178
           }
         ]
       },
@@ -2941,15 +917,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 27.5,
-        "fair_over": 0.501,
+        "fair_over": 0.4822,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
             "line": 27.5,
-            "over_american": -117,
-            "under_american": -116,
-            "fair_over": 0.501
+            "over_american": -108,
+            "under_american": -126,
+            "fair_over": 0.4822
           }
         ]
       },
@@ -2961,15 +937,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 13.5,
-        "fair_over": 0.5109,
+        "fair_over": 0.5059,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
             "line": 13.5,
-            "over_american": -122,
-            "under_american": -111,
-            "fair_over": 0.5109
+            "over_american": -120,
+            "under_american": -114,
+            "fair_over": 0.5059
           }
         ]
       }
@@ -2983,7 +959,7 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 21.5,
-        "fair_over": 0.4748,
+        "fair_over": 0.4723,
         "books": 2,
         "sources": [
           {
@@ -2996,9 +972,9 @@
           {
             "book": "fanduel",
             "line": 20.5,
-            "over_american": -125,
-            "under_american": -104,
-            "fair_over": 0.5215
+            "over_american": -122,
+            "under_american": -106,
+            "fair_over": 0.5164
           }
         ]
       },
@@ -3010,7 +986,7 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 4.5,
-        "fair_over": 0.4624,
+        "fair_over": 0.4672,
         "books": 2,
         "sources": [
           {
@@ -3023,9 +999,9 @@
           {
             "book": "fanduel",
             "line": 4.5,
-            "over_american": 104,
-            "under_american": -138,
-            "fair_over": 0.4581
+            "over_american": 100,
+            "under_american": -132,
+            "fair_over": 0.4677
           }
         ]
       },
@@ -3037,7 +1013,7 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 6.5,
-        "fair_over": 0.4771,
+        "fair_over": 0.4819,
         "books": 2,
         "sources": [
           {
@@ -3050,9 +1026,9 @@
           {
             "book": "fanduel",
             "line": 6.5,
-            "over_american": 104,
-            "under_american": -138,
-            "fair_over": 0.4581
+            "over_american": 100,
+            "under_american": -132,
+            "fair_over": 0.4677
           }
         ]
       },
@@ -3064,22 +1040,22 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 2.5,
-        "fair_over": 0.4614,
+        "fair_over": 0.4488,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 2.5,
             "over_american": -102,
-            "under_american": -134,
-            "fair_over": 0.4686
+            "under_american": -133,
+            "fair_over": 0.4694
           },
           {
             "book": "fanduel",
             "line": 2.5,
-            "over_american": 106,
-            "under_american": -140,
-            "fair_over": 0.4542
+            "over_american": 118,
+            "under_american": -158,
+            "fair_over": 0.4283
           }
         ]
       },
@@ -3091,15 +1067,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 32.5,
-        "fair_over": 0.505,
+        "fair_over": 0.5129,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
             "line": 32.5,
-            "over_american": -119,
-            "under_american": -114,
-            "fair_over": 0.505
+            "over_american": -123,
+            "under_american": -110,
+            "fair_over": 0.5129
           }
         ]
       },
@@ -3151,15 +1127,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 11.5,
-        "fair_over": 0.4646,
+        "fair_over": 0.4559,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
             "line": 11.5,
-            "over_american": 100,
-            "under_american": -136,
-            "fair_over": 0.4646
+            "over_american": 104,
+            "under_american": -141,
+            "fair_over": 0.4559
           }
         ]
       }
@@ -3173,22 +1149,22 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 15.5,
-        "fair_over": 0.5183,
+        "fair_over": 0.5309,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 15.5,
-            "over_american": -118,
-            "under_american": -112,
-            "fair_over": 0.5061
+            "over_american": -127,
+            "under_american": -105,
+            "fair_over": 0.5221
           },
           {
             "book": "fanduel",
             "line": 15.5,
-            "over_american": -130,
-            "under_american": 100,
-            "fair_over": 0.5306
+            "over_american": -135,
+            "under_american": 104,
+            "fair_over": 0.5396
           }
         ]
       },
@@ -3200,15 +1176,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 8.5,
-        "fair_over": 0.4578,
+        "fair_over": 0.4534,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 8.5,
-            "over_american": -104,
-            "under_american": -130,
-            "fair_over": 0.4742
+            "over_american": 100,
+            "under_american": -135,
+            "fair_over": 0.4653
           },
           {
             "book": "fanduel",
@@ -3227,22 +1203,22 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 3.5,
-        "fair_over": 0.468,
+        "fair_over": 0.4529,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 3.5,
-            "over_american": 104,
-            "under_american": -142,
-            "fair_over": 0.4552
+            "over_american": 114,
+            "under_american": -156,
+            "fair_over": 0.434
           },
           {
             "book": "fanduel",
             "line": 3.5,
-            "over_american": -106,
-            "under_american": -125,
-            "fair_over": 0.4808
+            "over_american": -102,
+            "under_american": -130,
+            "fair_over": 0.4718
           }
         ]
       },
@@ -3254,15 +1230,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 0.5,
-        "fair_over": 0.6469,
+        "fair_over": 0.6421,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 0.5,
-            "over_american": -231,
-            "under_american": 167,
-            "fair_over": 0.6508
+            "over_american": -220,
+            "under_american": 160,
+            "fair_over": 0.6413
           },
           {
             "book": "fanduel",
@@ -3281,15 +1257,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 27.5,
-        "fair_over": 0.501,
+        "fair_over": 0.5138,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
             "line": 27.5,
-            "over_american": -117,
-            "under_american": -116,
-            "fair_over": 0.501
+            "over_american": -124,
+            "under_american": -110,
+            "fair_over": 0.5138
           }
         ]
       },
@@ -3301,15 +1277,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 19.5,
-        "fair_over": 0.4742,
+        "fair_over": 0.4882,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
             "line": 19.5,
-            "over_american": -104,
-            "under_american": -130,
-            "fair_over": 0.4742
+            "over_american": -111,
+            "under_american": -123,
+            "fair_over": 0.4882
           }
         ]
       },
@@ -3321,15 +1297,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 24.5,
-        "fair_over": 0.4782,
+        "fair_over": 0.495,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
             "line": 24.5,
-            "over_american": -106,
-            "under_american": -128,
-            "fair_over": 0.4782
+            "over_american": -114,
+            "under_american": -119,
+            "fair_over": 0.495
           }
         ]
       },
@@ -3341,15 +1317,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 11.5,
-        "fair_over": 0.5226,
+        "fair_over": 0.505,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
             "line": 11.5,
-            "over_american": -129,
-            "under_american": -106,
-            "fair_over": 0.5226
+            "over_american": -119,
+            "under_american": -114,
+            "fair_over": 0.505
           }
         ]
       }
@@ -3390,7 +1366,7 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 3.5,
-        "fair_over": 0.4071,
+        "fair_over": 0.4086,
         "books": 2,
         "sources": [
           {
@@ -3403,9 +1379,9 @@
           {
             "book": "fanduel",
             "line": 3.5,
-            "over_american": 134,
-            "under_american": -180,
-            "fair_over": 0.3993
+            "over_american": 132,
+            "under_american": -178,
+            "fair_over": 0.4023
           }
         ]
       },
@@ -3471,15 +1447,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 22.5,
-        "fair_over": 0.5138,
+        "fair_over": 0.5218,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
             "line": 22.5,
-            "over_american": -124,
-            "under_american": -110,
-            "fair_over": 0.5138
+            "over_american": -128,
+            "under_american": -106,
+            "fair_over": 0.5218
           }
         ]
       },
@@ -3531,15 +1507,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 9.5,
-        "fair_over": 0.5149,
+        "fair_over": 0.5218,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
             "line": 9.5,
-            "over_american": -124,
-            "under_american": -109,
-            "fair_over": 0.5149
+            "over_american": -128,
+            "under_american": -106,
+            "fair_over": 0.5218
           }
         ]
       }
@@ -3553,7 +1529,7 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 8.5,
-        "fair_over": 0.4686,
+        "fair_over": 0.4665,
         "books": 2,
         "sources": [
           {
@@ -3566,9 +1542,9 @@
           {
             "book": "fanduel",
             "line": 8.5,
-            "over_american": 100,
-            "under_american": -130,
-            "fair_over": 0.4694
+            "over_american": 102,
+            "under_american": -132,
+            "fair_over": 0.4653
           }
         ]
       },
@@ -3580,15 +1556,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 1.5,
-        "fair_over": 0.3847,
+        "fair_over": 0.3926,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
             "line": 1.5,
-            "over_american": 142,
-            "under_american": -195,
-            "fair_over": 0.3847
+            "over_american": 137,
+            "under_american": -188,
+            "fair_over": 0.3926
           }
         ]
       },
@@ -3600,15 +1576,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 1.5,
-        "fair_over": 0.4532,
+        "fair_over": 0.4618,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
             "line": 1.5,
-            "over_american": 105,
-            "under_american": -143,
-            "fair_over": 0.4532
+            "over_american": 101,
+            "under_american": -138,
+            "fair_over": 0.4618
           }
         ]
       },
@@ -3633,24 +1609,24 @@
         ]
       }
     ],
-    "Sophie Cunningham": [
+    "Stephanie Talbot": [
       {
         "stat": "Points",
         "league": "WNBA",
-        "team": "IND",
-        "opponent": "LV",
+        "team": "LV",
+        "opponent": "IND",
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 5.5,
-        "fair_over": 0.5298,
+        "fair_over": 0.5288,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 5.5,
-            "over_american": -133,
-            "under_american": 100,
-            "fair_over": 0.5331
+            "over_american": -132,
+            "under_american": -101,
+            "fair_over": 0.531
           },
           {
             "book": "fanduel",
@@ -3664,27 +1640,89 @@
       {
         "stat": "Rebounds",
         "league": "WNBA",
+        "team": "LV",
+        "opponent": "IND",
+        "game": "IND@LV",
+        "start_time": "2026-10-02T01:00:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.5039,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -119,
+            "under_american": -115,
+            "fair_over": 0.5039
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "LV",
+        "opponent": "IND",
+        "game": "IND@LV",
+        "start_time": "2026-10-02T01:00:00.0000000Z",
+        "line": 9.5,
+        "fair_over": 0.5169,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 9.5,
+            "over_american": -125,
+            "under_american": -108,
+            "fair_over": 0.5169
+          }
+        ]
+      }
+    ],
+    "Sophie Cunningham": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "IND",
+        "opponent": "LV",
+        "game": "IND@LV",
+        "start_time": "2026-10-02T01:00:00.0000000Z",
+        "line": 5.5,
+        "fair_over": 0.4918,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 5.5,
+            "over_american": -120,
+            "under_american": -110,
+            "fair_over": 0.5101
+          },
+          {
+            "book": "fanduel",
+            "line": 5.5,
+            "over_american": -102,
+            "under_american": -128,
+            "fair_over": 0.4735
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
         "team": "IND",
         "opponent": "LV",
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 2.5,
-        "fair_over": 0.4475,
-        "books": 2,
+        "fair_over": 0.4248,
+        "books": 1,
         "sources": [
           {
             "book": "draftkings",
             "line": 2.5,
-            "over_american": 111,
-            "under_american": -151,
-            "fair_over": 0.4407
-          },
-          {
-            "book": "fanduel",
-            "line": 2.5,
-            "over_american": 106,
-            "under_american": -140,
-            "fair_over": 0.4542
+            "over_american": 119,
+            "under_american": -162,
+            "fair_over": 0.4248
           }
         ]
       },
@@ -3696,22 +1734,22 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 1.5,
-        "fair_over": 0.3881,
+        "fair_over": 0.38,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 1.5,
-            "over_american": 141,
-            "under_american": -193,
-            "fair_over": 0.3865
+            "over_american": 149,
+            "under_american": -205,
+            "fair_over": 0.374
           },
           {
             "book": "fanduel",
             "line": 1.5,
-            "over_american": 140,
-            "under_american": -188,
-            "fair_over": 0.3896
+            "over_american": 142,
+            "under_american": -192,
+            "fair_over": 0.3859
           }
         ]
       },
@@ -3722,16 +1760,16 @@
         "opponent": "LV",
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
-        "line": 8.5,
-        "fair_over": 0.4782,
+        "line": 7.5,
+        "fair_over": 0.5362,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
-            "line": 8.5,
-            "over_american": -106,
-            "under_american": -128,
-            "fair_over": 0.4782
+            "line": 7.5,
+            "over_american": -137,
+            "under_american": 100,
+            "fair_over": 0.5362
           }
         ]
       }
@@ -3745,22 +1783,22 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 5.5,
-        "fair_over": 0.4706,
+        "fair_over": 0.4741,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 5.5,
-            "over_american": -106,
-            "under_american": -125,
-            "fair_over": 0.4808
+            "over_american": -107,
+            "under_american": -124,
+            "fair_over": 0.4829
           },
           {
             "book": "fanduel",
             "line": 5.5,
-            "over_american": 104,
-            "under_american": -135,
-            "fair_over": 0.4604
+            "over_american": 102,
+            "under_american": -132,
+            "fair_over": 0.4653
           }
         ]
       },
@@ -3772,15 +1810,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 3.5,
-        "fair_over": 0.4558,
+        "fair_over": 0.4569,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 3.5,
-            "over_american": 118,
-            "under_american": -161,
-            "fair_over": 0.4265
+            "over_american": 117,
+            "under_american": -159,
+            "fair_over": 0.4288
           },
           {
             "book": "fanduel",
@@ -3812,75 +1850,6 @@
         ]
       }
     ],
-    "Stephanie Talbot": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "team": "LV",
-        "opponent": "IND",
-        "game": "IND@LV",
-        "start_time": "2026-10-02T01:00:00.0000000Z",
-        "line": 5.5,
-        "fair_over": 0.4941,
-        "books": 2,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 5.5,
-            "over_american": -104,
-            "under_american": -128,
-            "fair_over": 0.4759
-          },
-          {
-            "book": "fanduel",
-            "line": 5.5,
-            "over_american": -120,
-            "under_american": -108,
-            "fair_over": 0.5123
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "league": "WNBA",
-        "team": "LV",
-        "opponent": "IND",
-        "game": "IND@LV",
-        "start_time": "2026-10-02T01:00:00.0000000Z",
-        "line": 3.5,
-        "fair_over": 0.4468,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 3.5,
-            "over_american": 108,
-            "under_american": -147,
-            "fair_over": 0.4468
-          }
-        ]
-      },
-      {
-        "stat": "PR",
-        "league": "WNBA",
-        "team": "LV",
-        "opponent": "IND",
-        "game": "IND@LV",
-        "start_time": "2026-10-02T01:00:00.0000000Z",
-        "line": 8.5,
-        "fair_over": 0.5218,
-        "books": 1,
-        "sources": [
-          {
-            "book": "draftkings",
-            "line": 8.5,
-            "over_american": -128,
-            "under_american": -106,
-            "fair_over": 0.5218
-          }
-        ]
-      }
-    ],
     "Raven Johnson": [
       {
         "stat": "Points",
@@ -3890,22 +1859,22 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 5.5,
-        "fair_over": 0.4634,
+        "fair_over": 0.4702,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 5.5,
-            "over_american": 104,
-            "under_american": -139,
-            "fair_over": 0.4574
+            "over_american": 100,
+            "under_american": -133,
+            "fair_over": 0.4669
           },
           {
             "book": "fanduel",
             "line": 5.5,
-            "over_american": 100,
-            "under_american": -130,
-            "fair_over": 0.4694
+            "over_american": -102,
+            "under_american": -128,
+            "fair_over": 0.4735
           }
         ]
       },
@@ -3917,15 +1886,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 7.5,
-        "fair_over": 0.4851,
+        "fair_over": 0.4891,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
             "line": 7.5,
-            "over_american": -109,
-            "under_american": -124,
-            "fair_over": 0.4851
+            "over_american": -111,
+            "under_american": -122,
+            "fair_over": 0.4891
           }
         ]
       },
@@ -3955,22 +1924,22 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 3.5,
-        "fair_over": 0.5308,
+        "fair_over": 0.5165,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 3.5,
-            "over_american": -132,
-            "under_american": -101,
-            "fair_over": 0.531
+            "over_american": -122,
+            "under_american": -108,
+            "fair_over": 0.5142
           },
           {
             "book": "fanduel",
             "line": 3.5,
-            "over_american": -130,
-            "under_american": 100,
-            "fair_over": 0.5306
+            "over_american": -122,
+            "under_american": -104,
+            "fair_over": 0.5188
           }
         ]
       },
@@ -3982,22 +1951,22 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 2.5,
-        "fair_over": 0.581,
+        "fair_over": 0.5743,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 2.5,
-            "over_american": -165,
-            "under_american": 121,
-            "fair_over": 0.5791
+            "over_american": -159,
+            "under_american": 116,
+            "fair_over": 0.5701
           },
           {
             "book": "fanduel",
             "line": 2.5,
-            "over_american": -166,
-            "under_american": 124,
-            "fair_over": 0.583
+            "over_american": -162,
+            "under_american": 122,
+            "fair_over": 0.5785
           }
         ]
       },
@@ -4009,15 +1978,15 @@
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
         "line": 0.5,
-        "fair_over": 0.5248,
+        "fair_over": 0.519,
         "books": 2,
         "sources": [
           {
             "book": "draftkings",
             "line": 0.5,
-            "over_american": -136,
-            "under_american": 100,
-            "fair_over": 0.5354
+            "over_american": -129,
+            "under_american": -105,
+            "fair_over": 0.5238
           },
           {
             "book": "fanduel",
@@ -4035,16 +2004,16 @@
         "opponent": "LV",
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
-        "line": 8.5,
-        "fair_over": 0.4598,
+        "line": 7.5,
+        "fair_over": 0.5266,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
-            "line": 8.5,
-            "over_american": 102,
-            "under_american": -139,
-            "fair_over": 0.4598
+            "line": 7.5,
+            "over_american": -131,
+            "under_american": -104,
+            "fair_over": 0.5266
           }
         ]
       },
@@ -4055,181 +2024,3172 @@
         "opponent": "LV",
         "game": "IND@LV",
         "start_time": "2026-10-02T01:00:00.0000000Z",
-        "line": 7.5,
-        "fair_over": 0.4626,
+        "line": 6.5,
+        "fair_over": 0.5374,
         "books": 1,
         "sources": [
           {
             "book": "draftkings",
-            "line": 7.5,
-            "over_american": 101,
-            "under_american": -137,
-            "fair_over": 0.4626
+            "line": 6.5,
+            "over_american": -137,
+            "under_american": 101,
+            "fair_over": 0.5374
           }
         ]
       }
     ],
-    "Kiki Iriafen": [
+    "Gabby Williams": [
       {
         "stat": "Points",
         "league": "WNBA",
-        "line": 15.5,
-        "fair_over": 0.4621,
-        "books": 1,
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 20.5,
+        "fair_over": 0.494,
+        "books": 2,
         "sources": [
           {
+            "book": "draftkings",
+            "line": 20.5,
+            "over_american": -127,
+            "under_american": -104,
+            "fair_over": 0.5232
+          },
+          {
             "book": "fanduel",
-            "line": 15.5,
-            "over_american": 102,
-            "under_american": -136,
-            "fair_over": 0.4621
+            "line": 19.5,
+            "over_american": -125,
+            "under_american": -104,
+            "fair_over": 0.5215
           }
         ]
       },
       {
         "stat": "Rebounds",
         "league": "WNBA",
-        "line": 15.5,
-        "fair_over": 0.4808,
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.4253,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": 109,
+            "under_american": -149,
+            "fair_over": 0.4443
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -125,
+            "under_american": -106,
+            "fair_over": 0.5192
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.4261,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": 123,
+            "under_american": -168,
+            "fair_over": 0.417
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -174,
+            "under_american": 130,
+            "fair_over": 0.5936
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.3843,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": 129,
+            "under_american": -176,
+            "fair_over": 0.4065
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": 158,
+            "under_american": -215,
+            "fair_over": 0.3622
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 29.5,
+        "fair_over": 0.505,
         "books": 1,
         "sources": [
           {
+            "book": "draftkings",
+            "line": 29.5,
+            "over_american": -119,
+            "under_american": -114,
+            "fair_over": 0.505
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 25.5,
+        "fair_over": 0.4822,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 25.5,
+            "over_american": -108,
+            "under_american": -126,
+            "fair_over": 0.4822
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 25.5,
+        "fair_over": 0.4911,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 25.5,
+            "over_american": -112,
+            "under_american": -121,
+            "fair_over": 0.4911
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 8.5,
+        "fair_over": 0.4862,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 8.5,
+            "over_american": -110,
+            "under_american": -124,
+            "fair_over": 0.4862
+          }
+        ]
+      }
+    ],
+    "Paige Bueckers": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 18.5,
+        "fair_over": 0.5106,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 18.5,
+            "over_american": -125,
+            "under_american": -106,
+            "fair_over": 0.5192
+          },
+          {
+            "book": "fanduel",
+            "line": 18.5,
+            "over_american": -115,
+            "under_american": -113,
+            "fair_over": 0.502
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.5546,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -169,
+            "under_american": 124,
+            "fair_over": 0.5846
+          },
+          {
+            "book": "fanduel",
+            "line": 4.5,
+            "over_american": 126,
+            "under_american": -172,
+            "fair_over": 0.4117
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.5429,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": -150,
+            "under_american": 110,
+            "fair_over": 0.5575
+          },
+          {
+            "book": "fanduel",
+            "line": 4.5,
+            "over_american": -130,
+            "under_american": -102,
+            "fair_over": 0.5282
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.56,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": -171,
+            "under_american": 126,
+            "fair_over": 0.5878
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": -132,
+            "under_american": 100,
+            "fair_over": 0.5323
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 28.5,
+        "fair_over": 0.4871,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 28.5,
+            "over_american": -110,
+            "under_american": -123,
+            "fair_over": 0.4871
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 24.5,
+        "fair_over": 0.4762,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 24.5,
+            "over_american": -105,
+            "under_american": -129,
+            "fair_over": 0.4762
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 23.5,
+        "fair_over": 0.4802,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 23.5,
+            "over_american": -107,
+            "under_american": -127,
+            "fair_over": 0.4802
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 9.5,
+        "fair_over": 0.4513,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 9.5,
+            "over_american": 106,
+            "under_american": -144,
+            "fair_over": 0.4513
+          }
+        ]
+      }
+    ],
+    "Arike Ogunbowale": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 15.5,
+        "fair_over": 0.4738,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 15.5,
+            "over_american": -111,
+            "under_american": -119,
+            "fair_over": 0.4919
+          },
+          {
             "book": "fanduel",
             "line": 15.5,
+            "over_american": 106,
+            "under_american": -138,
+            "fair_over": 0.4557
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.4377,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": 127,
+            "under_american": -173,
+            "fair_over": 0.4101
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": -162,
+            "under_american": 122,
+            "fair_over": 0.5785
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.4189,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": 130,
+            "under_american": -177,
+            "fair_over": 0.4049
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": 116,
+            "under_american": -154,
+            "fair_over": 0.433
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.5879,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": -182,
+            "under_american": 133,
+            "fair_over": 0.6006
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": -160,
+            "under_american": 120,
+            "fair_over": 0.5752
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 21.5,
+        "fair_over": 0.5198,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 21.5,
+            "over_american": -127,
+            "under_american": -107,
+            "fair_over": 0.5198
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 18.5,
+        "fair_over": 0.505,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 18.5,
+            "over_american": -119,
+            "under_american": -114,
+            "fair_over": 0.505
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 18.5,
+        "fair_over": 0.5129,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 18.5,
+            "over_american": -123,
+            "under_american": -110,
+            "fair_over": 0.5129
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 6.5,
+        "fair_over": 0.4618,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 6.5,
+            "over_american": 101,
+            "under_american": -138,
+            "fair_over": 0.4618
+          }
+        ]
+      }
+    ],
+    "Veronica Burton": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 12.5,
+        "fair_over": 0.4683,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 12.5,
+            "over_american": 100,
+            "under_american": -133,
+            "fair_over": 0.4669
+          },
+          {
+            "book": "fanduel",
+            "line": 11.5,
+            "over_american": -128,
+            "under_american": -102,
+            "fair_over": 0.5265
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.5525,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -156,
+            "under_american": 115,
+            "fair_over": 0.5671
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -136,
+            "under_american": 102,
+            "fair_over": 0.5379
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 5.5,
+        "fair_over": 0.5535,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 5.5,
+            "over_american": -136,
+            "under_american": 100,
+            "fair_over": 0.5354
+          },
+          {
+            "book": "fanduel",
+            "line": 5.5,
+            "over_american": -158,
+            "under_american": 118,
+            "fair_over": 0.5717
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.42,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": 126,
+            "under_american": -172,
+            "fair_over": 0.4117
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": 118,
+            "under_american": -158,
+            "fair_over": 0.4283
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 22.5,
+        "fair_over": 0.4734,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 22.5,
+            "over_american": -104,
+            "under_american": -131,
+            "fair_over": 0.4734
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 18.5,
+        "fair_over": 0.4686,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 18.5,
+            "over_american": -102,
+            "under_american": -134,
+            "fair_over": 0.4686
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 16.5,
+        "fair_over": 0.4734,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 16.5,
+            "over_american": -104,
+            "under_american": -131,
+            "fair_over": 0.4734
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 9.5,
+        "fair_over": 0.5326,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 9.5,
+            "over_american": -134,
+            "under_american": -101,
+            "fair_over": 0.5326
+          }
+        ]
+      }
+    ],
+    "Janelle Salaun": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 10.5,
+        "fair_over": 0.4999,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 10.5,
+            "over_american": -126,
+            "under_american": -105,
+            "fair_over": 0.5212
+          },
+          {
+            "book": "fanduel",
+            "line": 10.5,
+            "over_american": -104,
+            "under_american": -125,
+            "fair_over": 0.4785
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.4945,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -117,
+            "under_american": -116,
+            "fair_over": 0.501
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -110,
+            "under_american": -122,
+            "fair_over": 0.488
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.5776,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": -172,
+            "under_american": 126,
+            "fair_over": 0.5883
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": -154,
+            "under_american": 116,
+            "fair_over": 0.567
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 15.5,
+        "fair_over": 0.5178,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 15.5,
+            "over_american": -126,
+            "under_american": -108,
+            "fair_over": 0.5178
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 14.5,
+        "fair_over": 0.497,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 14.5,
+            "over_american": -115,
+            "under_american": -118,
+            "fair_over": 0.497
+          }
+        ]
+      }
+    ],
+    "Jessica Shepard": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 10.5,
+        "fair_over": 0.456,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 10.5,
+            "over_american": -106,
+            "under_american": -125,
+            "fair_over": 0.4808
+          },
+          {
+            "book": "fanduel",
+            "line": 9.5,
+            "over_american": -108,
+            "under_american": -120,
+            "fair_over": 0.4877
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 10.5,
+        "fair_over": 0.4536,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 10.5,
+            "over_american": -104,
+            "under_american": -130,
+            "fair_over": 0.4742
+          },
+          {
+            "book": "fanduel",
+            "line": 10.5,
+            "over_american": 116,
+            "under_american": -154,
+            "fair_over": 0.433
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.5382,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": -133,
+            "under_american": -102,
+            "fair_over": 0.5306
+          },
+          {
+            "book": "fanduel",
+            "line": 4.5,
+            "over_american": -140,
+            "under_american": 106,
+            "fair_over": 0.5458
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 26.5,
+        "fair_over": 0.4762,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 26.5,
+            "over_american": -105,
+            "under_american": -129,
+            "fair_over": 0.4762
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 15.5,
+        "fair_over": 0.4911,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 15.5,
+            "over_american": -112,
+            "under_american": -121,
+            "fair_over": 0.4911
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 20.5,
+        "fair_over": 0.5198,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 20.5,
+            "over_american": -127,
+            "under_american": -107,
+            "fair_over": 0.5198
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 15.5,
+        "fair_over": 0.4734,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 15.5,
+            "over_american": -104,
+            "under_american": -131,
+            "fair_over": 0.4734
+          }
+        ]
+      }
+    ],
+    "Cecilia Zandalasini": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 7.5,
+        "fair_over": 0.4994,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 7.5,
+            "over_american": -128,
+            "under_american": -103,
+            "fair_over": 0.5253
+          },
+          {
+            "book": "fanduel",
+            "line": 7.5,
+            "over_american": -102,
+            "under_american": -128,
+            "fair_over": 0.4735
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.4096,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": 127,
+            "under_american": -174,
+            "fair_over": 0.4096
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.3488,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": 158,
+            "under_american": -217,
+            "fair_over": 0.3615
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": 178,
+            "under_american": -245,
+            "fair_over": 0.3362
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 11.5,
+        "fair_over": 0.5178,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 11.5,
+            "over_american": -126,
+            "under_american": -108,
+            "fair_over": 0.5178
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 9.5,
+        "fair_over": 0.497,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 9.5,
+            "over_american": -115,
+            "under_american": -118,
+            "fair_over": 0.497
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 10.5,
+        "fair_over": 0.4686,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 10.5,
+            "over_american": -102,
+            "under_american": -134,
+            "fair_over": 0.4686
+          }
+        ]
+      }
+    ],
+    "Kayla Thornton": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 7.5,
+        "fair_over": 0.5081,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 7.5,
+            "over_american": -117,
+            "under_american": -113,
+            "fair_over": 0.504
+          },
+          {
+            "book": "fanduel",
+            "line": 7.5,
+            "over_american": -120,
+            "under_american": -108,
+            "fair_over": 0.5123
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 5.5,
+        "fair_over": 0.4248,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 5.5,
+            "over_american": 116,
+            "under_american": -158,
+            "fair_over": 0.4305
+          },
+          {
+            "book": "fanduel",
+            "line": 4.5,
+            "over_american": -132,
+            "under_american": 100,
+            "fair_over": 0.5323
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.4597,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": -104,
+            "under_american": -130,
+            "fair_over": 0.4742
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": 110,
+            "under_american": -146,
+            "fair_over": 0.4452
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 13.5,
+        "fair_over": 0.5089,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 13.5,
+            "over_american": -121,
+            "under_american": -112,
+            "fair_over": 0.5089
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 8.5,
+        "fair_over": 0.4911,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 8.5,
+            "over_american": -112,
+            "under_american": -121,
+            "fair_over": 0.4911
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 12.5,
+        "fair_over": 0.5138,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 12.5,
+            "over_american": -124,
+            "under_american": -110,
+            "fair_over": 0.5138
+          }
+        ]
+      }
+    ],
+    "Awak Kuier": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 7.5,
+        "fair_over": 0.4611,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 7.5,
+            "over_american": 103,
+            "under_american": -137,
+            "fair_over": 0.4601
+          },
+          {
+            "book": "fanduel",
+            "line": 6.5,
+            "over_american": -122,
+            "under_american": -104,
+            "fair_over": 0.5188
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.5604,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": -140,
+            "under_american": 103,
+            "fair_over": 0.5422
+          },
+          {
+            "book": "fanduel",
+            "line": 4.5,
+            "over_american": -162,
+            "under_american": 122,
+            "fair_over": 0.5785
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 0.5,
+        "fair_over": 0.6496,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 0.5,
+            "over_american": -219,
+            "under_american": 159,
+            "fair_over": 0.64
+          },
+          {
+            "book": "fanduel",
+            "line": 0.5,
+            "over_american": -240,
+            "under_american": 174,
+            "fair_over": 0.6592
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 13.5,
+        "fair_over": 0.4921,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 13.5,
+            "over_american": -113,
+            "under_american": -121,
+            "fair_over": 0.4921
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 8.5,
+        "fair_over": 0.4871,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 8.5,
+            "over_american": -110,
+            "under_american": -123,
+            "fair_over": 0.4871
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 12.5,
+        "fair_over": 0.4646,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 12.5,
+            "over_american": 100,
+            "under_american": -136,
+            "fair_over": 0.4646
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "WNBA",
+        "team": "DAL",
+        "opponent": "GS",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 6.5,
+        "fair_over": 0.4443,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 6.5,
+            "over_american": 109,
+            "under_american": -149,
+            "fair_over": 0.4443
+          }
+        ]
+      }
+    ],
+    "Kiah Stokes": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.5371,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -135,
+            "under_american": 102,
+            "fair_over": 0.5371
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 6.5,
+        "fair_over": 0.428,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 6.5,
+            "over_american": 114,
+            "under_american": -155,
+            "fair_over": 0.4346
+          },
+          {
+            "book": "fanduel",
+            "line": 6.5,
+            "over_american": 122,
+            "under_american": -162,
+            "fair_over": 0.4215
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 11.5,
+        "fair_over": 0.5258,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 11.5,
+            "over_american": -130,
+            "under_american": -104,
+            "fair_over": 0.5258
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 5.5,
+        "fair_over": 0.495,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 5.5,
+            "over_american": -114,
+            "under_american": -119,
+            "fair_over": 0.495
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "GS",
+        "opponent": "DAL",
+        "game": "DAL@GS",
+        "start_time": "2026-10-03T01:00:00.0000000Z",
+        "line": 10.5,
+        "fair_over": 0.4694,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 10.5,
+            "over_american": -102,
+            "under_american": -133,
+            "fair_over": 0.4694
+          }
+        ]
+      }
+    ],
+    "Breanna Stewart": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 23.5,
+        "fair_over": 0.4672,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 23.5,
+            "over_american": -107,
+            "under_american": -124,
+            "fair_over": 0.4829
+          },
+          {
+            "book": "fanduel",
+            "line": 22.5,
+            "over_american": -118,
+            "under_american": -110,
+            "fair_over": 0.5082
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 8.5,
+        "fair_over": 0.5185,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 8.5,
+            "over_american": -123,
+            "under_american": -110,
+            "fair_over": 0.5129
+          },
+          {
+            "book": "fanduel",
+            "line": 8.5,
+            "over_american": -128,
+            "under_american": -104,
+            "fair_over": 0.5241
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.5079,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -128,
+            "under_american": -106,
+            "fair_over": 0.5218
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -112,
+            "under_american": -118,
+            "fair_over": 0.4939
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 0.5,
+        "fair_over": 0.5734,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 0.5,
+            "over_american": -147,
+            "under_american": 108,
+            "fair_over": 0.5532
+          },
+          {
+            "book": "fanduel",
+            "line": 0.5,
+            "over_american": -174,
+            "under_american": 130,
+            "fair_over": 0.5936
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 35.5,
+        "fair_over": 0.5149,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 35.5,
+            "over_american": -124,
+            "under_american": -109,
+            "fair_over": 0.5149
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 27.5,
+        "fair_over": 0.4802,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 27.5,
+            "over_american": -107,
+            "under_american": -127,
+            "fair_over": 0.4802
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 32.5,
+        "fair_over": 0.4802,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 32.5,
+            "over_american": -107,
+            "under_american": -127,
+            "fair_over": 0.4802
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 12.5,
+        "fair_over": 0.4911,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 12.5,
+            "over_american": -112,
+            "under_american": -121,
+            "fair_over": 0.4911
+          }
+        ]
+      }
+    ],
+    "Allisha Gray": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 19.5,
+        "fair_over": 0.4763,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 19.5,
+            "over_american": -107,
+            "under_american": -124,
+            "fair_over": 0.4829
+          },
+          {
+            "book": "fanduel",
+            "line": 18.5,
+            "over_american": -128,
+            "under_american": -102,
+            "fair_over": 0.5265
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.4989,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -119,
+            "under_american": -115,
+            "fair_over": 0.5039
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -112,
+            "under_american": -118,
+            "fair_over": 0.4939
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.4899,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": -116,
+            "under_american": -117,
+            "fair_over": 0.499
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
             "over_american": -106,
             "under_american": -125,
             "fair_over": 0.4808
           }
         ]
-      }
-    ],
-    "DeWanna Bonner": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "line": 8.5,
-        "fair_over": 0.4489,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 8.5,
-            "over_american": 108,
-            "under_american": -144,
-            "fair_over": 0.4489
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "league": "WNBA",
-        "line": 1.5,
-        "fair_over": 0.6141,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 1.5,
-            "over_american": -192,
-            "under_american": 142,
-            "fair_over": 0.6141
-          }
-        ]
       },
       {
         "stat": "3-Pointers Made",
         "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
         "line": 1.5,
-        "fair_over": 0.4899,
-        "books": 1,
+        "fair_over": 0.4968,
+        "books": 2,
         "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": -122,
+            "under_american": -112,
+            "fair_over": 0.5099
+          },
           {
             "book": "fanduel",
             "line": 1.5,
-            "over_american": -110,
-            "under_american": -120,
-            "fair_over": 0.4899
+            "over_american": -106,
+            "under_american": -122,
+            "fair_over": 0.4836
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 25.5,
+        "fair_over": 0.5129,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 25.5,
+            "over_american": -123,
+            "under_american": -110,
+            "fair_over": 0.5129
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 22.5,
+        "fair_over": 0.4762,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 22.5,
+            "over_american": -105,
+            "under_american": -129,
+            "fair_over": 0.4762
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 23.5,
+        "fair_over": 0.4762,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 23.5,
+            "over_american": -105,
+            "under_american": -129,
+            "fair_over": 0.4762
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 6.5,
+        "fair_over": 0.4578,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 6.5,
+            "over_american": 103,
+            "under_american": -140,
+            "fair_over": 0.4578
           }
         ]
       }
     ],
-    "Naz Hillmon": [
+    "Rhyne Howard": [
       {
         "stat": "Points",
         "league": "WNBA",
-        "line": 7.5,
-        "fair_over": 0.5419,
-        "books": 1,
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 18.5,
+        "fair_over": 0.5075,
+        "books": 2,
         "sources": [
           {
+            "book": "draftkings",
+            "line": 18.5,
+            "over_american": -112,
+            "under_american": -119,
+            "fair_over": 0.493
+          },
+          {
             "book": "fanduel",
-            "line": 7.5,
-            "over_american": -138,
-            "under_american": 104,
-            "fair_over": 0.5419
+            "line": 19.5,
+            "over_american": 102,
+            "under_american": -132,
+            "fair_over": 0.4653
           }
         ]
       },
       {
         "stat": "Rebounds",
         "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
         "line": 3.5,
-        "fair_over": 0.3408,
-        "books": 1,
+        "fair_over": 0.5166,
+        "books": 2,
         "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -119,
+            "under_american": -114,
+            "fair_over": 0.505
+          },
           {
             "book": "fanduel",
             "line": 3.5,
-            "over_american": 174,
-            "under_american": -240,
-            "fair_over": 0.3408
+            "over_american": -130,
+            "under_american": -102,
+            "fair_over": 0.5282
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.4746,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -114,
+            "under_american": -119,
+            "fair_over": 0.495
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": 106,
+            "under_american": -140,
+            "fair_over": 0.4542
           }
         ]
       },
       {
         "stat": "3-Pointers Made",
         "league": "WNBA",
-        "line": 2.5,
-        "fair_over": 0.2924,
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.4149,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": 116,
+            "under_american": -158,
+            "fair_over": 0.4305
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": 134,
+            "under_american": -180,
+            "fair_over": 0.3993
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 25.5,
+        "fair_over": 0.5198,
         "books": 1,
         "sources": [
           {
-            "book": "fanduel",
-            "line": 2.5,
-            "over_american": 220,
-            "under_american": -310,
-            "fair_over": 0.2924
+            "book": "draftkings",
+            "line": 25.5,
+            "over_american": -127,
+            "under_american": -107,
+            "fair_over": 0.5198
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 22.5,
+        "fair_over": 0.4774,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 22.5,
+            "over_american": -106,
+            "under_american": -129,
+            "fair_over": 0.4774
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 22.5,
+        "fair_over": 0.4782,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 22.5,
+            "over_american": -106,
+            "under_american": -128,
+            "fair_over": 0.4782
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 7.5,
+        "fair_over": 0.4686,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 7.5,
+            "over_american": -102,
+            "under_american": -134,
+            "fair_over": 0.4686
           }
         ]
       }
     ],
-    "Shakira Austin": [
+    "Angel Reese": [
       {
         "stat": "Points",
         "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
         "line": 16.5,
-        "fair_over": 0.4899,
-        "books": 1,
+        "fair_over": 0.4523,
+        "books": 2,
         "sources": [
           {
-            "book": "fanduel",
+            "book": "draftkings",
             "line": 16.5,
-            "over_american": -110,
+            "over_american": -111,
             "under_american": -120,
-            "fair_over": 0.4899
+            "fair_over": 0.491
+          },
+          {
+            "book": "fanduel",
+            "line": 14.5,
+            "over_american": -128,
+            "under_american": -102,
+            "fair_over": 0.5265
           }
         ]
       },
       {
         "stat": "Rebounds",
         "league": "WNBA",
-        "line": 5.5,
-        "fair_over": 0.4677,
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 12.5,
+        "fair_over": 0.5139,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 12.5,
+            "over_american": -131,
+            "under_american": -103,
+            "fair_over": 0.5278
+          },
+          {
+            "book": "fanduel",
+            "line": 12.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.5205,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": -128,
+            "under_american": -106,
+            "fair_over": 0.5218
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": -125,
+            "under_american": -106,
+            "fair_over": 0.5192
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 0.5,
+        "fair_over": 0.2897,
         "books": 1,
         "sources": [
           {
+            "book": "draftkings",
+            "line": 0.5,
+            "over_american": 223,
+            "under_american": -315,
+            "fair_over": 0.2897
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 32.5,
+        "fair_over": 0.4831,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 32.5,
+            "over_american": -108,
+            "under_american": -125,
+            "fair_over": 0.4831
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 19.5,
+        "fair_over": 0.4762,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 19.5,
+            "over_american": -105,
+            "under_american": -129,
+            "fair_over": 0.4762
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 29.5,
+        "fair_over": 0.497,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 29.5,
+            "over_american": -115,
+            "under_american": -118,
+            "fair_over": 0.497
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 15.5,
+        "fair_over": 0.505,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 15.5,
+            "over_american": -119,
+            "under_american": -114,
+            "fair_over": 0.505
+          }
+        ]
+      }
+    ],
+    "Sabrina Ionescu": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 15.5,
+        "fair_over": 0.4924,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 15.5,
+            "over_american": -121,
+            "under_american": -110,
+            "fair_over": 0.5111
+          },
+          {
             "book": "fanduel",
+            "line": 14.5,
+            "over_american": -130,
+            "under_american": 100,
+            "fair_over": 0.5306
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.5436,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -148,
+            "under_american": 109,
+            "fair_over": 0.555
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -132,
+            "under_american": 100,
+            "fair_over": 0.5323
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 5.5,
+        "fair_over": 0.4396,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
             "line": 5.5,
+            "over_american": 101,
+            "under_american": -137,
+            "fair_over": 0.4626
+          },
+          {
+            "book": "fanduel",
+            "line": 4.5,
+            "over_american": -160,
+            "under_american": 120,
+            "fair_over": 0.5752
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.396,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": 131,
+            "under_american": -180,
+            "fair_over": 0.4024
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": 140,
+            "under_american": -188,
+            "fair_over": 0.3896
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 25.5,
+        "fair_over": 0.4862,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 25.5,
+            "over_american": -110,
+            "under_american": -124,
+            "fair_over": 0.4862
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 21.5,
+        "fair_over": 0.4762,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 21.5,
+            "over_american": -105,
+            "under_american": -129,
+            "fair_over": 0.4762
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 19.5,
+        "fair_over": 0.5109,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 19.5,
+            "over_american": -122,
+            "under_american": -111,
+            "fair_over": 0.5109
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 9.5,
+        "fair_over": 0.4762,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 9.5,
+            "over_american": -105,
+            "under_american": -129,
+            "fair_over": 0.4762
+          }
+        ]
+      }
+    ],
+    "Jonquel Jones": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 14.5,
+        "fair_over": 0.4702,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 14.5,
+            "over_american": -108,
+            "under_american": -123,
+            "fair_over": 0.4849
+          },
+          {
+            "book": "fanduel",
+            "line": 13.5,
+            "over_american": -120,
+            "under_american": -108,
+            "fair_over": 0.5123
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 8.5,
+        "fair_over": 0.5471,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 8.5,
+            "over_american": -143,
+            "under_american": 106,
+            "fair_over": 0.548
+          },
+          {
+            "book": "fanduel",
+            "line": 9.5,
+            "over_american": 116,
+            "under_american": -154,
+            "fair_over": 0.433
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.4637,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": -116,
+            "under_american": -117,
+            "fair_over": 0.499
+          },
+          {
+            "book": "fanduel",
+            "line": 2.5,
+            "over_american": 118,
+            "under_american": -158,
+            "fair_over": 0.4283
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.5682,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": -158,
+            "under_american": 116,
+            "fair_over": 0.5695
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": -154,
+            "under_american": 116,
+            "fair_over": 0.567
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 26.5,
+        "fair_over": 0.4802,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 26.5,
+            "over_american": -107,
+            "under_american": -127,
+            "fair_over": 0.4802
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 16.5,
+        "fair_over": 0.5246,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 16.5,
+            "over_american": -130,
+            "under_american": -105,
+            "fair_over": 0.5246
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 23.5,
+        "fair_over": 0.497,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 23.5,
+            "over_american": -115,
+            "under_american": -118,
+            "fair_over": 0.497
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 11.5,
+        "fair_over": 0.5089,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 11.5,
+            "over_american": -121,
+            "under_american": -112,
+            "fair_over": 0.5089
+          }
+        ]
+      }
+    ],
+    "Jordin Canada": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 10.5,
+        "fair_over": 0.5163,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 10.5,
+            "over_american": -116,
+            "under_american": -114,
+            "fair_over": 0.502
+          },
+          {
+            "book": "fanduel",
+            "line": 10.5,
+            "over_american": -130,
+            "under_american": 100,
+            "fair_over": 0.5306
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.5615,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": -172,
+            "under_american": 126,
+            "fair_over": 0.5883
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": 122,
+            "under_american": -162,
+            "fair_over": 0.4215
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 7.5,
+        "fair_over": 0.5181,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 7.5,
+            "over_american": -109,
+            "under_american": -124,
+            "fair_over": 0.4851
+          },
+          {
+            "book": "fanduel",
+            "line": 7.5,
+            "over_american": -144,
+            "under_american": 108,
+            "fair_over": 0.5511
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 0.5,
+        "fair_over": 0.5878,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 0.5,
+            "over_american": -154,
+            "under_american": 113,
+            "fair_over": 0.5636
+          },
+          {
+            "book": "fanduel",
+            "line": 0.5,
+            "over_american": -192,
+            "under_american": 140,
+            "fair_over": 0.6121
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 21.5,
+        "fair_over": 0.4882,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 21.5,
+            "over_american": -111,
+            "under_american": -123,
+            "fair_over": 0.4882
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 18.5,
+        "fair_over": 0.4762,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 18.5,
+            "over_american": -105,
+            "under_american": -129,
+            "fair_over": 0.4762
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 13.5,
+        "fair_over": 0.5069,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 13.5,
+            "over_american": -120,
+            "under_american": -113,
+            "fair_over": 0.5069
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 10.5,
+        "fair_over": 0.4911,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 10.5,
+            "over_american": -112,
+            "under_american": -121,
+            "fair_over": 0.4911
+          }
+        ]
+      }
+    ],
+    "Leonie Fiebich": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 8.5,
+        "fair_over": 0.4932,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 8.5,
+            "over_american": -126,
+            "under_american": -105,
+            "fair_over": 0.5212
+          },
+          {
+            "book": "fanduel",
+            "line": 8.5,
+            "over_american": 102,
+            "under_american": -132,
+            "fair_over": 0.4653
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.5129,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -130,
+            "under_american": -104,
+            "fair_over": 0.5258
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
+            "over_american": -114,
+            "under_american": -114,
+            "fair_over": 0.5
+          }
+        ]
+      },
+      {
+        "stat": "Assists",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 2.5,
+        "fair_over": 0.4425,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 2.5,
+            "over_american": 110,
+            "under_american": -150,
+            "fair_over": 0.4425
+          }
+        ]
+      },
+      {
+        "stat": "3-Pointers Made",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.509,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": -121,
+            "under_american": -113,
+            "fair_over": 0.5079
+          },
+          {
+            "book": "fanduel",
+            "line": 1.5,
+            "over_american": -120,
+            "under_american": -110,
+            "fair_over": 0.5101
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 15.5,
+        "fair_over": 0.4811,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 15.5,
+            "over_american": -107,
+            "under_american": -126,
+            "fair_over": 0.4811
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 11.5,
+        "fair_over": 0.4871,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 11.5,
+            "over_american": -110,
+            "under_american": -123,
+            "fair_over": 0.4871
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 12.5,
+        "fair_over": 0.5129,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 12.5,
+            "over_american": -123,
+            "under_american": -110,
+            "fair_over": 0.5129
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 6.5,
+        "fair_over": 0.4407,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 6.5,
+            "over_american": 111,
+            "under_american": -151,
+            "fair_over": 0.4407
+          }
+        ]
+      }
+    ],
+    "Pauline Astier": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 8.5,
+        "fair_over": 0.4707,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 8.5,
+            "over_american": -115,
+            "under_american": -115,
+            "fair_over": 0.5
+          },
+          {
+            "book": "fanduel",
+            "line": 7.5,
+            "over_american": -113,
+            "under_american": -115,
+            "fair_over": 0.498
+          }
+        ]
+      },
+      {
+        "stat": "Rebounds",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.4595,
+        "books": 2,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": 106,
+            "under_american": -144,
+            "fair_over": 0.4513
+          },
+          {
+            "book": "fanduel",
+            "line": 3.5,
             "over_american": 100,
             "under_american": -132,
             "fair_over": 0.4677
@@ -4239,416 +5199,325 @@
       {
         "stat": "Assists",
         "league": "WNBA",
-        "line": 0.5,
-        "fair_over": 0.6141,
-        "books": 1,
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.4397,
+        "books": 2,
         "sources": [
           {
-            "book": "fanduel",
-            "line": 0.5,
-            "over_american": -192,
-            "under_american": 142,
-            "fair_over": 0.6141
-          }
-        ]
-      }
-    ],
-    "Jordin Canada": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "line": 9.5,
-        "fair_over": 0.5379,
-        "books": 1,
-        "sources": [
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": 100,
+            "under_american": -136,
+            "fair_over": 0.4646
+          },
           {
             "book": "fanduel",
-            "line": 9.5,
-            "over_american": -136,
-            "under_american": 102,
-            "fair_over": 0.5379
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "league": "WNBA",
-        "line": 6.5,
-        "fair_over": 0.3487,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 6.5,
-            "over_american": 168,
-            "under_american": -230,
-            "fair_over": 0.3487
-          }
-        ]
-      },
-      {
-        "stat": "Assists",
-        "league": "WNBA",
-        "line": 11.5,
-        "fair_over": 0.4138,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 11.5,
+            "line": 3.5,
             "over_american": 126,
-            "under_american": -168,
-            "fair_over": 0.4138
+            "under_american": -166,
+            "fair_over": 0.4149
           }
         ]
       },
       {
         "stat": "3-Pointers Made",
         "league": "WNBA",
-        "line": 1.5,
-        "fair_over": 0.2561,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 1.5,
-            "over_american": 265,
-            "under_american": -390,
-            "fair_over": 0.2561
-          }
-        ]
-      }
-    ],
-    "Lauren Betts": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "line": 2.5,
-        "fair_over": 0.4759,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 2.5,
-            "over_american": -104,
-            "under_american": -128,
-            "fair_over": 0.4759
-          }
-        ]
-      }
-    ],
-    "Georgia Amoore": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "line": 4.5,
-        "fair_over": 0.4808,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 4.5,
-            "over_american": -106,
-            "under_american": -125,
-            "fair_over": 0.4808
-          }
-        ]
-      },
-      {
-        "stat": "Assists",
-        "league": "WNBA",
-        "line": 3.5,
-        "fair_over": 0.567,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 3.5,
-            "over_american": -154,
-            "under_american": 116,
-            "fair_over": 0.567
-          }
-        ]
-      },
-      {
-        "stat": "3-Pointers Made",
-        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
         "line": 0.5,
-        "fair_over": 0.4581,
+        "fair_over": 0.4044,
         "books": 1,
         "sources": [
           {
-            "book": "fanduel",
+            "book": "draftkings",
             "line": 0.5,
-            "over_american": 104,
-            "under_american": -138,
-            "fair_over": 0.4581
-          }
-        ]
-      }
-    ],
-    "Angel Reese": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "line": 12.5,
-        "fair_over": 0.4939,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 12.5,
-            "over_american": -112,
-            "under_american": -118,
-            "fair_over": 0.4939
+            "over_american": 130,
+            "under_american": -178,
+            "fair_over": 0.4044
           }
         ]
       },
       {
-        "stat": "Rebounds",
+        "stat": "PRA",
         "league": "WNBA",
-        "line": 7.5,
-        "fair_over": 0.504,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 7.5,
-            "over_american": -118,
-            "under_american": -114,
-            "fair_over": 0.504
-          }
-        ]
-      },
-      {
-        "stat": "Assists",
-        "league": "WNBA",
-        "line": 2.5,
-        "fair_over": 0.5164,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 2.5,
-            "over_american": -122,
-            "under_american": -106,
-            "fair_over": 0.5164
-          }
-        ]
-      }
-    ],
-    "Michaela Onyenwere": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "line": 4.5,
-        "fair_over": 0.4542,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 4.5,
-            "over_american": 106,
-            "under_american": -140,
-            "fair_over": 0.4542
-          }
-        ]
-      }
-    ],
-    "Sonia Citron": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "line": 18.5,
-        "fair_over": 0.5379,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 18.5,
-            "over_american": -136,
-            "under_american": 102,
-            "fair_over": 0.5379
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "league": "WNBA",
-        "line": 6.5,
-        "fair_over": 0.4043,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 6.5,
-            "over_american": 132,
-            "under_american": -174,
-            "fair_over": 0.4043
-          }
-        ]
-      },
-      {
-        "stat": "Assists",
-        "league": "WNBA",
-        "line": 2.5,
-        "fair_over": 0.5,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 2.5,
-            "over_american": -114,
-            "under_american": -114,
-            "fair_over": 0.5
-          }
-        ]
-      },
-      {
-        "stat": "3-Pointers Made",
-        "league": "WNBA",
-        "line": 1.5,
-        "fair_over": 0.4808,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 1.5,
-            "over_american": -106,
-            "under_american": -125,
-            "fair_over": 0.4808
-          }
-        ]
-      }
-    ],
-    "Allisha Gray": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
-        "line": 24.5,
-        "fair_over": 0.5323,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 24.5,
-            "over_american": -132,
-            "under_american": 100,
-            "fair_over": 0.5323
-          }
-        ]
-      },
-      {
-        "stat": "Rebounds",
-        "league": "WNBA",
-        "line": 1.5,
-        "fair_over": 0.3408,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 1.5,
-            "over_american": 174,
-            "under_american": -240,
-            "fair_over": 0.3408
-          }
-        ]
-      },
-      {
-        "stat": "Assists",
-        "league": "WNBA",
-        "line": 2.5,
-        "fair_over": 0.5164,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 2.5,
-            "over_american": -122,
-            "under_american": -106,
-            "fair_over": 0.5164
-          }
-        ]
-      },
-      {
-        "stat": "3-Pointers Made",
-        "league": "WNBA",
-        "line": 3.5,
-        "fair_over": 0.4581,
-        "books": 1,
-        "sources": [
-          {
-            "book": "fanduel",
-            "line": 3.5,
-            "over_american": 104,
-            "under_american": -138,
-            "fair_over": 0.4581
-          }
-        ]
-      }
-    ],
-    "Rhyne Howard": [
-      {
-        "stat": "Points",
-        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
         "line": 15.5,
-        "fair_over": 0.4581,
+        "fair_over": 0.503,
         "books": 1,
         "sources": [
           {
-            "book": "fanduel",
+            "book": "draftkings",
             "line": 15.5,
-            "over_american": 104,
-            "under_american": -138,
-            "fair_over": 0.4581
+            "over_american": -118,
+            "under_american": -115,
+            "fair_over": 0.503
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 12.5,
+        "fair_over": 0.4754,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 12.5,
+            "over_american": -105,
+            "under_american": -130,
+            "fair_over": 0.4754
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 12.5,
+        "fair_over": 0.4646,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 12.5,
+            "over_american": 100,
+            "under_american": -136,
+            "fair_over": 0.4646
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "WNBA",
+        "team": "NY",
+        "opponent": "ATL",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 6.5,
+        "fair_over": 0.5326,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 6.5,
+            "over_american": -134,
+            "under_american": -101,
+            "fair_over": 0.5326
+          }
+        ]
+      }
+    ],
+    "Naz Hillmon": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 6.5,
+        "fair_over": 0.5101,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 6.5,
+            "over_american": -120,
+            "under_american": -110,
+            "fair_over": 0.5101
           }
         ]
       },
       {
         "stat": "Rebounds",
         "league": "WNBA",
-        "line": 4.5,
-        "fair_over": 0.3859,
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 3.5,
+        "fair_over": 0.5069,
         "books": 1,
         "sources": [
           {
-            "book": "fanduel",
-            "line": 4.5,
-            "over_american": 142,
-            "under_american": -192,
-            "fair_over": 0.3859
+            "book": "draftkings",
+            "line": 3.5,
+            "over_american": -120,
+            "under_american": -113,
+            "fair_over": 0.5069
           }
         ]
       },
       {
         "stat": "Assists",
         "league": "WNBA",
-        "line": 2.5,
-        "fair_over": 0.6464,
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.4323,
         "books": 1,
         "sources": [
           {
-            "book": "fanduel",
-            "line": 2.5,
-            "over_american": -225,
-            "under_american": 164,
-            "fair_over": 0.6464
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": 115,
+            "under_american": -157,
+            "fair_over": 0.4323
           }
         ]
       },
       {
         "stat": "3-Pointers Made",
         "league": "WNBA",
-        "line": 3.5,
-        "fair_over": 0.3487,
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 1.5,
+        "fair_over": 0.3444,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 1.5,
+            "over_american": 171,
+            "under_american": -236,
+            "fair_over": 0.3444
+          }
+        ]
+      },
+      {
+        "stat": "PRA",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 11.5,
+        "fair_over": 0.5278,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 11.5,
+            "over_american": -131,
+            "under_american": -103,
+            "fair_over": 0.5278
+          }
+        ]
+      },
+      {
+        "stat": "PA",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 8.5,
+        "fair_over": 0.4653,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 8.5,
+            "over_american": 100,
+            "under_american": -135,
+            "fair_over": 0.4653
+          }
+        ]
+      },
+      {
+        "stat": "PR",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 10.5,
+        "fair_over": 0.4921,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 10.5,
+            "over_american": -113,
+            "under_american": -121,
+            "fair_over": 0.4921
+          }
+        ]
+      },
+      {
+        "stat": "RA",
+        "league": "WNBA",
+        "team": "ATL",
+        "opponent": "NY",
+        "game": "NY@ATL",
+        "start_time": "2026-10-04T19:00:00.0000000Z",
+        "line": 4.5,
+        "fair_over": 0.5775,
+        "books": 1,
+        "sources": [
+          {
+            "book": "draftkings",
+            "line": 4.5,
+            "over_american": -164,
+            "under_american": 120,
+            "fair_over": 0.5775
+          }
+        ]
+      }
+    ],
+    "Aziaha James": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "line": 5.5,
+        "fair_over": 0.5082,
         "books": 1,
         "sources": [
           {
             "book": "fanduel",
-            "line": 3.5,
-            "over_american": 168,
-            "under_american": -230,
-            "fair_over": 0.3487
+            "line": 5.5,
+            "over_american": -118,
+            "under_american": -110,
+            "fair_over": 0.5082
+          }
+        ]
+      }
+    ],
+    "Alysha Clark": [
+      {
+        "stat": "Points",
+        "league": "WNBA",
+        "line": 5.5,
+        "fair_over": 0.4557,
+        "books": 1,
+        "sources": [
+          {
+            "book": "fanduel",
+            "line": 5.5,
+            "over_american": 106,
+            "under_american": -138,
+            "fair_over": 0.4557
           }
         ]
       }
@@ -5050,16 +5919,16 @@
       }
     ]
   },
-  "total_props": 217,
-  "total_players": 43,
+  "total_props": 244,
+  "total_players": 40,
   "books_coverage": {
-    "1": 149,
-    "2": 68
+    "1": 147,
+    "2": 97
   },
   "per_league": {
     "WNBA": {
-      "total_props": 193,
-      "total_players": 37
+      "total_props": 220,
+      "total_players": 34
     },
     "NBA": {
       "total_props": 24,
