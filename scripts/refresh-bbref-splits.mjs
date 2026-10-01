@@ -114,10 +114,21 @@ function rowToAverages(c) {
 }
 
 export async function fetchPlayerSplits(slug, endYear, league = "NBA") {
-  const res = await fetch(splitsUrl(slug, endYear, league), {
-    headers: HEADERS,
-    signal: AbortSignal.timeout(15000),
-  });
+  // Transient network errors (DNS ENOTFOUND, resets, timeouts) used to throw
+  // out of the whole run; retry twice with backoff, then fail just this player.
+  let res;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      res = await fetch(splitsUrl(slug, endYear, league), {
+        headers: HEADERS,
+        signal: AbortSignal.timeout(15000),
+      });
+      break;
+    } catch (e) {
+      if (attempt >= 2) return { error: `network: ${e.cause?.code ?? e.message}` };
+      await sleep(5000 * (attempt + 1));
+    }
+  }
   if (!res.ok) return { error: `HTTP ${res.status}` };
   const html = (await res.text()).replace(/<!--/g, "").replace(/-->/g, "");
   const homeRow = rowFor(html, "Home");

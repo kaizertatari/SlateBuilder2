@@ -26,6 +26,13 @@
     "team_abbr": "LA",
     "league": "WNBA"
   },
+  "Aari McDonald": {
+    "nba": 1630462,
+    "espn": 4066553,
+    "bbref": null,
+    "team_abbr": "MIN",
+    "league": "WNBA"
+  },
   "Aaron Gordon": {
     "nba": 203932,
     "espn": 3064290,
@@ -164,6 +171,13 @@
     "espn": 4684740,
     "bbref": "thompam01",
     "league": "NBA"
+  },
+  "Aminata Gueye": {
+    "nba": 1643832,
+    "espn": 5447776,
+    "bbref": null,
+    "team_abbr": "GS",
+    "league": "WNBA"
   },
   "Amy Okonkwo": {
     "nba": 1629539,
@@ -517,6 +531,13 @@
     "espn": 5105729,
     "bbref": "graych02w",
     "team_abbr": "LA",
+    "league": "WNBA"
+  },
+  "Charisma Osborne": {
+    "nba": 1642294,
+    "espn": 4433293,
+    "bbref": null,
+    "team_abbr": "POR",
     "league": "WNBA"
   },
   "Charlisse Leger-Walker": {
@@ -1616,7 +1637,7 @@
     "nba": 1642324,
     "espn": 4398907,
     "bbref": "martika01w",
-    "team_abbr": "LA",
+    "team_abbr": "CHI",
     "league": "WNBA"
   },
   "Katie Lou Samuelson": {
@@ -2010,10 +2031,10 @@
     "league": "WNBA"
   },
   "Madison Scott": {
-    "nba": null,
+    "nba": 1642810,
     "espn": 4433416,
     "bbref": "scottma01w",
-    "team_abbr": "WSH",
+    "team_abbr": "NY",
     "league": "WNBA"
   },
   "Maggie Doogan": {
@@ -2298,7 +2319,7 @@
     "nba": 1643479,
     "espn": 5106170,
     "bbref": "mwenend01w",
-    "team_abbr": "GS",
+    "team_abbr": "LA",
     "league": "WNBA"
   },
   "Neemias Queta": {
@@ -2714,7 +2735,7 @@
     "league": "WNBA"
   },
   "Saylor Poffenbarger": {
-    "nba": null,
+    "nba": 1643458,
     "espn": 4433542,
     "bbref": "poffesa01w",
     "team_abbr": "PHX",
