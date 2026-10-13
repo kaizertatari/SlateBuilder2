@@ -119,3 +119,43 @@ export function unlockChecklist(settledPicks) {
   ];
   return { checks, unlocked: checks.every((c) => c.ok) };
 }
+
+/**
+ * Same-game over/over correlation from graded rows (raw store rows): φ of the
+ * "went over the line" indicators for every pair of distinct props in one
+ * game, split by same player / teammate / opponent (side from player_team,
+ * or opponent+home_away for basketball rows). These are the measurements
+ * behind api/_lib/correlation.js CORRELATION_PRIORS.
+ * @returns {Array<{ relation:string, pairs:number, phi:number|null }>}
+ */
+export function overCorrelation(raw) {
+  const ok = raw.filter((r) => !r.logged_after_kickoff && Number.isFinite(Number(r.outcome?.actual_value)) && r.outcome?.hit_or_miss !== "void");
+  // One leg per (game, player, stat) — prefer the standard line.
+  const legs = new Map();
+  for (const r of ok) {
+    const k = `${r.game_start_time}|${r.fotmob_match_id ?? ""}|${r.player}|${statOf(r)}`;
+    const prev = legs.get(k);
+    if (!prev || (r.odds_type === "standard" && prev.odds_type !== "standard")) legs.set(k, r);
+  }
+  const games = new Map();
+  for (const r of legs.values()) {
+    const g = `${r.game_start_time}|${r.fotmob_match_id ?? ""}`;
+    if (!games.has(g)) games.set(g, []);
+    games.get(g).push({ r, over: Number(r.outcome.actual_value) > Number(r.line) ? 1 : 0, side: r.player_team ?? r.team ?? (r.opponent ? `${r.opponent}|${r.home_away ?? ""}` : null) });
+  }
+  const acc = new Map();
+  for (const ls of games.values()) {
+    for (let i = 0; i < ls.length; i++) for (let j = i + 1; j < ls.length; j++) {
+      const a = ls[i], b = ls[j];
+      const rel = a.r.player === b.r.player ? "same player" : a.side && b.side ? (a.side === b.side ? "teammate" : "opponent") : "other player, same game";
+      const s = acc.get(rel) ?? { n: 0, a: 0, b: 0, ab: 0 };
+      s.n++; s.a += a.over; s.b += b.over; s.ab += a.over * b.over;
+      acc.set(rel, s);
+    }
+  }
+  return [...acc.entries()].map(([relation, s]) => {
+    const ma = s.a / s.n, mb = s.b / s.n;
+    const den = Math.sqrt(ma * (1 - ma) * mb * (1 - mb));
+    return { relation, pairs: s.n, phi: den > 0 ? (s.ab / s.n - ma * mb) / den : null };
+  }).sort((x, y) => y.pairs - x.pairs);
+}

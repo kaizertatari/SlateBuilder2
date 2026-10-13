@@ -1,6 +1,6 @@
 // Smoke for the cross-league calibration helpers (scripts/_calib.mjs).
 
-import { normalizeRow, exclusionOf, hitSummary, compareSources, sigmaCheck, unlockChecklist, statOf } from "./_calib.mjs";
+import { normalizeRow, exclusionOf, hitSummary, compareSources, sigmaCheck, unlockChecklist, statOf, overCorrelation } from "./_calib.mjs";
 
 let pass = 0, fail = 0;
 const check = (name, ok) => { ok ? pass++ : fail++; console.log(`${ok ? "PASS" : "FAIL"}  ${name}`); };
@@ -46,6 +46,19 @@ check("unlock: goblins don't count toward the standard sample", !unlockChecklist
 const over = good.map((r) => ({ ...r, p_engine: 0.7 }));
 check("unlock: 10-pt overconfidence blocks", !unlockChecklist(over).unlocked && !unlockChecklist(over).checks[2].ok);
 check("unlock: no engine P blocks", unlockChecklist(good.map((r) => ({ ...r, p_engine: null }))).checks[2].value === "no engine probability");
+
+// overCorrelation: two teammates who always go over/under together → φ = 1.
+const g = (i, player, stat, team, over) => ({ league: "WNBA", game_start_time: `2026-09-${10 + i}T23:00Z`, player, prop_type: `${stat} OVER`, line: 10.5, odds_type: "standard", player_team: team, outcome: { hit_or_miss: "hit", actual_value: over ? 12 : 8 } });
+const corrRows = [];
+for (let i = 0; i < 6; i++) {
+  const o = i % 2 === 0;
+  corrRows.push(g(i, "A", "Points", "X", o), g(i, "B", "Points", "X", o), g(i, "C", "Points", "Y", !o), g(i, "A", "Rebounds", "X", o));
+}
+const corr = Object.fromEntries(overCorrelation(corrRows).map((c) => [c.relation, c]));
+check("overCorrelation: lockstep teammates φ = 1", near(corr.teammate?.phi, 1));
+check("overCorrelation: mirrored opponents φ = −1", near(corr.opponent?.phi, -1));
+check("overCorrelation: same player pairs counted", corr["same player"]?.pairs === 6);
+check("overCorrelation: post-kickoff + void rows ignored", overCorrelation(corrRows.map((r) => ({ ...r, logged_after_kickoff: true }))).length === 0);
 
 console.log(`\nsmoke-calib: ${pass} PASS, ${fail} FAIL`);
 if (fail) process.exit(1);

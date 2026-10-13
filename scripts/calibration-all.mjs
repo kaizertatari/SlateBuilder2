@@ -8,7 +8,8 @@
 //      confidence/100 vs coin-flip and base-rate baselines, on identical lines.
 //   4. Reliability of the engine probability, and σ sizing where logged
 //      (raw sd/mean of z plus fitScale's shrunk σ multiplier + mean shift).
-//   5. Shadow-mode unlock checklist.
+//   5. Same-game over/over correlation (feeds api/_lib/correlation.js).
+//   6. Shadow-mode unlock checklist.
 // League-specific refits stay in their own reports (epl-calibration-report).
 //
 // Usage:
@@ -16,7 +17,7 @@
 //   npm run calibration-all -- --league NBA --since 2026-10
 
 import { readGraded } from "./_graded.mjs";
-import { normalizeRow, hitSummary, groupBy, compareSources, reliability, sigmaCheck, unlockChecklist } from "./_calib.mjs";
+import { normalizeRow, hitSummary, groupBy, compareSources, reliability, sigmaCheck, unlockChecklist, overCorrelation } from "./_calib.mjs";
 import { SLATE_PENDING_LEAGUES } from "../api/_lib/prop-types.js";
 import { fitScale } from "../api/_lib/distributions.js";
 
@@ -87,6 +88,12 @@ function leagueReport(league, raw) {
     const line = (k, c, g) => { const s = fitScale(g); console.log(`    ${String(k).padEnd(24)} n=${String(c.n).padStart(4)}  sd(z) ${c.sd_z.toFixed(2)}  mean(z) ${c.mean_z.toFixed(2)}   →  σ ×${s.scale.toFixed(2)}  shift ${s.bias >= 0 ? "+" : ""}${s.bias.toFixed(2)}σ`); };
     line("ALL", tot, settled);
     for (const [k, c, g] of sig) line(k, c, g);
+  }
+
+  const corr = overCorrelation(raw);
+  if (corr.length) {
+    console.log("\n  Same-game correlation — φ of over/over between distinct props (compare api/_lib/correlation.js priors)");
+    for (const c of corr) console.log(`    ${c.relation.padEnd(24)} pairs=${String(c.pairs).padStart(6)}  φ ${c.phi == null ? "—" : c.phi.toFixed(3)} ± ${(1.96 / Math.sqrt(c.pairs)).toFixed(3)}`);
   }
 
   const u = unlockChecklist(picks);

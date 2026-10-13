@@ -87,6 +87,9 @@ export function collectMarketCandidates(linesData, { league = null, allowedLeagu
         market_line_delta: m.line_delta,
         books: m.books,
         game,
+        // Side within the game — the slate builder's same-game correlation
+        // separates teammates from opponents.
+        player_team: p.player_team ?? null,
         // Join keys carried from the lines snapshot so the priced leg can be
         // logged as a gradeable verdict (verdict-logger.logSlateLegs): the
         // grader settles on game_start_time + espn_id.
