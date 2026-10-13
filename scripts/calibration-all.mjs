@@ -6,7 +6,8 @@
 //   2. Picks — hit rate vs break-even by tier / line type / direction / stat.
 //   3. Probability sources — log loss + Brier of engine, model, market and
 //      confidence/100 vs coin-flip and base-rate baselines, on identical lines.
-//   4. Reliability of the engine probability, and σ sizing where logged.
+//   4. Reliability of the engine probability, and σ sizing where logged
+//      (raw sd/mean of z plus fitScale's shrunk σ multiplier + mean shift).
 //   5. Shadow-mode unlock checklist.
 // League-specific refits stay in their own reports (epl-calibration-report).
 //
@@ -17,6 +18,7 @@
 import { readGraded } from "./_graded.mjs";
 import { normalizeRow, hitSummary, groupBy, compareSources, reliability, sigmaCheck, unlockChecklist } from "./_calib.mjs";
 import { SLATE_PENDING_LEAGUES } from "../api/_lib/prop-types.js";
+import { fitScale } from "../api/_lib/distributions.js";
 
 const args = process.argv.slice(2);
 const arg = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : undefined; };
@@ -77,12 +79,14 @@ function leagueReport(league, raw) {
     }
   }
 
-  const sig = groupBy(settled, (r) => r.stat).map(([k, g]) => [k, sigmaCheck(g)]).filter(([, c]) => c && c.n >= 10);
+  const sig = groupBy(settled, (r) => r.stat).map(([k, g]) => [k, sigmaCheck(g), g]).filter(([, c]) => c && c.n >= 10);
   if (sig.length) {
     const tot = sigmaCheck(settled);
     console.log(`\n  σ sizing — sd(z) of (actual − mean)/σ; 1.00 = right-sized, >1 = σ too narrow; mean(z) < 0 = mean runs high`);
-    console.log(`    ${"ALL".padEnd(24)} n=${String(tot.n).padStart(4)}  sd(z) ${tot.sd_z.toFixed(2)}  mean(z) ${tot.mean_z.toFixed(2)}`);
-    for (const [k, c] of sig) console.log(`    ${String(k).padEnd(24)} n=${String(c.n).padStart(4)}  sd(z) ${c.sd_z.toFixed(2)}  mean(z) ${c.mean_z.toFixed(2)}`);
+    console.log("    suggested (fitScale, shrunk toward 1×/0): σ' = σ × mult, mean' = mean + shift·σ");
+    const line = (k, c, g) => { const s = fitScale(g); console.log(`    ${String(k).padEnd(24)} n=${String(c.n).padStart(4)}  sd(z) ${c.sd_z.toFixed(2)}  mean(z) ${c.mean_z.toFixed(2)}   →  σ ×${s.scale.toFixed(2)}  shift ${s.bias >= 0 ? "+" : ""}${s.bias.toFixed(2)}σ`); };
+    line("ALL", tot, settled);
+    for (const [k, c, g] of sig) line(k, c, g);
   }
 
   const u = unlockChecklist(picks);
