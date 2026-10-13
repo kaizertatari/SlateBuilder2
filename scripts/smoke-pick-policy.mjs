@@ -32,5 +32,28 @@ check("model-only capped at B with a flag", m.tier === "B" && m.rules.includes("
 check("SKIP carries no caps", tierForEdge(0.3, "goblin", policy, { modelOnly: true }).rules.length === 0);
 check("capTier never raises a tier", capTier("B", "A") === "B" && capTier("S", "B") === "B" && capTier("SKIP", "S") === "SKIP");
 
+// fit-payouts: synthetic entries priced with goblin 0.7 / demon 1.2 per leg.
+const { entryRows, fitPayouts, isFlexEntry } = await import("./fit-payouts.mjs");
+const page = { data: [], included: [] };
+let pid = 0;
+const entry = (types, mult, { promo = null, flex = false } = {}) => {
+  const preds = types.map((t) => { const id = String(++pid); page.included.push({ type: "prediction", id, attributes: { odds_type: t } }); return { id }; });
+  page.data.push({ attributes: { amount_bet_cents: 100, amount_to_win_cents: Math.round(100 * mult), promotion_id: promo, full_payout_multipliers: [flex ? [mult, 1.5, 0] : [mult]] }, relationships: { predictions: { data: preds } } });
+};
+entry(["standard", "standard", "standard"], 6);
+entry(["goblin", "goblin", "standard"], 6 * 0.7 ** 2);
+entry(["goblin", "goblin", "goblin", "goblin"], 10 * 0.7 ** 4);
+entry(["demon", "demon", "standard"], 6 * 1.2 ** 2);
+entry(["demon", "goblin"], 3 * 1.2 * 0.7);
+entry(["goblin", "goblin"], 99, { promo: 123 });
+entry(["standard", "standard", "standard"], 2.25, { flex: true });
+const er = entryRows([page]);
+check("entryRows drops promo entries", er.length === 6);
+check("isFlexEntry spots partial payouts", er.filter((r) => r.mode === "flex").length === 1 && !isFlexEntry({ full_payout_multipliers: [[6], [3, 0, 0]] }));
+const fp = fitPayouts(er.filter((r) => r.mode === "power"), { 2: 3, 3: 5, 4: 10 });
+check("fit recovers goblin factor", near(fp.factors.goblin, 0.7, 1e-2));
+check("fit recovers demon factor", near(fp.factors.demon, 1.2, 1e-2));
+check("observed all-standard payout overrides the app table", fp.base[3] === 6 && fp.base[4] === 10);
+
 console.log(`\nsmoke-pick-policy: ${pass} PASS, ${fail} FAIL`);
 if (fail) process.exit(1);

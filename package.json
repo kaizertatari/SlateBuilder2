@@ -23,6 +23,7 @@
     "refresh-prizepicks": "node scripts/refresh-prizepicks.mjs",
     "refresh-odds": "node scripts/scrape-odds.mjs",
     "fetch-entries": "node scripts/fetch-prizepicks-entries.mjs",
+    "fit-payouts": "node scripts/fit-payouts.mjs",
     "build-calibration": "node scripts/build-calibration.mjs",
     "calibrate-market": "node scripts/calibrate-market.mjs",
     "backtest-slates": "node scripts/backtest-slates.mjs",
