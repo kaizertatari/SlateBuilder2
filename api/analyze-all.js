@@ -12,7 +12,7 @@ import { gatherGroundTruthWithRetry } from "./analyze.js";
 import { rateLimit } from "./_lib/rate-limit.js";
 import { runWithRequestContext } from "./_lib/request-context.js";
 import { readLines } from "./_lib/lines-store.js";
-import { STATS, mapPrizePicksStatType } from "./_lib/prop-types.js";
+import { STATS, mapPrizePicksStatType, SLATE_PENDING_LEAGUES } from "./_lib/prop-types.js";
 import { get as cacheGet, set as cacheSet } from "./_lib/cache.js";
 import { preFilterMechanical } from "./_lib/verdict-verifier.js";
 import { applyEngine } from "./_lib/engine.js";
@@ -470,6 +470,9 @@ async function handlePost(req, reqId) {
       top_10: top10,
       lines_fetched_at: linesFetchedAt,
       skipped: skipped.length > 0 ? skipped : undefined,
+      // Shadow mode (SLATE_PENDING_LEAGUES): tiers are logged + graded as
+      // usual but are not calibrated, so the UI labels them as such.
+      calibration_pending: league && SLATE_PENDING_LEAGUES[league] ? true : undefined,
     };
     cacheSet(cacheKey, responseBody, CACHE_TTL_MS);
     return Response.json(responseBody, { headers: { "X-Cache": "MISS" } });

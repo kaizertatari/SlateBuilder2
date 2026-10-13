@@ -20,11 +20,16 @@
 import { projectPlayer, priceLine, simulateFantasy } from "./model.js";
 import { lineProbs } from "./distributions.js";
 import { buildTeamResolver, buildPlayerResolver } from "./names.js";
-import { POWER_MULTIPLIER, LINE_TYPE_FACTOR } from "../prizepicks-payouts.js";
+import { breakEven, blendProb, tierForEdge, capTier, clampP } from "../pick-policy.js";
 import { lineupOverride } from "./fotmob.js";
 
 export const EPL_POLICY = {
-  version: 1,
+  // v2 (2026-10-13): model-only stats are no longer tiered (graded
+  // model-only picks hit 51.4% vs 57.7% break-even, n=35, and harder shrink
+  // didn't help: 39–53% at every shrink 0.5→0.3). Still priced + logged +
+  // graded so they can earn tiers back. v2 also prices against the re-fit
+  // payout factors (goblin 0.68, demon 1.13).
+  version: 2,
   // Log-odds pooling weights when a book ladder prices the stat.
   blend: { model: 0.5, market: 0.5 },
   // Model-only stats: logit(p) is multiplied by this (0.5 halves the model's
@@ -32,9 +37,10 @@ export const EPL_POLICY = {
   modelOnlyShrink: 0.5,
   // Tier thresholds on blended P − break-even.
   tierEdge: { A: 0.05, B: 0.015 },
-  // Hard ceilings: no S-tier until EPL is calibrated; model-only ≤ B.
+  // Hard ceilings: no S-tier until EPL is calibrated; model-only never tiered
+  // (see v2 note above).
   maxTier: "A",
-  modelOnlyMaxTier: "B",
+  modelOnlyMaxTier: "SKIP",
   // Goblin/demon break-evens come from the app's approximate LINE_TYPE_FACTOR
   // (the slate builder keeps them opt-in for the same reason).
   approxPayoutMaxTier: "B",
@@ -58,18 +64,10 @@ export const PP_TO_STAT = {
 // Stats the books price with a player ladder (DK and/or FD).
 const MARKET_STATS = new Set(["shots", "sot", "key_passes", "goals", "assists", "goal_assist", "tackles", "saves", "fouls", "fouled"]);
 
-const TIER_RANK = { SKIP: 0, B: 1, A: 2, S: 3 };
-const capTier = (tier, cap) => (TIER_RANK[tier] > TIER_RANK[cap] ? cap : tier);
-const logit = (p) => Math.log(p / (1 - p));
-const sigmoid = (x) => 1 / (1 + Math.exp(-x));
-const clampP = (p) => Math.min(1 - 1e-4, Math.max(1e-4, p));
 const r3 = (x) => (x == null ? null : Number(x.toFixed(3)));
 
-// Per-leg break-even: 2-pick power (3×) reference × the app's line-type
-// factor. Exact for standard (57.7%); goblin/demon are approximate.
-export function breakEven(oddsType = "standard") {
-  return 1 / (Math.sqrt(POWER_MULTIPLIER[2]) * (LINE_TYPE_FACTOR[oddsType] ?? 1));
-}
+// Re-exported for existing callers; the shared pick policy owns it.
+export { breakEven };
 
 /**
  * Build the reusable context (resolvers, indexes) once per request batch.
@@ -198,22 +196,15 @@ export function eplVerdict(prop, direction, ctx, policy = EPL_POLICY) {
     pMarket = clampP((direction === "OVER" ? lp.over : lp.under) / (d || 1));
   }
 
-  // Blend.
-  const modelOnly = pMarket == null;
-  const prob = modelOnly
-    ? sigmoid(policy.modelOnlyShrink * logit(pModel))
-    : sigmoid(policy.blend.model * logit(pModel) + policy.blend.market * logit(pMarket));
-
-  // Tier + caps.
-  const be = breakEven(oddsType);
-  const edge = prob - be;
-  let tier = edge >= policy.tierEdge.A ? "A" : edge >= policy.tierEdge.B ? "B" : "SKIP";
-  const flags = [];
-  const rules = [modelOnly ? "epl-model-only" : "epl-blend"];
-  tier = capTier(tier, policy.maxTier);
+  // Blend, then tier from edge over break-even (shared pick policy).
+  const { prob, modelOnly } = blendProb({ pModel, pMarket, blend: policy.blend, modelOnlyShrink: policy.modelOnlyShrink });
+  const tiered = tierForEdge(prob, oddsType, policy, { modelOnly });
+  const be = tiered.break_even;
+  const edge = tiered.edge;
+  let tier = tiered.tier;
+  const flags = [...tiered.flags];
+  const rules = [modelOnly ? "epl-model-only" : "epl-blend", ...tiered.rules];
   if (tier !== "SKIP") {
-    if (oddsType !== "standard") { tier = capTier(tier, policy.approxPayoutMaxTier); rules.push("cap:approx-payout"); flags.push(`⚠️ ${oddsType} payout is approximate — capped at B`); }
-    if (modelOnly) { tier = capTier(tier, policy.modelOnlyMaxTier); rules.push("cap:model-only"); flags.push("⚠️ No sportsbook market for this stat — model only, capped at B"); }
     if (lineupState !== "confirmed" && pStart < policy.rotationStart) { tier = capTier(tier, "B"); rules.push("cap:rotation"); flags.push(`⚠️ ${Math.round(pStart * 100)}% to start — re-run after lineups (~1h before kickoff)`); }
     if (mp.apps < policy.minApps) { tier = capTier(tier, "B"); rules.push("cap:thin-sample"); flags.push(`⚠️ Only ${mp.apps} appearance(s) this season`); }
     if (mp.status?.fpl === "d") { tier = capTier(tier, "B"); rules.push("cap:doubtful"); flags.push(`⚠️ FPL: doubtful${mp.status.chance_next != null ? ` (${mp.status.chance_next}%)` : ""}${mp.status.news ? ` — ${mp.status.news}` : ""}`); }

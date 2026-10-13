@@ -51,6 +51,7 @@ export async function collectEplCandidates({ allowedStats = null, oddsTypes = ["
         edge: best.edge,
         break_even: best.break_even,
         game,
+        player_team: best.team ?? null,
         match: best.game,
         game_start_time: p.start_time ?? null,
         justification: best.justification,

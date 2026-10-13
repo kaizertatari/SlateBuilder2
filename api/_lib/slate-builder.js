@@ -12,12 +12,15 @@
 //   Power : EV = winMultiplier · Π p_i − 1          (all legs must hit)
 //   Flex  : EV = Σ_k P(exactly k hit)·payout(k) − 1 (partial payouts)
 //
-// Independence is assumed AFTER the diversification rule (max 1 leg per game,
-// which also caps one leg per player). That's why v1 diversifies rather than
-// stacks — it keeps Π p_i honest. Same-game correlation is a later upgrade.
+// Correlation: never two legs on one player (PrizePicks entries forbid it, and
+// graded same-player legs move together — WNBA φ 0.38). Legs in different
+// games are independent (exact Poisson-binomial). When maxPerGame > 1 lets
+// two legs share a game, the slate is priced with a Gaussian copula on the
+// measured same-game correlations (api/_lib/correlation.js) instead of Π p_i.
 
 import { calibratedProb, calibrationSupport } from "./calibration.js";
 import { powerMultiplier, flexMultiplier, POWER_MULTIPLIER, FLEX_PAYOUTS, LINE_TYPE_FACTOR } from "./prizepicks-payouts.js";
+import { hitDistribution, hasSameGamePair } from "./correlation.js";
 
 // Canonical per-game key for the diversification cap. The PrizePicks scrape
 // writes TWO game entries per matchup (one per team perspective: "BOS@LAL"
@@ -48,12 +51,15 @@ function poissonBinomial(probs) {
   return dp; // dp[k] = P(exactly k hit), length n+1
 }
 
-// EV + win multiplier for a fully-formed slate.
-function evaluateSlate(legs, mode) {
+// EV + win multiplier for a fully-formed slate. `corrCache` memoizes the
+// correlated same-game group distributions across the search.
+function evaluateSlate(legs, mode, corrCache) {
   const n = legs.length;
   const probs = legs.map((l) => l.prob);
+  const correlated = hasSameGamePair(legs);
+  const joint = correlated ? hitDistribution(legs, { cache: corrCache }) : null;
   if (mode === "flex") {
-    const dist = poissonBinomial(probs);
+    const dist = joint ?? poissonBinomial(probs);
     let ev = 0;
     let approx = false;
     for (let k = 0; k <= n; k++) {
@@ -62,12 +68,12 @@ function evaluateSlate(legs, mode) {
       ev += dist[k] * m.multiplier;
     }
     const win = flexMultiplier(legs, n);
-    return { ev: ev - 1, win_multiplier: win.multiplier, approx, p_all: dist[n], dist };
+    return { ev: ev - 1, win_multiplier: win.multiplier, approx, p_all: dist[n], dist, correlated };
   }
   // power
-  const pAll = probs.reduce((a, b) => a * b, 1);
+  const pAll = joint ? joint[n] : probs.reduce((a, b) => a * b, 1);
   const m = powerMultiplier(legs);
-  return { ev: m.multiplier * pAll - 1, win_multiplier: m.multiplier, approx: m.approx, p_all: pAll, dist: null };
+  return { ev: m.multiplier * pAll - 1, win_multiplier: m.multiplier, approx: m.approx, p_all: pAll, dist: null, correlated };
 }
 
 /**
@@ -141,6 +147,8 @@ export function buildSlate(candidates, options = {}) {
   }
   let pool = [...bestByProp.values()].sort((a, b) => b.rank - a.rank);
   if (pool.length > topPoolCap) pool = pool.slice(0, topPoolCap);
+  // Pool index = the correlation memo's bitmask bit (topPoolCap ≤ 52).
+  pool = pool.map((c, i) => ({ ...c, corrIdx: i }));
 
   if (pool.length < size) {
     return { abstained: true, reason: `only ${pool.length} eligible legs (< ${size})`, slate: null, considered: pool.length, best_rejected: null, params };
@@ -176,8 +184,9 @@ export function buildSlate(candidates, options = {}) {
   let bestRejected = null;
   const idx = new Array(size);
 
+  const corrCache = new Map();
   const consider = (legs) => {
-    const ev = evaluateSlate(legs, mode);
+    const ev = evaluateSlate(legs, mode, corrCache);
     if (!bestRejected || ev.ev > bestRejected.ev) bestRejected = { ev: ev.ev, win_multiplier: ev.win_multiplier };
     const qualifies = ev.win_multiplier >= targetMultiplier && ev.ev >= minEdge;
     if (qualifies && (!best || ev.ev > best.evObj.ev)) best = { legs: legs.slice(), evObj: ev };
@@ -189,6 +198,7 @@ export function buildSlate(candidates, options = {}) {
   // sizes (C(40,6) ≈ 3.8M raw combos in flex). Same output set as the old
   // post-hoc check: capped combos never reached evaluateSlate before either.
   const perGame = Object.create(null);
+  const usedPlayer = new Set();
   const recurse = (start, depth) => {
     if (depth === size) {
       consider(idx.map((i) => pool[i]));
@@ -197,9 +207,13 @@ export function buildSlate(candidates, options = {}) {
     for (let i = start; i < pool.length; i++) {
       const key = pool[i].gameCapKey;
       if ((perGame[key] || 0) >= maxPerGame) continue;
+      const who = String(pool[i].player || "").toLowerCase();
+      if (usedPlayer.has(who)) continue;
       perGame[key] = (perGame[key] || 0) + 1;
+      usedPlayer.add(who);
       idx[depth] = i;
       recurse(i + 1, depth + 1);
+      usedPlayer.delete(who);
       perGame[key] -= 1;
     }
   };
@@ -238,6 +252,8 @@ export function buildSlate(candidates, options = {}) {
       win_multiplier: evObj.win_multiplier,
       approx_multiplier: evObj.approx,
       p_all: round3(evObj.p_all),
+      // true when same-game legs were priced jointly (copula) instead of Π p_i.
+      correlated: evObj.correlated,
       ev: round3(evObj.ev),
       expected_return: round3(evObj.ev + 1),
       hit_distribution: evObj.dist ? evObj.dist.map(round3) : undefined,

@@ -29,7 +29,7 @@ import { fileURLToPath } from "node:url";
 import { projectPlayer, priceLine, simulateFantasy, teamTotal } from "../api/_lib/epl/model.js";
 import { lineProbs } from "../api/_lib/epl/distributions.js";
 import { buildTeamResolver, buildPlayerResolver } from "../api/_lib/epl/names.js";
-import { POWER_MULTIPLIER, LINE_TYPE_FACTOR } from "../api/_lib/prizepicks-payouts.js";
+import { breakEven } from "../api/_lib/pick-policy.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const topIdx = process.argv.indexOf("--top");
@@ -44,8 +44,6 @@ export const PP_TO_STAT = {
   "Goalie Saves": "saves", "Goals Allowed": "goals_conceded",
   "Outfield Fantasy Score": "fantasy",
 };
-
-const breakEven = (type) => 1 / (Math.sqrt(POWER_MULTIPLIER[2]) * (LINE_TYPE_FACTOR[type] ?? 1));
 
 function spearman(xs, ys) {
   const rank = (a) => {
