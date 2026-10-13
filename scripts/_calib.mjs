@@ -9,7 +9,7 @@
 //   p_conf    confidence / 100 — scored so a score posing as a % is exposed
 //   break_even  per-leg break-even for the line type
 
-import { breakEven } from "../api/_lib/epl/verdict.js";
+import { breakEven } from "../api/_lib/pick-policy.js";
 import { scoreProbs, reliability, wilson } from "../api/_lib/epl/grading.js";
 
 export { scoreProbs, reliability, wilson };
