@@ -17,5 +17,7 @@ echo === %date% %time% start === >> "logs\grade.log"
 set "rc=%ERRORLEVEL%"
 "C:\Program Files\nodejs\node.exe" scripts\export-graded.mjs >> "logs\grade.log" 2>&1
 if errorlevel 1 set "rc=1"
+REM Cross-league calibration report over data\graded\ (latest copy alone).
+"C:\Program Files\nodejs\node.exe" scripts\calibration-all.mjs > "logs\calibration-latest.txt" 2>&1
 echo === %date% %time% end exit=%rc% === >> "logs\grade.log"
 exit /b %rc%

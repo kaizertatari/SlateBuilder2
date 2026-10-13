@@ -459,6 +459,20 @@ calibration). `npm run export-graded` refreshes it idempotently (only adds
 rows or replaces them with a newer grade, never deletes); read it with
 `readGraded()` from `scripts/_graded.mjs`.
 
+## Cross-league calibration (all leagues, durable store)
+
+`npm run calibration-all [-- --league NBA --since 2026-10]` — read-only,
+reads `data/graded/` (so it spans past Axiom's 30 days). Same sections for
+every league: coverage + exclusions (push/void/logged after kickoff), picks
+vs break-even by tier / line type / direction / stat, SKIP
+counterfactuals, probability sources scored against coin-flip and base-rate
+baselines on identical lines (engine P, model vs market, and basketball
+`confidence/100`), reliability, σ sizing (sd and mean of
+(actual − mean)/σ), and the shadow-mode unlock checklist (≥150 standard
+picks, hit ≥ break-even, predicted within 3 pts). Runs daily after grading;
+latest copy in `logs\calibration-latest.txt`. League-specific refits stay in
+their own reports (`epl-calibration-report`).
+
 ## Measure signal calibration
 
 `node scripts/calibration-report.mjs --lookback 120` (read-only,
