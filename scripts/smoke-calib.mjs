@@ -13,7 +13,7 @@ check("EPL break-even read from row", epl.break_even === 0.577 && epl.y === 1 &&
 const bb = normalizeRow({ league: "WNBA", tier: "S", odds_type: "goblin", direction: "OVER", prop_type: "Points OVER", model_dir_prob: 0.81, market_fair_at_line: 0.7, model_mean: 20, model_sigma: 5, confidence: 90, outcome: { hit_or_miss: "miss", actual_value: 10 } });
 check("basketball engine P = projection model_dir_prob", bb.p_engine === 0.81 && bb.p_market === 0.7);
 check("basketball confidence scored as p_conf", near(bb.p_conf, 0.9));
-check("break-even falls back to line type", near(bb.break_even, 1 / (Math.sqrt(3) * 0.76)));
+check("break-even falls back to line type", near(bb.break_even, 1 / (Math.sqrt(3) * 0.68)));
 check("stat strips direction suffix", bb.stat === "Points" && statOf({ prop_type: "PRA UNDER" }) === "PRA");
 check("pre-filtered SKIP is not bettable", !normalizeRow({ league: "NBA", tier: "SKIP", pre_filtered: true, outcome: { hit_or_miss: "hit" } }).bettable);
 

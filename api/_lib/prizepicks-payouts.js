@@ -17,8 +17,11 @@
 //   scripts/scrape-prizepicks.mjs and thread it onto candidates, then replace
 //   LINE_TYPE_FACTOR with the real per-pick multiplier here.
 
-// Power Play — all legs must hit. n → win multiplier.
-export const POWER_MULTIPLIER = { 2: 3, 3: 5, 4: 10, 5: 20, 6: 37.5 };
+// Power Play — all legs must hit. n → win multiplier. 3-pick = 6× per the
+// operator's real entries (scripts/fit-payouts.mjs, 2026-05: 4 of 5
+// all-standard 3-pick Power entries paid 6×; was 5×). 6-pick is unverified
+// (no all-standard 6-pick Power entry in the history).
+export const POWER_MULTIPLIER = { 2: 3, 3: 6, 4: 10, 5: 20, 6: 37.5 };
 
 // Flex Play — partial payouts. n → { correctLegs → multiplier }. Outcomes
 // below the lowest listed key pay 0 (lose stake).
@@ -32,11 +35,14 @@ export const FLEX_PAYOUTS = {
 export const SUPPORTED_SIZES = Object.keys(POWER_MULTIPLIER).map(Number);
 
 // Coarse per-pick multiplier relative to a standard pick. APPROXIMATE — see
-// the accuracy note. Loosely back-fit from observed entries (≈3 goblins paid
-// ~2.2× vs a standard 3-pick 5× ⇒ ~0.76 each); demon is the rough inverse.
+// the accuracy note. Least-squares fit on the operator's 2026-05 Power
+// entries (scripts/fit-payouts.mjs, 2026-10-13): goblin 0.68/leg (55
+// entries, middle half 0.67–0.72), demon 1.13/leg (only 8 entries — re-fit
+// after fresh entries: npm run fetch-entries && npm run fit-payouts). Was
+// goblin 0.76 / demon 1.6 (a rough back-fit from ~3 goblin entries).
 // Exported so slate-builder's variant ranking uses the same constants (a
 // drift between the two would silently skew leg selection vs payout math).
-export const LINE_TYPE_FACTOR = { standard: 1, goblin: 0.76, demon: 1.6, unknown: 1 };
+export const LINE_TYPE_FACTOR = { standard: 1, goblin: 0.68, demon: 1.13, unknown: 1 };
 
 function legFactorProduct(legs) {
   let prod = 1;

@@ -29,6 +29,8 @@ check("goblin edge measured vs goblin break-even and capped at B", gob.tier === 
 check("goblin at a standard-looking 70% is a SKIP", tierForEdge(0.7, "goblin", policy).tier === "SKIP");
 const m = tierForEdge(be + 0.1, "standard", policy, { modelOnly: true });
 check("model-only capped at B with a flag", m.tier === "B" && m.rules.includes("cap:model-only") && m.flags.length === 1);
+const ms = tierForEdge(be + 0.1, "standard", { ...policy, modelOnlyMaxTier: "SKIP" }, { modelOnly: true });
+check("modelOnlyMaxTier SKIP: never tiered, explained", ms.tier === "SKIP" && ms.rules.includes("cap:model-only") && /aren't tiered/.test(ms.flags[0]));
 check("SKIP carries no caps", tierForEdge(0.3, "goblin", policy, { modelOnly: true }).rules.length === 0);
 check("capTier never raises a tier", capTier("B", "A") === "B" && capTier("S", "B") === "B" && capTier("SKIP", "S") === "SKIP");
 

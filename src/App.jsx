@@ -681,7 +681,7 @@ export default function App() {
 
   // Build the best +EV slate from the filtered board via /api/build-slate.
   // Board-level (not per-player): the market consensus prices every prop, so
-  // this is one fast request. v1 uses STANDARD lines (exact 5× payout) — we
+  // this is one fast request. v1 uses STANDARD lines (exact 6× 3-pick payout) — we
   // don't pass oddsTypes, so the endpoint defaults to standard; goblin/demon
   // payouts are approximate and would fabricate EV. The Games filter carries
   // over (mapped from canonical "A|B" back to the scrape's away@home keys).

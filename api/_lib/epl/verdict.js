@@ -24,7 +24,12 @@ import { breakEven, blendProb, tierForEdge, capTier, clampP } from "../pick-poli
 import { lineupOverride } from "./fotmob.js";
 
 export const EPL_POLICY = {
-  version: 1,
+  // v2 (2026-10-13): model-only stats are no longer tiered (graded
+  // model-only picks hit 51.4% vs 57.7% break-even, n=35, and harder shrink
+  // didn't help: 39–53% at every shrink 0.5→0.3). Still priced + logged +
+  // graded so they can earn tiers back. v2 also prices against the re-fit
+  // payout factors (goblin 0.68, demon 1.13).
+  version: 2,
   // Log-odds pooling weights when a book ladder prices the stat.
   blend: { model: 0.5, market: 0.5 },
   // Model-only stats: logit(p) is multiplied by this (0.5 halves the model's
@@ -32,9 +37,10 @@ export const EPL_POLICY = {
   modelOnlyShrink: 0.5,
   // Tier thresholds on blended P − break-even.
   tierEdge: { A: 0.05, B: 0.015 },
-  // Hard ceilings: no S-tier until EPL is calibrated; model-only ≤ B.
+  // Hard ceilings: no S-tier until EPL is calibrated; model-only never tiered
+  // (see v2 note above).
   maxTier: "A",
-  modelOnlyMaxTier: "B",
+  modelOnlyMaxTier: "SKIP",
   // Goblin/demon break-evens come from the app's approximate LINE_TYPE_FACTOR
   // (the slate builder keeps them opt-in for the same reason).
   approxPayoutMaxTier: "B",

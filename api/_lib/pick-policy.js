@@ -66,7 +66,9 @@ export function tierForEdge(prob, oddsType, policy, { modelOnly = false } = {}) 
     if (modelOnly) {
       tier = capTier(tier, policy.modelOnlyMaxTier);
       rules.push("cap:model-only");
-      flags.push(`⚠️ No sportsbook market for this stat — model only, capped at ${policy.modelOnlyMaxTier}`);
+      flags.push(policy.modelOnlyMaxTier === "SKIP"
+        ? "⚠️ No sportsbook market for this stat — model-only picks aren't tiered until graded results support them"
+        : `⚠️ No sportsbook market for this stat — model only, capped at ${policy.modelOnlyMaxTier}`);
     }
   }
   return { tier, edge, break_even: be, rules, flags };

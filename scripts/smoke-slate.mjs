@@ -20,7 +20,7 @@ const leg = (player, stat, game, prob, odds_type = "standard", direction = "OVER
   ok(r.abstained, `A: standard ~48% should abstain (got ${r.abstained ? "abstain" : "slate ev=" + r.slate?.ev})`);
 }
 
-// ── B) Three 80% standard legs → +EV slate at 5× ──
+// ── B) Three 80% standard legs → +EV slate at 6× ──
 {
   const cands = [
     leg("P1", "Points", "G1", 0.80), leg("P2", "Rebounds", "G2", 0.80),
@@ -28,9 +28,9 @@ const leg = (player, stat, game, prob, odds_type = "standard", direction = "OVER
   ];
   const r = buildSlate(cands, { targetMultiplier: 3, mode: "power", size: 3 });
   ok(!r.abstained, "B: three 80% legs should produce a slate");
-  ok(r.slate && Math.abs(r.slate.win_multiplier - 5) < 1e-9, `B: 3-pick power = 5× (got ${r.slate?.win_multiplier})`);
-  // 0.8^3 * 5 - 1 = 1.56
-  ok(r.slate && Math.abs(r.slate.ev - 1.56) < 0.01, `B: EV ≈ 1.56 (got ${r.slate?.ev})`);
+  ok(r.slate && Math.abs(r.slate.win_multiplier - 6) < 1e-9, `B: 3-pick power = 6× (got ${r.slate?.win_multiplier})`);
+  // 0.8^3 * 6 - 1 = 2.072
+  ok(r.slate && Math.abs(r.slate.ev - 2.072) < 0.01, `B: EV ≈ 2.072 (got ${r.slate?.ev})`);
   ok(r.slate && r.slate.legs.every((l) => l.prob === 0.8), "B: picks the three 0.80 legs, not the 0.50");
 }
 

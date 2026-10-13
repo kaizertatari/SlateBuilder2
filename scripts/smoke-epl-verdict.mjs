@@ -101,7 +101,7 @@ assert("book-priced stat pools model + market in log-odds", !v.detail.model_only
 assert("confidence = rounded blended %", v.confidence === Math.round(v.prob * 100));
 const mo = eplVerdict(prop("Alpha CB", "Clearances", 3.5), "OVER", c0);
 assert("model-only stat shrunk toward the line", mo.detail.model_only && close(mo.prob, sigmoid(EPL_POLICY.modelOnlyShrink * logit(mo.detail.p_model)), 2e-3), `${mo.prob}`);
-assert("model-only never above B", mo.tier === "SKIP" || mo.tier === "B");
+assert("model-only stats are never tiered (policy v2)", mo.tier === "SKIP");
 assert("no S-tier while uncalibrated", ![v, mo].some((x) => x.tier === "S"));
 const under = eplVerdict(prop("Alpha ST", "Shots", 2.5), "UNDER", c0);
 assert("OVER + UNDER model probs complement (half line)", close(v.detail.p_model + under.detail.p_model, 1, 1e-3));

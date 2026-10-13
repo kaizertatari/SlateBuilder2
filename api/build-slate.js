@@ -140,7 +140,7 @@ async function handlePost(req, reqId) {
     // otherwise restrict to the calibrated set so the no-league path can't
     // price an un-enabled league.
     const allowedLeagues = isPending ? new Set([reqLeague]) : calibratedLeagues;
-    // Default to STANDARD lines only: their payout is exact (3-pick Power = 5×)
+    // Default to STANDARD lines only: their payout is exact (3-pick Power = 6×)
     // and they're where the ≥3× target lives. goblin/demon payout multipliers
     // are approximate (LINE_TYPE_FACTOR) and fabricate EV, so they're opt-in
     // until real PrizePicks per-pick multipliers are scraped (Stage 3).
