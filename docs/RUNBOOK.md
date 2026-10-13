@@ -14,7 +14,7 @@ home-bridge daemon that the deployed UI forwards to.
 
 | Task | Schedule | What it runs |
 |---|---|---|
-| `grade-outcomes-daily` | 09:00 local (**DISABLED 2026-06-21**) | `scripts/grade-outcomes.mjs` — joins verdicts ↔ ESPN actuals, emits outcome events. Disabled in favor of on-demand grading at calibration time. ⚠️ Axiom retention is 30 days, so grade within 30 days of any verdict (lookback ≤30) or it ages out unrecoverably. Re-enable: `Enable-ScheduledTask -TaskName grade-outcomes-daily`. |
+| `grade-outcomes-daily` | 09:00 local (re-enabled 2026-10-13; was disabled 06-21 → 10-13 and still pointed at the old `Slate Builder` checkout) | `conhost.exe --headless scripts/grade-outcomes-task.bat` → `grade-outcomes.mjs` (basketball verdicts ↔ ESPN actuals, emits outcome events), then `export-graded.mjs` (copies every graded verdict↔outcome pair, all leagues incl. EPL graded at 07:00 by `EPL Daily`, into `data/graded/<league>/<YYYY-MM>.jsonl`). Log `logs\grade.log`. ⚠️ Axiom retention is 30 days and a join needs both events alive, so `data/graded/` is the durable record — commit it with snapshot refreshes. |
 | `PrizePicks Refresh Lines` | 00:00 / 06:00 / 12:00 / 18:00 | PrizePicks lines scrape → `data/prizepicks-lines.json` + blob |
 | `PrizePicks Refresh Odds` | 00:10 / 06:10 / 12:10 / 18:10 | `scripts/refresh-odds-task.bat` → DK+FD no-vig consensus → `data/odds.json` + blob (+10 min after lines so they stay in sync) |
 | `Funnel Watchdog` | every 15 min | `scripts/funnel-watchdog-task.bat` → self-heals the Tailscale funnel zombie (see below) |
@@ -450,6 +450,14 @@ verdict-logger default), discriminated by `event_type` ∈
 {`verdict`, `outcome`, `log`}. The `verdict` field stores direction; the
 `tier` field stores S/A/B/SKIP — filter on `tier` for issued picks.
 Helpers in `scripts/_axiom.mjs`; `AXIOM_TOKEN` from `.env.local`.
+
+Axiom only holds 30 days. The permanent record of graded results is
+`data/graded/<league>/<YYYY-MM>.jsonl` (one line per join key: the latest
+verdict logged before kickoff + a nested `outcome`; rows whose only verdict
+came after kickoff carry `logged_after_kickoff: true` — exclude them from
+calibration). `npm run export-graded` refreshes it idempotently (only adds
+rows or replaces them with a newer grade, never deletes); read it with
+`readGraded()` from `scripts/_graded.mjs`.
 
 ## Measure signal calibration
 

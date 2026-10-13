@@ -76,10 +76,8 @@ function formatLinesFetchedAt(iso) {
 }
 
 export default function App() {
-  // Default to WNBA: it's slate-calibrated and reliably has a multi-game board,
-  // so the builder produces a slate out of the box. (NBA is calibrated too but
-  // off-season/Finals nights often have a single game → diversification can't
-  // fill a slate.)
+  // Default to WNBA: it's the only slate-calibrated league (NBA + EPL run in
+  // shadow mode — see SLATE_PENDING_LEAGUES).
   const [league, setLeague] = useState("WNBA");
   // Multi-player selection. Order preserved so the chip row is stable;
   // togglePlayer is the single mutation site so duplicates can't accrete.
@@ -641,6 +639,7 @@ export default function App() {
         skipped: [],
         errors: [],
         lines_fetched_at: successes[0].data.lines_fetched_at ?? null,
+        calibration_pending: successes.some((s) => s.data.calibration_pending),
       };
       for (const s of successes) {
         const d = s.data;
@@ -1691,7 +1690,7 @@ export default function App() {
                   {slate.calibration_pending
                     ? slate.league === "EPL"
                       ? "EPL runs in shadow mode: every priced leg is logged and graded after the match; the slate unlocks once enough EPL picks are graded."
-                      : "EV is withheld until this league's standard-line calibration is validated — its market is single-book and ungraded, so a slate would read as falsely +EV."
+                      : `${slate.league ?? "This league"} runs in shadow mode: every priced leg is logged and graded; EV is withheld until its calibration is validated, so a slate would read as falsely +EV.`
                     : `Not betting is the correct call when nothing clears +EV at ≥${slate.params?.targetMultiplier ?? targetMultiplier}×.`}
                 </div>
                 {slate.preview?.legs?.length > 0 && (
@@ -1805,6 +1804,23 @@ export default function App() {
                 </span>
               )}
             </div>
+
+            {results.calibration_pending && (
+              <div style={{
+                background: "#1a1200",
+                border: "1px solid #664400",
+                padding: "8px 16px",
+                marginTop: -16,
+                marginBottom: 16,
+                fontSize: 11,
+                color: "#cc9944",
+                lineHeight: 1.5,
+              }}>
+                <span style={{ fontWeight: "bold", letterSpacing: 1 }}>SHADOW MODE — TIERS UNCALIBRATED. </span>
+                Every verdict is logged and graded, but this league&apos;s tiers and confidence haven&apos;t been
+                validated against results yet. Treat them as research, not recommendations.
+              </div>
+            )}
 
             {/* Tier breakdown — surfaces what the LLM/verifier actually
                 returned across all analyzed lines. The S/A/B summary above

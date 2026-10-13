@@ -427,6 +427,35 @@ await test("EPL build-slate: paused (shadow mode), preview without EV", async ()
   return { note: `priced ${b.props_priced}/${b.props_examined}; preview ${b.preview ? `${b.preview.legs.length} legs` : b.preview_reason}` };
 });
 
+header("8e. NBA shadow mode (SLATE_PENDING_LEAGUES.NBA)");
+await test("NBA build-slate: paused pending calibration, no EV", async () => {
+  const { POST } = await import("../api/build-slate.js");
+  const res = await POST(new Request("http://localhost/api/build-slate", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-forwarded-for": "127.0.0.96" },
+    body: JSON.stringify({ league: "NBA" }),
+  }));
+  const b = await res.json();
+  if (b.error) throw new Error(b.error);
+  if (b.league !== "NBA" || !b.abstained || !b.calibration_pending || b.slate) throw new Error("NBA slate must stay paused while in shadow mode");
+  if (b.best_rejected) throw new Error("no EV numbers while uncalibrated");
+  return { note: `priced ${b.props_priced}/${b.props_examined}` };
+});
+await test("NBA analyze-all: response marked calibration_pending", async () => {
+  const nba = Object.entries(linesData?.by_player || {}).find(([, props]) => props.some((p) => (p.league ?? "NBA") === "NBA"));
+  if (!nba) return { skip: "no NBA board" };
+  const { POST } = await import("../api/analyze-all.js");
+  const res = await POST(new Request("http://localhost/api/analyze-all", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-forwarded-for": "127.0.0.95" },
+    body: JSON.stringify({ player: nba[0], league: "NBA" }),
+  }));
+  const b = await res.json();
+  if (b.error) throw new Error(b.error);
+  if (b.total_analyzed > 0 && b.calibration_pending !== true) throw new Error("NBA analyze-all response not marked calibration_pending");
+  return { note: `${nba[0]}: analyzed=${b.total_analyzed}` };
+});
+
 // ─── 9. Blob roundtrip ───────────────────────────────────────────────────
 
 header("9. Blob roundtrip (writeLines)");
