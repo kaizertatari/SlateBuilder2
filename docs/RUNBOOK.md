@@ -473,6 +473,19 @@ picks, hit ≥ break-even, predicted within 3 pts). Runs daily after grading;
 latest copy in `logs\calibration-latest.txt`. League-specific refits stay in
 their own reports (`epl-calibration-report`).
 
+## Fit PrizePicks payouts from real entries
+
+The projections feed carries no per-pick multiplier (`adjusted_odds` is only
+a true/false flag), so goblin/demon prices are only visible on placed
+entries. `npm run fetch-entries` (headed login, home machine) refreshes
+`tmp/prizepicks-entries-raw.json`; `npm run fit-payouts` then fits, on Power
+entries only (promos, free and Flex entries excluded), the all-standard
+payout per size and the per-leg goblin/demon factors, next to the app's
+`POWER_MULTIPLIER` / `LINE_TYPE_FACTOR`. Suggest-only — edit
+`api/_lib/prizepicks-payouts.js` after review. 2026-05 history: 3-pick
+standard 6× (app 5×), goblin 0.68/leg (app 0.76), demon 1.13/leg (app 1.6,
+only 8 entries).
+
 ## Measure signal calibration
 
 `node scripts/calibration-report.mjs --lookback 120` (read-only,
