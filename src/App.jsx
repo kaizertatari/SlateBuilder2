@@ -46,9 +46,11 @@ const PLAYERS_BY_LEAGUE = (() => {
   return grouped;
 })();
 
-// EPL has no players.json roster — its players come from its own board
-// snapshot (/api/lines?league=EPL), priced by the EPL verdict engine.
-const LEAGUES = ["NBA", "WNBA", "EPL"];
+// EPL and NFL have no players.json roster — their players come from their
+// own board snapshots (/api/lines?league=EPL|NFL), priced by their own
+// verdict engines.
+const LEAGUES = ["NBA", "WNBA", "EPL", "NFL"];
+const BOARD_LEAGUES = new Set(["EPL", "NFL"]);
 
 const REFRESH_STATUS_COLORS = {
   success: { fg: "#00FF88", bg: "#002218", border: "#00FF8844" },
@@ -186,8 +188,9 @@ export default function App() {
   // stays stale until a full page reload.
   const loadLines = useCallback(async () => {
     try {
-      // EPL reads its own board snapshot (epl-pp-lines.json).
-      const r = await fetch(league === "EPL" ? "/api/lines?league=EPL" : "/api/lines");
+      // EPL / NFL read their own board snapshots (epl-pp-lines.json,
+      // nfl-pp-lines.json).
+      const r = await fetch(BOARD_LEAGUES.has(league) ? `/api/lines?league=${league}` : "/api/lines");
       const d = r.ok ? await r.json() : null;
       setLinesData(d || null);
       if (d?.fetched_at) setLinesFetchedAt(d.fetched_at);
@@ -257,8 +260,8 @@ export default function App() {
   const leagueCounts = useMemo(() => {
     const counts = {};
     for (const l of LEAGUES) counts[l] = PLAYERS_BY_LEAGUE[l]?.length ?? null;
-    // EPL's roster is its board, known once that snapshot is loaded.
-    if (league === "EPL") counts.EPL = Object.keys(linesData?.data?.by_player || {}).length;
+    // EPL's / NFL's roster is its board, known once that snapshot is loaded.
+    if (BOARD_LEAGUES.has(league)) counts[league] = Object.keys(linesData?.data?.by_player || {}).length;
     return counts;
   }, [league, linesData]);
 
@@ -286,7 +289,7 @@ export default function App() {
   // Players visible in the picker — narrowed to selected games when at
   // least one game is picked. Empty selection means "no game filter".
   const leaguePlayers = useMemo(() => {
-    const all = league === "EPL"
+    const all = BOARD_LEAGUES.has(league)
       ? Object.keys(linesData?.data?.by_player || {}).sort()
       : PLAYERS_BY_LEAGUE[league] ?? [];
     // With dates narrowed but no explicit game picks, the date pool IS the
@@ -547,10 +550,10 @@ export default function App() {
   // scoped to the filter that produced them.
   const analyzeOne = useCallback(async (playerName) => {
     const directionParam = selectedDirections.length === 1 ? selectedDirections[0] : undefined;
-    // EPL verdicts move with FotMob lineups inside one board snapshot, so
-    // they skip the session cache (the server caches them for 5 minutes) —
-    // re-running after lineups drop must re-price.
-    const cached = league === "EPL" ? null : readNewestCached(playerName, selectedStats, directionParam, selectedOdds);
+    // EPL verdicts move with FotMob lineups (NFL: injury reports) inside one
+    // board snapshot, so they skip the session cache (the server caches them
+    // for 5 minutes) — re-running after lineups/inactives must re-price.
+    const cached = BOARD_LEAGUES.has(league) ? null : readNewestCached(playerName, selectedStats, directionParam, selectedOdds);
     if (cached) {
       return { data: cached.data, cacheStatus: "HIT" };
     }
@@ -571,7 +574,7 @@ export default function App() {
     if (data.error) throw new Error(`${playerName}: ${data.error}`);
     if (!response.ok) throw new Error(data.error || "Request failed");
 
-    if (data.lines_fetched_at && league !== "EPL") {
+    if (data.lines_fetched_at && !BOARD_LEAGUES.has(league)) {
       const key = buildKey(playerName, data.lines_fetched_at, selectedStats, directionParam, selectedOdds);
       writeCached(key, data);
       clearStaleForPlayer(key, playerName);
@@ -1690,6 +1693,8 @@ export default function App() {
                   {slate.calibration_pending
                     ? slate.league === "EPL"
                       ? "EPL runs in shadow mode: every priced leg is logged and graded after the match; the slate unlocks once enough EPL picks are graded."
+                      : slate.league === "NFL"
+                      ? "NFL runs in shadow mode: every priced leg is logged and graded after the game; the slate unlocks once enough NFL picks are graded. Re-run after inactives (~90 min before kickoff)."
                       : `${slate.league ?? "This league"} runs in shadow mode: every priced leg is logged and graded; EV is withheld until its calibration is validated, so a slate would read as falsely +EV.`
                     : `Not betting is the correct call when nothing clears +EV at ≥${slate.params?.targetMultiplier ?? targetMultiplier}×.`}
                 </div>

@@ -443,6 +443,92 @@ multiplicative team×opponent structure over-cuts possession sides facing
 another possession side (Arsenal at Brighton: ~369 team passes) — so
 model-only lines must be shrunk toward the line before any tier (step 4).
 
+## NFL model (data → model → books → PrizePicks board → app)
+
+Order before an NFL slate: `refresh-nfl-data` → `build-nfl-model` →
+`scrape-nfl-odds` → `refresh-nfl-prizepicks`. Re-run `refresh-nfl-data` +
+`build-nfl-model` after Wednesday–Friday injury reports, and Analyze again
+after inactives (~90 min before kickoff).
+
+- `npm run refresh-nfl-data` → `data/nfl-{games,player-games,players,injuries}.json`
+  (nflverse GitHub releases, plain HTTPS, 2025 + current season; zero stats
+  dropped — read with `statOf`). Validates receptions = completions and rec
+  yds = pass yds per team-game.
+- `npm run build-nfl-model` → `data/nfl-model.json`: the fit plus everything
+  the runtime needs — player names + roster status, each team's last
+  starting QB (`qbStarters`), the upcoming schedule (closing-line fallback)
+  and the two latest injury-report weeks. `backtest-nfl-model` is the judge
+  for parameter changes (`--params` override).
+- `npm run scrape-nfl-odds` → `data/nfl-odds.json` (DraftKings league 88808,
+  Node fetch — curl is 403'd; FanDuel event tabs). Props post only a few
+  days before each game.
+- `npm run refresh-nfl-prizepicks [-- --league-id N]` → `data/nfl-pp-lines.json`
+  (its own snapshot, like EPL's). NFL is **league 9** (confirmed 2026-10-14:
+  4,352 props, 83% goblin/demon). The script refuses to write unless ≥80% of
+  props carry NFL teams, and prints every stat type with `(UNMAPPED)` next to any
+  spelling `mapNflStat` doesn't know yet — add those to `PP_TO_STAT` in
+  `api/_lib/nfl/verdict.js`. Unmapped on purpose: Longest Rush/Reception/
+  Completion (~550 props, need play-by-play), Sacks Taken, per-quarter/half
+  and ratio props, multi-player "(Combo)". **Stop the Refresh Bridge first** (shared
+  profile); same PX slider regime — seed-assist routine if PX won't clear.
+- **In the app**: the **NFL** tab reads `GET /api/lines?league=NFL`;
+  Analyze / build-slate route `league: "NFL"` to `api/_lib/nfl/`. Runtime
+  data (`store.js`) is Blob-first with the committed `data/nfl-*.json` as
+  floor (`refresh-nfl-prizepicks --push` updates the deployed board).
+- **Policy (`NFL_POLICY`, priors until graded)**: the model's simulated
+  draws are exponentially tilted so P(over the book line) equals the books'
+  de-vigged price, then priced at the PrizePicks line (the market sets the
+  level, the model the shape); that market P pools 0.7 / model 0.3 in
+  log-odds. Anytime TD (one-sided) prices Rush+Rec TDs 0.5 at implied ÷
+  1.12. Stats with no book price are priced and logged but never tiered.
+  Gates: IR/PUP/suspended → SKIP; this week's report Out/Doubtful → SKIP;
+  Questionable → cap B; Out last week with no report yet → cap B; backup QB
+  passing with no book price → SKIP. Caps at B: no games this season,
+  absent 2+ weeks, changed team, tilt > 1.5 sd. No S-tier.
+- **Slate builder**: `SLATE_PENDING_LEAGUES.NFL` — shadow mode, same shape as
+  EPL (preview without EV). Verdicts log as `engine_mode: "nfl-v1"` with
+  `gsis_id` + `nfl_game_id` and `nfl_*` probability fields
+  (`calibration-all` reads them).
+
+### NFL grading loop (shadow mode)
+
+- `npm run sweep-nfl-board [-- --within-hours N] [-- --dry-run]` prices
+  every line on the NFL board (both sides of standard lines, OVER only on
+  goblin/demon) and logs it to Axiom (`source: "nfl-sweep"`).
+- `node scripts/nfl-gameday.mjs` — quiet no-op unless a game kicks off
+  within 90 min (kickoffs from the model's schedule, ET); then
+  `scrape-nfl-odds --push` + a sweep of those games. The last sweep before
+  kickoff is the **closing** snapshot.
+- `npm run grade-nfl-outcomes [-- --lookback 10] [-- --dry-run]` settles the
+  last pre-kickoff verdict per line from nflverse weekly stats (published the
+  morning after). PrizePicks rules: no snap → void, integer tie → push.
+  **Snap counts decide played vs DNP**, because nflverse weekly stats only list
+  players who recorded a stat. On week 5, 39 priced skill players played
+  without one. Without snap counts their UNDERs would void instead of hitting.
+  Until a game's snap counts are out those lines wait (void
+  `unverified` after 7 days). Each outcome records CLV: the book price
+  of the picked side at the first vs the last pre-kickoff verdict
+  (`nfl_clv`, `nfl_open/close_p_market`, `nfl_open/close_book_line`). It
+  also records nflverse's closing spread/total. Fantasy Score matches
+  nflverse `fantasy_points_ppr` on 6,689/6,691 rows, after accounting for
+  PrizePicks scoring INT and fumbles lost at −1 instead of nflverse's −2.
+  Verdicts with `source: "smoke-app"` are ignored (`smoke-app` no longer logs NFL).
+- `calibration-all --league NFL` adds a closing-line-value section (mean CLV,
+  share that beat the close, hit rate by CLV sign) once outcomes carry it.
+- **Inactives (~90 min out) are not automated**: an inactive player is still
+  priced off the Friday report, then voids at grading.
+
+**NFL scheduled tasks — NOT registered yet.** They run from this checkout, so
+register only once `feat/nfl-model` is merged into the branch kept checked
+out here: `powershell -ExecutionPolicy Bypass -File scripts\register-nfl-tasks.ps1`
+(`-Remove` unregisters; same settings as the EPL tasks).
+
+| Task | Schedule | What it runs |
+|---|---|---|
+| `NFL Daily` | 07:30 | `nfl-daily-task.bat` → `refresh-nfl-data` → `build-nfl-model --push` → `scrape-nfl-odds --push` → `sweep-nfl-board` (whole board = opening prices for CLV) → `grade-nfl-outcomes` → `export-graded --league NFL` → `calibration-all --league NFL` (latest in `logs\nfl-calibration-latest.txt`). Log `logs\nfl-daily.log` |
+| `NFL Gameday Sweep` | every 30 min, 07:00–23:30 | `nfl-gameday-task.bat` → `nfl-gameday.mjs` (above). No browser. Log `logs\nfl-gameday.log` (only when it acts) |
+| `NFL Refresh Board` | 00:40 / 06:40 / 12:40 / 18:40 | `nfl-board-task.bat` → `refresh-nfl-prizepicks --push`; 20 min after `EPL Refresh Board` (shared PrizePicks profile). Refuses to write an empty board or one without NFL teams. Log `logs\nfl-board.log` |
+
 ## Query Axiom
 
 Telemetry lives in Axiom dataset `props_verdict` (also the

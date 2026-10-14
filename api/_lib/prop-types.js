@@ -41,6 +41,33 @@ export const EPL_STATS = [
   "Outfield Fantasy Score",
 ];
 
+// NFL display labels (api/_lib/nfl/verdict.js NFL_STAT_LABEL order). The
+// NFL engine maps PrizePicks spellings itself (mapNflStat) — "Fantasy
+// Score" would collide with basketball's here. Labels match the live board
+// (2026-10-14).
+export const NFL_STATS = [
+  "Pass Yards",
+  "Pass Attempts",
+  "Pass Completions",
+  "Pass TDs",
+  "INT",
+  "Rush Yards",
+  "Rush Attempts",
+  "Receiving Yards",
+  "Receptions",
+  "Rec Targets",
+  "Rush+Rec Yds",
+  "Pass+Rush Yds",
+  "Anytime TDs",
+  "Rush TDs",
+  "Rec TDs",
+  "Fantasy Score",
+  "Tackles+Ast",
+  "Sacks",
+  "FG Made",
+  "Kicking Points",
+];
+
 // Full whitelist (cross-league). League-aware callers (UI stat picker,
 // slate filters) should use STATS_BY_LEAGUE so per-league lists stay
 // independent ("Assists" is shared by name across sports).
@@ -50,6 +77,7 @@ export const STATS_BY_LEAGUE = {
   NBA: BASKETBALL_STATS,
   WNBA: BASKETBALL_STATS,
   EPL: EPL_STATS,
+  NFL: NFL_STATS,
 };
 
 // Slate-builder calibration gate (shared by the API + UI so they agree).
@@ -67,6 +95,7 @@ export const SLATE_CALIBRATED_LEAGUES = ["WNBA"];
 export const SLATE_PENDING_LEAGUES = {
   EPL: "~150 graded EPL picks",
   NBA: "basketball port to the probability pipeline + ~150 graded NBA picks",
+  NFL: "~150 graded NFL picks",
 };
 
 // Stat name → key inside an averages object (groundTruth.season.averages,

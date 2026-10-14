@@ -337,3 +337,61 @@ export function fitScale(rows, { prior = 1, priorN = 30 } = {}) {
   const bias = (n * m) / (n + priorN);
   return { n, scale, bias, raw_sd: rawSd, raw_mean: m };
 }
+
+// ─── Market level-matching (exponential tilt) ────────────────────────────────
+
+/**
+ * Reweight simulation draws so P(over `line`) matches a market price while
+ * keeping the model's shape: w(x) ∝ exp(θ · z(x)), z = standardized draw, θ
+ * by bisection (the minimum-KL change within the exponential family). Works
+ * on the histogram of distinct values, so it is cheap for any draw count.
+ * The target is conditional on no push. Price lines with tiltedLineProbs.
+ * @returns {null | { values:Float64Array, weights:Float64Array, theta:number, mean:number }}
+ *   null when the draws can't reach the target (all on one side of the line)
+ */
+export function tiltToMarket(draws, line, targetOver) {
+  const n = draws.length;
+  if (!n || !(targetOver > 0 && targetOver < 1)) return null;
+  const hist = new Map();
+  for (const x of draws) hist.set(x, (hist.get(x) ?? 0) + 1);
+  const values = Float64Array.from(hist.keys());
+  const counts = Float64Array.from(hist.values());
+  let m = 0, v = 0;
+  for (let i = 0; i < values.length; i++) m += counts[i] * values[i];
+  m /= n;
+  for (let i = 0; i < values.length; i++) v += counts[i] * (values[i] - m) ** 2;
+  const sd = Math.sqrt(v / n) || 1;
+  const z = values.map((x) => (x - m) / sd);
+  const pOver = (theta) => {
+    let o = 0, u = 0;
+    for (let i = 0; i < values.length; i++) {
+      const w = counts[i] * Math.exp(theta * z[i]);
+      if (values[i] > line) o += w;
+      else if (values[i] < line) u += w;
+    }
+    return o + u > 0 ? o / (o + u) : NaN;
+  };
+  let lo = -8, hi = 8;
+  if (!(pOver(lo) <= targetOver && targetOver <= pOver(hi))) return null;
+  for (let it = 0; it < 50; it++) {
+    const mid = (lo + hi) / 2;
+    if (pOver(mid) < targetOver) lo = mid;
+    else hi = mid;
+  }
+  const theta = (lo + hi) / 2;
+  const weights = counts.map((c, i) => c * Math.exp(theta * z[i]));
+  let tot = 0, mean = 0;
+  for (let i = 0; i < values.length; i++) { tot += weights[i]; mean += weights[i] * values[i]; }
+  for (let i = 0; i < values.length; i++) weights[i] /= tot;
+  return { values, weights, theta, mean: mean / tot };
+}
+
+/** P(over / under / push) at `line` under a tiltToMarket result. */
+export function tiltedLineProbs(line, tilt) {
+  let over = 0, push = 0;
+  for (let i = 0; i < tilt.values.length; i++) {
+    if (tilt.values[i] > line) over += tilt.weights[i];
+    else if (tilt.values[i] === line) push += tilt.weights[i];
+  }
+  return { over, under: Math.max(0, 1 - over - push), push };
+}

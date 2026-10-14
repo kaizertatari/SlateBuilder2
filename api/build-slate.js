@@ -24,8 +24,9 @@ import { ALL_ODDS_TYPES } from "./_lib/select-lines.js";
 import { lookupMarket, setOdds } from "./_lib/odds.js";
 import { readOdds } from "./_lib/odds-store.js";
 import { buildSlate } from "./_lib/slate-builder.js";
-import { logSlateLegs, logEplVerdicts } from "./_lib/verdict-logger.js";
+import { logSlateLegs, logEplVerdicts, logNflVerdicts } from "./_lib/verdict-logger.js";
 import { collectEplCandidates } from "./_lib/epl/slate.js";
+import { collectNflCandidates } from "./_lib/nfl/slate.js";
 import { randomUUID } from "node:crypto";
 
 export const runtime = "nodejs";
@@ -178,6 +179,35 @@ async function handlePost(req, reqId) {
         considered: epl.candidates.length,
         props_examined: epl.considered,
         props_priced: epl.candidates.length,
+      }, { headers: { "X-Cache": "MISS" } });
+    }
+
+    // NFL: same shadow-mode shape as EPL, priced by the NFL verdict engine.
+    if (reqLeague === "NFL") {
+      const nfl = await collectNflCandidates({
+        allowedStats: Array.isArray(statTypes) && statTypes.length ? new Set(statTypes) : null,
+        oddsTypes,
+        games,
+        direction,
+      });
+      logNflVerdicts(nfl.verdicts, { source: "build-slate" });
+      const preview = buildSlate(nfl.candidates, { targetMultiplier, mode, size, maxPerGame });
+      return Response.json({
+        request_id: reqId,
+        league: "NFL",
+        lines_fetched_at: nfl.lines_fetched_at,
+        odds_fetched_at: nfl.odds_fetched_at,
+        odds_sources: nfl.odds_sources,
+        abstained: true,
+        calibration_pending: true,
+        reason: `NFL slates are paused pending calibration (target ${SLATE_PENDING_LEAGUES.NFL}). Probabilities blend the player simulation with DK/FD prices; not yet graded.`,
+        slate: null,
+        preview: preview.slate ? { ...preview.slate, uncalibrated: true } : null,
+        preview_reason: preview.slate ? null : preview.reason,
+        best_rejected: null,
+        considered: nfl.candidates.length,
+        props_examined: nfl.considered,
+        props_priced: nfl.candidates.length,
       }, { headers: { "X-Cache": "MISS" } });
     }
 

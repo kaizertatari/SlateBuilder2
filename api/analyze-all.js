@@ -22,6 +22,8 @@ import { readOdds } from "./_lib/odds-store.js";
 import { logVerdict } from "./_lib/verdict-logger.js";
 import { analyzeEplPlayer } from "./_lib/epl/analyze.js";
 import { readEplLines } from "./_lib/epl/store.js";
+import { analyzeNflPlayer } from "./_lib/nfl/analyze.js";
+import { readNflLines } from "./_lib/nfl/store.js";
 import { randomUUID } from "node:crypto";
 
 export const runtime = "nodejs";
@@ -121,7 +123,7 @@ async function handlePost(req, reqId) {
         { status: 400 }
       );
     }
-    const league = rawLeague && ["NBA", "WNBA", "EPL"].includes(String(rawLeague).toUpperCase())
+    const league = rawLeague && ["NBA", "WNBA", "EPL", "NFL"].includes(String(rawLeague).toUpperCase())
       ? String(rawLeague).toUpperCase()
       : null;
     // oddsTypes: optional subset of ["goblin", "standard", "demon"]. When
@@ -166,6 +168,29 @@ async function handlePost(req, reqId) {
       });
       const responseBody = { request_id: reqId, ...eplBody, lines_fetched_at: fetchedAt };
       cacheSet(eplKey, responseBody, EPL_CACHE_TTL_MS);
+      return Response.json(responseBody, { headers: { "X-Cache": "MISS" } });
+    }
+
+    // NFL: its own board snapshot, priced by the NFL verdict engine (player
+    // simulation level-matched to DK/FD). Injury reports move verdicts, so
+    // the same short cache as EPL.
+    if (league === "NFL") {
+      const nflLines = await readNflLines();
+      const fetchedAt = nflLines.fetched_at || null;
+      const sortedStats = (Array.isArray(statTypes) && statTypes.length > 0) ? [...statTypes].sort().join(",") : "ALL";
+      const nflKey = `nfl:${buildCacheKey(player, fetchedAt, sortedStats, direction || "BOTH", oddsTypes ? oddsTypes.join(",") : "ALL")}`;
+      const hit = cacheGet(nflKey);
+      if (hit) return Response.json(hit, { headers: { "X-Cache": "HIT" } });
+      const nflBody = await analyzeNflPlayer({
+        player,
+        props: (nflLines.by_player || {})[player] || [],
+        allowedStats: Array.isArray(statTypes) && statTypes.length ? new Set(statTypes) : null,
+        directions: direction ? [direction] : ["OVER", "UNDER"],
+        oddsTypes,
+        maxLines: MAX_LINES,
+      });
+      const responseBody = { request_id: reqId, ...nflBody, lines_fetched_at: fetchedAt };
+      cacheSet(nflKey, responseBody, EPL_CACHE_TTL_MS);
       return Response.json(responseBody, { headers: { "X-Cache": "MISS" } });
     }
 

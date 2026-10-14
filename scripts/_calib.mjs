@@ -17,7 +17,7 @@ export { scoreProbs, reliability, wilson };
 const num = (x) => (x == null || x === "" ? null : Number.isFinite(Number(x)) ? Number(x) : null);
 const prob = (x) => { const p = num(x); return p != null && p > 0 && p < 1 ? p : null; };
 
-export const statOf = (r) => r.epl_stat ?? (r.prop_type ? String(r.prop_type).replace(/\s+(OVER|UNDER)\s*$/i, "").trim() : null);
+export const statOf = (r) => r.epl_stat ?? r.nfl_stat ?? (r.prop_type ? String(r.prop_type).replace(/\s+(OVER|UNDER)\s*$/i, "").trim() : null);
 
 /** Why a row is left out of calibration, or null when it counts. */
 export function exclusionOf(r) {
@@ -29,7 +29,10 @@ export function exclusionOf(r) {
 
 export function normalizeRow(r) {
   const isEpl = r.league === "EPL";
+  const isNfl = r.league === "NFL";
   const oddsType = r.odds_type || "standard";
+  // Probability-pipeline leagues log <league>_prob / _p_model / _p_market.
+  const pick = (epl, nfl, other) => (isEpl ? r[epl] : isNfl ? r[nfl] : r[other]);
   return {
     league: r.league,
     tier: r.tier || "SKIP",
@@ -41,14 +44,16 @@ export function normalizeRow(r) {
     game_start_time: r.game_start_time,
     excluded: exclusionOf(r),
     y: r.outcome?.hit_or_miss === "hit" ? 1 : r.outcome?.hit_or_miss === "miss" ? 0 : null,
-    p_engine: prob(isEpl ? r.epl_prob : r.model_dir_prob),
-    p_model: prob(isEpl ? r.epl_p_model : r.model_dir_prob),
-    p_market: prob(isEpl ? r.epl_p_market : r.market_fair_at_line),
+    p_engine: prob(pick("epl_prob", "nfl_prob", "model_dir_prob")),
+    p_model: prob(pick("epl_p_model", "nfl_p_model", "model_dir_prob")),
+    p_market: prob(pick("epl_p_market", "nfl_p_market", "market_fair_at_line")),
     p_conf: prob(num(r.confidence) != null ? num(r.confidence) / 100 : null),
-    break_even: num(r.epl_break_even) ?? breakEven(oddsType),
-    mean: num(isEpl ? r.epl_mean : r.model_mean),
+    break_even: num(r.epl_break_even) ?? num(r.nfl_break_even) ?? breakEven(oddsType),
+    mean: num(pick("epl_mean", "nfl_mean", "model_mean")),
     sigma: num(r.model_sigma),
     actual: num(r.outcome?.actual_value),
+    // Closing-line value of the picked side's book price (NFL grader).
+    clv: num(r.outcome?.nfl_clv),
   };
 }
 
@@ -133,13 +138,13 @@ export function overCorrelation(raw) {
   // One leg per (game, player, stat) — prefer the standard line.
   const legs = new Map();
   for (const r of ok) {
-    const k = `${r.game_start_time}|${r.fotmob_match_id ?? ""}|${r.player}|${statOf(r)}`;
+    const k = `${r.game_start_time}|${r.fotmob_match_id ?? r.nfl_game_id ?? ""}|${r.player}|${statOf(r)}`;
     const prev = legs.get(k);
     if (!prev || (r.odds_type === "standard" && prev.odds_type !== "standard")) legs.set(k, r);
   }
   const games = new Map();
   for (const r of legs.values()) {
-    const g = `${r.game_start_time}|${r.fotmob_match_id ?? ""}`;
+    const g = `${r.game_start_time}|${r.fotmob_match_id ?? r.nfl_game_id ?? ""}`;
     if (!games.has(g)) games.set(g, []);
     games.get(g).push({ r, over: Number(r.outcome.actual_value) > Number(r.line) ? 1 : 0, side: r.player_team ?? r.team ?? (r.opponent ? `${r.opponent}|${r.home_away ?? ""}` : null) });
   }
