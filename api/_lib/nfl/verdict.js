@@ -194,6 +194,10 @@ export function nflVerdict(prop, direction, ctx, policy = NFL_POLICY) {
   if (inj?.report_status === "Out") return skip(base, "injury_out", `${name} is OUT (${inj.injury ?? "injury"})`);
   if (inj?.report_status === "Doubtful") return skip(base, "injury_doubtful", `${name} is DOUBTFUL (${inj.injury ?? "injury"})`);
 
+  // PrizePicks posts a kicker Fantasy Score scored on kicking (likely FG
+  // distance-weighted); the model's Fantasy Score is the offensive formula.
+  if (stat === "fantasy" && (mp.pos === "K" || mp.pos === "P")) return skip(base, "unsupported_stat", "Kicker Fantasy Score isn't modelled");
+
   const quote = bookQuote(ctx, id, stat, policy);
   if (mp.pos === "QB" && PASSING.has(stat)) {
     const starter = ctx.model.qbStarters?.[team]?.player_id;

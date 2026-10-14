@@ -110,6 +110,7 @@ check("gate: unknown team", v(prop("Sam Darnold", "Pass Yards", 195.5, { player_
 check("gate: no game between the teams", v(prop("Sam Darnold", "Pass Yards", 195.5, { opponent: "KC" })).skip_reason === "no_game");
 check("gate: unknown player", v(prop("Nobody Atall", "Pass Yards", 195.5)).skip_reason === "unresolved_player");
 check("gate: stat that doesn't apply to the player", v(prop("Jason Myers", "Pass Yards", 195.5)).skip_reason === "wrong_position_stat");
+check("gate: kicker Fantasy Score is unsupported, not a wrong position", v(prop("Jason Myers", "Fantasy Score", 8)).skip_reason === "unsupported_stat");
 check("game line comes from the books (home margin = −home spread)", atBook.detail.game_line.source === "books" && atBook.detail.game_line.home_margin === -2.5);
 check("PrizePicks team spelling LAR-style resolves through the same path", v(prop("Sam Darnold", "Pass Yards", 195.5, { player_team: "Seattle Seahawks", opponent: "DEN" })).tier === soft.tier);
 
