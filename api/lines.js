@@ -7,11 +7,13 @@
 //   ?league=EPL               — serve the Premier League board (its own
 //                               snapshot, epl-pp-lines.json) instead of the
 //                               basketball one
+//   ?league=NFL               — serve the NFL board (nfl-pp-lines.json)
 //
 // Usage: GET /api/lines
 
 import { readLines } from "./_lib/lines-store.js";
 import { readEplLines } from "./_lib/epl/store.js";
+import { readNflLines } from "./_lib/nfl/store.js";
 
 export const runtime = "nodejs";
 
@@ -22,10 +24,10 @@ export async function GET(req) {
   const opponentFilter = url.searchParams.get("opponent");
   const gameFilter = url.searchParams.get("game");
 
-  const isEpl = String(url.searchParams.get("league") || "").toUpperCase() === "EPL";
+  const leagueParam = String(url.searchParams.get("league") || "").toUpperCase();
   let lines;
   try {
-    lines = isEpl ? await readEplLines() : await readLines();
+    lines = leagueParam === "EPL" ? await readEplLines() : leagueParam === "NFL" ? await readNflLines() : await readLines();
   } catch (err) {
     return Response.json(
       { error: `Failed to read lines data: ${err.message}` },

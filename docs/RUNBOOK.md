@@ -443,6 +443,51 @@ multiplicative team×opponent structure over-cuts possession sides facing
 another possession side (Arsenal at Brighton: ~369 team passes) — so
 model-only lines must be shrunk toward the line before any tier (step 4).
 
+## NFL model (data → model → books → PrizePicks board → app)
+
+Order before an NFL slate: `refresh-nfl-data` → `build-nfl-model` →
+`scrape-nfl-odds` → `refresh-nfl-prizepicks`. Re-run `refresh-nfl-data` +
+`build-nfl-model` after Wednesday–Friday injury reports, and Analyze again
+after inactives (~90 min before kickoff).
+
+- `npm run refresh-nfl-data` → `data/nfl-{games,player-games,players,injuries}.json`
+  (nflverse GitHub releases, plain HTTPS, 2025 + current season; zero stats
+  dropped — read with `statOf`). Validates receptions = completions and rec
+  yds = pass yds per team-game.
+- `npm run build-nfl-model` → `data/nfl-model.json`: the fit plus everything
+  the runtime needs — player names + roster status, each team's last
+  starting QB (`qbStarters`), the upcoming schedule (closing-line fallback)
+  and the two latest injury-report weeks. `backtest-nfl-model` is the judge
+  for parameter changes (`--params` override).
+- `npm run scrape-nfl-odds` → `data/nfl-odds.json` (DraftKings league 88808,
+  Node fetch — curl is 403'd; FanDuel event tabs). Props post only a few
+  days before each game.
+- `npm run refresh-nfl-prizepicks [-- --league-id N]` → `data/nfl-pp-lines.json`
+  (its own snapshot, like EPL's). **The NFL league id is unverified** (9 is
+  the likely value): the script refuses to write unless ≥80% of props carry
+  NFL teams, and prints every stat type with `(UNMAPPED)` next to any
+  spelling `mapNflStat` doesn't know yet — add those to `PP_TO_STAT` in
+  `api/_lib/nfl/verdict.js`. **Stop the Refresh Bridge first** (shared
+  profile); same PX slider regime — seed-assist routine if PX won't clear.
+- **In the app**: the **NFL** tab reads `GET /api/lines?league=NFL`;
+  Analyze / build-slate route `league: "NFL"` to `api/_lib/nfl/`. Runtime
+  data (`store.js`) is Blob-first with the committed `data/nfl-*.json` as
+  floor (`refresh-nfl-prizepicks --push` updates the deployed board).
+- **Policy (`NFL_POLICY`, priors until graded)**: the model's simulated
+  draws are exponentially tilted so P(over the book line) equals the books'
+  de-vigged price, then priced at the PrizePicks line (the market sets the
+  level, the model the shape); that market P pools 0.7 / model 0.3 in
+  log-odds. Anytime TD (one-sided) prices Rush+Rec TDs 0.5 at implied ÷
+  1.12. Stats with no book price are priced and logged but never tiered.
+  Gates: IR/PUP/suspended → SKIP; this week's report Out/Doubtful → SKIP;
+  Questionable → cap B; Out last week with no report yet → cap B; backup QB
+  passing with no book price → SKIP. Caps at B: no games this season,
+  absent 2+ weeks, changed team, tilt > 1.5 sd. No S-tier.
+- **Slate builder**: `SLATE_PENDING_LEAGUES.NFL` — shadow mode, same shape as
+  EPL (preview without EV). Verdicts log as `engine_mode: "nfl-v1"` with
+  `gsis_id` + `nfl_game_id` and `nfl_*` probability fields
+  (`calibration-all` reads them).
+
 ## Query Axiom
 
 Telemetry lives in Axiom dataset `props_verdict` (also the

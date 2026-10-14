@@ -342,6 +342,58 @@ export function logEplVerdicts(verdicts, { source = "analyze-all" } = {}) {
   for (let i = 0; i < events.length; i += 500) ingestMany(token, events.slice(i, i + 500));
 }
 
+/**
+ * Log NFL verdicts (api/_lib/nfl/verdict.js) to Axiom — same join keys as the
+ * other leagues (player, prop_type "<Stat> <DIR>", line, direction,
+ * game_start_time) plus the nflverse gsis player id + game id for the NFL
+ * grader; NO espn_id, so the basketball ESPN grader skips them. Pre-filtered
+ * SKIPs are kept. Fire-and-forget; no-op without AXIOM_TOKEN.
+ */
+export function logNflVerdicts(verdicts, { source = "analyze-all" } = {}) {
+  const token = process.env.AXIOM_TOKEN;
+  if (!token) return;
+  const now = new Date().toISOString();
+  const events = (verdicts || []).map((v) => ({
+    _time: now,
+    event_type: "verdict",
+    req_id: getReqId(),
+    source,
+    league: "NFL",
+    engine_mode: "nfl-v1",
+    player: v.player ?? null,
+    prop_type: v.prop_type && v.direction ? `${v.prop_type} ${v.direction}` : v.prop_type ?? null,
+    line: v.line ?? null,
+    direction: v.direction ?? null,
+    odds_type: v.odds_type ?? null,
+    game_start_time: v.game_start_time ?? null,
+    gsis_id: v.player_id ?? null,
+    nfl_game_id: v.game_id ?? null,
+    nfl_stat: v.stat ?? null,
+    verdict: v.verdict ?? null,
+    tier: v.tier ?? null,
+    confidence: v.confidence ?? null,
+    nfl_prob: v.prob ?? null,
+    nfl_break_even: v.break_even ?? null,
+    nfl_edge: v.edge ?? null,
+    nfl_p_model: v.detail?.p_model ?? null,
+    nfl_p_market: v.detail?.p_market ?? null,
+    nfl_mean: v.detail?.mean ?? null,
+    nfl_market_mean: v.detail?.market_mean ?? null,
+    nfl_tilt: v.detail?.tilt ?? null,
+    nfl_book_line: v.detail?.book_line ?? null,
+    nfl_book_fair_over: v.detail?.book_fair_over ?? null,
+    nfl_books: v.detail?.books ?? null,
+    nfl_model_only: v.detail?.model_only ?? null,
+    nfl_injury: v.detail?.injury ?? null,
+    nfl_policy_version: v.detail?.policy_version ?? null,
+    pre_filtered: !!v.pre_filtered,
+    skip_reason: v.skip_reason ?? null,
+    rules_fired: v.rules_fired ?? null,
+    flags: v.flags ?? null,
+  }));
+  for (let i = 0; i < events.length; i += 500) ingestMany(token, events.slice(i, i + 500));
+}
+
 export function logEvent({ level, source, message, errorName, errorStatus, context } = {}) {
   const token = process.env.AXIOM_TOKEN;
   if (!token) return;

@@ -456,6 +456,56 @@ await test("NBA analyze-all: response marked calibration_pending", async () => {
   return { note: `${nba[0]}: analyzed=${b.total_analyzed}` };
 });
 
+header("8f. NFL (own board, NFL verdict engine; shadow mode)");
+await test("NFL analyze path prices a book-quoted player off the real artifacts", async () => {
+  const { analyzeNflPlayer } = await import("../api/_lib/nfl/analyze.js");
+  const { nflOddsStore } = await import("../api/_lib/nfl/store.js");
+  const { NFL_STAT_LABEL } = await import("../api/_lib/nfl/verdict.js");
+  const odds = await nflOddsStore.read();
+  const entry = Object.entries(odds.by_player || {}).find(([, qs]) => qs.length >= 2 && qs[0].team);
+  if (!entry) return { skip: "no NFL odds snapshot" };
+  const [name, qs] = entry;
+  // A synthetic PrizePicks board from the book lines (the real NFL board
+  // isn't captured yet): each stat at the book line and 10% under it.
+  const props = qs.filter((q) => NFL_STAT_LABEL[q.stat]).flatMap((q) => [q.line, Math.max(0.5, Math.floor(q.line * 0.9) + 0.5)].map((line) => ({
+    player: name, stat_type: NFL_STAT_LABEL[q.stat], line, odds_type: "standard", player_team: q.team,
+    opponent: q.game.split("@").find((t) => t !== q.team), start_time: q.start_time,
+  })));
+  const b = await analyzeNflPlayer({ player: name, props, source: "smoke-app" });
+  const tc = b.tier_counts || {};
+  const sum = (tc.S || 0) + (tc.A || 0) + (tc.B || 0) + (tc.SKIP || 0) + (tc.UNKNOWN || 0);
+  if (sum !== b.total_analyzed) throw new Error(`tier_counts sum ${sum} ≠ total_analyzed ${b.total_analyzed}`);
+  if (b.league !== "NFL" || !b.calibration_pending) throw new Error("NFL response not marked league/calibration_pending");
+  for (const r of b.top_10 || []) {
+    if (r.tier === "S") throw new Error(`${r.prop_type}: S-tier while NFL is uncalibrated`);
+    if (!(r.prob > 0 && r.prob < 1) || !(r.break_even > 0)) throw new Error(`${r.prop_type}: prob/break-even missing`);
+  }
+  const started = (b.skipped || []).filter((s) => s.reason === "game_started").length;
+  return { note: `${name}: analyzed=${b.total_analyzed} A=${tc.A} B=${tc.B} SKIP=${tc.SKIP}${started ? ` (${started} past kickoff)` : ""}` };
+});
+await test("NFL build-slate: paused (shadow mode), no EV", async () => {
+  const { POST } = await import("../api/build-slate.js");
+  const res = await POST(new Request("http://localhost/api/build-slate", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-forwarded-for": "127.0.0.94" },
+    body: JSON.stringify({ league: "NFL" }),
+  }));
+  const b = await res.json();
+  if (b.error) throw new Error(b.error);
+  if (b.league !== "NFL" || !b.abstained || !b.calibration_pending || b.slate) throw new Error("NFL slate must stay paused while calibration is pending");
+  if (b.best_rejected) throw new Error("no EV numbers while uncalibrated");
+  return { note: `priced ${b.props_priced}/${b.props_examined}${b.props_examined ? "" : " (no NFL board captured yet)"}` };
+});
+await test("NFL lines endpoint serves its own snapshot", async () => {
+  const { GET } = await import("../api/lines.js");
+  const res = await GET(new Request("http://localhost/api/lines?league=NFL"));
+  const b = await res.json();
+  if (b.error) throw new Error(b.error);
+  const props = Object.values(b.by_player || b.data?.by_player || {}).flat();
+  if (props.some((p) => p.league && p.league !== "NFL")) throw new Error("non-NFL props in the NFL snapshot");
+  return { note: `${props.length} NFL props` };
+});
+
 // ─── 9. Blob roundtrip ───────────────────────────────────────────────────
 
 header("9. Blob roundtrip (writeLines)");

@@ -312,7 +312,16 @@ export function fitModel(snapshot, { asOf = null, params = NFL_MODEL_PARAMS } = 
     players[id] = rec;
   }
 
-  return { version: MODEL_VERSION, asOf, current, lastWeek, params: P, league, leagueQb, starterAttShare, team, players, fitted_on: tgs.length };
+  // Each team's starting QB in its most recent game (≥50% offensive snaps) —
+  // the verdict layer's default "who starts" until a book prices someone else.
+  const qbStarters = {};
+  for (const r of rows) {
+    if ((snapshot.players[r.player_id]?.position ?? r.position) !== "QB" || (r.off_pct ?? 0) < 0.5) continue;
+    const cur = qbStarters[r.team];
+    if (!cur || r.season > cur.season || (r.season === cur.season && r.week > cur.week)) qbStarters[r.team] = { player_id: r.player_id, season: r.season, week: r.week };
+  }
+
+  return { version: MODEL_VERSION, asOf, current, lastWeek, params: P, league, leagueQb, starterAttShare, team, players, qbStarters, fitted_on: tgs.length };
 }
 
 // ─── Projection + simulation ─────────────────────────────────────────────────
