@@ -518,10 +518,11 @@ after inactives (~90 min before kickoff).
 - **Inactives (~90 min out) are not automated**: an inactive player is still
   priced off the Friday report, then voids at grading.
 
-**NFL scheduled tasks — NOT registered yet.** They run from this checkout, so
-register only once `feat/nfl-model` is merged into the branch kept checked
-out here: `powershell -ExecutionPolicy Bypass -File scripts\register-nfl-tasks.ps1`
-(`-Remove` unregisters; same settings as the EPL tasks).
+**NFL scheduled tasks (registered 2026-10-14)** via
+`powershell -ExecutionPolicy Bypass -File scripts\register-nfl-tasks.ps1`
+(re-run to replace, `-Remove` unregisters; same settings as the EPL tasks).
+They run from this checkout, so it must stay on a branch that has the NFL
+scripts (Testing since 8e4863b).
 
 | Task | Schedule | What it runs |
 |---|---|---|
