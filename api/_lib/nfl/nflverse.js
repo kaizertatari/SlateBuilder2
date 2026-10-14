@@ -57,6 +57,7 @@ export const STAT_FIELDS = {
   receiving_air_yards: "rec_air_yds", target_share: "target_share", air_yards_share: "air_yards_share",
   rushing_fumbles_lost: "rush_fum_lost", receiving_fumbles_lost: "rec_fum_lost", sack_fumbles_lost: "sack_fum_lost",
   passing_2pt_conversions: "pass_2pt", rushing_2pt_conversions: "rush_2pt", receiving_2pt_conversions: "rec_2pt",
+  special_teams_tds: "st_td", fumble_recovery_tds: "fum_rec_td",
   def_tackles_solo: "tackles_solo", def_tackle_assists: "tackle_ast", def_sacks: "def_sacks", def_interceptions: "def_int",
   fg_made: "fg_made", fg_att: "fg_att", fg_long: "fg_long", pat_made: "pat_made", pat_att: "pat_att",
   fantasy_points_ppr: "fantasy_ppr",

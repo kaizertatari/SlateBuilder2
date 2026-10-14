@@ -70,7 +70,7 @@ function leagueReport(league, raw) {
 
   sourceTable("Probability sources, all settled lines with an engine P", settled, ["p_engine"]);
   sourceTable("Model vs market, lines with both", settled, ["p_model", "p_market"]);
-  if (league !== "EPL") sourceTable("Basketball confidence read as a probability", settled, ["p_conf"]);
+  if (league !== "EPL" && league !== "NFL") sourceTable("Basketball confidence read as a probability", settled, ["p_conf"]);
 
   const withP = settled.filter((r) => r.p_engine != null);
   if (withP.length) {
@@ -78,6 +78,15 @@ function leagueReport(league, raw) {
     for (const b of reliability(withP.map((r) => r.p_engine), withP.map((r) => r.y))) {
       console.log(`    ${b.range.padEnd(9)} n=${String(b.n).padStart(4)}  predicted ${pct(b.predicted)}  realized ${pct(b.realized)}`);
     }
+  }
+
+  const clvRows = picks.filter((r) => r.clv != null);
+  if (clvRows.length) {
+    const mean = clvRows.reduce((a, r) => a + r.clv, 0) / clvRows.length;
+    console.log(`
+  Closing-line value — picks' book price, first → last pre-kickoff verdict (+ = market moved toward the pick)`);
+    console.log(`    n=${clvRows.length}  mean ${(mean * 100).toFixed(2)} pts  beat the close ${pct(clvRows.filter((r) => r.clv > 0).length / clvRows.length)}  unchanged ${pct(clvRows.filter((r) => r.clv === 0).length / clvRows.length)}`);
+    pickTable("Picks by CLV sign", clvRows, (r) => (r.clv > 0 ? "beat the close" : r.clv < 0 ? "lost to the close" : "no move"));
   }
 
   const sig = groupBy(settled, (r) => r.stat).map(([k, g]) => [k, sigmaCheck(g), g]).filter(([, c]) => c && c.n >= 10);

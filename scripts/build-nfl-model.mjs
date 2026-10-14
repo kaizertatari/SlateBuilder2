@@ -1,7 +1,7 @@
 // NFL model step 2 — fit api/_lib/nfl/model.js on the nflverse snapshot
 // (npm run refresh-nfl-data) and write the artifact data/nfl-model.json.
 //
-// Usage: npm run build-nfl-model
+// Usage: npm run build-nfl-model  [-- --push]
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -42,6 +42,17 @@ async function main() {
   await fs.writeFile(path.join(ROOT, "data/nfl-model.json"), JSON.stringify(out) + "\n");
   const qbs = Object.values(model.players).filter((p) => p.pos === "QB" && p.attShareStart != null).length;
   console.log(`build-nfl-model: fit through ${model.current} week ${model.lastWeek} on ${model.fitted_on} team-games in ${Date.now() - t0}ms — ${Object.keys(model.players).length} players (${qbs} QBs with starts); pass_att season shift ${model.team.pass_att.seasonAdj.toFixed(2)}`);
+  if (process.argv.includes("--push")) {
+    // Blob copy for the deployed app (api/_lib/nfl/store.js nflModelStore) —
+    // without it the app keeps the artifact bundled at the last deploy.
+    const { loadEnvLocal } = await import("./_env.mjs");
+    loadEnvLocal();
+    if (!process.env.BLOB_READ_WRITE_TOKEN) console.warn("  --push: BLOB_READ_WRITE_TOKEN not set — skipped");
+    else {
+      const { nflModelStore } = await import("../api/_lib/nfl/store.js");
+      console.log(`  pushed to blob: ${await nflModelStore.write(out)}`);
+    }
+  }
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

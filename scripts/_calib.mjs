@@ -52,6 +52,8 @@ export function normalizeRow(r) {
     mean: num(pick("epl_mean", "nfl_mean", "model_mean")),
     sigma: num(r.model_sigma),
     actual: num(r.outcome?.actual_value),
+    // Closing-line value of the picked side's book price (NFL grader).
+    clv: num(r.outcome?.nfl_clv),
   };
 }
 

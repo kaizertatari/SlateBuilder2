@@ -10,7 +10,7 @@
 //     fair_over, books, team, game, start_time, quotes:[ per-book ] } ] },
 //     anytime_td: { "<name>": [ { book, american, implied, team, game } ] } }
 //
-// Usage: npm run scrape-nfl-odds  [-- --days 8]   (residential IP, Node fetch)
+// Usage: npm run scrape-nfl-odds  [-- --days 8] [-- --push]   (residential IP, Node fetch)
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -117,9 +117,26 @@ async function main() {
   for (const r of rows) byStat[r.stat] = (byStat[r.stat] || 0) + 1;
   const result = { fetched_at: new Date().toISOString(), sources: ["draftkings", "fanduel"], games: dk.games, by_player, anytime_td,
     total_props: rows.length, total_players: Object.keys(by_player).length, two_book_props: rows.filter((r) => r.books > 1).length, by_stat: byStat };
+  if (!rows.length && !Object.keys(dk.games).length) {
+    // Blocked or empty response — keep the last snapshot instead of wiping it.
+    console.error("  nothing scraped — data/nfl-odds.json left unchanged");
+    process.exitCode = 1;
+    return;
+  }
   await fs.writeFile(OUTPUT, JSON.stringify(result, null, 1) + "\n");
   console.log(`Wrote ${rows.length} props (${result.two_book_props} priced by both books) for ${result.total_players} players, ${Object.keys(anytime_td).length} anytime-TD players → data/nfl-odds.json`);
   console.log(`  by stat: ${JSON.stringify(byStat)}`);
+  if (args.includes("--push")) {
+    // Blob copy for the deployed app (api/_lib/nfl/store.js nflOddsStore) —
+    // without it the app prices against the odds bundled at the last deploy.
+    const { loadEnvLocal } = await import("./_env.mjs");
+    loadEnvLocal();
+    if (!process.env.BLOB_READ_WRITE_TOKEN) console.warn("  --push: BLOB_READ_WRITE_TOKEN not set — skipped");
+    else {
+      const { nflOddsStore } = await import("../api/_lib/nfl/store.js");
+      console.log(`  pushed to blob: ${await nflOddsStore.write(result)}`);
+    }
+  }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

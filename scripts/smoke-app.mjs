@@ -457,6 +457,10 @@ await test("NBA analyze-all: response marked calibration_pending", async () => {
 });
 
 header("8f. NFL (own board, NFL verdict engine; shadow mode)");
+// These run on synthetic lines — never log them to Axiom, or the NFL grader
+// would settle lines that were never on the board.
+const savedAxiomToken = process.env.AXIOM_TOKEN;
+delete process.env.AXIOM_TOKEN;
 await test("NFL analyze path prices a book-quoted player off the real artifacts", async () => {
   const { analyzeNflPlayer } = await import("../api/_lib/nfl/analyze.js");
   const { nflOddsStore } = await import("../api/_lib/nfl/store.js");
@@ -507,6 +511,8 @@ await test("NFL lines endpoint serves its own snapshot", async () => {
 });
 
 // ─── 9. Blob roundtrip ───────────────────────────────────────────────────
+
+if (savedAxiomToken != null) process.env.AXIOM_TOKEN = savedAxiomToken;
 
 header("9. Blob roundtrip (writeLines)");
 await test("write current data + read back identical shape", async () => {

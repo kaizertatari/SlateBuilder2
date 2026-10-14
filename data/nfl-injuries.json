@@ -1,4 +1,4 @@
-{"fetched_at":"2026-10-13T22:41:04.199Z","season":2026,"rows":[
+{"fetched_at":"2026-10-14T15:14:54.426Z","season":2026,"rows":[
 {"player_id":"00-0034381","name":"Josh Sweat","position":"LB","team":"ARI","season":2026,"week":1,"game_type":"REG","practice_status":"Full Participation in Practice"},
 {"player_id":"00-0035859","name":"Blake Gillikin","position":"P","team":"ARI","season":2026,"week":1,"game_type":"REG","practice_status":"Full Participation in Practice"},
 {"player_id":"00-0039007","name":"Garrett Williams","position":"CB","team":"ARI","season":2026,"week":1,"game_type":"REG","report_status":"Out","practice_status":"Limited Participation in Practice","primary_injury":"Achilles"},
@@ -1411,5 +1411,20 @@
 {"player_id":"00-0039912","name":"Ben Sinnott","position":"TE","team":"WAS","season":2026,"week":5,"game_type":"REG","practice_status":"Full Participation in Practice"},
 {"player_id":"00-0040242","name":"Jacory Croskey-Merritt","position":"RB","team":"WAS","season":2026,"week":5,"game_type":"REG","practice_status":"Full Participation in Practice"},
 {"player_id":"00-0040731","name":"Trey Amos","position":"CB","team":"WAS","season":2026,"week":5,"game_type":"REG","report_status":"Questionable","practice_status":"Limited Participation in Practice","primary_injury":"Ankle"},
-{"player_id":"00-0041028","name":"Sonny Styles","position":"LB","team":"WAS","season":2026,"week":5,"game_type":"REG","practice_status":"Full Participation in Practice"}
+{"player_id":"00-0041028","name":"Sonny Styles","position":"LB","team":"WAS","season":2026,"week":5,"game_type":"REG","practice_status":"Full Participation in Practice"},
+{"player_id":"00-0034978","name":"Ben Powers","position":"G","team":"DEN","season":2026,"week":6,"game_type":"REG","practice_status":"Full Participation in Practice"},
+{"player_id":"00-0036221","name":"Brandon Jones","position":"S","team":"DEN","season":2026,"week":6,"game_type":"REG","practice_status":"Full Participation in Practice"},
+{"player_id":"00-0036564","name":"Talanoa Hufanga","position":"S","team":"DEN","season":2026,"week":6,"game_type":"REG","practice_status":"Did Not Participate In Practice"},
+{"player_id":"00-0036874","name":"Pat Surtain II","position":"CB","team":"DEN","season":2026,"week":6,"game_type":"REG","practice_status":"Did Not Participate In Practice"},
+{"player_id":"00-0038552","name":"Riley Moss","position":"CB","team":"DEN","season":2026,"week":6,"game_type":"REG","practice_status":"Limited Participation in Practice"},
+{"player_id":"00-0040153","name":"Sai'vion Jones","position":"DE","team":"DEN","season":2026,"week":6,"game_type":"REG","practice_status":"Full Participation in Practice"},
+{"player_id":"00-0031933","name":"Leonard Williams","position":"DT","team":"SEA","season":2026,"week":6,"game_type":"REG","practice_status":"Limited Participation in Practice"},
+{"player_id":"00-0035704","name":"Drew Lock","position":"QB","team":"SEA","season":2026,"week":6,"game_type":"REG","practice_status":"Limited Participation in Practice"},
+{"player_id":"00-0037003","name":"Chazz Surratt","position":"LB","team":"SEA","season":2026,"week":6,"game_type":"REG","practice_status":"Did Not Participate In Practice"},
+{"player_id":"00-0037156","name":"Irvin Charles","position":"WR","team":"SEA","season":2026,"week":6,"game_type":"REG","practice_status":"Full Participation in Practice"},
+{"player_id":"00-0038543","name":"Jaxon Smith-Njigba","position":"WR","team":"SEA","season":2026,"week":6,"game_type":"REG","practice_status":"Limited Participation in Practice"},
+{"player_id":"00-0038922","name":"Drake Thomas","position":"LB","team":"SEA","season":2026,"week":6,"game_type":"REG","practice_status":"Did Not Participate In Practice"},
+{"player_id":"00-0039165","name":"Zach Charbonnet","position":"RB","team":"SEA","season":2026,"week":6,"game_type":"REG","practice_status":"Limited Participation in Practice"},
+{"player_id":"00-0039299","name":"George Holani","position":"RB","team":"SEA","season":2026,"week":6,"game_type":"REG","practice_status":"Full Participation in Practice"},
+{"player_id":"00-0040882","name":"Beau Stephens","position":"G","team":"SEA","season":2026,"week":6,"game_type":"REG","practice_status":"Full Participation in Practice"}
 ]}

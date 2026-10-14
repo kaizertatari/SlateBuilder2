@@ -488,6 +488,45 @@ after inactives (~90 min before kickoff).
   `gsis_id` + `nfl_game_id` and `nfl_*` probability fields
   (`calibration-all` reads them).
 
+### NFL grading loop (shadow mode)
+
+- `npm run sweep-nfl-board [-- --within-hours N] [-- --dry-run]` prices
+  every line on the NFL board (both sides of standard lines, OVER only on
+  goblin/demon) and logs it to Axiom (`source: "nfl-sweep"`).
+- `node scripts/nfl-gameday.mjs` — quiet no-op unless a game kicks off
+  within 90 min (kickoffs from the model's schedule, ET); then
+  `scrape-nfl-odds --push` + a sweep of those games. The last sweep before
+  kickoff is the **closing** snapshot.
+- `npm run grade-nfl-outcomes [-- --lookback 10] [-- --dry-run]` settles the
+  last pre-kickoff verdict per line from nflverse weekly stats (published the
+  morning after). PrizePicks rules: no snap → void, integer tie → push.
+  **Snap counts decide played vs DNP**, because nflverse weekly stats only list
+  players who recorded a stat. On week 5, 39 priced skill players played
+  without one. Without snap counts their UNDERs would void instead of hitting.
+  Until a game's snap counts are out those lines wait (void
+  `unverified` after 7 days). Each outcome records CLV: the book price
+  of the picked side at the first vs the last pre-kickoff verdict
+  (`nfl_clv`, `nfl_open/close_p_market`, `nfl_open/close_book_line`). It
+  also records nflverse's closing spread/total. Fantasy Score matches
+  nflverse `fantasy_points_ppr` on 6,689/6,691 rows, after accounting for
+  PrizePicks scoring INT and fumbles lost at −1 instead of nflverse's −2.
+  Verdicts with `source: "smoke-app"` are ignored (`smoke-app` no longer logs NFL).
+- `calibration-all --league NFL` adds a closing-line-value section (mean CLV,
+  share that beat the close, hit rate by CLV sign) once outcomes carry it.
+- **Inactives (~90 min out) are not automated**: an inactive player is still
+  priced off the Friday report, then voids at grading.
+
+**NFL scheduled tasks — NOT registered yet.** They run from this checkout, so
+register only once `feat/nfl-model` is merged into the branch kept checked
+out here: `powershell -ExecutionPolicy Bypass -File scripts\register-nfl-tasks.ps1`
+(`-Remove` unregisters; same settings as the EPL tasks).
+
+| Task | Schedule | What it runs |
+|---|---|---|
+| `NFL Daily` | 07:30 | `nfl-daily-task.bat` → `refresh-nfl-data` → `build-nfl-model --push` → `scrape-nfl-odds --push` → `sweep-nfl-board` (whole board = opening prices for CLV) → `grade-nfl-outcomes` → `export-graded --league NFL` → `calibration-all --league NFL` (latest in `logs\nfl-calibration-latest.txt`). Log `logs\nfl-daily.log` |
+| `NFL Gameday Sweep` | every 30 min, 07:00–23:30 | `nfl-gameday-task.bat` → `nfl-gameday.mjs` (above). No browser. Log `logs\nfl-gameday.log` (only when it acts) |
+| `NFL Refresh Board` | 00:40 / 06:40 / 12:40 / 18:40 | `nfl-board-task.bat` → `refresh-nfl-prizepicks --push`; 20 min after `EPL Refresh Board` (shared PrizePicks profile). Refuses to write an empty board or one without NFL teams. Log `logs\nfl-board.log` |
+
 ## Query Axiom
 
 Telemetry lives in Axiom dataset `props_verdict` (also the

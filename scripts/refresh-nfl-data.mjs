@@ -29,7 +29,7 @@ const sIdx = args.indexOf("--seasons");
 const SEASONS = (sIdx >= 0 ? args[sIdx + 1] : "2025,2026").split(",").map(Number);
 const CURRENT = Math.max(...SEASONS);
 
-async function getCsv(file) {
+export async function getCsv(file) {
   const url = `${REL}/${file}`;
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
