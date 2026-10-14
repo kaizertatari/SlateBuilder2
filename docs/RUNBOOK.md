@@ -463,11 +463,13 @@ after inactives (~90 min before kickoff).
   Node fetch — curl is 403'd; FanDuel event tabs). Props post only a few
   days before each game.
 - `npm run refresh-nfl-prizepicks [-- --league-id N]` → `data/nfl-pp-lines.json`
-  (its own snapshot, like EPL's). **The NFL league id is unverified** (9 is
-  the likely value): the script refuses to write unless ≥80% of props carry
-  NFL teams, and prints every stat type with `(UNMAPPED)` next to any
+  (its own snapshot, like EPL's). NFL is **league 9** (confirmed 2026-10-14:
+  4,352 props, 83% goblin/demon). The script refuses to write unless ≥80% of
+  props carry NFL teams, and prints every stat type with `(UNMAPPED)` next to any
   spelling `mapNflStat` doesn't know yet — add those to `PP_TO_STAT` in
-  `api/_lib/nfl/verdict.js`. **Stop the Refresh Bridge first** (shared
+  `api/_lib/nfl/verdict.js`. Unmapped on purpose: Longest Rush/Reception/
+  Completion (~550 props, need play-by-play), Sacks Taken, per-quarter/half
+  and ratio props, multi-player "(Combo)". **Stop the Refresh Bridge first** (shared
   profile); same PX slider regime — seed-assist routine if PX won't clear.
 - **In the app**: the **NFL** tab reads `GET /api/lines?league=NFL`;
   Analyze / build-slate route `league: "NFL"` to `api/_lib/nfl/`. Runtime

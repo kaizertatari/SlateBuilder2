@@ -45,7 +45,7 @@ export function actualFor(stat, row) {
       ).toFixed(2));
     }
     case "pass_yds": case "pass_att": case "completions": case "pass_td": case "pass_int":
-    case "rush_yds": case "rush_att": case "rec_yds": case "rec": case "targets":
+    case "rush_yds": case "rush_att": case "rec_yds": case "rec": case "targets": case "rush_td": case "rec_td":
     case "def_sacks": case "fg_made":
       return n(stat);
     default: return null;

@@ -48,8 +48,10 @@ export const NFL_POLICY = {
   sims: 10000,
 };
 
-// PrizePicks stat_type (lowercased) → model stat. UNVERIFIED until the NFL
-// board is captured: several spellings per stat so the first capture maps.
+// PrizePicks stat_type (lowercased) → model stat. The first spelling of each
+// is what the live board used on 2026-10-14 (league 9); the rest are aliases.
+// Not modelled: Longest Rush/Reception/Completion (need play-by-play),
+// Sacks Taken, per-quarter/half and ratio props, multi-player "(Combo)".
 export const PP_TO_STAT = {
   "pass yards": "pass_yds", "passing yards": "pass_yds",
   "pass attempts": "pass_att", "passing attempts": "pass_att",
@@ -63,7 +65,8 @@ export const PP_TO_STAT = {
   "rec targets": "targets", "targets": "targets",
   "rush+rec yds": "rush_rec_yds", "rush + rec yds": "rush_rec_yds", "rush+rec yards": "rush_rec_yds",
   "pass+rush yds": "pass_rush_yds", "pass + rush yds": "pass_rush_yds", "pass+rush yards": "pass_rush_yds",
-  "rush+rec tds": "rush_rec_td", "rush + rec tds": "rush_rec_td", "touchdowns": "rush_rec_td",
+  "anytime tds": "rush_rec_td", "anytime td": "rush_rec_td", "rush+rec tds": "rush_rec_td", "rush + rec tds": "rush_rec_td", "touchdowns": "rush_rec_td",
+  "rush tds": "rush_td", "rushing tds": "rush_td", "rec tds": "rec_td", "receiving tds": "rec_td",
   "fantasy score": "fantasy",
   "tackles+ast": "tackles_ast", "tackles + ast": "tackles_ast",
   "sacks": "def_sacks",
@@ -76,7 +79,7 @@ export const mapNflStat = (statType) => PP_TO_STAT[String(statType || "").trim()
 export const NFL_STAT_LABEL = {
   pass_yds: "Pass Yards", pass_att: "Pass Attempts", completions: "Pass Completions", pass_td: "Pass TDs", pass_int: "INT",
   rush_yds: "Rush Yards", rush_att: "Rush Attempts", rec_yds: "Receiving Yards", rec: "Receptions", targets: "Rec Targets",
-  rush_rec_yds: "Rush+Rec Yds", pass_rush_yds: "Pass+Rush Yds", rush_rec_td: "Rush+Rec TDs", fantasy: "Fantasy Score",
+  rush_rec_yds: "Rush+Rec Yds", pass_rush_yds: "Pass+Rush Yds", rush_rec_td: "Anytime TDs", rush_td: "Rush TDs", rec_td: "Rec TDs", fantasy: "Fantasy Score",
   tackles_ast: "Tackles+Ast", def_sacks: "Sacks", fg_made: "FG Made", kicking_pts: "Kicking Points",
 };
 

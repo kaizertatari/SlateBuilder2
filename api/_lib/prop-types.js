@@ -42,9 +42,9 @@ export const EPL_STATS = [
 ];
 
 // NFL display labels (api/_lib/nfl/verdict.js NFL_STAT_LABEL order). The
-// NFL engine maps PrizePicks spellings itself (mapNflStat) — PrizePicks'
-// NFL names are unverified until the board is captured, and "Fantasy
-// Score" would collide with basketball's here.
+// NFL engine maps PrizePicks spellings itself (mapNflStat) — "Fantasy
+// Score" would collide with basketball's here. Labels match the live board
+// (2026-10-14).
 export const NFL_STATS = [
   "Pass Yards",
   "Pass Attempts",
@@ -58,7 +58,9 @@ export const NFL_STATS = [
   "Rec Targets",
   "Rush+Rec Yds",
   "Pass+Rush Yds",
-  "Rush+Rec TDs",
+  "Anytime TDs",
+  "Rush TDs",
+  "Rec TDs",
   "Fantasy Score",
   "Tackles+Ast",
   "Sacks",

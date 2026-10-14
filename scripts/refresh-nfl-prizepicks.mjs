@@ -4,10 +4,9 @@
 // (PerimeterX-cleared profile, the one request shape PX accepts) writing its
 // OWN snapshot, so the basketball snapshot and the bridge are untouched.
 //
-// The NFL league id is UNVERIFIED (9 is the likely value). The guard below
-// refuses the write unless most props' teams resolve to NFL teams, so a
-// wrong id can't land a different sport in the NFL snapshot. Pass the id
-// with --league-id once confirmed from the app's /leagues response.
+// NFL is league 9 (confirmed on the live board 2026-10-14). The guard below
+// still refuses the write unless most props' teams resolve to NFL teams, so
+// a renumbered league can't land a different sport in the NFL snapshot.
 //
 // The profile is shared with the Refresh Bridge daemon — stop it first
 // (Stop-ScheduledTask "Refresh Bridge"), restart after (RUNBOOK).

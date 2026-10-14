@@ -60,7 +60,7 @@ export const NFL_MODEL_PARAMS = {
 export const MODEL_STATS = [
   "pass_yds", "pass_att", "completions", "pass_td", "pass_int",
   "rush_yds", "rush_att", "rec_yds", "rec", "targets",
-  "rush_rec_yds", "pass_rush_yds", "rush_rec_td", "fantasy",
+  "rush_rec_yds", "pass_rush_yds", "rush_rec_td", "rush_td", "rec_td", "fantasy",
   "tackles_ast", "def_sacks", "fg_made", "kicking_pts",
 ];
 
@@ -365,7 +365,7 @@ export function simulatePlayer(model, playerId, ctx, { sims = model.params.sims,
   // attempts by the league ratio.
   const tgtPerAtt = 0.95;
 
-  const out = { pass_yds: [], pass_att: [], completions: [], pass_td: [], pass_int: [], rush_yds: [], rush_att: [], rec_yds: [], rec: [], targets: [], rush_rec_yds: [], pass_rush_yds: [], rush_rec_td: [], fantasy: [], tackles_ast: [], def_sacks: [], fg_made: [], kicking_pts: [] };
+  const out = { pass_yds: [], pass_att: [], completions: [], pass_td: [], pass_int: [], rush_yds: [], rush_att: [], rec_yds: [], rec: [], targets: [], rush_rec_yds: [], pass_rush_yds: [], rush_rec_td: [], rush_td: [], rec_td: [], fantasy: [], tackles_ast: [], def_sacks: [], fg_made: [], kicking_pts: [] };
   const hasOff = p.games > 0;
   for (let i = 0; i < sims; i++) {
     let passAtt = 0, cmp = 0, passY = 0, passTd = 0, int = 0, car = 0, rushY = 0, rushTd = 0, tgt = 0, rec = 0, recY = 0, recTd = 0;
@@ -392,6 +392,7 @@ export function simulatePlayer(model, playerId, ctx, { sims = model.params.sims,
     out.pass_att.push(passAtt); out.completions.push(cmp); out.pass_yds.push(passY); out.pass_td.push(passTd); out.pass_int.push(int);
     out.rush_att.push(car); out.rush_yds.push(rushY); out.targets.push(tgt); out.rec.push(rec); out.rec_yds.push(recY);
     out.rush_rec_yds.push(rushY + recY); out.pass_rush_yds.push(passY + rushY); out.rush_rec_td.push(rushTd + recTd);
+    out.rush_td.push(rushTd); out.rec_td.push(recTd);
     const W = FANTASY_WEIGHTS;
     out.fantasy.push(Math.round((W.pass_yds * passY + W.pass_td * passTd + W.pass_int * int + W.rush_yds * rushY + W.rush_td * rushTd + W.rec * rec + W.rec_yds * recY + W.rec_td * recTd + W.fum_lost * fum) * 100) / 100);
     if (p.def) {
