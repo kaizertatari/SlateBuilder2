@@ -79,14 +79,17 @@ async function main() {
     window.chrome = window.chrome || { runtime: {} };
   });
 
-  const page = context.pages()[0] || (await context.newPage());
+  let page = context.pages()[0] || (await context.newPage());
   await page.goto(APP_URL, { waitUntil: "domcontentloaded", timeout: 60000 }).catch(() => {});
   console.log("Seed-assist window open. If a slider captcha is shown, slide it now.");
   console.log("This script will NOT reload the page; it probes the API every 5s.");
 
   const deadline = Date.now() + BUDGET_MS;
   while (Date.now() < deadline) {
-    if (page.isClosed()) {
+    // The site/challenge can swap tabs under us — follow any surviving page
+    // and only give up when the whole window is gone.
+    if (page.isClosed()) page = context.pages().find((p) => !p.isClosed());
+    if (!page) {
       console.error("Window was closed before PerimeterX cleared.");
       await context.close().catch(() => {});
       process.exit(1);
