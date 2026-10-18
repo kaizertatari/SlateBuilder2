@@ -296,7 +296,20 @@ snapshot's `season` field after refresh.
 
 ## Refresh team defense
 
-`npm run refresh-team-defense`.
+`npm run refresh-team-defense:guarded` (NBA → `data/team-defense.json`) and
+`npm run refresh-team-defense:wnba:guarded` (WNBA → `data/team-defense-wnba.json`).
+Run from home (stats.nba.com / stats.wnba.com often refuse Vercel IPs). The
+validator fails if any team in `api/_lib/team-ids.js` is missing or its
+`team_id` disagrees, or if the season label isn't the current one (so the NBA
+refresh fails until opening night — expected).
+
+These snapshots are the fallback when the live fetch fails, and they are
+bundled at build time: a refresh only reaches prod after commit + deploy.
+Choice order at runtime (`rankDefenseTables` in `api/_lib/team-defense.js`):
+live once every team has ≥ 10 games → current-season snapshot → NBA
+prior-season snapshot (flagged) → thin live. WNBA never uses a prior-season
+snapshot. Every basketball verdict logs the choice to Axiom as `def_source`,
+`def_season`, `def_as_of`, `def_games`, `def_prior_season`, `def_thin`.
 
 ## Refresh EPL data (Premier League model, this season)
 

@@ -250,23 +250,31 @@ export async function getLeagueTeamDefense({
   const idIdx = headers.indexOf("TEAM_ID");
   const nameIdx = headers.indexOf("TEAM_NAME");
   const drIdx = headers.indexOf("DEF_RATING");
+  const gpIdx = headers.indexOf("GP");
   if (idIdx < 0 || drIdx < 0) return null;
 
   const rows = rs.rowSet.map((row) => ({
     team_id: row[idIdx],
     team_name: row[nameIdx],
     def_rating: row[drIdx],
+    gp: gpIdx >= 0 ? row[gpIdx] : null,
   }));
   rows.sort((a, b) => a.def_rating - b.def_rating);
   const out = {};
   rows.forEach((r, i) => {
     const abbr = teamIdToAbbr[r.team_id];
-    if (!abbr) return;
+    if (!abbr) {
+      // An unmapped id silently drops that opponent's defense for every pick
+      // (POR/TOR went a whole season this way) — make it loud.
+      console.warn(`leaguedashteamstats: no ${league} abbr for team_id ${r.team_id} (${r.team_name}) — add it to team-ids.js`);
+      return;
+    }
     out[abbr] = {
       team_id: r.team_id,
       team_name: r.team_name,
       def_rating: r.def_rating,
       def_rank: i + 1,
+      gp: r.gp,
     };
   });
   return out;

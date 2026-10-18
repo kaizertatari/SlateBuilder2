@@ -9,6 +9,7 @@
 import { nbaFetch, rowToObj, findResultSet } from "./nba-http.js";
 import { currentSeason } from "./nba-stats.js";
 import { teamIdByAbbr } from "./team-ids.js";
+import { toNbaAbbr } from "./espn.js";
 import { swr } from "./cache.js";
 
 const LEAGUE_ID_BY_NAME = { NBA: "00", WNBA: "10" };
@@ -76,7 +77,8 @@ export async function getPrimaryDefender(playerId, oppAbbr, {
   league = "NBA",
 } = {}) {
   if (!playerId || !oppAbbr) return null;
-  const defTeamId = teamIdByAbbr(oppAbbr, league);
+  // Callers pass ESPN abbrs (LV, WSH, GS, ...); the id map is keyed by stats abbrs.
+  const defTeamId = teamIdByAbbr(toNbaAbbr(oppAbbr, league), league);
   if (!defTeamId) return null;
   const leagueId = LEAGUE_ID_BY_NAME[league] ?? "00";
   const seasonLabel = season ?? currentSeason(new Date(), league);

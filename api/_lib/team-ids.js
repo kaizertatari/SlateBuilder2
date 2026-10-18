@@ -22,10 +22,9 @@ export const ABBR_BY_TEAM_ID = Object.fromEntries(
 // match stats.wnba.com — PrizePicks publishes slight variants (LV, LA, NY,
 // GS) which are aliased to these in api/_lib/espn.js.
 //
-// POR/TOR team IDs are not yet known until stats.wnba.com publishes their
-// rosters; they live in the map without an ID so the def_rank lookup
-// returns null cleanly (framework caps at A-tier when opponent_defense is
-// absent — same fallback as any other missing-data path).
+// IDs verified against stats.wnba.com leaguedashteamstats (2026-10-18). The
+// LAS/MIN/WAS IDs were previously rotated (LAS held Minnesota's, MIN held
+// Washington's, WAS held LA's) — re-verify against TEAM_NAME before editing.
 export const WNBA_TEAM_ID_BY_ABBR = {
   ATL: 1611661330, // Atlanta Dream
   CHI: 1611661329, // Chicago Sky
@@ -33,15 +32,15 @@ export const WNBA_TEAM_ID_BY_ABBR = {
   DAL: 1611661321, // Dallas Wings
   GSV: 1611661331, // Golden State Valkyries (2025 expansion)
   IND: 1611661325, // Indiana Fever
-  LAS: 1611661324, // Los Angeles Sparks
+  LAS: 1611661320, // Los Angeles Sparks
   LVA: 1611661319, // Las Vegas Aces
-  MIN: 1611661322, // Minnesota Lynx
+  MIN: 1611661324, // Minnesota Lynx
   NYL: 1611661313, // New York Liberty
   PHX: 1611661317, // Phoenix Mercury
-  POR: null,       // Portland Fire (2026 expansion — id pending)
+  POR: 1611661327, // Portland Fire (2026 expansion)
   SEA: 1611661328, // Seattle Storm
-  TOR: null,       // Toronto Tempo (2026 expansion — id pending)
-  WAS: 1611661320, // Washington Mystics
+  TOR: 1611661332, // Toronto Tempo (2026 expansion)
+  WAS: 1611661322, // Washington Mystics
 };
 
 export const WNBA_ABBR_BY_TEAM_ID = Object.fromEntries(

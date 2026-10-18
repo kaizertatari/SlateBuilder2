@@ -186,6 +186,15 @@ export function logVerdict({
     win_prob: groundTruth?.win_prob?.player_team_pct ?? null,
     opponent: groundTruth?.opponent_team?.abbr ?? null,
     def_rank: groundTruth?.opponent_defense?.def_rank ?? null,
+    // Provenance of def_rank (team-defense.js): live | snapshot, which
+    // season, when fetched, fewest team games, and whether it is a prior
+    // season or thin early-season live table. Null when def_rank is null.
+    def_source: groundTruth?.opponent_defense?.source ?? null,
+    def_season: groundTruth?.opponent_defense?.season ?? null,
+    def_as_of: groundTruth?.opponent_defense?.as_of ?? null,
+    def_games: groundTruth?.opponent_defense?.games ?? null,
+    def_prior_season: groundTruth?.opponent_defense?.prior_season ?? null,
+    def_thin: groundTruth?.opponent_defense?.thin ?? null,
     primary_defender: groundTruth?.opponent_defense?.primary_defender?.player ?? null,
     is_playoff: !!groundTruth?.series,
     series_round: groundTruth?.series?.round ?? null,
