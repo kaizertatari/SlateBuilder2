@@ -71,6 +71,10 @@ async function main() {
     if (row.team_id !== idMap[abbr]) fail(`${abbr} team_id ${row.team_id} != team-ids.js ${idMap[abbr]}`);
   }
 
+  if (league === "NBA" && !Object.keys(snap.prior_season?.teams ?? {}).length) {
+    fail(`NBA snapshot is missing prior_season (needed for the this-season/last-season blend)`);
+  }
+
   console.log(`✓ ${path.relative(ROOT, filePath)}: ${league} ${snap.season}, ${Object.keys(regularSeason).length} teams`);
 }
 

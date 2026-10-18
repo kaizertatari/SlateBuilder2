@@ -48,6 +48,19 @@ async function buildSnapshot(league) {
     out.seasons[seasonType] = teams;
     console.log(`  ${Object.keys(teams).length} teams`);
   }
+
+  // NBA blends this season with last season (team-defense.js), so the
+  // snapshot carries last season's regular season too. WNBA has no
+  // carry-over, so it doesn't.
+  if (league === "NBA") {
+    const y = parseInt(season, 10);
+    const prior = `${y - 1}-${String(y % 100).padStart(2, "0")}`;
+    console.log(`Fetching NBA ${prior} Regular Season (blend prior)...`);
+    const teams = await getLeagueTeamDefense({ season: prior, seasonType: "Regular Season", league });
+    if (!teams || Object.keys(teams).length === 0) throw new Error(`NBA ${prior}: no rows for the blend prior`);
+    out.prior_season = { season: prior, teams };
+    console.log(`  ${Object.keys(teams).length} teams`);
+  }
   return out;
 }
 

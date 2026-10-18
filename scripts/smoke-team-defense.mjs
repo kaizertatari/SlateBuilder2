@@ -1,8 +1,8 @@
 // Smoke for opponent-defense coverage: team-id maps, ESPN↔stats abbr
-// aliases, and the live/snapshot table ranking in team-defense.js. No network.
+// aliases, and the this-season/last-season blend in team-defense.js. No network.
 //   node scripts/smoke-team-defense.mjs
 import { readFileSync } from "node:fs";
-import { rankDefenseTables, DEF_MIN_GAMES } from "../api/_lib/team-defense.js";
+import { resolveDefenseTable, DEF_BLEND_K } from "../api/_lib/team-defense.js";
 import { WNBA_TEAM_ID_BY_ABBR, TEAM_ID_BY_ABBR } from "../api/_lib/team-ids.js";
 import { toNbaAbbr } from "../api/_lib/espn.js";
 
@@ -35,39 +35,59 @@ for (const espn of ["ATL", "CHI", "CON", "DAL", "GS", "IND", "LA", "LV", "MIN", 
   ok(WNBA_TEAM_ID_BY_ABBR[toNbaAbbr(espn, "WNBA")] != null, `C: ESPN ${espn} → ${toNbaAbbr(espn, "WNBA")} unmapped`);
 }
 
-// D) Table ranking
-const teams = (gp) => ({ AAA: { def_rank: 1, gp }, BBB: { def_rank: 2, gp } });
-const live = (gp) => ({ teams: teams(gp), fetched_at: "2026-10-18T00:00:00Z" });
-const snap = (season) => ({ season, fetched_at: "2026-05-23T00:00:00Z", seasons: { "Regular Season": teams(82) } });
-const rank = (o) => rankDefenseTables({ seasonType: "Regular Season", seasonLabel: "2026-27", league: "NBA", ...o });
+// D) Blend: this season (live or current snapshot) with last season (NBA),
+//    w = gp/(gp+K), last season re-centred on the current league mean.
+const K = DEF_BLEND_K;
+const cur = (gp) => ({ AAA: { def_rating: 112, gp }, BBB: { def_rating: 108, gp } });
+const last = { AAA: { def_rating: 100 }, BBB: { def_rating: 110 } };
+const live = (gp) => ({ teams: cur(gp), fetched_at: "2026-10-18T00:00:00Z" });
+const prevSnap = { season: "2025-26", fetched_at: "2026-05-23T00:00:00Z", seasons: { "Regular Season": last } };
+const resolve = (o) => resolveDefenseTable({ seasonType: "Regular Season", seasonLabel: "2026-27", league: "NBA", ...o });
+const near = (a, b) => Math.abs(a - b) < 0.011;
 {
-  const t = rank({ live: live(DEF_MIN_GAMES), snapshot: snap("2026-27") });
-  ok(t[0].source === "live" && !t[0].thin && t[0].as_of === "2026-10-18T00:00:00Z", "D1: established live first");
+  const t = resolve({ live: live(1), snapshot: prevSnap });
+  const w = 1 / (1 + K);
+  ok(t.source === "live+prior" && t.as_of === "2026-10-18T00:00:00Z", "D1: live + last season → live+prior");
+  ok(near(t.teams.AAA.weight, w), `D1: weight after 1 game = ${w.toFixed(3)}`);
+  ok(near(t.teams.AAA.def_rating, w * 112 + (1 - w) * 105), "D1: AAA blended with re-centred prior (105)");
+  ok(t.teams.AAA.def_rank === 1, "D1: 1 game in, last season's ordering still wins");
 }
 {
-  const t = rank({ live: live(3), snapshot: snap("2025-26") });
-  ok(t[0].source === "snapshot" && t[0].prior_season === true, "D2: NBA thin live → prior-season snapshot first, flagged");
-  ok(t[1].source === "live" && t[1].thin === true, "D2: thin live kept as last resort");
+  const t = resolve({ live: live(K), snapshot: prevSnap });
+  ok(near(t.teams.BBB.weight, 0.5) && near(t.teams.BBB.def_rating, 111.5), "D2: at K games → 50/50");
 }
 {
-  const t = rank({ live: null, snapshot: snap("2025-26") });
-  ok(t.length === 1 && t[0].prior_season, "D3: NBA live down → prior-season snapshot, flagged");
+  const t = resolve({ live: live(6 * K), snapshot: prevSnap });
+  ok(t.teams.BBB.def_rank === 1 && t.teams.BBB.weight > 0.8, "D3: deep into the season this season's ordering wins");
 }
 {
-  const t = rank({ live: null, snapshot: snap("2025"), seasonLabel: "2026", league: "WNBA" });
-  ok(t.length === 0, "D4: WNBA never carries a prior-season snapshot");
+  const t = resolve({ live: null, snapshot: prevSnap });
+  ok(t.source === "prior" && t.season === "2025-26" && t.teams.AAA.weight === 0, "D4: preseason / live down → last season only");
 }
 {
-  const t = rank({ live: live(4), snapshot: snap("2025"), seasonLabel: "2026", league: "WNBA" });
-  ok(t.length === 1 && t[0].source === "live" && t[0].thin, "D5: WNBA early season → thin live only");
+  const snap = { season: "2026-27", fetched_at: "2026-11-01T00:00:00Z", seasons: { "Regular Season": cur(8) }, prior_season: { season: "2025-26", teams: last } };
+  const t = resolve({ live: null, snapshot: snap });
+  ok(t.source === "snapshot+prior" && near(t.teams.AAA.weight, 8 / (8 + K)), "D5: live down mid-season → current snapshot blended with its prior_season block");
 }
 {
-  const t = rank({ live: null, snapshot: snap("2026"), seasonLabel: "2026", league: "WNBA" });
-  ok(t.length === 1 && t[0].source === "snapshot" && !t[0].prior_season, "D6: WNBA live down → current snapshot");
+  const t = resolve({ live: live(3), snapshot: { season: "2025", seasons: { "Regular Season": last } }, seasonLabel: "2026", league: "WNBA" });
+  ok(t.source === "live" && t.teams.AAA.weight === 1, "D6: WNBA never blends last season");
 }
 {
-  const t = rank({ live: { teams: { AAA: { def_rank: 1 } } }, snapshot: null });
-  ok(t.length === 1 && !t[0].thin && t[0].games === null, "D7: live without GP is not treated as thin");
+  const t = resolve({ live: null, snapshot: { season: "2025", seasons: { "Regular Season": last } }, seasonLabel: "2026", league: "WNBA" });
+  ok(t === null, "D7: WNBA with only last season → no table");
+}
+{
+  const t = resolve({ live: null, snapshot: { season: "2026", seasons: { "Regular Season": cur(44) } }, seasonLabel: "2026", league: "WNBA" });
+  ok(t.source === "snapshot" && t.teams.AAA.def_rank === 2, "D8: WNBA live down → current snapshot");
+}
+{
+  const t = resolve({ live: { teams: { ...cur(5), NEW: { def_rating: 109, gp: 5 } } }, snapshot: prevSnap });
+  ok(t.teams.NEW.weight === 1, "D9: team without a last-season row uses this season only");
+}
+{
+  const t = resolve({ live: { teams: { AAA: { def_rating: 112 }, BBB: { def_rating: 108 } } }, snapshot: prevSnap });
+  ok(t.teams.AAA.weight === 1, "D10: live without GP is trusted fully");
 }
 
 console.log(`\nsmoke-team-defense: ${pass} passed, ${fail} failed`);
