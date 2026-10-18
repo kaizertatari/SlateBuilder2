@@ -1,0 +1,172 @@
+{
+  "league": "WNBA",
+  "season": "2026",
+  "fetched_at": "2026-10-18T16:24:56.882Z",
+  "seasons": {
+    "Regular Season": {
+      "GSV": {
+        "team_id": 1611661331,
+        "team_name": "Golden State Valkyries",
+        "def_rating": 99.1,
+        "def_rank": 1,
+        "gp": 44
+      },
+      "WAS": {
+        "team_id": 1611661322,
+        "team_name": "Washington Mystics",
+        "def_rating": 103.3,
+        "def_rank": 2,
+        "gp": 44
+      },
+      "ATL": {
+        "team_id": 1611661330,
+        "team_name": "Atlanta Dream",
+        "def_rating": 103.5,
+        "def_rank": 3,
+        "gp": 44
+      },
+      "MIN": {
+        "team_id": 1611661324,
+        "team_name": "Minnesota Lynx",
+        "def_rating": 103.5,
+        "def_rank": 4,
+        "gp": 44
+      },
+      "LVA": {
+        "team_id": 1611661319,
+        "team_name": "Las Vegas Aces",
+        "def_rating": 105.9,
+        "def_rank": 5,
+        "gp": 44
+      },
+      "DAL": {
+        "team_id": 1611661321,
+        "team_name": "Dallas Wings",
+        "def_rating": 106.4,
+        "def_rank": 6,
+        "gp": 44
+      },
+      "NYL": {
+        "team_id": 1611661313,
+        "team_name": "New York Liberty",
+        "def_rating": 106.9,
+        "def_rank": 7,
+        "gp": 44
+      },
+      "IND": {
+        "team_id": 1611661325,
+        "team_name": "Indiana Fever",
+        "def_rating": 108.3,
+        "def_rank": 8,
+        "gp": 44
+      },
+      "CHI": {
+        "team_id": 1611661329,
+        "team_name": "Chicago Sky",
+        "def_rating": 108.5,
+        "def_rank": 9,
+        "gp": 44
+      },
+      "SEA": {
+        "team_id": 1611661328,
+        "team_name": "Seattle Storm",
+        "def_rating": 108.6,
+        "def_rank": 10,
+        "gp": 44
+      },
+      "PHX": {
+        "team_id": 1611661317,
+        "team_name": "Phoenix Mercury",
+        "def_rating": 108.9,
+        "def_rank": 11,
+        "gp": 44
+      },
+      "CON": {
+        "team_id": 1611661323,
+        "team_name": "Connecticut Sun",
+        "def_rating": 109.2,
+        "def_rank": 12,
+        "gp": 44
+      },
+      "LAS": {
+        "team_id": 1611661320,
+        "team_name": "Los Angeles Sparks",
+        "def_rating": 110.3,
+        "def_rank": 13,
+        "gp": 44
+      },
+      "POR": {
+        "team_id": 1611661327,
+        "team_name": "Portland Fire",
+        "def_rating": 112.4,
+        "def_rank": 14,
+        "gp": 44
+      },
+      "TOR": {
+        "team_id": 1611661332,
+        "team_name": "Toronto Tempo",
+        "def_rating": 116,
+        "def_rank": 15,
+        "gp": 44
+      }
+    },
+    "Playoffs": {
+      "ATL": {
+        "team_id": 1611661330,
+        "team_name": "Atlanta Dream",
+        "def_rating": 100,
+        "def_rank": 1,
+        "gp": 6
+      },
+      "GSV": {
+        "team_id": 1611661331,
+        "team_name": "Golden State Valkyries",
+        "def_rating": 101.5,
+        "def_rank": 2,
+        "gp": 7
+      },
+      "NYL": {
+        "team_id": 1611661313,
+        "team_name": "New York Liberty",
+        "def_rating": 106.5,
+        "def_rank": 3,
+        "gp": 5
+      },
+      "LVA": {
+        "team_id": 1611661319,
+        "team_name": "Las Vegas Aces",
+        "def_rating": 107.4,
+        "def_rank": 4,
+        "gp": 6
+      },
+      "WAS": {
+        "team_id": 1611661322,
+        "team_name": "Washington Mystics",
+        "def_rating": 112.1,
+        "def_rank": 5,
+        "gp": 2
+      },
+      "IND": {
+        "team_id": 1611661325,
+        "team_name": "Indiana Fever",
+        "def_rating": 114,
+        "def_rank": 6,
+        "gp": 3
+      },
+      "MIN": {
+        "team_id": 1611661324,
+        "team_name": "Minnesota Lynx",
+        "def_rating": 116.3,
+        "def_rank": 7,
+        "gp": 2
+      },
+      "DAL": {
+        "team_id": 1611661321,
+        "team_name": "Dallas Wings",
+        "def_rating": 121.1,
+        "def_rank": 8,
+        "gp": 3
+      }
+    }
+  }
+}

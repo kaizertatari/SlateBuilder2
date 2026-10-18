@@ -136,6 +136,7 @@ const WNBA_TO_ESPN_ABBR = {
   LAS: "LA",
   NYL: "NY",
   GSV: "GS",
+  WAS: "WSH",
 };
 
 const ESPN_TO_NBA_ABBR = Object.fromEntries(

@@ -296,7 +296,31 @@ snapshot's `season` field after refresh.
 
 ## Refresh team defense
 
-`npm run refresh-team-defense`.
+`npm run refresh-team-defense:guarded` (NBA → `data/team-defense.json`) and
+`npm run refresh-team-defense:wnba:guarded` (WNBA → `data/team-defense-wnba.json`).
+Run from home (stats.nba.com / stats.wnba.com often refuse Vercel IPs). The
+validator fails if any team in `api/_lib/team-ids.js` is missing or its
+`team_id` disagrees, if the season label isn't the current one (so the NBA
+refresh fails until opening night — expected), or if the NBA file lacks
+`prior_season` (last season's table, which the refresh now also writes).
+
+These snapshots are the fallback when the live fetch fails, and they are
+bundled at build time: a refresh only reaches prod after commit + deploy.
+
+NBA defense is a blend (`resolveDefenseTable` in `api/_lib/team-defense.js`):
+this season's rating (live, else current snapshot) weighted
+`gp / (gp + DEF_BLEND_K)`, the rest from last season's rating re-centred on
+the current league mean; teams re-ranked on the blend. Preseason = last
+season only. WNBA = this season only (no carry-over). Every basketball
+verdict logs `def_source` (live | snapshot | live+prior | snapshot+prior |
+prior), `def_season`, `def_as_of`, `def_games`, `def_weight` (this season's
+share), `def_prior_season`.
+
+Re-fit `DEF_BLEND_K` each preseason (suggest-only, from home):
+`node scripts/fit-defense-blend.mjs --seasons 2021-22,2022-23,2023-24,2024-25,2025-26`.
+It backtests rest-of-season DRtg error for every k and prints the best;
+change the constant only when the gain is > ~0.03. Set to 15 on 2026-10-18
+(k=15 RMSE 2.49 vs k=10 2.54, this-season-only 3.68, last-season-only 2.90).
 
 ## Refresh EPL data (Premier League model, this season)
 
