@@ -130,12 +130,19 @@ function fitEffects(tgs, res, w, minK) {
   const off = Object.fromEntries(teams.map((x) => [x, 0]));
   const def = Object.fromEntries(teams.map((x) => [x, 0]));
   const sigma2 = sum(res.map((e, i) => w[i] * e * e)) / sum(w);
-  // τ² from the spread of raw team means.
+  // τ² from the spread of raw team means, net of their sampling noise. With
+  // decayed weights (< 1) a weighted mean's variance is σ²·Σw²/(Σw)², not
+  // σ²/Σw — the latter roughly doubled the noise and floored τ², zeroing
+  // every team effect (2026-10-18).
   const byTeam = new Map();
-  tgs.forEach((t, i) => { const a = byTeam.get(t.team) ?? { sw: 0, se: 0 }; a.sw += w[i]; a.se += w[i] * res[i]; byTeam.set(t.team, a); });
+  tgs.forEach((t, i) => {
+    const a = byTeam.get(t.team) ?? { sw: 0, sw2: 0, se: 0 };
+    a.sw += w[i]; a.sw2 += w[i] * w[i]; a.se += w[i] * res[i];
+    byTeam.set(t.team, a);
+  });
   const means = [...byTeam.values()].map((a) => a.se / a.sw);
-  const nBar = sum([...byTeam.values()].map((a) => a.sw)) / byTeam.size;
-  const tau2 = Math.max(1e-6, sum(means.map((m) => m * m)) / means.length - sigma2 / nBar);
+  const noise = sum([...byTeam.values()].map((a) => (sigma2 * a.sw2) / (a.sw * a.sw))) / byTeam.size;
+  const tau2 = Math.max(1e-6, sum(means.map((m) => m * m)) / means.length - noise);
   const k = Math.max(minK, sigma2 / tau2);
   for (let it = 0; it < 20; it++) {
     for (const [obj, other, side] of [[off, def, "team"], [def, off, "opp"]]) {

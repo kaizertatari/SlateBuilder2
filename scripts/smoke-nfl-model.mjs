@@ -81,6 +81,14 @@ if (fs.existsSync(art)) {
   const a = JSON.parse(fs.readFileSync(art, "utf8"));
   check("artifact: fitted with players + team effects", Object.keys(a.players).length > 1000 && a.team.pass_att && a.team.rush_att);
   const starters = Object.values(a.players).filter((p) => p.pos === "QB" && p.starts >= 2);
+  // Refit on the real snapshot: team effects must survive the EB shrink.
+  // A noise term of σ²/Σw (decayed weights < 1) floored τ² and zeroed every
+  // team effect (k ~ 7e7) until 2026-10-18; the real between-team spread
+  // in pass attempts after spread/total is ~±2.5.
+  const read = (n) => JSON.parse(fs.readFileSync(path.join(ROOT, "data", n), "utf8"));
+  const real = fitModel({ rows: read("nfl-player-games.json").rows, games: read("nfl-games.json").games, players: read("nfl-players.json").players });
+  const offs = Object.values(real.team.pass_att.off);
+  check("real data: pass_att team effects survive shrinkage", real.team.pass_att.k < 100 && Math.max(...offs) - Math.min(...offs) > 2, `k=${real.team.pass_att.k.toPrecision(3)}`);
   check("artifact: starting QBs throw ~all team attempts", starters.length > 20 && starters.every((p) => p.attShareStart > 0.85), `${starters.length} starters`);
 } else {
   console.log("SKIP  artifact checks (run npm run build-nfl-model)");
