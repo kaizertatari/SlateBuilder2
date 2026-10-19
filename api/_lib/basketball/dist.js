@@ -177,3 +177,22 @@ export function calibratedProbOver({ params, key, mean, factor = 1, line }) {
   const mu = Math.max(1e-3, mean * factor * c);
   return { p_over: lineProbs(line, mu, r).over, mean: mu };
 }
+
+/**
+ * Move a book's fair P(over) at its own line to another line through the
+ * fitted negative binomial: find μ with NB(μ, r).over(bookLine) = pOver
+ * (monotone in μ — bisection), then read P(over) at targetLine. Replaces the
+ * fixed-σ normal shift in odds.js for the SHADOW pipeline, so goblin/demon
+ * lines (typically 2–7 points from the book line) get a skewed, mean-scaled
+ * tail. Returns pOver unchanged when the lines match. Clamped [0.01, 0.99].
+ */
+export function nbShiftOver({ pOver, bookLine, targetLine, r }) {
+  if (typeof pOver !== "number" || typeof bookLine !== "number" || typeof targetLine !== "number" || !(r > 0)) return null;
+  const p = Math.min(0.99, Math.max(0.01, pOver));
+  if (targetLine === bookLine) return p;
+  const over = (mu) => lineProbs(bookLine, mu, r).over;
+  let lo = 1e-3, hi = Math.max(5, 4 * bookLine + 10);
+  while (over(hi) < p && hi < 1e4) hi *= 2;
+  for (let i = 0; i < 60; i++) { const mid = (lo + hi) / 2; if (over(mid) < p) lo = mid; else hi = mid; }
+  return Math.min(0.99, Math.max(0.01, lineProbs(targetLine, (lo + hi) / 2, r).over));
+}

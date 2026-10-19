@@ -74,5 +74,19 @@ ok(minutesProfile([0, 0]) === null, "B: no minutes → null");
   ok(BASKETBALL_POLICY.maxTier === "A" && BASKETBALL_POLICY.modelOnlyMaxTier === "SKIP", "G: no S-tier, model-only never tiered");
 }
 
+// H) NB market shift (book price at its line → PrizePicks line)
+{
+  const { nbShiftOver } = await import("../api/_lib/basketball/dist.js");
+  const s = (o) => nbShiftOver({ r: 6, ...o });
+  ok(s({ pOver: 0.5, bookLine: 20.5, targetLine: 20.5 }) === 0.5, "H: same line → unchanged");
+  const down = s({ pOver: 0.5, bookLine: 20.5, targetLine: 16.5 }), up = s({ pOver: 0.5, bookLine: 20.5, targetLine: 24.5 });
+  ok(down > 0.5 && up < 0.5, "H: lower line → higher P(over), higher line → lower");
+  ok(Math.abs((down - 0.5) - (0.5 - up)) > 0.005, `H: asymmetric (skewed) shift (${down.toFixed(3)} / ${up.toFixed(3)})`);
+  const back = s({ pOver: down, bookLine: 16.5, targetLine: 20.5 });
+  ok(Math.abs(back - 0.5) < 0.005, `H: shifting back recovers the book price (${back.toFixed(4)})`);
+  ok(s({ pOver: 0.45, bookLine: 1.5, targetLine: 0.5 }) > 0.45, "H: low-count goblin shift moves the right way");
+  ok(nbShiftOver({ pOver: 0.5, bookLine: 2.5, targetLine: 1.5, r: null }) === null, "H: missing r → null");
+}
+
 console.log(`\nsmoke-basketball-dist: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -20,9 +20,10 @@
 
 import { getReqId } from "./request-context.js";
 import { PROP_TO_FIELD } from "./prop-types.js";
-import { calibratedProbOver } from "./basketball/dist.js";
+import { calibratedProbOver, nbShiftOver } from "./basketball/dist.js";
 import { pipelineVerdict } from "./basketball/policy.js";
 import { projectProb } from "./projection.js";
+import { lookupMarket } from "./odds.js";
 
 const INGEST_URL_BASE = "https://api.axiom.co/v1/datasets";
 const TIMEOUT_MS = 5000;
@@ -63,6 +64,9 @@ export function logVerdict({
   // baseline (projectProb — pure, same machinery the engine uses).
   const pipeMean = shadowMean(result, groundTruth, stat, direction, input?.line);
   const dist = distFields(groundTruth?.opp_factor, pipeMean.mean, input?.line, direction);
+  // The market rule only runs inside the engine, so pre-filtered lines carry
+  // no market — look it up the same way (rule-market-edge) for the pipeline.
+  const pipeMarket = result?.market ?? shadowMarket(groundTruth, stat, input?.line);
 
   const event = {
     _time: new Date().toISOString(),
@@ -229,7 +233,12 @@ export function logVerdict({
     // calibrated model P blended 50/50 in log-odds with the de-vigged market
     // at the line, tiered on the shared pick-policy contract. pipe_tier is
     // what the pipeline WOULD issue — graded against break-even in shadow.
-    ...pipeFields(dist.dist_p_over, result?.market?.no_vig_prob, direction, oddsType),
+    pipe_market_src: result?.market ? "engine" : (pipeMarket ? "lookup" : null),
+    ...pipeFields(dist.dist_p_over, pipeMarket?.no_vig_prob, direction, oddsType),
+    // Same pipeline with the book prices moved to the PrizePicks line by the
+    // fitted NB instead of the fixed-σ normal (goblins/demons sit 2–7 points
+    // from the book line). Both logged until graded NBA lines pick one.
+    ...nbPipeFields(groundTruth?.opp_factor?.dist, pipeMarket?.sources, input?.line, dist.dist_p_over, direction, oddsType),
     primary_defender: groundTruth?.opponent_defense?.primary_defender?.player ?? null,
     is_playoff: !!groundTruth?.series,
     series_round: groundTruth?.series?.round ?? null,
@@ -535,6 +544,34 @@ function pipeFields(pModelOver, pMarketOver, direction, oddsType) {
     pipe_model_only: v.model_only,
     pipe_market_over: typeof pMarketOver === "number" ? pMarketOver : null,
     pipe_policy_version: v.version,
+  };
+}
+
+// Market at the line for lines the engine never saw (same lookup as
+// rule-market-edge). Never throws; null when odds don't cover the pick.
+function shadowMarket(groundTruth, stat, line) {
+  const player = groundTruth?.info?.full_name ?? groundTruth?.player;
+  if (!player || !stat || typeof line !== "number") return null;
+  try {
+    const m = lookupMarket({ player, stat, line, league: groundTruth?.league });
+    return m ? { no_vig_prob: m.fair_over, sources: (m.sources ?? []).map((x) => ({ book: x.book ?? null, line: x.line, fair_over: x.fair_over })) } : null;
+  } catch {
+    return null;
+  }
+}
+
+function nbPipeFields(distParams, sources, line, pModelOver, direction, oddsType) {
+  const target = typeof line === "number" ? line : Number(line);
+  const shifted = (sources ?? [])
+    .map((s) => nbShiftOver({ pOver: s.fair_over, bookLine: s.line, targetLine: target, r: distParams?.r }))
+    .filter((p) => typeof p === "number");
+  const marketOver = shifted.length ? shifted.reduce((a, b) => a + b, 0) / shifted.length : null;
+  const v = marketOver != null ? pipelineVerdict({ pModelOver, pMarketOver: marketOver, direction, oddsType: oddsType || "standard" }) : null;
+  return {
+    market_over_nb: marketOver != null ? +marketOver.toFixed(4) : null,
+    pipe_nb_prob: v ? +v.prob.toFixed(4) : null,
+    pipe_nb_tier: v ? v.tier : null,
+    pipe_nb_edge: v ? +v.edge.toFixed(4) : null,
   };
 }
 

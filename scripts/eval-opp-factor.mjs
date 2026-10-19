@@ -189,6 +189,22 @@ for (const [name, set] of [["standard lines", priced.filter((i) => i.type === "s
     console.log(`  market-weight refit on ${mk.length} lines with a market (log loss of P(over); policy uses 0.5):`);
     console.log("   " + [0, 0.25, 0.5, 0.6, 0.7, 0.8, 1].map((w) => `${w}→${avg(mk.map((x) => ll(sig((1 - w) * logit(clamp(x.dist)) + w * logit(clamp(x.mkt))), x.over))).toFixed(4)}`).join("  "));
   }
+  // Market shifted by the fitted NB (pipe_nb_*) vs the fixed-σ normal
+  // (pipe_*): head to head on lines where both exist.
+  const nb = rows.filter((r) => typeof r.pipe_nb_prob === "number" && typeof r.pipe_prob === "number").map((r) => {
+    const over = r.outcome.actual_value > Number(r.line) ? 1 : 0;
+    return { day: String(r.game_start_time).slice(0, 10), type: r.odds_type || "standard", hit: r.direction === "UNDER" ? 1 - over : over, a: r.pipe_prob, b: r.pipe_nb_prob, tierB: r.pipe_nb_tier, be: r.pipe_break_even };
+  });
+  if (nb.length >= 20) {
+    for (const [name, set] of [["goblin/demon", nb.filter((x) => x.type !== "standard")], ["all", nb]]) {
+      if (set.length < 20) continue;
+      const d = avg(set.map((x) => ll(x.b, x.hit) - ll(x.a, x.hit)));
+      const ci = bootstrapDays(set, (x) => ll(x.b, x.hit) - ll(x.a, x.hit));
+      console.log(`  NB-shifted market vs normal (${name}): ${avg(set.map((x) => ll(x.b, x.hit))).toFixed(4)} vs ${avg(set.map((x) => ll(x.a, x.hit))).toFixed(4)}  change ${d >= 0 ? "+" : ""}${d.toFixed(4)} [95% ${ci.lo.toFixed(4)}, ${ci.hi.toFixed(4)}] n=${set.length} over ${ci.days} days`);
+    }
+    const picks = nb.filter((x) => x.tierB === "A" || x.tierB === "B");
+    if (picks.length) console.log(`  would-be picks with the NB market: n=${picks.length}  hit ${(100 * avg(picks.map((x) => x.hit))).toFixed(1)}%  break-even ${(100 * avg(picks.map((x) => x.be))).toFixed(1)}%`);
+  } else console.log(`  NB-shifted market vs normal: ${nb.length} lines — too few yet`);
   for (const [name, set] of [["standard", P.filter((x) => x.type === "standard")], ["all", P]]) {
     const picks = set.filter((x) => x.tier === "A" || x.tier === "B");
     if (!picks.length) { console.log(`  would-be picks (${name}): none yet`); continue; }

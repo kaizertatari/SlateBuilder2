@@ -101,6 +101,9 @@ export function apply(ctx) {
       book_line: m.book_line,
       books: m.books,
       source: m.source,
+      // Each book's own line + fair P(over) before the shift — lets the
+      // shadow pipeline re-shift with the fitted NB (dist.js nbShiftOver).
+      sources: (m.sources ?? []).map((s) => ({ book: s.book ?? null, line: s.line, fair_over: s.fair_over })),
     },
   };
 }
