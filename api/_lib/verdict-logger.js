@@ -21,6 +21,8 @@
 import { getReqId } from "./request-context.js";
 import { PROP_TO_FIELD } from "./prop-types.js";
 import { calibratedProbOver } from "./basketball/dist.js";
+import { pipelineVerdict } from "./basketball/policy.js";
+import { projectProb } from "./projection.js";
 
 const INGEST_URL_BASE = "https://api.axiom.co/v1/datasets";
 const TIMEOUT_MS = 5000;
@@ -56,6 +58,11 @@ export function logVerdict({
 
   const stat = canonicalStat(input?.propType);
   const direction = directionOf(input?.propType);
+  // SHADOW pipeline needs a mean on EVERY line, including the ~70% the
+  // pre-filter SKIPs before the engine runs: fall back to the engine's own
+  // baseline (projectProb — pure, same machinery the engine uses).
+  const pipeMean = shadowMean(result, groundTruth, stat, direction, input?.line);
+  const dist = distFields(groundTruth?.opp_factor, pipeMean.mean, input?.line, direction);
 
   const event = {
     _time: new Date().toISOString(),
@@ -216,7 +223,13 @@ export function logVerdict({
     // negative binomial (× matchup × per-stat mean correction c) instead of
     // Normal(mean, fixed σ). Compare dist_p_over with model_prob on graded
     // lines before anything uses it.
-    ...distFields(groundTruth?.opp_factor, result?.projection?.mean, input?.line, direction),
+    ...dist,
+    dist_mean_src: dist.dist_p_over != null ? pipeMean.src : null,
+    // SHADOW basketball probability pipeline step 2 (basketball/policy.js):
+    // calibrated model P blended 50/50 in log-odds with the de-vigged market
+    // at the line, tiered on the shared pick-policy contract. pipe_tier is
+    // what the pipeline WOULD issue — graded against break-even in shadow.
+    ...pipeFields(dist.dist_p_over, result?.market?.no_vig_prob, direction, oddsType),
     primary_defender: groundTruth?.opponent_defense?.primary_defender?.player ?? null,
     is_playoff: !!groundTruth?.series,
     series_round: groundTruth?.series?.round ?? null,
@@ -496,6 +509,33 @@ function ingestMany(token, events) {
     });
   pending.add(p);
   p.finally(() => pending.delete(p));
+}
+
+// The engine's projection mean, or — for pre-filtered SKIPs, which never
+// reach the engine — the same baseline computed directly. Never throws.
+function shadowMean(result, groundTruth, stat, direction, line) {
+  if (typeof result?.projection?.mean === "number") return { mean: result.projection.mean, src: "engine" };
+  if (!groundTruth || !stat || typeof line !== "number") return { mean: null, src: null };
+  try {
+    const p = projectProb({ groundTruth, statType: stat, direction, line });
+    return typeof p?.mean === "number" ? { mean: p.mean, src: "baseline" } : { mean: null, src: null };
+  } catch {
+    return { mean: null, src: null };
+  }
+}
+
+function pipeFields(pModelOver, pMarketOver, direction, oddsType) {
+  const v = pipelineVerdict({ pModelOver, pMarketOver, direction, oddsType: oddsType || "standard" });
+  if (!v) return { pipe_prob: null, pipe_tier: null, pipe_edge: null, pipe_break_even: null, pipe_model_only: null, pipe_market_over: null, pipe_policy_version: null };
+  return {
+    pipe_prob: +v.prob.toFixed(4),
+    pipe_tier: v.tier,
+    pipe_edge: +v.edge.toFixed(4),
+    pipe_break_even: +v.break_even.toFixed(4),
+    pipe_model_only: v.model_only,
+    pipe_market_over: typeof pMarketOver === "number" ? pMarketOver : null,
+    pipe_policy_version: v.version,
+  };
 }
 
 // Shadow calibrated-distribution fields (see logVerdict). All null when the

@@ -59,5 +59,20 @@ ok(minutesProfile([0, 0]) === null, "B: no minutes → null");
   }
 }
 
+// G) Pipeline policy: blend, direction, caps (basketball/policy.js)
+{
+  const { pipelineVerdict, BASKETBALL_POLICY } = await import("../api/_lib/basketball/policy.js");
+  const v = pipelineVerdict({ pModelOver: 0.70, pMarketOver: 0.60, direction: "OVER" });
+  ok(v.prob > 0.60 && v.prob < 0.70 && !v.model_only, `G: 50/50 log-odds blend sits between model and market (${v.prob.toFixed(3)})`);
+  const u = pipelineVerdict({ pModelOver: 0.30, pMarketOver: 0.40, direction: "UNDER" });
+  ok(Math.abs(u.prob - v.prob) < 1e-12, "G: UNDER prices the other side symmetrically");
+  ok(v.tier === "A" && Math.abs(v.break_even - 0.577) < 0.002, `G: standard edge ${v.edge.toFixed(3)} over 57.7% → A`);
+  ok(pipelineVerdict({ pModelOver: 0.90, pMarketOver: null, direction: "OVER" }).tier === "SKIP", "G: no market → model-only, never tiered");
+  ok(pipelineVerdict({ pModelOver: 0.95, pMarketOver: 0.92, direction: "OVER", oddsType: "goblin" }).tier !== "A", "G: goblin capped below A (approximate payout)");
+  ok(pipelineVerdict({ pModelOver: 0.55, pMarketOver: 0.50, direction: "OVER" }).tier === "SKIP", "G: below break-even → SKIP");
+  ok(pipelineVerdict({ pModelOver: null, pMarketOver: 0.5, direction: "OVER" }) === null, "G: no model P → null");
+  ok(BASKETBALL_POLICY.maxTier === "A" && BASKETBALL_POLICY.modelOnlyMaxTier === "SKIP", "G: no S-tier, model-only never tiered");
+}
+
 console.log(`\nsmoke-basketball-dist: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
