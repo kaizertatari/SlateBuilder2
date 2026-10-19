@@ -21,6 +21,7 @@ import { setOdds } from "./_lib/odds.js";
 import { readOdds } from "./_lib/odds-store.js";
 import { logVerdict, flushVerdictLogs } from "./_lib/verdict-logger.js";
 import { getOppFactor } from "./_lib/basketball/opp-store.js";
+import { ENGINE_STANDARD_WARNING } from "./_lib/basketball/policy.js";
 import { analyzeEplPlayer } from "./_lib/epl/analyze.js";
 import { readEplLines } from "./_lib/epl/store.js";
 import { analyzeNflPlayer } from "./_lib/nfl/analyze.js";
@@ -476,6 +477,8 @@ async function handlePost(req, reqId) {
           // grade-outcomes hits per rule) can attribute outcomes.
           rules_fired: Array.isArray(verified.rules_fired) ? verified.rules_fired : [],
           flags: Array.isArray(verified.flags) ? verified.flags : [],
+          // Graded standard-line engine picks lose (see ENGINE_STANDARD_WARNING).
+          warning: (task.oddsType ?? "standard") === "standard" ? ENGINE_STANDARD_WARNING : null,
         });
       }
     }
