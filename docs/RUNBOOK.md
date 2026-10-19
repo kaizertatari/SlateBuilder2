@@ -352,7 +352,12 @@ weighted by the player's stat mix), `opp_pace_factor`, `opp_adj_mean` (the
 projection mean × both), `opp_games`, `opp_weight`, `opp_fitted_at`. **No
 rule reads them** — they're there to be tested against graded lines (does
 the factor predict actual − line?) after ~2 weeks of NBA games, before any
-tier uses them. Backtest: `node scripts/backtest-basketball-opponent.mjs
+tier uses them. **Gate:** `node scripts/eval-opp-factor.mjs --league NBA`
+(read-only; add `--backfill` for history logged before shadow mode) — over
+rate by factor third + log loss of each graded line re-priced at
+mean × factor vs as run, with a game-day bootstrap interval; ADOPT when ≥ 150
+priced standard lines and the change is < 0 with its interval below 0.
+Backtest: `node scripts/backtest-basketball-opponent.mjs
 --league NBA [--grid]` (team layer: NBA mean log loss 0.66821 → 0.66579;
 position layer adds nothing, off).
 
