@@ -27,7 +27,7 @@
 
 import { statOf } from "./gamelogs.js";
 
-export const OPP_STATS = ["pts", "reb", "ast", "fg3m", "fg3a", "stl", "blk", "tov", "fta"];
+export const OPP_STATS = ["pts", "reb", "ast", "fg3m", "fg3a", "fga", "stl", "blk", "tov", "fta"];
 // PrizePicks combos are sums of the base stats.
 export const COMBOS = { pra: ["pts", "reb", "ast"], pr: ["pts", "reb"], pa: ["pts", "ast"], ra: ["reb", "ast"] };
 
@@ -114,6 +114,14 @@ export function fitOpponentModel(cur, { before = null, prior = null, params = OP
       return [s, w * raw + (1 - w) * pr];
     }));
   }
+  // Defenses with no games yet this season (preseason, or before `before`)
+  // fall back to the prior alone — weight 0 on the current season.
+  for (const [d, f] of Object.entries(prior?.team ?? {})) {
+    if (team[d]) continue;
+    team[d] = Object.fromEntries(OPP_STATS.map((s) => [s, 1 + P.priorTeamWeight * ((f[s] ?? 1) - 1)]));
+    games[d] = 0;
+  }
+  for (const [t, p] of Object.entries(prior?.pace ?? {})) if (pace[t] == null) pace[t] = p * leaguePoss / prior.leaguePoss;
   const posAcc = {};
   for (const { r, t, e, g } of expRows) {
     const a = ((posAcc[t.opponent] ??= {})[g] ??= {});
@@ -128,7 +136,7 @@ export function fitOpponentModel(cur, { before = null, prior = null, params = OP
       pos[d][grp] = Object.fromEntries(OPP_STATS.map((s) => [s, w * (a[s].e > 0 ? a[s].y / a[s].e : 1) + (1 - w)]));
     }
   }
-  return { params: P, before, leaguePoss, pace, rates, groupRate: groupRates, team, pos, games, players: cur.players };
+  return { params: P, before, leaguePoss, pace, rates, groupRate: groupRates, team, pos, games, players: { ...(prior?.players ?? {}), ...cur.players } };
 }
 
 /**
@@ -146,9 +154,69 @@ export function projectOpp(model, { playerId, team, opponent, minutes, group = n
   const out = {};
   for (const s of OPP_STATS) {
     const tf = useTeam ? (model.team[opponent]?.[s] ?? 1) : 1;
-    const qf = usePos ? (model.pos[opponent]?.[grp]?.[s] ?? 1) : 1;
+    const qf = usePos ? (model.pos?.[opponent]?.[grp]?.[s] ?? 1) : 1;
     out[s] = base[s] * minutes * pf * tf * qf;
   }
   for (const [c, parts] of Object.entries(COMBOS)) out[c] = sum(parts.map((p) => out[p]));
   return out;
+}
+
+// PrizePicks basketball prop → weights on the base stats (Fantasy Score uses
+// PrizePicks' scoring: PTS 1, REB 1.2, AST 1.5, STL 3, BLK 3, TO −1).
+export const PROP_WEIGHTS = {
+  "Points": { pts: 1 }, "Rebounds": { reb: 1 }, "Assists": { ast: 1 },
+  "PRA": { pts: 1, reb: 1, ast: 1 }, "PR": { pts: 1, reb: 1 }, "PA": { pts: 1, ast: 1 }, "RA": { reb: 1, ast: 1 },
+  "3-Pointers Made": { fg3m: 1 }, "3-Pointers Attempted": { fg3a: 1 }, "FG Attempted": { fga: 1 },
+  "Blocks+Steals": { blk: 1, stl: 1 }, "Blocks": { blk: 1 }, "Steals": { stl: 1 }, "Turnovers": { tov: 1 },
+  "Fantasy Score": { pts: 1, reb: 1.2, ast: 1.5, stl: 3, blk: 3, tov: -1 },
+};
+
+/**
+ * Multiplicative adjustment for one player's prop vs one opponent, weighted
+ * by the player's own stat mix (so a PRA factor leans on whichever stat he
+ * produces most). Teams are stats.nba.com abbreviations.
+ * @returns {{ opp_factor, pace_factor, games, weight }|null}
+ *   opp_factor  defense effect alone; pace_factor  game-pace effect alone;
+ *   games       defense's games this season; weight  this season's share
+ */
+export function opponentFactor(model, { playerId, team, opponent, prop }) {
+  const w = PROP_WEIGHTS[String(prop ?? "").replace(/\s+(OVER|UNDER)$/i, "").trim()];
+  if (!w || !model || !opponent) return null;
+  const grp = model.players?.[playerId]?.group ?? "W";
+  const base = model.rates?.[playerId] ?? model.groupRate?.[grp];
+  if (!base) return null;
+  const pt = model.pace?.[team], po = model.pace?.[opponent];
+  const paceFactor = pt && po ? (pt * po / model.leaguePoss) / pt : 1;
+  let eBase = 0, eTeam = 0;
+  for (const [s, k] of Object.entries(w)) {
+    const r = (base[s] ?? 0) * k;
+    eBase += r;
+    eTeam += r * (model.team?.[opponent]?.[s] ?? 1);
+  }
+  if (!(eBase > 0)) return null;
+  const g = model.games?.[opponent] ?? 0;
+  const kTeam = model.params?.kTeam ?? OPP_PARAMS.kTeam;
+  return { opp_factor: +(eTeam / eBase).toFixed(4), pace_factor: +paceFactor.toFixed(4), games: g, weight: +(g / (g + kTeam)).toFixed(3) };
+}
+
+/** Fitted model → the small runtime artifact (no position layer, rounded). */
+export function compactModel(model, meta = {}) {
+  const r4 = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, typeof v === "number" ? +v.toFixed(4) : v]));
+  const rates = {}, players = {};
+  for (const [id, rt] of Object.entries(model.rates)) {
+    if (!(rt.min > 0)) continue;
+    rates[id] = r4(rt);
+    const g = model.players?.[id]?.group;
+    if (g) players[id] = { group: g };
+  }
+  return {
+    ...meta,
+    params: { kTeam: model.params.kTeam, priorTeamWeight: model.params.priorTeamWeight },
+    leaguePoss: +model.leaguePoss.toFixed(2),
+    pace: r4(model.pace),
+    team: Object.fromEntries(Object.entries(model.team).map(([d, f]) => [d, r4(f)])),
+    games: model.games,
+    groupRate: Object.fromEntries(Object.entries(model.groupRate).map(([g, f]) => [g, r4(f)])),
+    rates, players,
+  };
 }

@@ -197,6 +197,19 @@ export function logVerdict({
     def_games: groundTruth?.opponent_defense?.games ?? null,
     def_weight: groundTruth?.opponent_defense?.weight ?? null,
     def_prior_season: groundTruth?.opponent_defense?.prior_season ?? null,
+    // SHADOW opponent-factor model (api/_lib/basketball/opponent.js) — logged
+    // to be validated against graded lines before any rule uses it.
+    // opp_factor = defense effect on this prop (player's stat mix),
+    // opp_pace_factor = game-pace effect, opp_adj_mean = the projection mean
+    // with both applied. opp_weight = this season's share of the factor.
+    opp_factor: groundTruth?.opp_factor?.opp_factor ?? null,
+    opp_pace_factor: groundTruth?.opp_factor?.pace_factor ?? null,
+    opp_games: groundTruth?.opp_factor?.games ?? null,
+    opp_weight: groundTruth?.opp_factor?.weight ?? null,
+    opp_fitted_at: groundTruth?.opp_factor?.fitted_at ?? null,
+    opp_adj_mean: (groundTruth?.opp_factor && typeof result?.projection?.mean === "number")
+      ? +(result.projection.mean * groundTruth.opp_factor.opp_factor * groundTruth.opp_factor.pace_factor).toFixed(3)
+      : null,
     primary_defender: groundTruth?.opponent_defense?.primary_defender?.player ?? null,
     is_playoff: !!groundTruth?.series,
     series_round: groundTruth?.series?.round ?? null,

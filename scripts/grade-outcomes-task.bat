@@ -19,5 +19,14 @@ set "rc=%ERRORLEVEL%"
 if errorlevel 1 set "rc=1"
 REM Cross-league calibration report over data\graded\ (latest copy alone).
 "C:\Program Files\nodejs\node.exe" scripts\calibration-all.mjs > "logs\calibration-latest.txt" 2>&1
+REM SHADOW basketball opponent-factor model: refresh last night's box scores,
+REM refit, push the artifact the app logs on every verdict (no tier change).
+REM Failures here never touch rc. Output -> logs\opp-model.log.
+echo === %date% %time% start === >> "logs\opp-model.log"
+for %%L in (NBA WNBA) do (
+  "C:\Program Files\nodejs\node.exe" scripts\refresh-basketball-gamelogs.mjs --league %%L >> "logs\opp-model.log" 2>&1
+  "C:\Program Files\nodejs\node.exe" scripts\build-basketball-opponent.mjs --league %%L --push >> "logs\opp-model.log" 2>&1
+)
+echo === %date% %time% end === >> "logs\opp-model.log"
 echo === %date% %time% end exit=%rc% === >> "logs\grade.log"
 exit /b %rc%

@@ -1,7 +1,7 @@
 // Smoke for the basketball opponent-factor model (api/_lib/basketball/opponent.js)
 // on a synthetic league. No network.
 //   node scripts/smoke-basketball-opponent.mjs
-import { fitOpponentModel, projectOpp, OPP_PARAMS } from "../api/_lib/basketball/opponent.js";
+import { fitOpponentModel, projectOpp, opponentFactor, compactModel, OPP_PARAMS } from "../api/_lib/basketball/opponent.js";
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) pass++; else { fail++; console.error("  FAIL: " + m); } };
@@ -58,6 +58,32 @@ ok(Math.abs((two.team.DDD?.pts ?? 1) - 1) < Math.abs(m.team.DDD.pts - 1), "E: ea
 // F) Unknown player falls back to the group rate; unknown everything → null
 ok(projectOpp(m, { playerId: 999, team: "CCC", opponent: "DDD", minutes: 30, group: "G" })?.pts > 0, "F: unknown player uses group rate");
 ok(projectOpp(m, { playerId: 999, team: "CCC", opponent: "DDD", minutes: 30, group: "Z" }) === null, "F: unknown group → null");
+
+// G) Shadow factor per PrizePicks prop + the runtime artifact
+{
+  const f = opponentFactor(m, { playerId: 21, team: "CCC", opponent: "DDD", prop: "Points OVER" });
+  ok(f && f.opp_factor > 1.1 && Math.abs(f.opp_factor - m.team.DDD.pts) < 1e-3, `G: Points factor = DDD points factor (${f?.opp_factor})`);
+  const reb = opponentFactor(m, { playerId: 21, team: "CCC", opponent: "DDD", prop: "Rebounds" });
+  const pr = opponentFactor(m, { playerId: 21, team: "CCC", opponent: "DDD", prop: "PR UNDER" });
+  ok(pr.opp_factor > reb.opp_factor && pr.opp_factor < f.opp_factor, "G: PR factor sits between its parts, weighted by the player's mix");
+  ok(opponentFactor(m, { playerId: 21, team: "CCC", opponent: "AAA", prop: "Rebounds" }).pace_factor > 1, "G: pace factor > 1 vs the fast team");
+  ok(opponentFactor(m, { playerId: 21, team: "CCC", opponent: "DDD", prop: "Fantasy Score" })?.opp_factor > 1, "G: Fantasy Score priced from weighted stats");
+  ok(opponentFactor(m, { playerId: 21, team: "CCC", opponent: "DDD", prop: "Shots" }) === null, "G: unknown prop → null");
+  const c = compactModel(m, { league: "TEST" });
+  const fc = opponentFactor(c, { playerId: 21, team: "CCC", opponent: "DDD", prop: "Points" });
+  ok(c.league === "TEST" && !("pos" in c) && Math.abs(fc.opp_factor - f.opp_factor) < 1e-3, "G: compact artifact reproduces the factor");
+  // Preseason: empty current season → the prior's defenses carry over at weight 0
+  const pre = fitOpponentModel({ players: {}, team_games: [], rows: [] }, { prior: m });
+  ok(Object.keys(pre.team).length === 4 && pre.games.DDD === 0 && pre.team.DDD.pts > 1 && pre.team.DDD.pts < m.team.DDD.pts, "G: preseason fit = shrunk prior for every defense");
+  ok(opponentFactor(pre, { playerId: 21, team: "CCC", opponent: "DDD", prop: "Points" }).weight === 0, "G: preseason weight 0");
+}
+// H) Runtime wrapper never throws and stays out of non-basketball leagues
+{
+  const { getOppFactor } = await import("../api/_lib/basketball/opp-store.js");
+  ok(await getOppFactor({ league: "EPL", playerId: 1, team: "ARS", opponent: "CHE", propType: "Shots" }) === null, "H: EPL → null");
+  ok(await getOppFactor({ league: "NBA", playerId: 1, team: null, opponent: null, propType: "Points" }) === null, "H: no opponent → null, no throw");
+  ok(await getOppFactor({ league: "NBA", playerId: 1, team: "BOS", opponent: "DET", propType: "Curling" }) === null, "H: unknown prop → null");
+}
 
 console.log(`\nsmoke-basketball-opponent: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

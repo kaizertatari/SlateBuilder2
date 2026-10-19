@@ -11,6 +11,7 @@ import * as bdl from "./_lib/balldontlie.js";
 import * as espnStats from "./_lib/espn-stats.js";
 import { getOpponentDefense, getDefRankByAbbr } from "./_lib/team-defense.js";
 import { getPrimaryDefender } from "./_lib/matchup-defender.js";
+import { getOppFactor } from "./_lib/basketball/opp-store.js";
 import {
   getTodaysGames,
   findGameForTeamAbbr,
@@ -232,6 +233,9 @@ export async function gatherGroundTruth({ player, propType, line, teamAbbrHint =
   // Splits and opponent defense use regular season — playoff samples are too
   // small to be a stable baseline. Same logic as Rule 5a road deduction.
   const opponentSide = opponentFor(game, info.team_abbr, { league });
+  // SHADOW (opponent-factor model): started here so it overlaps the fetches
+  // below; attached to ground truth + logged, never read by a rule.
+  const oppFactorP = getOppFactor({ league, playerId, team: info.team_abbr, opponent: opponentSide?.abbr, propType });
   // Stage 4b — the player's own game side (whichever isn't the opponent), used
   // to locate own-team injuries for ppg enrichment (revives mechanism 2).
   const playerSide = (opponentSide && game.home && game.away)
@@ -342,6 +346,8 @@ export async function gatherGroundTruth({ player, propType, line, teamAbbrHint =
     h2h,
     extendedGames,
   });
+  if (groundTruth) groundTruth.opp_factor = await oppFactorP;
+  trace.opp_factor = groundTruth?.opp_factor ? "shadow" : "missing";
 
    return { groundTruth, missing, trace, playerInfo };
  }

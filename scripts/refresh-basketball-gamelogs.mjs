@@ -60,8 +60,13 @@ async function get(endpoint, params) {
 
 const gameLog = (season, who) => get("leaguegamelog", { Counter: 0, Direction: "ASC", PlayerOrTeam: who, Season: season, SeasonType: "Regular Season", Sorter: "DATE" });
 
-function serialize(season, fetchedAt, players, teamGames, rows) {
-  const own = Object.fromEntries([...new Set(rows.map((r) => r.player_id))].map((id) => [id, players[id] ?? null]));
+function serialize(season, fetchedAt, players, teamGames, unsortedRows) {
+  // stats.nba.com returns rows in a different order on every call; sort so
+  // the snapshot is reproducible and an unchanged season is byte-identical.
+  const cmp = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+  const rows = [...unsortedRows].sort((a, b) => cmp(a.game_id, b.game_id) || cmp(a.team, b.team) || a.player_id - b.player_id);
+  teamGames = [...teamGames].sort((a, b) => cmp(a.game_id, b.game_id) || cmp(a.team, b.team));
+  const own = Object.fromEntries([...new Set(rows.map((r) => r.player_id))].sort((a, b) => a - b).map((id) => [id, players[id] ?? null]));
   const slim = rows.map(({ date, opponent, home, ...r }) => r);
   return [
     `{"league":${JSON.stringify(LEAGUE)},"season":${JSON.stringify(season)},"fetched_at":${JSON.stringify(fetchedAt)},`,
@@ -106,6 +111,12 @@ async function main() {
   if (bad) throw new Error(`${bad} validation problems — nothing written`);
   await fs.mkdir(OUT_DIR, { recursive: true });
   for (const [season, text] of Object.entries(files)) {
+    // Skip identical content (only fetched_at would change) so finished
+    // seasons and the off-season don't churn the snapshot every day.
+    // (CRLF-normalised: git checks the snapshots out with Windows endings.)
+    const body = (t) => t.replace(/\r\n/g, "\n").replace(/"fetched_at":"[^"]*",/, "");
+    const old = await fs.readFile(outPath(season), "utf8").catch(() => null);
+    if (old && body(old) === body(text)) { console.log(`Unchanged ${path.relative(ROOT, outPath(season))}`); continue; }
     await fs.writeFile(outPath(season), text);
     console.log(`Wrote ${path.relative(ROOT, outPath(season))} (${(Buffer.byteLength(text) / 1e6).toFixed(1)} MB)`);
   }
