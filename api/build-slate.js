@@ -24,7 +24,7 @@ import { ALL_ODDS_TYPES } from "./_lib/select-lines.js";
 import { lookupMarket, setOdds } from "./_lib/odds.js";
 import { readOdds } from "./_lib/odds-store.js";
 import { buildSlate } from "./_lib/slate-builder.js";
-import { logSlateLegs, logEplVerdicts, logNflVerdicts } from "./_lib/verdict-logger.js";
+import { logSlateLegs, logEplVerdicts, logNflVerdicts, flushVerdictLogs } from "./_lib/verdict-logger.js";
 import { collectEplCandidates } from "./_lib/epl/slate.js";
 import { collectNflCandidates } from "./_lib/nfl/slate.js";
 import { randomUUID } from "node:crypto";
@@ -106,7 +106,9 @@ export function collectMarketCandidates(linesData, { league = null, allowedLeagu
 
 export async function POST(req) {
   const reqId = randomUUID().slice(0, 8);
-  return runWithRequestContext({ reqId }, () => handlePost(req, reqId));
+  // Flush before returning: a frozen function drops in-flight log events.
+  try { return await runWithRequestContext({ reqId }, () => handlePost(req, reqId)); }
+  finally { await flushVerdictLogs(); }
 }
 
 async function handlePost(req, reqId) {

@@ -444,14 +444,32 @@ function ingest(token, event) {
 }
 
 // Ship one or many events in a single ingest POST (Axiom accepts an array).
+// In-flight ingest requests. Callers never await an ingest, but a serverless
+// function can be frozen as soon as its response is returned, killing any
+// request still in flight — a production analyze-all on 2026-10-19 landed 7
+// of 24 verdicts (the late engine verdicts were lost). Handlers await
+// flushVerdictLogs() before returning so every event reaches Axiom.
+const pending = new Set();
+
+/** Wait (at most maxMs) for every in-flight ingest to settle. Never throws. */
+export async function flushVerdictLogs(maxMs = TIMEOUT_MS) {
+  if (!pending.size) return;
+  let timer;
+  await Promise.race([
+    Promise.allSettled([...pending]),
+    new Promise((resolve) => { timer = setTimeout(resolve, maxMs); }),
+  ]);
+  clearTimeout(timer);
+}
+
 function ingestMany(token, events) {
   if (!events || !events.length) return;
   const dataset = process.env.AXIOM_DATASET || "props_verdict";
-  // Dangling promise on purpose — do NOT await. Catch network errors so
-  // they never escape as unhandled rejections; surface non-2xx responses
-  // (bad token, missing dataset) as warnings so misconfiguration doesn't
-  // silently drop events.
-  fetch(`${INGEST_URL_BASE}/${encodeURIComponent(dataset)}/ingest`, {
+  // Not awaited here (handlers flush once, before responding). Catch network
+  // errors so they never escape as unhandled rejections; surface non-2xx
+  // responses (bad token, missing dataset) as warnings so misconfiguration
+  // doesn't silently drop events.
+  const p = fetch(`${INGEST_URL_BASE}/${encodeURIComponent(dataset)}/ingest`, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${token}`,
@@ -469,6 +487,8 @@ function ingestMany(token, events) {
     .catch((err) => {
       console.warn(`[verdict-logger] axiom ingest failed: ${err.message}`);
     });
+  pending.add(p);
+  p.finally(() => pending.delete(p));
 }
 
 function canonicalStat(propType) {

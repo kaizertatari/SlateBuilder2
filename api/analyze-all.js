@@ -19,7 +19,8 @@ import { applyEngine } from "./_lib/engine.js";
 import { selectLinesForStat, ALL_ODDS_TYPES } from "./_lib/select-lines.js";
 import { setOdds } from "./_lib/odds.js";
 import { readOdds } from "./_lib/odds-store.js";
-import { logVerdict } from "./_lib/verdict-logger.js";
+import { logVerdict, flushVerdictLogs } from "./_lib/verdict-logger.js";
+import { getOppFactor } from "./_lib/basketball/opp-store.js";
 import { analyzeEplPlayer } from "./_lib/epl/analyze.js";
 import { readEplLines } from "./_lib/epl/store.js";
 import { analyzeNflPlayer } from "./_lib/nfl/analyze.js";
@@ -89,7 +90,9 @@ const MAX_LINES = parseInt(process.env.MAX_LINES_PER_PLAYER || "60", 10);
 
 export async function POST(req) {
   const reqId = randomUUID().slice(0, 8);
-  return runWithRequestContext({ reqId }, () => handlePost(req, reqId));
+  // Flush before returning: a frozen function drops in-flight log events.
+  try { return await runWithRequestContext({ reqId }, () => handlePost(req, reqId)); }
+  finally { await flushVerdictLogs(); }
 }
 
 async function handlePost(req, reqId) {
@@ -406,6 +409,11 @@ async function handlePost(req, reqId) {
         prop_type: task.propType,
         line: task.line,
       };
+      // SHADOW opponent factor is prop-specific (PRA ≠ Assists) — recompute
+      // per task instead of inheriting the first task's from sharedGroundTruth.
+      if (sharedGroundTruth.opp_ctx) {
+        taskGroundTruth.opp_factor = await getOppFactor({ ...sharedGroundTruth.opp_ctx, propType: task.propType });
+      }
       const taskStartedAt = Date.now();
 
       // PRE-FILTER: the mechanical framework hard-gates short-circuit

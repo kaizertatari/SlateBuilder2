@@ -29,7 +29,7 @@ import { preFilterMechanical } from "./_lib/verdict-verifier.js";
 import { applyEngine } from "./_lib/engine.js";
 import { setOdds } from "./_lib/odds.js";
 import { readOdds } from "./_lib/odds-store.js";
-import { logVerdict } from "./_lib/verdict-logger.js";
+import { logVerdict, flushVerdictLogs } from "./_lib/verdict-logger.js";
 import { randomUUID } from "node:crypto";
 import * as bbref from "./_lib/bbref.js";
 import {
@@ -235,7 +235,8 @@ export async function gatherGroundTruth({ player, propType, line, teamAbbrHint =
   const opponentSide = opponentFor(game, info.team_abbr, { league });
   // SHADOW (opponent-factor model): started here so it overlaps the fetches
   // below; attached to ground truth + logged, never read by a rule.
-  const oppFactorP = getOppFactor({ league, playerId, team: info.team_abbr, opponent: opponentSide?.abbr, propType });
+  const oppCtx = { league, playerId, team: info.team_abbr, opponent: opponentSide?.abbr };
+  const oppFactorP = getOppFactor({ ...oppCtx, propType });
   // Stage 4b — the player's own game side (whichever isn't the opponent), used
   // to locate own-team injuries for ppg enrichment (revives mechanism 2).
   const playerSide = (opponentSide && game.home && game.away)
@@ -346,7 +347,12 @@ export async function gatherGroundTruth({ player, propType, line, teamAbbrHint =
     h2h,
     extendedGames,
   });
-  if (groundTruth) groundTruth.opp_factor = await oppFactorP;
+  if (groundTruth) {
+    groundTruth.opp_factor = await oppFactorP;
+    // analyze-all reuses this ground truth across props; it recomputes the
+    // prop-specific factor from this context.
+    groundTruth.opp_ctx = oppCtx;
+  }
   trace.opp_factor = groundTruth?.opp_factor ? "shadow" : "missing";
 
    return { groundTruth, missing, trace, playerInfo };
@@ -420,7 +426,9 @@ export async function gatherGroundTruthWithRetry(
 
  export async function POST(req) {
   const reqId = randomUUID().slice(0, 8);
-  return runWithRequestContext({ reqId }, () => handlePost(req));
+  // Flush before returning: a frozen function drops in-flight log events.
+  try { return await runWithRequestContext({ reqId }, () => handlePost(req)); }
+  finally { await flushVerdictLogs(); }
 }
 
 /**
