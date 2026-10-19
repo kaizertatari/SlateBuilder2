@@ -322,6 +322,23 @@ It backtests rest-of-season DRtg error for every k and prints the best;
 change the constant only when the gain is > ~0.03. Set to 15 on 2026-10-18
 (k=15 RMSE 2.49 vs k=10 2.54, this-season-only 3.68, last-season-only 2.90).
 
+## Refresh basketball game logs (opponent-factor model input)
+
+`npm run refresh-basketball-gamelogs` (NBA: last two seasons + current) and
+`npm run refresh-basketball-gamelogs:wnba` (WNBA: last + current). Run from
+home. Writes one file per league-season to `data/basketball/` (e.g.
+`nba-2025-26.json`): every player-game and team-game box score
+(stats.nba.com / stats.wnba.com `leaguegamelog`), possessions per game, and
+each player's listed position + group (G / W = G-F, F-G, F / B = F-C, C-F, C)
+from `playerindex?Historical=1`. Finished seasons never change; seasons with
+no games yet are skipped.
+
+Nothing is written unless every season validates: player rows sum exactly to
+the team box score for points, rebounds, assists, FGA, 3PA, FTA, steals and
+blocks (turnovers may fall short — team turnovers aren't credited to a
+player), every game has both teams, and < 1% of minutes lack a position.
+Not scheduled yet; the opponent-factor model (step 2) will read these.
+
 ## Refresh EPL data (Premier League model, this season)
 
 `npm run refresh-epl-data` — after each matchweek (and before any EPL
