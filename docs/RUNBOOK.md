@@ -14,7 +14,7 @@ home-bridge daemon that the deployed UI forwards to.
 
 | Task | Schedule | What it runs |
 |---|---|---|
-| `grade-outcomes-daily` | 09:00 local (re-enabled 2026-10-13; was disabled 06-21 → 10-13 and still pointed at the old `Slate Builder` checkout) | `conhost.exe --headless scripts/grade-outcomes-task.bat` → `grade-outcomes.mjs` (basketball verdicts ↔ ESPN actuals, emits outcome events), then `export-graded.mjs` (copies every graded verdict↔outcome pair, all leagues incl. EPL graded at 07:00 by `EPL Daily`, into `data/graded/<league>/<YYYY-MM>.jsonl`). Log `logs\grade.log`. ⚠️ Axiom retention is 30 days and a join needs both events alive, so `data/graded/` is the durable record — commit it with snapshot refreshes. |
+| `grade-outcomes-daily` | 09:00 local (re-enabled 2026-10-13; was disabled 06-21 → 10-13 and still pointed at the old `Slate Builder` checkout) | `conhost.exe --headless scripts/grade-outcomes-task.bat` → `grade-outcomes.mjs` (basketball verdicts ↔ ESPN actuals, emits outcome events), then `export-graded.mjs` (copies every graded verdict↔outcome pair, all leagues incl. EPL graded at 07:00 by `EPL Daily`, into `data/graded/<league>/<YYYY-MM>.jsonl`). Log `logs\grade.log`. Then (shadow, never affects the exit code) refreshes the NBA + WNBA game logs and rebuilds + `--push`es the basketball opponent-factor artifacts (log `logs\opp-model.log`; see "Refresh basketball game logs"). ⚠️ Axiom retention is 30 days and a join needs both events alive, so `data/graded/` is the durable record — commit it with snapshot refreshes. |
 | `PrizePicks Refresh Lines` | 00:00 / 06:00 / 12:00 / 18:00 | PrizePicks lines scrape → `data/prizepicks-lines.json` + blob |
 | `PrizePicks Refresh Odds` | 00:10 / 06:10 / 12:10 / 18:10 | `scripts/refresh-odds-task.bat` → DK+FD no-vig consensus → `data/odds.json` + blob (+10 min after lines so they stay in sync) |
 | `Funnel Watchdog` | every 15 min | `scripts/funnel-watchdog-task.bat` → self-heals the Tailscale funnel zombie (see below) |
@@ -321,6 +321,40 @@ Re-fit `DEF_BLEND_K` each preseason (suggest-only, from home):
 It backtests rest-of-season DRtg error for every k and prints the best;
 change the constant only when the gain is > ~0.03. Set to 15 on 2026-10-18
 (k=15 RMSE 2.49 vs k=10 2.54, this-season-only 3.68, last-season-only 2.90).
+
+## Refresh basketball game logs (opponent-factor model input)
+
+`npm run refresh-basketball-gamelogs` (NBA: last two seasons + current) and
+`npm run refresh-basketball-gamelogs:wnba` (WNBA: last + current). Run from
+home. Writes one file per league-season to `data/basketball/` (e.g.
+`nba-2025-26.json`): every player-game and team-game box score
+(stats.nba.com / stats.wnba.com `leaguegamelog`), possessions per game, and
+each player's listed position + group (G / W = G-F, F-G, F / B = F-C, C-F, C)
+from `playerindex?Historical=1`. Finished seasons never change; seasons with
+no games yet are skipped.
+
+Nothing is written unless every season validates: player rows sum exactly to
+the team box score for points, rebounds, assists, FGA, 3PA, FTA, steals and
+blocks (turnovers may fall short — team turnovers aren't credited to a
+player), every game has both teams, and < 1% of minutes lack a position.
+An unchanged season (rows sorted, only `fetched_at` new) is not rewritten.
+
+**Opponent-factor model (SHADOW).** `node scripts/build-basketball-opponent.mjs
+--league NBA|WNBA [--push]` fits `api/_lib/basketball/opponent.js` on these
+snapshots and writes `data/<league>-opp-model.json` (+ the Blob copy with
+`--push`, read by `api/_lib/basketball/opp-store.js`). NBA = current season on
+top of last season's fit (preseason: last season alone, weight 0); WNBA =
+current season only. Both refresh + build run daily at the end of
+`grade-outcomes-task.bat` (log `logs\opp-model.log`).
+
+Every basketball verdict logs `opp_factor` (defense effect on that prop,
+weighted by the player's stat mix), `opp_pace_factor`, `opp_adj_mean` (the
+projection mean × both), `opp_games`, `opp_weight`, `opp_fitted_at`. **No
+rule reads them** — they're there to be tested against graded lines (does
+the factor predict actual − line?) after ~2 weeks of NBA games, before any
+tier uses them. Backtest: `node scripts/backtest-basketball-opponent.mjs
+--league NBA [--grid]` (team layer: NBA mean log loss 0.66821 → 0.66579;
+position layer adds nothing, off).
 
 ## Refresh EPL data (Premier League model, this season)
 
