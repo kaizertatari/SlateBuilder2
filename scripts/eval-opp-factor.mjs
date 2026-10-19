@@ -117,7 +117,6 @@ for (const r of rows) {
 }
 
 console.log(`${LEAGUE} graded lines settled before tip: ${rows.length}; with a factor: ${items.length} (logged ${srcCount.logged}, backfilled ${srcCount.backfill}); without: ${noFactor}${BACKFILL ? "" : " (try --backfill for pre-shadow history)"}`);
-if (!items.length) process.exit(0);
 
 // 1) Over rate by factor third
 for (const [name, set] of [["standard lines", items.filter((i) => i.type === "standard")], ["all line types", items]]) {
@@ -142,6 +141,24 @@ for (const [name, set] of [["standard lines", priced.filter((i) => i.type === "s
     const ci = bootstrapDays(set, (it) => ll(it, s) - ll(it, 0));
     console.log(`  mean × factor^${s.toFixed(1)}    ${(base + d).toFixed(4)}   change ${d >= 0 ? "+" : ""}${d.toFixed(4)}  [95% ${ci.lo >= 0 ? "+" : ""}${ci.lo.toFixed(4)}, ${ci.hi >= 0 ? "+" : ""}${ci.hi.toFixed(4)}] over ${ci.days} game days`);
     if (name === "standard lines" && s === 1) verdict.push({ n: set.length, d, hi: ci.hi });
+  }
+}
+
+// 3) Calibrated distribution (probability pipeline step 1, logged as
+//    dist_p_over) vs the engine's Normal(mean, fixed σ) model_prob on the
+//    same graded lines — only rows where both were logged.
+{
+  const both = rows.filter((r) => typeof r.dist_p_over === "number" && typeof r.model_prob === "number").map((r) => ({
+    day: String(r.game_start_time).slice(0, 10), type: r.odds_type || "standard",
+    over: r.outcome.actual_value > Number(r.line) ? 1 : 0, eng: r.model_prob, dist: r.dist_p_over,
+  }));
+  const ll = (p, y) => { const q = clamp(p); return -(y ? Math.log(q) : Math.log(1 - q)); };
+  console.log(`\nCalibrated distribution vs engine (logged on the same verdicts): ${both.length} graded lines`);
+  for (const [name, set] of [["standard", both.filter((i) => i.type === "standard")], ["all", both]]) {
+    if (set.length < 20) { console.log(`  ${name}: ${set.length} — too few yet`); continue; }
+    const d = avg(set.map((it) => ll(it.dist, it.over) - ll(it.eng, it.over)));
+    const ci = bootstrapDays(set, (it) => ll(it.dist, it.over) - ll(it.eng, it.over));
+    console.log(`  ${name.padEnd(9)} n=${String(set.length).padStart(4)}  engine ${avg(set.map((it) => ll(it.eng, it.over))).toFixed(4)}  calibrated ${avg(set.map((it) => ll(it.dist, it.over))).toFixed(4)}  change ${d >= 0 ? "+" : ""}${d.toFixed(4)} [95% ${ci.lo.toFixed(4)}, ${ci.hi.toFixed(4)}] over ${ci.days} days`);
   }
 }
 

@@ -16,6 +16,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { fitOpponentModel, compactModel } from "../api/_lib/basketball/opponent.js";
+import { fitDistParams } from "../api/_lib/basketball/dist.js";
 import { currentSeason } from "../api/_lib/nba-stats.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -40,10 +41,15 @@ async function main() {
   if (!cur.rows.length && !prior) throw new Error(`${LEAGUE}: no ${season} games and no prior — nothing to fit`);
   const model = fitOpponentModel(cur, { prior });
   const dataThrough = cur.team_games.reduce((m, t) => (t.date > m ? t.date : m), "") || null;
+  // Calibrated distribution (basketball probability pipeline, step 1 —
+  // SHADOW): fit walk-forward on the last completed season, as backtested.
+  const distSnap = await load(priorSeason);
+  const dist = distSnap ? { season: priorSeason, ...fitDistParams(distSnap) } : null;
   const out = compactModel(model, {
     league: LEAGUE, season, prior_season: prior ? priorSeason : null,
     fitted_at: new Date().toISOString(), data_through: dataThrough,
     current_games: cur.team_games.length / 2,
+    dist,
   });
   const file = path.join(ROOT, "data", `${LEAGUE.toLowerCase()}-opp-model.json`);
   await fs.writeFile(file, JSON.stringify(out) + "\n");

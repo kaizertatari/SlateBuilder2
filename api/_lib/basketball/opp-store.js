@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 import { createBlobStore } from "../blob-store.js";
 import * as cache from "../cache.js";
 import { opponentFactor } from "./opponent.js";
+import { PROP_KEY } from "./dist.js";
 import { toEspnAbbr, toNbaAbbr } from "../espn.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -51,7 +52,12 @@ export async function getOppFactor({ league, playerId, team, opponent, propType 
     const f = opponentFactor(model, {
       playerId, team: statsAbbr(team, league), opponent: statsAbbr(opponent, league), prop: propType,
     });
-    return f ? { ...f, fitted_at: model.fitted_at ?? null, data_through: model.data_through ?? null } : null;
+    if (!f) return null;
+    // Calibrated-distribution parameters for this prop (probability
+    // pipeline step 1, SHADOW) — the logger prices the line with them.
+    const key = PROP_KEY[String(propType ?? "").replace(/\s+(OVER|UNDER)$/i, "").trim()];
+    const dist = key && model.dist?.r?.[key] > 0 ? { key, r: model.dist.r[key], c: model.dist.c[key], season: model.dist.season } : null;
+    return { ...f, fitted_at: model.fitted_at ?? null, data_through: model.data_through ?? null, dist };
   } catch {
     return null;
   }

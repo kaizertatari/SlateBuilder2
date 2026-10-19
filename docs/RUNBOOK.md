@@ -357,6 +357,17 @@ tier uses them. **Gate:** `node scripts/eval-opp-factor.mjs --league NBA`
 rate by factor third + log loss of each graded line re-priced at
 mean × factor vs as run, with a game-day bootstrap interval; ADOPT when ≥ 150
 priced standard lines and the change is < 0 with its interval below 0.
+**Calibrated distribution (probability pipeline step 1, SHADOW).** The same
+artifact carries `dist` — per-prop NB dispersion `r` and mean correction `c`
+fitted walk-forward on the last completed season (`api/_lib/basketball/dist.js`
+`fitDistParams`). Every verdict with an engine mean also logs `dist_p_over` /
+`dist_dir_prob` / `dist_mean`: the same mean and line priced as
+NB(mean × matchup × c, r) instead of the engine's Normal(mean, one fixed σ per
+stat). `eval-opp-factor.mjs` section 3 compares them on graded lines.
+Backtest: `node scripts/backtest-basketball-dist.mjs --league NBA [--graded]`
+(NBA main-line log loss 0.6902 → 0.6852; real graded WNBA lines with the
+engine's own mean 0.8236 → 0.7510).
+
 Backtest: `node scripts/backtest-basketball-opponent.mjs
 --league NBA [--grid]` (team layer: NBA mean log loss 0.66821 → 0.66579;
 position layer adds nothing, off).

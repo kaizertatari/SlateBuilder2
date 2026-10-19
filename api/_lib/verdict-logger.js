@@ -20,6 +20,7 @@
 
 import { getReqId } from "./request-context.js";
 import { PROP_TO_FIELD } from "./prop-types.js";
+import { calibratedProbOver } from "./basketball/dist.js";
 
 const INGEST_URL_BASE = "https://api.axiom.co/v1/datasets";
 const TIMEOUT_MS = 5000;
@@ -210,6 +211,12 @@ export function logVerdict({
     opp_adj_mean: (groundTruth?.opp_factor && typeof result?.projection?.mean === "number")
       ? +(result.projection.mean * groundTruth.opp_factor.opp_factor * groundTruth.opp_factor.pace_factor).toFixed(3)
       : null,
+    // SHADOW basketball probability pipeline step 1 (api/_lib/basketball/
+    // dist.js): the same engine mean and line priced with the calibrated
+    // negative binomial (× matchup × per-stat mean correction c) instead of
+    // Normal(mean, fixed σ). Compare dist_p_over with model_prob on graded
+    // lines before anything uses it.
+    ...distFields(groundTruth?.opp_factor, result?.projection?.mean, input?.line, direction),
     primary_defender: groundTruth?.opponent_defense?.primary_defender?.player ?? null,
     is_playoff: !!groundTruth?.series,
     series_round: groundTruth?.series?.round ?? null,
@@ -489,6 +496,24 @@ function ingestMany(token, events) {
     });
   pending.add(p);
   p.finally(() => pending.delete(p));
+}
+
+// Shadow calibrated-distribution fields (see logVerdict). All null when the
+// verdict has no projection mean, no line, or no fitted parameters.
+function distFields(opp, mean, line, direction) {
+  const d = opp?.dist;
+  const res = d ? calibratedProbOver({
+    params: { r: { [d.key]: d.r }, c: { [d.key]: d.c } }, key: d.key, mean,
+    factor: (opp.opp_factor ?? 1) * (opp.pace_factor ?? 1), line: typeof line === "number" ? line : Number(line),
+  }) : null;
+  if (!res) return { dist_p_over: null, dist_dir_prob: null, dist_mean: null, dist_season: null };
+  const p = +res.p_over.toFixed(4);
+  return {
+    dist_p_over: p,
+    dist_dir_prob: direction === "UNDER" ? +(1 - p).toFixed(4) : p,
+    dist_mean: +res.mean.toFixed(3),
+    dist_season: d.season ?? null,
+  };
 }
 
 function canonicalStat(propType) {
