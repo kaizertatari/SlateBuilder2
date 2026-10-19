@@ -16,6 +16,12 @@
 
 import { blendProb, tierForEdge } from "../pick-policy.js";
 
+// Shown on every basketball ENGINE pick on a standard line (user decision
+// 2026-10-19: keep standard picks, warn; goblins left unchanged). Remove when
+// the pipeline replaces the engine's tiers.
+export const ENGINE_STANDARD_WARNING =
+  "⚠️ Unvalidated: basketball engine picks on standard lines hit 45% vs the 57.7% break-even on 51 graded WNBA picks (6 game days, as of 2026-10-19). A probability pipeline is being validated in shadow until ~Nov 3.";
+
 export const BASKETBALL_POLICY = {
   version: 1,
   blend: { model: 0.5, market: 0.5 },

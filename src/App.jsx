@@ -1975,6 +1975,7 @@ export default function App() {
                         <div style={{ marginBottom: 4, fontWeight: "bold", color: style.color }}>
                           #{i + 1} {r.player} - {r.prop_type} {r.verdict} ({r.line}) - {r.tier ? `${r.tier}-TIER` : "—"} {r.confidence}%
                         </div>
+                        {r.warning && <div style={{ color: "#FFB020", marginBottom: 4 }}>{r.warning}</div>}
                         <div style={{ color: "#8ab0cc" }}>{r.justification}</div>
                       </div>
                     );
