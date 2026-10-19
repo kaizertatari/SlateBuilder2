@@ -162,6 +162,41 @@ for (const [name, set] of [["standard lines", priced.filter((i) => i.type === "s
   }
 }
 
+// 4) Probability pipeline (step 2, logged as pipe_*): blended P vs the
+//    engine, the market weight refit on these lines, and — the decision
+//    metric — how the pipeline's WOULD-BE picks did against break-even.
+{
+  const logit = (p) => Math.log(p / (1 - p)), sig = (x) => 1 / (1 + Math.exp(-x));
+  const ll = (p, y) => { const q = clamp(p); return -(y ? Math.log(q) : Math.log(1 - q)); };
+  const P = rows.filter((r) => typeof r.pipe_prob === "number").map((r) => {
+    const over = r.outcome.actual_value > Number(r.line) ? 1 : 0;
+    const hit = r.direction === "UNDER" ? 1 - over : over;
+    return {
+      day: String(r.game_start_time).slice(0, 10), type: r.odds_type || "standard", over, hit, tier: r.pipe_tier,
+      be: r.pipe_break_even, pipeDir: r.pipe_prob, dist: r.dist_p_over, mkt: r.pipe_market_over,
+      engDir: typeof r.model_dir_prob === "number" ? r.model_dir_prob : null,
+    };
+  });
+  console.log(`\nProbability pipeline (pipe_*): ${P.length} graded lines`);
+  const withEng = P.filter((x) => x.engDir != null);
+  if (withEng.length >= 20) {
+    const d = avg(withEng.map((x) => ll(x.pipeDir, x.hit) - ll(x.engDir, x.hit)));
+    const ci = bootstrapDays(withEng, (x) => ll(x.pipeDir, x.hit) - ll(x.engDir, x.hit));
+    console.log(`  vs engine (bet side): pipeline ${avg(withEng.map((x) => ll(x.pipeDir, x.hit))).toFixed(4)}  engine ${avg(withEng.map((x) => ll(x.engDir, x.hit))).toFixed(4)}  change ${d >= 0 ? "+" : ""}${d.toFixed(4)} [95% ${ci.lo.toFixed(4)}, ${ci.hi.toFixed(4)}] n=${withEng.length}`);
+  } else console.log(`  vs engine: ${withEng.length} lines — too few yet`);
+  const mk = P.filter((x) => typeof x.mkt === "number" && typeof x.dist === "number");
+  if (mk.length >= 20) {
+    console.log(`  market-weight refit on ${mk.length} lines with a market (log loss of P(over); policy uses 0.5):`);
+    console.log("   " + [0, 0.25, 0.5, 0.6, 0.7, 0.8, 1].map((w) => `${w}→${avg(mk.map((x) => ll(sig((1 - w) * logit(clamp(x.dist)) + w * logit(clamp(x.mkt))), x.over))).toFixed(4)}`).join("  "));
+  }
+  for (const [name, set] of [["standard", P.filter((x) => x.type === "standard")], ["all", P]]) {
+    const picks = set.filter((x) => x.tier === "A" || x.tier === "B");
+    if (!picks.length) { console.log(`  would-be picks (${name}): none yet`); continue; }
+    const hit = avg(picks.map((x) => x.hit)), be = avg(picks.map((x) => x.be)), pred = avg(picks.map((x) => x.pipeDir));
+    console.log(`  would-be picks (${name}): n=${picks.length}  hit ${(100 * hit).toFixed(1)}%  predicted ${(100 * pred).toFixed(1)}%  break-even ${(100 * be).toFixed(1)}%  ${picks.length >= MIN_STANDARD && hit > be ? "✓" : "✗"} (need ≥ ${MIN_STANDARD} and hit > break-even)`);
+  }
+}
+
 const v = verdict[0];
 console.log("\nGate (standard lines):");
 if (!v) console.log("  ✗ not enough priced standard lines yet — keep shadowing");

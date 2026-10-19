@@ -364,6 +364,18 @@ fitted walk-forward on the last completed season (`api/_lib/basketball/dist.js`
 `dist_dir_prob` / `dist_mean`: the same mean and line priced as
 NB(mean × matchup × c, r) instead of the engine's Normal(mean, one fixed σ per
 stat). `eval-opp-factor.mjs` section 3 compares them on graded lines.
+Pre-filtered SKIPs (≈70% of lines, never reach the engine) get the engine's
+baseline mean via `projectProb` (`dist_mean_src: "baseline"` vs `"engine"`),
+so the pipeline prices every line.
+
+**Pipeline verdict (step 2, SHADOW).** `api/_lib/basketball/policy.js`
+blends `dist_p_over` 50/50 in log-odds with the de-vigged market at the line
+(`result.market.no_vig_prob`) and tiers it on the shared pick-policy contract
+(edge over line-type break-even: A ≥ 5 pts, B ≥ 1.5; no S; goblin/demon
+capped at B; no market = model-only, never tiered). Logged as `pipe_prob`
+(P of the bet side), `pipe_tier`, `pipe_edge`, `pipe_break_even`,
+`pipe_model_only`, `pipe_market_over`. `eval-opp-factor.mjs` section 4: pipeline
+vs engine log loss, market-weight refit, and would-be picks vs break-even.
 Backtest: `node scripts/backtest-basketball-dist.mjs --league NBA [--graded]`
 (NBA main-line log loss 0.6902 → 0.6852; real graded WNBA lines with the
 engine's own mean 0.8236 → 0.7510).
