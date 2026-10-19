@@ -374,7 +374,16 @@ blends `dist_p_over` 50/50 in log-odds with the de-vigged market at the line
 (edge over line-type break-even: A ≥ 5 pts, B ≥ 1.5; no S; goblin/demon
 capped at B; no market = model-only, never tiered). Logged as `pipe_prob`
 (P of the bet side), `pipe_tier`, `pipe_edge`, `pipe_break_even`,
-`pipe_model_only`, `pipe_market_over`. `eval-opp-factor.mjs` section 4: pipeline
+`pipe_model_only`, `pipe_market_over`, `pipe_market_src` (`engine` = from
+rule-market-edge; `lookup` = same lookup for pre-filtered lines the engine
+never saw). A second variant, `market_over_nb` / `pipe_nb_prob` /
+`pipe_nb_tier` / `pipe_nb_edge`, moves each book's price to the PrizePicks
+line with the fitted NB (`dist.js` `nbShiftOver`) instead of odds.js's
+fixed-σ normal — goblins/demons sit 2–7 points from the book line.
+`node scripts/backtest-market-shift.mjs` (graded lines with a gap): NB beat
+normal in every slice (all 0.7449 → 0.7191) but the market-covered graded
+sample is mostly ONE night (2026-09-24), so both stay logged until graded
+NBA lines decide. `eval-opp-factor.mjs` section 4: pipeline
 vs engine log loss, market-weight refit, and would-be picks vs break-even.
 Backtest: `node scripts/backtest-basketball-dist.mjs --league NBA [--graded]`
 (NBA main-line log loss 0.6902 → 0.6852; real graded WNBA lines with the
