@@ -1,17 +1,10 @@
 {
- "fetched_at": "2026-10-19T22:18:42.752Z",
+ "fetched_at": "2026-10-20T14:04:36.476Z",
  "sources": [
   "draftkings",
   "fanduel"
  ],
  "games": {
-  "WAS@SF": {
-   "home": "SF",
-   "away": "WAS",
-   "start_time": "2026-10-20T00:15:00.0000000Z",
-   "total": 52.5,
-   "home_spread": -7.5
-  },
   "NE@CHI": {
    "home": "CHI",
    "away": "NE",
@@ -24,7 +17,7 @@
    "away": "PIT",
    "start_time": "2026-10-25T13:30:00.0000000Z",
    "total": 44.5,
-   "home_spread": 3
+   "home_spread": 3.5
   },
   "TB@CAR": {
    "home": "CAR",
@@ -38,28 +31,28 @@
    "away": "NYG",
    "start_time": "2026-10-25T17:00:00.0000000Z",
    "total": 42.5,
-   "home_spread": -9.5
+   "home_spread": -10
   },
   "SF@ATL": {
    "home": "ATL",
    "away": "SF",
    "start_time": "2026-10-25T17:00:00.0000000Z",
    "total": 50.5,
-   "home_spread": 4.5
+   "home_spread": 3.5
   },
   "CIN@BAL": {
    "home": "BAL",
    "away": "CIN",
    "start_time": "2026-10-25T17:00:00.0000000Z",
    "total": 51.5,
-   "home_spread": -2.5
+   "home_spread": -3
   },
   "IND@MIN": {
    "home": "MIN",
    "away": "IND",
    "start_time": "2026-10-25T17:00:00.0000000Z",
    "total": 41.5,
-   "home_spread": -5.5
+   "home_spread": -6.5
   },
   "MIA@NYJ": {
    "home": "NYJ",
@@ -86,7 +79,7 @@
    "home": "DET",
    "away": "GB",
    "start_time": "2026-10-25T20:25:00.0000000Z",
-   "total": 52.5,
+   "total": 53.5,
    "home_spread": -3
   },
   "LA@LV": {
@@ -112,380 +105,10 @@
   }
  },
  "by_player": {
-  "Brock Purdy": [
-   {
-    "stat": "pass_yds",
-    "line": 252.5,
-    "fair_over": 0.5,
-    "books": 1,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 252.5,
-      "over_american": -112,
-      "under_american": -112,
-      "fair_over": 0.5
-     },
-     {
-      "book": "fanduel",
-      "line": 249.5,
-      "over_american": -113,
-      "under_american": -113,
-      "fair_over": 0.5
-     }
-    ]
-   },
-   {
-    "stat": "pass_td",
-    "line": 2.5,
-    "fair_over": 0.4052,
-    "books": 2,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 2.5,
-      "over_american": 131,
-      "under_american": -167,
-      "fair_over": 0.409
-     },
-     {
-      "book": "fanduel",
-      "line": 2.5,
-      "over_american": 134,
-      "under_american": -176,
-      "fair_over": 0.4013
-     }
-    ]
-   },
-   {
-    "stat": "pass_att",
-    "line": 30.5,
-    "fair_over": 0.5042,
-    "books": 1,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 30.5,
-      "over_american": -115,
-      "under_american": -111,
-      "fair_over": 0.5042
-     }
-    ]
-   },
-   {
-    "stat": "completions",
-    "line": 21.5,
-    "fair_over": 0.464,
-    "books": 1,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 21.5,
-      "over_american": 103,
-      "under_american": -132,
-      "fair_over": 0.464
-     }
-    ]
-   },
-   {
-    "stat": "pass_int",
-    "line": 0.5,
-    "fair_over": 0.4351,
-    "books": 1,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 0.5,
-      "over_american": 117,
-      "under_american": -149,
-      "fair_over": 0.4351
-     }
-    ]
-   },
-   {
-    "stat": "pass_rush_yds",
-    "line": 276.5,
-    "fair_over": 0.4979,
-    "books": 1,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 276.5,
-      "over_american": -112,
-      "under_american": -114,
-      "fair_over": 0.4979
-     }
-    ]
-   },
-   {
-    "stat": "rush_yds",
-    "line": 19.5,
-    "fair_over": 0.5021,
-    "books": 1,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 19.5,
-      "over_american": -113,
-      "under_american": -111,
-      "fair_over": 0.5021
-     },
-     {
-      "book": "fanduel",
-      "line": 21.5,
-      "over_american": -113,
-      "under_american": -113,
-      "fair_over": 0.5
-     }
-    ]
-   },
-   {
-    "stat": "rush_att",
-    "line": 4.5,
-    "fair_over": 0.4431,
-    "books": 1,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 4.5,
-      "over_american": 113,
-      "under_american": -144,
-      "fair_over": 0.4431
-     }
-    ]
-   },
-   {
-    "stat": "longest_completion",
-    "line": 37.5,
-    "fair_over": 0.4938,
-    "books": 1,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 37.5,
-      "over_american": -111,
-      "under_american": -117,
-      "fair_over": 0.4938
-     }
-    ]
-   }
-  ],
-  "Jayden Daniels": [
-   {
-    "stat": "pass_yds",
-    "line": 210.5,
-    "fair_over": 0.5,
-    "books": 1,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 210.5,
-      "over_american": -112,
-      "under_american": -112,
-      "fair_over": 0.5
-     },
-     {
-      "book": "fanduel",
-      "line": 209.5,
-      "over_american": -113,
-      "under_american": -113,
-      "fair_over": 0.5
-     }
-    ]
-   },
-   {
-    "stat": "pass_td",
-    "line": 1.5,
-    "fair_over": 0.4292,
-    "books": 2,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 1.5,
-      "over_american": 111,
-      "under_american": -142,
-      "fair_over": 0.4468
-     },
-     {
-      "book": "fanduel",
-      "line": 1.5,
-      "over_american": 128,
-      "under_american": -168,
-      "fair_over": 0.4116
-     }
-    ]
-   },
-   {
-    "stat": "pass_att",
-    "line": 30.5,
-    "fair_over": 0.5125,
-    "books": 1,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 30.5,
-      "over_american": -119,
-      "under_american": -107,
-      "fair_over": 0.5125
-     }
-    ]
-   },
-   {
-    "stat": "completions",
-    "line": 19.5,
-    "fair_over": 0.4649,
-    "books": 1,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 19.5,
-      "over_american": 103,
-      "under_american": -131,
-      "fair_over": 0.4649
-     }
-    ]
-   },
-   {
-    "stat": "pass_int",
-    "line": 0.5,
-    "fair_over": 0.4038,
-    "books": 1,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 0.5,
-      "over_american": 134,
-      "under_american": -171,
-      "fair_over": 0.4038
-     }
-    ]
-   },
-   {
-    "stat": "pass_rush_yds",
-    "line": 255.5,
-    "fair_over": 0.499,
-    "books": 1,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 255.5,
-      "over_american": -112,
-      "under_american": -113,
-      "fair_over": 0.499
-     }
-    ]
-   },
-   {
-    "stat": "rush_yds",
-    "line": 40.5,
-    "fair_over": 0.4958,
-    "books": 1,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 40.5,
-      "over_american": -110,
-      "under_american": -114,
-      "fair_over": 0.4958
-     },
-     {
-      "book": "fanduel",
-      "line": 38.5,
-      "over_american": -113,
-      "under_american": -113,
-      "fair_over": 0.5
-     }
-    ]
-   },
-   {
-    "stat": "rush_att",
-    "line": 7.5,
-    "fair_over": 0.462,
-    "books": 1,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 7.5,
-      "over_american": 104,
-      "under_american": -133,
-      "fair_over": 0.462
-     }
-    ]
-   },
-   {
-    "stat": "longest_completion",
-    "line": 31.5,
-    "fair_over": 0.5082,
-    "books": 1,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 31.5,
-      "over_american": -118,
-      "under_american": -110,
-      "fair_over": 0.5082
-     }
-    ]
-   }
-  ],
   "Drake Maye": [
    {
     "stat": "pass_yds",
-    "line": 247.5,
+    "line": 249.5,
     "fair_over": 0.5021,
     "books": 1,
     "team": "NE",
@@ -494,14 +117,14 @@
     "quotes": [
      {
       "book": "draftkings",
-      "line": 247.5,
+      "line": 249.5,
       "over_american": -113,
       "under_american": -111,
       "fair_over": 0.5021
      },
      {
       "book": "fanduel",
-      "line": 244.5,
+      "line": 253.5,
       "over_american": -114,
       "under_american": -114,
       "fair_over": 0.5
@@ -511,7 +134,7 @@
    {
     "stat": "pass_td",
     "line": 1.5,
-    "fair_over": 0.5135,
+    "fair_over": 0.5103,
     "books": 2,
     "team": "NE",
     "game": "NE@CHI",
@@ -520,23 +143,23 @@
      {
       "book": "draftkings",
       "line": 1.5,
-      "over_american": -130,
-      "under_american": 102,
-      "fair_over": 0.5331
+      "over_american": -120,
+      "under_american": -106,
+      "fair_over": 0.5146
      },
      {
       "book": "fanduel",
       "line": 1.5,
-      "over_american": -112,
-      "under_american": -118,
-      "fair_over": 0.4939
+      "over_american": -118,
+      "under_american": -112,
+      "fair_over": 0.5061
      }
     ]
    },
    {
     "stat": "pass_att",
     "line": 31.5,
-    "fair_over": 0.4812,
+    "fair_over": 0.4803,
     "books": 1,
     "team": "NE",
     "game": "NE@CHI",
@@ -546,15 +169,15 @@
       "book": "draftkings",
       "line": 31.5,
       "over_american": -104,
-      "under_american": -122,
-      "fair_over": 0.4812
+      "under_american": -123,
+      "fair_over": 0.4803
      }
     ]
    },
    {
     "stat": "completions",
     "line": 20.5,
-    "fair_over": 0.5176,
+    "fair_over": 0.5268,
     "books": 1,
     "team": "NE",
     "game": "NE@CHI",
@@ -563,16 +186,16 @@
      {
       "book": "draftkings",
       "line": 20.5,
-      "over_american": -122,
-      "under_american": -105,
-      "fair_over": 0.5176
+      "over_american": -127,
+      "under_american": -101,
+      "fair_over": 0.5268
      }
     ]
    },
    {
     "stat": "pass_int",
     "line": 0.5,
-    "fair_over": 0.4782,
+    "fair_over": 0.469,
     "books": 1,
     "team": "NE",
     "game": "NE@CHI",
@@ -581,16 +204,16 @@
      {
       "book": "draftkings",
       "line": 0.5,
-      "over_american": -103,
-      "under_american": -124,
-      "fair_over": 0.4782
+      "over_american": 101,
+      "under_american": -129,
+      "fair_over": 0.469
      }
     ]
    },
    {
     "stat": "pass_rush_yds",
-    "line": 281.5,
-    "fair_over": 0.4979,
+    "line": 283.5,
+    "fair_over": 0.499,
     "books": 1,
     "team": "NE",
     "game": "NE@CHI",
@@ -598,18 +221,18 @@
     "quotes": [
      {
       "book": "draftkings",
-      "line": 281.5,
+      "line": 283.5,
       "over_american": -112,
-      "under_american": -114,
-      "fair_over": 0.4979
+      "under_american": -113,
+      "fair_over": 0.499
      }
     ]
    },
    {
     "stat": "rush_yds",
     "line": 29.5,
-    "fair_over": 0.4958,
-    "books": 2,
+    "fair_over": 0.5073,
+    "books": 1,
     "team": "NE",
     "game": "NE@CHI",
     "start_time": "2026-10-23T00:15:00.0000000Z",
@@ -617,13 +240,13 @@
      {
       "book": "draftkings",
       "line": 29.5,
-      "over_american": -108,
-      "under_american": -116,
-      "fair_over": 0.4916
+      "over_american": -116,
+      "under_american": -109,
+      "fair_over": 0.5073
      },
      {
       "book": "fanduel",
-      "line": 29.5,
+      "line": 28.5,
       "over_american": -114,
       "under_american": -114,
       "fair_over": 0.5
@@ -631,8 +254,26 @@
     ]
    },
    {
+    "stat": "rush_att",
+    "line": 5.5,
+    "fair_over": 0.469,
+    "books": 1,
+    "team": "NE",
+    "game": "NE@CHI",
+    "start_time": "2026-10-23T00:15:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 5.5,
+      "over_american": 101,
+      "under_american": -129,
+      "fair_over": 0.469
+     }
+    ]
+   },
+   {
     "stat": "longest_completion",
-    "line": 38.5,
+    "line": 39.5,
     "fair_over": 0.5082,
     "books": 1,
     "team": "NE",
@@ -641,7 +282,7 @@
     "quotes": [
      {
       "book": "draftkings",
-      "line": 38.5,
+      "line": 39.5,
       "over_american": -118,
       "under_american": -110,
       "fair_over": 0.5082
@@ -652,8 +293,8 @@
   "Caleb Williams": [
    {
     "stat": "pass_yds",
-    "line": 246.5,
-    "fair_over": 0.4979,
+    "line": 248.5,
+    "fair_over": 0.5042,
     "books": 1,
     "team": "CHI",
     "game": "NE@CHI",
@@ -661,10 +302,10 @@
     "quotes": [
      {
       "book": "draftkings",
-      "line": 246.5,
-      "over_american": -111,
-      "under_american": -113,
-      "fair_over": 0.4979
+      "line": 248.5,
+      "over_american": -114,
+      "under_american": -110,
+      "fair_over": 0.5042
      },
      {
       "book": "fanduel",
@@ -678,7 +319,7 @@
    {
     "stat": "pass_td",
     "line": 1.5,
-    "fair_over": 0.5571,
+    "fair_over": 0.5683,
     "books": 2,
     "team": "CHI",
     "game": "NE@CHI",
@@ -687,23 +328,23 @@
      {
       "book": "draftkings",
       "line": 1.5,
-      "over_american": -148,
-      "under_american": 116,
-      "fair_over": 0.5631
+      "over_american": -149,
+      "under_american": 117,
+      "fair_over": 0.5649
      },
      {
       "book": "fanduel",
       "line": 1.5,
-      "over_american": -144,
-      "under_american": 108,
-      "fair_over": 0.5511
+      "over_american": -158,
+      "under_american": 118,
+      "fair_over": 0.5717
      }
     ]
    },
    {
     "stat": "pass_att",
     "line": 33.5,
-    "fair_over": 0.4845,
+    "fair_over": 0.4761,
     "books": 1,
     "team": "CHI",
     "game": "NE@CHI",
@@ -712,16 +353,16 @@
      {
       "book": "draftkings",
       "line": 33.5,
-      "over_american": -106,
-      "under_american": -121,
-      "fair_over": 0.4845
+      "over_american": -102,
+      "under_american": -125,
+      "fair_over": 0.4761
      }
     ]
    },
    {
     "stat": "completions",
     "line": 20.5,
-    "fair_over": 0.5176,
+    "fair_over": 0.54,
     "books": 1,
     "team": "CHI",
     "game": "NE@CHI",
@@ -730,16 +371,16 @@
      {
       "book": "draftkings",
       "line": 20.5,
-      "over_american": -122,
-      "under_american": -105,
-      "fair_over": 0.5176
+      "over_american": -134,
+      "under_american": 105,
+      "fair_over": 0.54
      }
     ]
    },
    {
     "stat": "pass_int",
     "line": 0.5,
-    "fair_over": 0.4487,
+    "fair_over": 0.425,
     "books": 1,
     "team": "CHI",
     "game": "NE@CHI",
@@ -748,16 +389,16 @@
      {
       "book": "draftkings",
       "line": 0.5,
-      "over_american": 110,
-      "under_american": -141,
-      "fair_over": 0.4487
+      "over_american": 122,
+      "under_american": -156,
+      "fair_over": 0.425
      }
     ]
    },
    {
     "stat": "pass_rush_yds",
-    "line": 269.5,
-    "fair_over": 0.5,
+    "line": 271.5,
+    "fair_over": 0.5021,
     "books": 1,
     "team": "CHI",
     "game": "NE@CHI",
@@ -765,10 +406,10 @@
     "quotes": [
      {
       "book": "draftkings",
-      "line": 269.5,
-      "over_american": -113,
-      "under_american": -113,
-      "fair_over": 0.5
+      "line": 271.5,
+      "over_american": -114,
+      "under_american": -112,
+      "fair_over": 0.5021
      }
     ]
    },
@@ -798,9 +439,27 @@
     ]
    },
    {
+    "stat": "rush_att",
+    "line": 4.5,
+    "fair_over": 0.4854,
+    "books": 1,
+    "team": "CHI",
+    "game": "NE@CHI",
+    "start_time": "2026-10-23T00:15:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 4.5,
+      "over_american": -106,
+      "under_american": -120,
+      "fair_over": 0.4854
+     }
+    ]
+   },
+   {
     "stat": "longest_completion",
     "line": 36.5,
-    "fair_over": 0.501,
+    "fair_over": 0.4969,
     "books": 1,
     "team": "CHI",
     "game": "NE@CHI",
@@ -809,414 +468,479 @@
      {
       "book": "draftkings",
       "line": 36.5,
-      "over_american": -114,
-      "under_american": -113,
-      "fair_over": 0.501
+      "over_american": -112,
+      "under_american": -115,
+      "fair_over": 0.4969
      }
     ]
    }
   ],
-  "Christian McCaffrey": [
+  "Tyler Shough": [
    {
-    "stat": "rush_yds",
-    "line": 62.5,
+    "stat": "pass_yds",
+    "line": 236.5,
     "fair_over": 0.5021,
     "books": 1,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
+    "team": "NO",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
     "quotes": [
      {
       "book": "draftkings",
-      "line": 62.5,
+      "line": 236.5,
       "over_american": -113,
       "under_american": -111,
       "fair_over": 0.5021
      },
      {
       "book": "fanduel",
-      "line": 59.5,
-      "over_american": -113,
-      "under_american": -113,
+      "line": 232.5,
+      "over_american": -114,
+      "under_american": -114,
       "fair_over": 0.5
      }
     ]
    },
    {
-    "stat": "rush_att",
-    "line": 14.5,
-    "fair_over": 0.531,
-    "books": 1,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
+    "stat": "pass_td",
+    "line": 1.5,
+    "fair_over": 0.4001,
+    "books": 2,
+    "team": "NO",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
     "quotes": [
      {
       "book": "draftkings",
-      "line": 14.5,
-      "over_american": -129,
-      "under_american": 101,
-      "fair_over": 0.531
+      "line": 1.5,
+      "over_american": 130,
+      "under_american": -166,
+      "fair_over": 0.4106
+     },
+     {
+      "book": "fanduel",
+      "line": 1.5,
+      "over_american": 140,
+      "under_american": -188,
+      "fair_over": 0.3896
      }
     ]
    },
    {
-    "stat": "rush_rec_yds",
-    "line": 108.5,
-    "fair_over": 0.5021,
+    "stat": "pass_att",
+    "line": 35.5,
+    "fair_over": 0.5083,
     "books": 1,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
+    "team": "NO",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
     "quotes": [
      {
       "book": "draftkings",
-      "line": 108.5,
+      "line": 35.5,
+      "over_american": -117,
+      "under_american": -109,
+      "fair_over": 0.5083
+     }
+    ]
+   },
+   {
+    "stat": "completions",
+    "line": 23.5,
+    "fair_over": 0.4979,
+    "books": 1,
+    "team": "NO",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 23.5,
+      "over_american": -112,
+      "under_american": -114,
+      "fair_over": 0.4979
+     }
+    ]
+   },
+   {
+    "stat": "pass_rush_yds",
+    "line": 252.5,
+    "fair_over": 0.5021,
+    "books": 1,
+    "team": "NO",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 252.5,
       "over_american": -114,
       "under_american": -112,
       "fair_over": 0.5021
-     },
-     {
-      "book": "fanduel",
-      "line": 105.5,
-      "over_american": -113,
-      "under_american": -113,
-      "fair_over": 0.5
      }
     ]
    },
-   {
-    "stat": "rec_yds",
-    "line": 40.5,
-    "fair_over": 0.5021,
-    "books": 2,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 40.5,
-      "over_american": -114,
-      "under_american": -110,
-      "fair_over": 0.5042
-     },
-     {
-      "book": "fanduel",
-      "line": 40.5,
-      "over_american": -113,
-      "under_american": -113,
-      "fair_over": 0.5
-     }
-    ]
-   },
-   {
-    "stat": "rec",
-    "line": 4.5,
-    "fair_over": 0.5568,
-    "books": 2,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 4.5,
-      "over_american": -143,
-      "under_american": 112,
-      "fair_over": 0.5551
-     },
-     {
-      "book": "fanduel",
-      "line": 4.5,
-      "over_american": -148,
-      "under_american": 112,
-      "fair_over": 0.5585
-     }
-    ]
-   },
-   {
-    "stat": "longest_rec",
-    "line": 16.5,
-    "fair_over": 0.501,
-    "books": 1,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 16.5,
-      "over_american": -114,
-      "under_american": -113,
-      "fair_over": 0.501
-     }
-    ]
-   }
-  ],
-  "Rachaad White": [
    {
     "stat": "rush_yds",
-    "line": 45.5,
-    "fair_over": 0.4937,
-    "books": 1,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 45.5,
-      "over_american": -109,
-      "under_american": -115,
-      "fair_over": 0.4937
-     },
-     {
-      "book": "fanduel",
-      "line": 44.5,
-      "over_american": -113,
-      "under_american": -113,
-      "fair_over": 0.5
-     }
-    ]
-   },
-   {
-    "stat": "rush_att",
     "line": 12.5,
-    "fair_over": 0.4958,
+    "fair_over": 0.5,
     "books": 1,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
+    "team": "NO",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
     "quotes": [
      {
       "book": "draftkings",
       "line": 12.5,
-      "over_american": -111,
-      "under_american": -115,
-      "fair_over": 0.4958
-     }
-    ]
-   },
-   {
-    "stat": "rush_rec_yds",
-    "line": 65.5,
-    "fair_over": 0.4958,
-    "books": 1,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 65.5,
-      "over_american": -111,
-      "under_american": -115,
-      "fair_over": 0.4958
-     },
-     {
-      "book": "fanduel",
-      "line": 63.5,
-      "over_american": -113,
-      "under_american": -113,
-      "fair_over": 0.5
-     }
-    ]
-   },
-   {
-    "stat": "rec_yds",
-    "line": 14.5,
-    "fair_over": 0.4953,
-    "books": 2,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 14.5,
-      "over_american": -108,
-      "under_american": -117,
-      "fair_over": 0.4906
-     },
-     {
-      "book": "fanduel",
-      "line": 14.5,
-      "over_american": -113,
-      "under_american": -113,
-      "fair_over": 0.5
-     }
-    ]
-   },
-   {
-    "stat": "rec",
-    "line": 2.5,
-    "fair_over": 0.4691,
-    "books": 2,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 2.5,
-      "over_american": -102,
-      "under_american": -125,
-      "fair_over": 0.4761
-     },
-     {
-      "book": "fanduel",
-      "line": 2.5,
-      "over_american": 102,
-      "under_american": -136,
-      "fair_over": 0.4621
-     }
-    ]
-   },
-   {
-    "stat": "longest_rec",
-    "line": 9.5,
-    "fair_over": 0.4715,
-    "books": 1,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 9.5,
-      "over_american": -101,
-      "under_american": -129,
-      "fair_over": 0.4715
-     }
-    ]
-   }
-  ],
-  "Kaelon Black": [
-   {
-    "stat": "rush_yds",
-    "line": 24.5,
-    "fair_over": 0.499,
-    "books": 2,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 24.5,
-      "over_american": -111,
-      "under_american": -113,
-      "fair_over": 0.4979
-     },
-     {
-      "book": "fanduel",
-      "line": 24.5,
-      "over_american": -113,
-      "under_american": -113,
-      "fair_over": 0.5
-     }
-    ]
-   }
-  ],
-  "Austin Ekeler": [
-   {
-    "stat": "rush_yds",
-    "line": 19.5,
-    "fair_over": 0.4916,
-    "books": 1,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 19.5,
-      "over_american": -108,
-      "under_american": -116,
-      "fair_over": 0.4916
-     },
-     {
-      "book": "fanduel",
-      "line": 18.5,
-      "over_american": -113,
-      "under_american": -113,
-      "fair_over": 0.5
-     }
-    ]
-   },
-   {
-    "stat": "rush_rec_yds",
-    "line": 31.5,
-    "fair_over": 0.5021,
-    "books": 1,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 31.5,
-      "over_american": -114,
+      "over_american": -112,
       "under_american": -112,
+      "fair_over": 0.5
+     },
+     {
+      "book": "fanduel",
+      "line": 13.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   }
+  ],
+  "Aaron Rodgers": [
+   {
+    "stat": "pass_yds",
+    "line": 231.5,
+    "fair_over": 0.5,
+    "books": 1,
+    "team": "PIT",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 231.5,
+      "over_american": -112,
+      "under_american": -112,
+      "fair_over": 0.5
+     },
+     {
+      "book": "fanduel",
+      "line": 230.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "pass_td",
+    "line": 1.5,
+    "fair_over": 0.4715,
+    "books": 2,
+    "team": "PIT",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 1.5,
+      "over_american": 100,
+      "under_american": -128,
+      "fair_over": 0.4711
+     },
+     {
+      "book": "fanduel",
+      "line": 1.5,
+      "over_american": -102,
+      "under_american": -130,
+      "fair_over": 0.4718
+     }
+    ]
+   },
+   {
+    "stat": "pass_att",
+    "line": 33.5,
+    "fair_over": 0.4948,
+    "books": 1,
+    "team": "PIT",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 33.5,
+      "over_american": -110,
+      "under_american": -115,
+      "fair_over": 0.4948
+     }
+    ]
+   },
+   {
+    "stat": "completions",
+    "line": 21.5,
+    "fair_over": 0.4803,
+    "books": 1,
+    "team": "PIT",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 21.5,
+      "over_american": -104,
+      "under_american": -123,
+      "fair_over": 0.4803
+     }
+    ]
+   },
+   {
+    "stat": "pass_rush_yds",
+    "line": 236.5,
+    "fair_over": 0.5,
+    "books": 1,
+    "team": "PIT",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 236.5,
+      "over_american": -113,
+      "under_american": -113,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rush_yds",
+    "line": 0.5,
+    "fair_over": 0.4875,
+    "books": 2,
+    "team": "PIT",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 0.5,
+      "over_american": -106,
+      "under_american": -118,
+      "fair_over": 0.4873
+     },
+     {
+      "book": "fanduel",
+      "line": 0.5,
+      "over_american": -108,
+      "under_american": -120,
+      "fair_over": 0.4877
+     }
+    ]
+   }
+  ],
+  "Jared Goff": [
+   {
+    "stat": "pass_yds",
+    "line": 279.5,
+    "fair_over": 0.5,
+    "books": 1,
+    "team": "DET",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 279.5,
+      "over_american": -112,
+      "under_american": -112,
+      "fair_over": 0.5
+     },
+     {
+      "book": "fanduel",
+      "line": 278.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "pass_td",
+    "line": 1.5,
+    "fair_over": 0.6499,
+    "books": 2,
+    "team": "DET",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 1.5,
+      "over_american": -218,
+      "under_american": 169,
+      "fair_over": 0.6484
+     },
+     {
+      "book": "fanduel",
+      "line": 1.5,
+      "over_american": -230,
+      "under_american": 168,
+      "fair_over": 0.6513
+     }
+    ]
+   }
+  ],
+  "Jordan Love": [
+   {
+    "stat": "pass_yds",
+    "line": 277.5,
+    "fair_over": 0.501,
+    "books": 2,
+    "team": "GB",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 277.5,
+      "over_american": -113,
+      "under_american": -111,
       "fair_over": 0.5021
      },
      {
       "book": "fanduel",
-      "line": 30.5,
-      "over_american": -115,
-      "under_american": -111,
-      "fair_over": 0.5042
-     }
-    ]
-   },
-   {
-    "stat": "rec_yds",
-    "line": 8.5,
-    "fair_over": 0.4958,
-    "books": 2,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 8.5,
-      "over_american": -108,
-      "under_american": -116,
-      "fair_over": 0.4916
-     },
-     {
-      "book": "fanduel",
-      "line": 8.5,
-      "over_american": -113,
-      "under_american": -113,
+      "line": 277.5,
+      "over_american": -114,
+      "under_american": -114,
       "fair_over": 0.5
      }
     ]
    },
    {
-    "stat": "rec",
+    "stat": "pass_td",
     "line": 1.5,
-    "fair_over": 0.4508,
+    "fair_over": 0.6192,
     "books": 2,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
+    "team": "GB",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
     "quotes": [
      {
       "book": "draftkings",
       "line": 1.5,
-      "over_american": 111,
-      "under_american": -141,
-      "fair_over": 0.4475
+      "over_american": -198,
+      "under_american": 154,
+      "fair_over": 0.6279
      },
      {
       "book": "fanduel",
       "line": 1.5,
-      "over_american": 106,
-      "under_american": -140,
-      "fair_over": 0.4542
+      "over_american": -188,
+      "under_american": 140,
+      "fair_over": 0.6104
+     }
+    ]
+   }
+  ],
+  "Sam Darnold": [
+   {
+    "stat": "pass_yds",
+    "line": 225.5,
+    "fair_over": 0.5021,
+    "books": 1,
+    "team": "SEA",
+    "game": "KC@SEA",
+    "start_time": "2026-10-26T00:20:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 225.5,
+      "over_american": -113,
+      "under_american": -111,
+      "fair_over": 0.5021
+     },
+     {
+      "book": "fanduel",
+      "line": 224.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "pass_td",
+    "line": 1.5,
+    "fair_over": 0.3894,
+    "books": 2,
+    "team": "SEA",
+    "game": "KC@SEA",
+    "start_time": "2026-10-26T00:20:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 1.5,
+      "over_american": 149,
+      "under_american": -191,
+      "fair_over": 0.3796
+     },
+     {
+      "book": "fanduel",
+      "line": 1.5,
+      "over_american": 134,
+      "under_american": -180,
+      "fair_over": 0.3993
+     }
+    ]
+   }
+  ],
+  "Patrick Mahomes": [
+   {
+    "stat": "pass_yds",
+    "line": 224.5,
+    "fair_over": 0.5,
+    "books": 1,
+    "team": "KC",
+    "game": "KC@SEA",
+    "start_time": "2026-10-26T00:20:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 224.5,
+      "over_american": -112,
+      "under_american": -112,
+      "fair_over": 0.5
+     },
+     {
+      "book": "fanduel",
+      "line": 220.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "pass_td",
+    "line": 1.5,
+    "fair_over": 0.381,
+    "books": 2,
+    "team": "KC",
+    "game": "KC@SEA",
+    "start_time": "2026-10-26T00:20:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 1.5,
+      "over_american": 145,
+      "under_american": -187,
+      "fair_over": 0.3852
+     },
+     {
+      "book": "fanduel",
+      "line": 1.5,
+      "over_american": 148,
+      "under_american": -200,
+      "fair_over": 0.3769
      }
     ]
    }
@@ -1225,7 +949,7 @@
    {
     "stat": "rush_yds",
     "line": 61.5,
-    "fair_over": 0.5042,
+    "fair_over": 0.4948,
     "books": 1,
     "team": "CHI",
     "game": "NE@CHI",
@@ -1234,9 +958,9 @@
      {
       "book": "draftkings",
       "line": 61.5,
-      "over_american": -114,
-      "under_american": -110,
-      "fair_over": 0.5042
+      "over_american": -110,
+      "under_american": -115,
+      "fair_over": 0.4948
      },
      {
       "book": "fanduel",
@@ -1250,7 +974,7 @@
    {
     "stat": "rush_att",
     "line": 14.5,
-    "fair_over": 0.5372,
+    "fair_over": 0.54,
     "books": 1,
     "team": "CHI",
     "game": "NE@CHI",
@@ -1259,41 +983,41 @@
      {
       "book": "draftkings",
       "line": 14.5,
-      "over_american": -132,
-      "under_american": 104,
-      "fair_over": 0.5372
+      "over_american": -134,
+      "under_american": 105,
+      "fair_over": 0.54
      }
     ]
    },
    {
     "stat": "rush_rec_yds",
-    "line": 86.5,
-    "fair_over": 0.5031,
-    "books": 2,
+    "line": 85.5,
+    "fair_over": 0.5021,
+    "books": 1,
     "team": "CHI",
     "game": "NE@CHI",
     "start_time": "2026-10-23T00:15:00.0000000Z",
     "quotes": [
      {
       "book": "draftkings",
-      "line": 86.5,
-      "over_american": -115,
-      "under_american": -111,
-      "fair_over": 0.5042
+      "line": 85.5,
+      "over_american": -114,
+      "under_american": -112,
+      "fair_over": 0.5021
      },
      {
       "book": "fanduel",
       "line": 86.5,
-      "over_american": -115,
-      "under_american": -113,
-      "fair_over": 0.502
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
      }
     ]
    },
    {
     "stat": "rec_yds",
     "line": 19.5,
-    "fair_over": 0.4969,
+    "fair_over": 0.501,
     "books": 2,
     "team": "CHI",
     "game": "NE@CHI",
@@ -1302,9 +1026,9 @@
      {
       "book": "draftkings",
       "line": 19.5,
-      "over_american": -109,
-      "under_american": -115,
-      "fair_over": 0.4937
+      "over_american": -113,
+      "under_american": -111,
+      "fair_over": 0.5021
      },
      {
       "book": "fanduel",
@@ -1318,7 +1042,7 @@
    {
     "stat": "rec",
     "line": 2.5,
-    "fair_over": 0.5602,
+    "fair_over": 0.5657,
     "books": 2,
     "team": "CHI",
     "game": "NE@CHI",
@@ -1327,9 +1051,9 @@
      {
       "book": "draftkings",
       "line": 2.5,
-      "over_american": -150,
-      "under_american": 117,
-      "fair_over": 0.5656
+      "over_american": -157,
+      "under_american": 123,
+      "fair_over": 0.5767
      },
      {
       "book": "fanduel",
@@ -1342,8 +1066,8 @@
    },
    {
     "stat": "longest_rec",
-    "line": 9.5,
-    "fair_over": 0.5062,
+    "line": 10.5,
+    "fair_over": 0.4856,
     "books": 1,
     "team": "CHI",
     "game": "NE@CHI",
@@ -1351,10 +1075,10 @@
     "quotes": [
      {
       "book": "draftkings",
-      "line": 9.5,
-      "over_american": -117,
-      "under_american": -111,
-      "fair_over": 0.5062
+      "line": 10.5,
+      "over_american": -107,
+      "under_american": -121,
+      "fair_over": 0.4856
      }
     ]
    }
@@ -1362,8 +1086,8 @@
   "Rhamondre Stevenson": [
    {
     "stat": "rush_yds",
-    "line": 45.5,
-    "fair_over": 0.5,
+    "line": 44.5,
+    "fair_over": 0.5021,
     "books": 1,
     "team": "NE",
     "game": "NE@CHI",
@@ -1371,14 +1095,14 @@
     "quotes": [
      {
       "book": "draftkings",
-      "line": 45.5,
-      "over_american": -112,
-      "under_american": -112,
-      "fair_over": 0.5
+      "line": 44.5,
+      "over_american": -113,
+      "under_american": -111,
+      "fair_over": 0.5021
      },
      {
       "book": "fanduel",
-      "line": 44.5,
+      "line": 43.5,
       "over_american": -114,
       "under_american": -114,
       "fair_over": 0.5
@@ -1387,8 +1111,8 @@
    },
    {
     "stat": "rush_att",
-    "line": 11.5,
-    "fair_over": 0.4572,
+    "line": 10.5,
+    "fair_over": 0.5372,
     "books": 1,
     "team": "NE",
     "game": "NE@CHI",
@@ -1396,32 +1120,32 @@
     "quotes": [
      {
       "book": "draftkings",
-      "line": 11.5,
-      "over_american": 106,
-      "under_american": -136,
-      "fair_over": 0.4572
+      "line": 10.5,
+      "over_american": -132,
+      "under_american": 104,
+      "fair_over": 0.5372
      }
     ]
    },
    {
     "stat": "rush_rec_yds",
-    "line": 68.5,
-    "fair_over": 0.4958,
-    "books": 1,
+    "line": 66.5,
+    "fair_over": 0.5026,
+    "books": 2,
     "team": "NE",
     "game": "NE@CHI",
     "start_time": "2026-10-23T00:15:00.0000000Z",
     "quotes": [
      {
       "book": "draftkings",
-      "line": 68.5,
-      "over_american": -111,
-      "under_american": -115,
-      "fair_over": 0.4958
+      "line": 66.5,
+      "over_american": -115,
+      "under_american": -110,
+      "fair_over": 0.5052
      },
      {
       "book": "fanduel",
-      "line": 67.5,
+      "line": 66.5,
       "over_american": -114,
       "under_american": -114,
       "fair_over": 0.5
@@ -1430,19 +1154,19 @@
    },
    {
     "stat": "rec_yds",
-    "line": 18.5,
-    "fair_over": 0.5021,
-    "books": 2,
+    "line": 17.5,
+    "fair_over": 0.5105,
+    "books": 1,
     "team": "NE",
     "game": "NE@CHI",
     "start_time": "2026-10-23T00:15:00.0000000Z",
     "quotes": [
      {
       "book": "draftkings",
-      "line": 18.5,
-      "over_american": -114,
-      "under_american": -110,
-      "fair_over": 0.5042
+      "line": 17.5,
+      "over_american": -117,
+      "under_american": -107,
+      "fair_over": 0.5105
      },
      {
       "book": "fanduel",
@@ -1456,7 +1180,7 @@
    {
     "stat": "rec",
     "line": 2.5,
-    "fair_over": 0.5351,
+    "fair_over": 0.5307,
     "books": 2,
     "team": "NE",
     "game": "NE@CHI",
@@ -1465,9 +1189,9 @@
      {
       "book": "draftkings",
       "line": 2.5,
-      "over_american": -135,
-      "under_american": 106,
-      "fair_over": 0.542
+      "over_american": -130,
+      "under_american": 102,
+      "fair_over": 0.5331
      },
      {
       "book": "fanduel",
@@ -1480,8 +1204,8 @@
    },
    {
     "stat": "longest_rec",
-    "line": 10.5,
-    "fair_over": 0.4702,
+    "line": 9.5,
+    "fair_over": 0.4959,
     "books": 1,
     "team": "NE",
     "game": "NE@CHI",
@@ -1489,10 +1213,10 @@
     "quotes": [
      {
       "book": "draftkings",
-      "line": 10.5,
-      "over_american": 100,
-      "under_american": -129,
-      "fair_over": 0.4702
+      "line": 9.5,
+      "over_american": -112,
+      "under_american": -116,
+      "fair_over": 0.4959
      }
     ]
    }
@@ -1501,7 +1225,7 @@
    {
     "stat": "rush_yds",
     "line": 29.5,
-    "fair_over": 0.5042,
+    "fair_over": 0.5021,
     "books": 1,
     "team": "NE",
     "game": "NE@CHI",
@@ -1510,9 +1234,9 @@
      {
       "book": "draftkings",
       "line": 29.5,
-      "over_american": -114,
-      "under_american": -110,
-      "fair_over": 0.5042
+      "over_american": -113,
+      "under_american": -111,
+      "fair_over": 0.5021
      },
      {
       "book": "fanduel",
@@ -1526,7 +1250,7 @@
    {
     "stat": "rush_att",
     "line": 7.5,
-    "fair_over": 0.4592,
+    "fair_over": 0.4854,
     "books": 1,
     "team": "NE",
     "game": "NE@CHI",
@@ -1535,175 +1259,103 @@
      {
       "book": "draftkings",
       "line": 7.5,
-      "over_american": 105,
-      "under_american": -135,
-      "fair_over": 0.4592
+      "over_american": -106,
+      "under_american": -120,
+      "fair_over": 0.4854
      }
     ]
    }
   ],
-  "George Kittle": [
+  "Jaylen Warren": [
    {
-    "stat": "rec_yds",
-    "line": 67.5,
-    "fair_over": 0.5021,
+    "stat": "rush_yds",
+    "line": 65.5,
+    "fair_over": 0.5,
     "books": 1,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
+    "team": "PIT",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
     "quotes": [
      {
       "book": "draftkings",
-      "line": 67.5,
-      "over_american": -113,
-      "under_american": -111,
-      "fair_over": 0.5021
+      "line": 65.5,
+      "over_american": -112,
+      "under_american": -112,
+      "fair_over": 0.5
      },
      {
       "book": "fanduel",
       "line": 66.5,
-      "over_american": -113,
-      "under_american": -113,
-      "fair_over": 0.5
-     }
-    ]
-   },
-   {
-    "stat": "rec",
-    "line": 5.5,
-    "fair_over": 0.467,
-    "books": 2,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 5.5,
-      "over_american": 100,
-      "under_american": -127,
-      "fair_over": 0.4719
-     },
-     {
-      "book": "fanduel",
-      "line": 5.5,
-      "over_american": 102,
-      "under_american": -136,
-      "fair_over": 0.4621
-     }
-    ]
-   },
-   {
-    "stat": "longest_rec",
-    "line": 21.5,
-    "fair_over": 0.5103,
-    "books": 1,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 21.5,
-      "over_american": -119,
-      "under_american": -109,
-      "fair_over": 0.5103
-     }
-    ]
-   }
-  ],
-  "Mike Evans": [
-   {
-    "stat": "rec_yds",
-    "line": 63.5,
-    "fair_over": 0.5042,
-    "books": 1,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 63.5,
       "over_american": -114,
-      "under_american": -110,
-      "fair_over": 0.5042
-     },
-     {
-      "book": "fanduel",
-      "line": 66.5,
-      "over_american": -113,
-      "under_american": -113,
+      "under_american": -114,
       "fair_over": 0.5
      }
     ]
    },
    {
-    "stat": "rec",
-    "line": 4.5,
-    "fair_over": 0.5613,
+    "stat": "rush_att",
+    "line": 15.5,
+    "fair_over": 0.5104,
     "books": 1,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
+    "team": "PIT",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
     "quotes": [
      {
       "book": "draftkings",
-      "line": 4.5,
-      "over_american": -147,
-      "under_american": 115,
-      "fair_over": 0.5613
-     },
-     {
-      "book": "fanduel",
-      "line": 5.5,
-      "over_american": 120,
-      "under_american": -160,
-      "fair_over": 0.4248
+      "line": 15.5,
+      "over_american": -118,
+      "under_american": -108,
+      "fair_over": 0.5104
      }
     ]
    },
    {
-    "stat": "longest_rec",
-    "line": 23.5,
-    "fair_over": 0.4897,
+    "stat": "rush_rec_yds",
+    "line": 96.5,
+    "fair_over": 0.5,
     "books": 1,
-    "team": "SF",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
+    "team": "PIT",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
     "quotes": [
      {
       "book": "draftkings",
-      "line": 23.5,
-      "over_american": -109,
-      "under_american": -119,
-      "fair_over": 0.4897
-     }
-    ]
-   }
-  ],
-  "Terry McLaurin": [
-   {
-    "stat": "rec_yds",
-    "line": 49.5,
-    "fair_over": 0.499,
-    "books": 2,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 49.5,
-      "over_american": -111,
+      "line": 96.5,
+      "over_american": -113,
       "under_american": -113,
-      "fair_over": 0.4979
+      "fair_over": 0.5
      },
      {
       "book": "fanduel",
-      "line": 49.5,
-      "over_american": -113,
-      "under_american": -113,
+      "line": 97.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec_yds",
+    "line": 25.5,
+    "fair_over": 0.5,
+    "books": 2,
+    "team": "PIT",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 25.5,
+      "over_american": -112,
+      "under_american": -112,
+      "fair_over": 0.5
+     },
+     {
+      "book": "fanduel",
+      "line": 25.5,
+      "over_american": -114,
+      "under_american": -114,
       "fair_over": 0.5
      }
     ]
@@ -1711,85 +1363,15 @@
    {
     "stat": "rec",
     "line": 3.5,
-    "fair_over": 0.5516,
+    "fair_over": 0.405,
     "books": 2,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
+    "team": "PIT",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
     "quotes": [
      {
       "book": "draftkings",
       "line": 3.5,
-      "over_american": -137,
-      "under_american": 107,
-      "fair_over": 0.5447
-     },
-     {
-      "book": "fanduel",
-      "line": 3.5,
-      "over_american": -148,
-      "under_american": 112,
-      "fair_over": 0.5585
-     }
-    ]
-   },
-   {
-    "stat": "longest_rec",
-    "line": 21.5,
-    "fair_over": 0.4836,
-    "books": 1,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 21.5,
-      "over_american": -106,
-      "under_american": -122,
-      "fair_over": 0.4836
-     }
-    ]
-   }
-  ],
-  "Stefon Diggs": [
-   {
-    "stat": "rec_yds",
-    "line": 38.5,
-    "fair_over": 0.5021,
-    "books": 2,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 38.5,
-      "over_american": -114,
-      "under_american": -110,
-      "fair_over": 0.5042
-     },
-     {
-      "book": "fanduel",
-      "line": 38.5,
-      "over_american": -113,
-      "under_american": -113,
-      "fair_over": 0.5
-     }
-    ]
-   },
-   {
-    "stat": "rec",
-    "line": 4.5,
-    "fair_over": 0.4106,
-    "books": 1,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 4.5,
       "over_american": 130,
       "under_american": -166,
       "fair_over": 0.4106
@@ -1797,53 +1379,225 @@
      {
       "book": "fanduel",
       "line": 3.5,
-      "over_american": -166,
-      "under_american": 124,
-      "fair_over": 0.583
-     }
-    ]
-   },
-   {
-    "stat": "longest_rec",
-    "line": 16.5,
-    "fair_over": 0.4948,
-    "books": 1,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 16.5,
-      "over_american": -111,
-      "under_american": -116,
-      "fair_over": 0.4948
+      "over_american": 134,
+      "under_american": -180,
+      "fair_over": 0.3993
      }
     ]
    }
   ],
-  "Chigoziem Okonkwo": [
+  "Kendre Miller": [
    {
-    "stat": "rec_yds",
-    "line": 24.5,
-    "fair_over": 0.4979,
+    "stat": "rush_yds",
+    "line": 45.5,
+    "fair_over": 0.4969,
     "books": 2,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
+    "team": "NO",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
     "quotes": [
      {
       "book": "draftkings",
-      "line": 24.5,
+      "line": 45.5,
+      "over_american": -109,
+      "under_american": -115,
+      "fair_over": 0.4937
+     },
+     {
+      "book": "fanduel",
+      "line": 45.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rush_att",
+    "line": 12.5,
+    "fair_over": 0.4572,
+    "books": 1,
+    "team": "NO",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 12.5,
+      "over_american": 106,
+      "under_american": -136,
+      "fair_over": 0.4572
+     }
+    ]
+   }
+  ],
+  "Rico Dowdle": [
+   {
+    "stat": "rush_yds",
+    "line": 33.5,
+    "fair_over": 0.5042,
+    "books": 2,
+    "team": "PIT",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 33.5,
+      "over_american": -116,
+      "under_american": -108,
+      "fair_over": 0.5084
+     },
+     {
+      "book": "fanduel",
+      "line": 33.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rush_rec_yds",
+    "line": 48.5,
+    "fair_over": 0.5042,
+    "books": 1,
+    "team": "PIT",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 48.5,
+      "over_american": -115,
+      "under_american": -111,
+      "fair_over": 0.5042
+     },
+     {
+      "book": "fanduel",
+      "line": 47.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec_yds",
+    "line": 10.5,
+    "fair_over": 0.4873,
+    "books": 1,
+    "team": "PIT",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 10.5,
+      "over_american": -106,
+      "under_american": -118,
+      "fair_over": 0.4873
+     },
+     {
+      "book": "fanduel",
+      "line": 9.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 1.5,
+    "fair_over": 0.5905,
+    "books": 1,
+    "team": "PIT",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.000Z",
+    "quotes": [
+     {
+      "book": "fanduel",
+      "line": 1.5,
+      "over_american": -172,
+      "under_american": 128,
+      "fair_over": 0.5905
+     }
+    ]
+   }
+  ],
+  "Alvin Kamara": [
+   {
+    "stat": "rush_yds",
+    "line": 16.5,
+    "fair_over": 0.4948,
+    "books": 2,
+    "team": "NO",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 16.5,
+      "over_american": -107,
+      "under_american": -117,
+      "fair_over": 0.4895
+     },
+     {
+      "book": "fanduel",
+      "line": 16.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rush_rec_yds",
+    "line": 31.5,
+    "fair_over": 0.499,
+    "books": 1,
+    "team": "NO",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 31.5,
+      "over_american": -112,
+      "under_american": -113,
+      "fair_over": 0.499
+     },
+     {
+      "book": "fanduel",
+      "line": 32.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec_yds",
+    "line": 12.5,
+    "fair_over": 0.4979,
+    "books": 2,
+    "team": "NO",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 12.5,
       "over_american": -110,
       "under_american": -114,
       "fair_over": 0.4958
      },
      {
       "book": "fanduel",
-      "line": 24.5,
-      "over_american": -113,
-      "under_american": -113,
+      "line": 12.5,
+      "over_american": -114,
+      "under_american": -114,
       "fair_over": 0.5
      }
     ]
@@ -1851,113 +1605,154 @@
    {
     "stat": "rec",
     "line": 2.5,
-    "fair_over": 0.5749,
+    "fair_over": 0.5331,
     "books": 2,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
+    "team": "NO",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
     "quotes": [
      {
       "book": "draftkings",
       "line": 2.5,
-      "over_american": -162,
-      "under_american": 126,
-      "fair_over": 0.5829
+      "over_american": -133,
+      "under_american": 104,
+      "fair_over": 0.538
      },
      {
       "book": "fanduel",
       "line": 2.5,
-      "over_american": -154,
-      "under_american": 116,
-      "fair_over": 0.567
-     }
-    ]
-   },
-   {
-    "stat": "longest_rec",
-    "line": 12.5,
-    "fair_over": 0.5041,
-    "books": 1,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
-    "quotes": [
-     {
-      "book": "draftkings",
-      "line": 12.5,
-      "over_american": -116,
-      "under_american": -112,
-      "fair_over": 0.5041
+      "over_american": -130,
+      "under_american": -102,
+      "fair_over": 0.5282
      }
     ]
    }
   ],
-  "Antonio Williams": [
+  "Jahmyr Gibbs": [
    {
-    "stat": "rec_yds",
-    "line": 23.5,
-    "fair_over": 0.5063,
+    "stat": "rush_yds",
+    "line": 92.5,
+    "fair_over": 0.5042,
     "books": 1,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
+    "team": "DET",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
     "quotes": [
      {
       "book": "draftkings",
-      "line": 23.5,
-      "over_american": -115,
-      "under_american": -109,
-      "fair_over": 0.5063
+      "line": 92.5,
+      "over_american": -114,
+      "under_american": -110,
+      "fair_over": 0.5042
      },
      {
       "book": "fanduel",
-      "line": 21.5,
+      "line": 93.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rush_rec_yds",
+    "line": 135.5,
+    "fair_over": 0.5,
+    "books": 1,
+    "team": "DET",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 135.5,
       "over_american": -113,
       "under_american": -113,
+      "fair_over": 0.5
+     },
+     {
+      "book": "fanduel",
+      "line": 137.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec_yds",
+    "line": 38.5,
+    "fair_over": 0.499,
+    "books": 2,
+    "team": "DET",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 38.5,
+      "over_american": -111,
+      "under_american": -113,
+      "fair_over": 0.4979
+     },
+     {
+      "book": "fanduel",
+      "line": 38.5,
+      "over_american": -114,
+      "under_american": -114,
       "fair_over": 0.5
      }
     ]
    },
    {
     "stat": "rec",
-    "line": 2.5,
-    "fair_over": 0.4145,
+    "line": 4.5,
+    "fair_over": 0.5819,
     "books": 2,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
+    "team": "DET",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
     "quotes": [
      {
       "book": "draftkings",
-      "line": 2.5,
-      "over_american": 123,
-      "under_american": -158,
-      "fair_over": 0.4227
+      "line": 4.5,
+      "over_american": -155,
+      "under_american": 121,
+      "fair_over": 0.5733
      },
      {
       "book": "fanduel",
-      "line": 2.5,
-      "over_american": 130,
-      "under_american": -174,
-      "fair_over": 0.4064
+      "line": 4.5,
+      "over_american": -172,
+      "under_american": 128,
+      "fair_over": 0.5905
      }
     ]
-   },
+   }
+  ],
+  "Kenneth Walker III": [
    {
-    "stat": "longest_rec",
-    "line": 14.5,
-    "fair_over": 0.5185,
+    "stat": "rush_yds",
+    "line": 91.5,
+    "fair_over": 0.4958,
     "books": 1,
-    "team": "WAS",
-    "game": "WAS@SF",
-    "start_time": "2026-10-20T00:15:00.0000000Z",
+    "team": "KC",
+    "game": "KC@SEA",
+    "start_time": "2026-10-26T00:20:00.0000000Z",
     "quotes": [
      {
       "book": "draftkings",
-      "line": 14.5,
-      "over_american": -123,
-      "under_american": -105,
-      "fair_over": 0.5185
+      "line": 91.5,
+      "over_american": -110,
+      "under_american": -114,
+      "fair_over": 0.4958
+     },
+     {
+      "book": "fanduel",
+      "line": 92.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
      }
     ]
    }
@@ -1966,7 +1761,7 @@
    {
     "stat": "rec_yds",
     "line": 68.5,
-    "fair_over": 0.4958,
+    "fair_over": 0.5021,
     "books": 1,
     "team": "NE",
     "game": "NE@CHI",
@@ -1975,9 +1770,9 @@
      {
       "book": "draftkings",
       "line": 68.5,
-      "over_american": -110,
-      "under_american": -114,
-      "fair_over": 0.4958
+      "over_american": -113,
+      "under_american": -111,
+      "fair_over": 0.5021
      },
      {
       "book": "fanduel",
@@ -1990,33 +1785,33 @@
    },
    {
     "stat": "rec",
-    "line": 5.5,
-    "fair_over": 0.4285,
-    "books": 1,
+    "line": 4.5,
+    "fair_over": 0.5553,
+    "books": 2,
     "team": "NE",
     "game": "NE@CHI",
     "start_time": "2026-10-23T00:15:00.0000000Z",
     "quotes": [
      {
       "book": "draftkings",
-      "line": 5.5,
-      "over_american": 120,
-      "under_american": -154,
-      "fair_over": 0.4285
+      "line": 4.5,
+      "over_american": -154,
+      "under_american": 121,
+      "fair_over": 0.5726
      },
      {
       "book": "fanduel",
       "line": 4.5,
-      "over_american": -158,
-      "under_american": 118,
-      "fair_over": 0.5717
+      "over_american": -136,
+      "under_american": 102,
+      "fair_over": 0.5379
      }
     ]
    },
    {
     "stat": "longest_rec",
     "line": 24.5,
-    "fair_over": 0.4856,
+    "fair_over": 0.4928,
     "books": 1,
     "team": "NE",
     "game": "NE@CHI",
@@ -2025,9 +1820,9 @@
      {
       "book": "draftkings",
       "line": 24.5,
-      "over_american": -107,
-      "under_american": -121,
-      "fair_over": 0.4856
+      "over_american": -110,
+      "under_american": -117,
+      "fair_over": 0.4928
      }
     ]
    }
@@ -2035,19 +1830,19 @@
   "Luther Burden III": [
    {
     "stat": "rec_yds",
-    "line": 56.5,
-    "fair_over": 0.5,
-    "books": 1,
+    "line": 55.5,
+    "fair_over": 0.499,
+    "books": 2,
     "team": "CHI",
     "game": "NE@CHI",
     "start_time": "2026-10-23T00:15:00.0000000Z",
     "quotes": [
      {
       "book": "draftkings",
-      "line": 56.5,
-      "over_american": -112,
-      "under_american": -112,
-      "fair_over": 0.5
+      "line": 55.5,
+      "over_american": -111,
+      "under_american": -113,
+      "fair_over": 0.4979
      },
      {
       "book": "fanduel",
@@ -2061,7 +1856,7 @@
    {
     "stat": "rec",
     "line": 4.5,
-    "fair_over": 0.5123,
+    "fair_over": 0.5236,
     "books": 2,
     "team": "CHI",
     "game": "NE@CHI",
@@ -2070,9 +1865,9 @@
      {
       "book": "draftkings",
       "line": 4.5,
-      "over_american": -118,
-      "under_american": -108,
-      "fair_over": 0.5104
+      "over_american": -130,
+      "under_american": 102,
+      "fair_over": 0.5331
      },
      {
       "book": "fanduel",
@@ -2085,8 +1880,8 @@
    },
    {
     "stat": "longest_rec",
-    "line": 22.5,
-    "fair_over": 0.4897,
+    "line": 21.5,
+    "fair_over": 0.5082,
     "books": 1,
     "team": "CHI",
     "game": "NE@CHI",
@@ -2094,10 +1889,10 @@
     "quotes": [
      {
       "book": "draftkings",
-      "line": 22.5,
-      "over_american": -109,
-      "under_american": -119,
-      "fair_over": 0.4897
+      "line": 21.5,
+      "over_american": -118,
+      "under_american": -110,
+      "fair_over": 0.5082
      }
     ]
    }
@@ -2105,8 +1900,8 @@
   "Rome Odunze": [
    {
     "stat": "rec_yds",
-    "line": 44.5,
-    "fair_over": 0.5042,
+    "line": 46.5,
+    "fair_over": 0.4958,
     "books": 1,
     "team": "CHI",
     "game": "NE@CHI",
@@ -2114,10 +1909,10 @@
     "quotes": [
      {
       "book": "draftkings",
-      "line": 44.5,
-      "over_american": -114,
-      "under_american": -110,
-      "fair_over": 0.5042
+      "line": 46.5,
+      "over_american": -110,
+      "under_american": -114,
+      "fair_over": 0.4958
      },
      {
       "book": "fanduel",
@@ -2131,7 +1926,7 @@
    {
     "stat": "rec",
     "line": 3.5,
-    "fair_over": 0.439,
+    "fair_over": 0.4525,
     "books": 2,
     "team": "CHI",
     "game": "NE@CHI",
@@ -2140,9 +1935,9 @@
      {
       "book": "draftkings",
       "line": 3.5,
-      "over_american": 112,
-      "under_american": -143,
-      "fair_over": 0.4449
+      "over_american": 100,
+      "under_american": -127,
+      "fair_over": 0.4719
      },
      {
       "book": "fanduel",
@@ -2156,7 +1951,7 @@
    {
     "stat": "longest_rec",
     "line": 21.5,
-    "fair_over": 0.4897,
+    "fair_over": 0.4938,
     "books": 1,
     "team": "CHI",
     "game": "NE@CHI",
@@ -2165,9 +1960,9 @@
      {
       "book": "draftkings",
       "line": 21.5,
-      "over_american": -109,
-      "under_american": -119,
-      "fair_over": 0.4897
+      "over_american": -111,
+      "under_american": -117,
+      "fair_over": 0.4938
      }
     ]
    }
@@ -2175,8 +1970,8 @@
   "Colston Loveland": [
    {
     "stat": "rec_yds",
-    "line": 42.5,
-    "fair_over": 0.5063,
+    "line": 43.5,
+    "fair_over": 0.4958,
     "books": 1,
     "team": "CHI",
     "game": "NE@CHI",
@@ -2184,14 +1979,14 @@
     "quotes": [
      {
       "book": "draftkings",
-      "line": 42.5,
-      "over_american": -115,
-      "under_american": -109,
-      "fair_over": 0.5063
+      "line": 43.5,
+      "over_american": -110,
+      "under_american": -114,
+      "fair_over": 0.4958
      },
      {
       "book": "fanduel",
-      "line": 44.5,
+      "line": 42.5,
       "over_american": -114,
       "under_american": -114,
       "fair_over": 0.5
@@ -2201,7 +1996,7 @@
    {
     "stat": "rec",
     "line": 4.5,
-    "fair_over": 0.437,
+    "fair_over": 0.4299,
     "books": 2,
     "team": "CHI",
     "game": "NE@CHI",
@@ -2210,23 +2005,23 @@
      {
       "book": "draftkings",
       "line": 4.5,
-      "over_american": 122,
-      "under_american": -156,
-      "fair_over": 0.425
+      "over_american": 117,
+      "under_american": -149,
+      "fair_over": 0.4351
      },
      {
       "book": "fanduel",
       "line": 4.5,
-      "over_american": 108,
-      "under_american": -144,
-      "fair_over": 0.4489
+      "over_american": 120,
+      "under_american": -160,
+      "fair_over": 0.4248
      }
     ]
    },
    {
     "stat": "longest_rec",
     "line": 18.5,
-    "fair_over": 0.5062,
+    "fair_over": 0.5134,
     "books": 1,
     "team": "CHI",
     "game": "NE@CHI",
@@ -2235,9 +2030,9 @@
      {
       "book": "draftkings",
       "line": 18.5,
-      "over_american": -117,
-      "under_american": -111,
-      "fair_over": 0.5062
+      "over_american": -120,
+      "under_american": -107,
+      "fair_over": 0.5134
      }
     ]
    }
@@ -2245,19 +2040,19 @@
   "Hunter Henry": [
    {
     "stat": "rec_yds",
-    "line": 33.5,
-    "fair_over": 0.4979,
-    "books": 2,
+    "line": 35.5,
+    "fair_over": 0.5063,
+    "books": 1,
     "team": "NE",
     "game": "NE@CHI",
     "start_time": "2026-10-23T00:15:00.0000000Z",
     "quotes": [
      {
       "book": "draftkings",
-      "line": 33.5,
-      "over_american": -110,
-      "under_american": -114,
-      "fair_over": 0.4958
+      "line": 35.5,
+      "over_american": -115,
+      "under_american": -109,
+      "fair_over": 0.5063
      },
      {
       "book": "fanduel",
@@ -2271,7 +2066,7 @@
    {
     "stat": "rec",
     "line": 3.5,
-    "fair_over": 0.4241,
+    "fair_over": 0.4492,
     "books": 2,
     "team": "NE",
     "game": "NE@CHI",
@@ -2280,23 +2075,23 @@
      {
       "book": "draftkings",
       "line": 3.5,
-      "over_american": 123,
-      "under_american": -157,
-      "fair_over": 0.4233
+      "over_american": 110,
+      "under_american": -140,
+      "fair_over": 0.4494
      },
      {
       "book": "fanduel",
       "line": 3.5,
-      "over_american": 120,
-      "under_american": -160,
-      "fair_over": 0.4248
+      "over_american": 108,
+      "under_american": -144,
+      "fair_over": 0.4489
      }
     ]
    },
    {
     "stat": "longest_rec",
-    "line": 16.5,
-    "fair_over": 0.5174,
+    "line": 17.5,
+    "fair_over": 0.4928,
     "books": 1,
     "team": "NE",
     "game": "NE@CHI",
@@ -2304,10 +2099,10 @@
     "quotes": [
      {
       "book": "draftkings",
-      "line": 16.5,
-      "over_american": -123,
-      "under_american": -106,
-      "fair_over": 0.5174
+      "line": 17.5,
+      "over_american": -110,
+      "under_american": -117,
+      "fair_over": 0.4928
      }
     ]
    }
@@ -2315,7 +2110,7 @@
   "Demario Douglas": [
    {
     "stat": "rec_yds",
-    "line": 29.5,
+    "line": 34.5,
     "fair_over": 0.5042,
     "books": 1,
     "team": "NE",
@@ -2324,18 +2119,25 @@
     "quotes": [
      {
       "book": "draftkings",
-      "line": 29.5,
+      "line": 34.5,
       "over_american": -114,
       "under_american": -110,
       "fair_over": 0.5042
+     },
+     {
+      "book": "fanduel",
+      "line": 33.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
      }
     ]
    },
    {
     "stat": "rec",
     "line": 3.5,
-    "fair_over": 0.4017,
-    "books": 1,
+    "fair_over": 0.4119,
+    "books": 2,
     "team": "NE",
     "game": "NE@CHI",
     "start_time": "2026-10-23T00:15:00.0000000Z",
@@ -2343,9 +2145,16 @@
      {
       "book": "draftkings",
       "line": 3.5,
-      "over_american": 135,
-      "under_american": -173,
-      "fair_over": 0.4017
+      "over_american": 132,
+      "under_american": -169,
+      "fair_over": 0.4069
+     },
+     {
+      "book": "fanduel",
+      "line": 3.5,
+      "over_american": 124,
+      "under_american": -166,
+      "fair_over": 0.417
      }
     ]
    }
@@ -2353,7 +2162,7 @@
   "Kalif Raymond": [
    {
     "stat": "rec_yds",
-    "line": 28.5,
+    "line": 26.5,
     "fair_over": 0.5021,
     "books": 1,
     "team": "CHI",
@@ -2362,7 +2171,7 @@
     "quotes": [
      {
       "book": "draftkings",
-      "line": 28.5,
+      "line": 26.5,
       "over_american": -113,
       "under_american": -111,
       "fair_over": 0.5021
@@ -2379,7 +2188,7 @@
    {
     "stat": "rec",
     "line": 2.5,
-    "fair_over": 0.5166,
+    "fair_over": 0.5084,
     "books": 2,
     "team": "CHI",
     "game": "NE@CHI",
@@ -2388,9 +2197,9 @@
      {
       "book": "draftkings",
       "line": 2.5,
-      "over_american": -130,
-      "under_american": 102,
-      "fair_over": 0.5331
+      "over_american": -121,
+      "under_american": -105,
+      "fair_over": 0.5167
      },
      {
       "book": "fanduel",
@@ -2404,7 +2213,7 @@
    {
     "stat": "longest_rec",
     "line": 16.5,
-    "fair_over": 0.5082,
+    "fair_over": 0.4836,
     "books": 1,
     "team": "CHI",
     "game": "NE@CHI",
@@ -2413,9 +2222,165 @@
      {
       "book": "draftkings",
       "line": 16.5,
-      "over_american": -118,
-      "under_american": -110,
-      "fair_over": 0.5082
+      "over_american": -106,
+      "under_american": -122,
+      "fair_over": 0.4836
+     }
+    ]
+   }
+  ],
+  "Kyle Williams": [
+   {
+    "stat": "rec_yds",
+    "line": 20.5,
+    "fair_over": 0.499,
+    "books": 2,
+    "team": "NE",
+    "game": "NE@CHI",
+    "start_time": "2026-10-23T00:15:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 20.5,
+      "over_american": -111,
+      "under_american": -113,
+      "fair_over": 0.4979
+     },
+     {
+      "book": "fanduel",
+      "line": 20.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 1.5,
+    "fair_over": 0.4165,
+    "books": 2,
+    "team": "NE",
+    "game": "NE@CHI",
+    "start_time": "2026-10-23T00:15:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 1.5,
+      "over_american": 121,
+      "under_american": -155,
+      "fair_over": 0.4267
+     },
+     {
+      "book": "fanduel",
+      "line": 1.5,
+      "over_american": 130,
+      "under_american": -174,
+      "fair_over": 0.4064
+     }
+    ]
+   }
+  ],
+  "Efton Chism III": [
+   {
+    "stat": "rec_yds",
+    "line": 18.5,
+    "fair_over": 0.5063,
+    "books": 1,
+    "team": "NE",
+    "game": "NE@CHI",
+    "start_time": "2026-10-23T00:15:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 18.5,
+      "over_american": -115,
+      "under_american": -109,
+      "fair_over": 0.5063
+     },
+     {
+      "book": "fanduel",
+      "line": 21.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 1.5,
+    "fair_over": 0.5641,
+    "books": 2,
+    "team": "NE",
+    "game": "NE@CHI",
+    "start_time": "2026-10-23T00:15:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 1.5,
+      "over_american": -147,
+      "under_american": 115,
+      "fair_over": 0.5613
+     },
+     {
+      "book": "fanduel",
+      "line": 1.5,
+      "over_american": -154,
+      "under_american": 116,
+      "fair_over": 0.567
+     }
+    ]
+   }
+  ],
+  "Eli Raridon": [
+   {
+    "stat": "rec_yds",
+    "line": 13.5,
+    "fair_over": 0.5052,
+    "books": 2,
+    "team": "NE",
+    "game": "NE@CHI",
+    "start_time": "2026-10-23T00:15:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 13.5,
+      "over_american": -117,
+      "under_american": -107,
+      "fair_over": 0.5105
+     },
+     {
+      "book": "fanduel",
+      "line": 13.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 1.5,
+    "fair_over": 0.439,
+    "books": 2,
+    "team": "NE",
+    "game": "NE@CHI",
+    "start_time": "2026-10-23T00:15:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 1.5,
+      "over_american": 112,
+      "under_american": -143,
+      "fair_over": 0.4449
+     },
+     {
+      "book": "fanduel",
+      "line": 1.5,
+      "over_american": 116,
+      "under_american": -154,
+      "fair_over": 0.433
      }
     ]
    }
@@ -2424,7 +2389,7 @@
    {
     "stat": "rec_yds",
     "line": 8.5,
-    "fair_over": 0.499,
+    "fair_over": 0.4969,
     "books": 2,
     "team": "CHI",
     "game": "NE@CHI",
@@ -2433,9 +2398,9 @@
      {
       "book": "draftkings",
       "line": 8.5,
-      "over_american": -111,
-      "under_american": -113,
-      "fair_over": 0.4979
+      "over_american": -109,
+      "under_american": -115,
+      "fair_over": 0.4937
      },
      {
       "book": "fanduel",
@@ -2449,7 +2414,7 @@
    {
     "stat": "rec",
     "line": 1.5,
-    "fair_over": 0.3568,
+    "fair_over": 0.3669,
     "books": 2,
     "team": "CHI",
     "game": "NE@CHI",
@@ -2458,9 +2423,9 @@
      {
       "book": "draftkings",
       "line": 1.5,
-      "over_american": 159,
-      "under_american": -205,
-      "fair_over": 0.3649
+      "over_american": 145,
+      "under_american": -187,
+      "fair_over": 0.3852
      },
      {
       "book": "fanduel",
@@ -2474,7 +2439,7 @@
    {
     "stat": "longest_rec",
     "line": 7.5,
-    "fair_over": 0.502,
+    "fair_over": 0.4918,
     "books": 1,
     "team": "CHI",
     "game": "NE@CHI",
@@ -2483,433 +2448,951 @@
      {
       "book": "draftkings",
       "line": 7.5,
-      "over_american": -115,
+      "over_american": -110,
+      "under_american": -118,
+      "fair_over": 0.4918
+     }
+    ]
+   }
+  ],
+  "Chris Olave": [
+   {
+    "stat": "rec_yds",
+    "line": 73.5,
+    "fair_over": 0.4979,
+    "books": 1,
+    "team": "NO",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 73.5,
+      "over_american": -111,
       "under_american": -113,
-      "fair_over": 0.502
+      "fair_over": 0.4979
+     },
+     {
+      "book": "fanduel",
+      "line": 74.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 5.5,
+    "fair_over": 0.5672,
+    "books": 2,
+    "team": "NO",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 5.5,
+      "over_american": -151,
+      "under_american": 118,
+      "fair_over": 0.5674
+     },
+     {
+      "book": "fanduel",
+      "line": 5.5,
+      "over_american": -154,
+      "under_american": 116,
+      "fair_over": 0.567
+     }
+    ]
+   }
+  ],
+  "Germie Bernard": [
+   {
+    "stat": "rec_yds",
+    "line": 54.5,
+    "fair_over": 0.4958,
+    "books": 1,
+    "team": "PIT",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 54.5,
+      "over_american": -110,
+      "under_american": -114,
+      "fair_over": 0.4958
+     },
+     {
+      "book": "fanduel",
+      "line": 53.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 4.5,
+    "fair_over": 0.5656,
+    "books": 2,
+    "team": "PIT",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 4.5,
+      "over_american": -146,
+      "under_american": 114,
+      "fair_over": 0.5595
+     },
+     {
+      "book": "fanduel",
+      "line": 4.5,
+      "over_american": -158,
+      "under_american": 118,
+      "fair_over": 0.5717
+     }
+    ]
+   }
+  ],
+  "DK Metcalf": [
+   {
+    "stat": "rec_yds",
+    "line": 52.5,
+    "fair_over": 0.5042,
+    "books": 1,
+    "team": "PIT",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 52.5,
+      "over_american": -114,
+      "under_american": -110,
+      "fair_over": 0.5042
+     },
+     {
+      "book": "fanduel",
+      "line": 54.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 4.5,
+    "fair_over": 0.5261,
+    "books": 2,
+    "team": "PIT",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 4.5,
+      "over_american": -125,
+      "under_american": -102,
+      "fair_over": 0.5239
+     },
+     {
+      "book": "fanduel",
+      "line": 4.5,
+      "over_american": -130,
+      "under_american": -102,
+      "fair_over": 0.5282
+     }
+    ]
+   }
+  ],
+  "Devaughn Vele": [
+   {
+    "stat": "rec_yds",
+    "line": 41.5,
+    "fair_over": 0.4969,
+    "books": 2,
+    "team": "NO",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 41.5,
+      "over_american": -109,
+      "under_american": -115,
+      "fair_over": 0.4937
+     },
+     {
+      "book": "fanduel",
+      "line": 41.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 4.5,
+    "fair_over": 0.4168,
+    "books": 2,
+    "team": "NO",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 4.5,
+      "over_american": 129,
+      "under_american": -165,
+      "fair_over": 0.4122
+     },
+     {
+      "book": "fanduel",
+      "line": 4.5,
+      "over_american": 122,
+      "under_american": -162,
+      "fair_over": 0.4215
+     }
+    ]
+   }
+  ],
+  "Juwan Johnson": [
+   {
+    "stat": "rec_yds",
+    "line": 33.5,
+    "fair_over": 0.5042,
+    "books": 1,
+    "team": "NO",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 33.5,
+      "over_american": -114,
+      "under_american": -110,
+      "fair_over": 0.5042
+     },
+     {
+      "book": "fanduel",
+      "line": 32.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 3.5,
+    "fair_over": 0.5201,
+    "books": 2,
+    "team": "NO",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 3.5,
+      "over_american": -126,
+      "under_american": -101,
+      "fair_over": 0.526
+     },
+     {
+      "book": "fanduel",
+      "line": 3.5,
+      "over_american": -122,
+      "under_american": -108,
+      "fair_over": 0.5142
+     }
+    ]
+   }
+  ],
+  "Noah Fant": [
+   {
+    "stat": "rec_yds",
+    "line": 10.5,
+    "fair_over": 0.5042,
+    "books": 1,
+    "team": "NO",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 10.5,
+      "over_american": -114,
+      "under_american": -110,
+      "fair_over": 0.5042
+     },
+     {
+      "book": "fanduel",
+      "line": 11.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 1.5,
+    "fair_over": 0.5261,
+    "books": 2,
+    "team": "NO",
+    "game": "PIT@NO",
+    "start_time": "2026-10-25T13:30:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 1.5,
+      "over_american": -125,
+      "under_american": -102,
+      "fair_over": 0.5239
+     },
+     {
+      "book": "fanduel",
+      "line": 1.5,
+      "over_american": -130,
+      "under_american": -102,
+      "fair_over": 0.5282
+     }
+    ]
+   }
+  ],
+  "Amon-Ra St. Brown": [
+   {
+    "stat": "rec_yds",
+    "line": 77.5,
+    "fair_over": 0.5,
+    "books": 1,
+    "team": "DET",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 77.5,
+      "over_american": -112,
+      "under_american": -112,
+      "fair_over": 0.5
+     },
+     {
+      "book": "fanduel",
+      "line": 78.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 7.5,
+    "fair_over": 0.4818,
+    "books": 2,
+    "team": "DET",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 7.5,
+      "over_american": -111,
+      "under_american": -115,
+      "fair_over": 0.4958
+     },
+     {
+      "book": "fanduel",
+      "line": 7.5,
+      "over_american": 100,
+      "under_american": -132,
+      "fair_over": 0.4677
+     }
+    ]
+   }
+  ],
+  "Matthew Golden": [
+   {
+    "stat": "rec_yds",
+    "line": 73.5,
+    "fair_over": 0.5,
+    "books": 2,
+    "team": "GB",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 73.5,
+      "over_american": -112,
+      "under_american": -112,
+      "fair_over": 0.5
+     },
+     {
+      "book": "fanduel",
+      "line": 73.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 4.5,
+    "fair_over": 0.5761,
+    "books": 2,
+    "team": "GB",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 4.5,
+      "over_american": -160,
+      "under_american": 125,
+      "fair_over": 0.5806
+     },
+     {
+      "book": "fanduel",
+      "line": 4.5,
+      "over_american": -158,
+      "under_american": 118,
+      "fair_over": 0.5717
+     }
+    ]
+   }
+  ],
+  "Christian Watson": [
+   {
+    "stat": "rec_yds",
+    "line": 72.5,
+    "fair_over": 0.5021,
+    "books": 1,
+    "team": "GB",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 72.5,
+      "over_american": -113,
+      "under_american": -111,
+      "fair_over": 0.5021
+     },
+     {
+      "book": "fanduel",
+      "line": 74.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 4.5,
+    "fair_over": 0.4368,
+    "books": 2,
+    "team": "GB",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 4.5,
+      "over_american": 125,
+      "under_american": -160,
+      "fair_over": 0.4194
+     },
+     {
+      "book": "fanduel",
+      "line": 4.5,
+      "over_american": 106,
+      "under_american": -140,
+      "fair_over": 0.4542
+     }
+    ]
+   }
+  ],
+  "Jameson Williams": [
+   {
+    "stat": "rec_yds",
+    "line": 52.5,
+    "fair_over": 0.4979,
+    "books": 1,
+    "team": "DET",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 52.5,
+      "over_american": -111,
+      "under_american": -113,
+      "fair_over": 0.4979
+     },
+     {
+      "book": "fanduel",
+      "line": 53.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 3.5,
+    "fair_over": 0.5331,
+    "books": 2,
+    "team": "DET",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 3.5,
+      "over_american": -133,
+      "under_american": 104,
+      "fair_over": 0.538
+     },
+     {
+      "book": "fanduel",
+      "line": 3.5,
+      "over_american": -130,
+      "under_american": -102,
+      "fair_over": 0.5282
+     }
+    ]
+   }
+  ],
+  "Sam LaPorta": [
+   {
+    "stat": "rec_yds",
+    "line": 50.5,
+    "fair_over": 0.4979,
+    "books": 1,
+    "team": "DET",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 50.5,
+      "over_american": -111,
+      "under_american": -113,
+      "fair_over": 0.4979
+     },
+     {
+      "book": "fanduel",
+      "line": 49.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 5.5,
+    "fair_over": 0.4351,
+    "books": 1,
+    "team": "DET",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 5.5,
+      "over_american": 117,
+      "under_american": -149,
+      "fair_over": 0.4351
+     },
+     {
+      "book": "fanduel",
+      "line": 4.5,
+      "over_american": -148,
+      "under_american": 112,
+      "fair_over": 0.5585
+     }
+    ]
+   }
+  ],
+  "Tucker Kraft": [
+   {
+    "stat": "rec_yds",
+    "line": 43.5,
+    "fair_over": 0.5,
+    "books": 1,
+    "team": "GB",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 43.5,
+      "over_american": -112,
+      "under_american": -112,
+      "fair_over": 0.5
+     },
+     {
+      "book": "fanduel",
+      "line": 42.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 4.5,
+    "fair_over": 0.4177,
+    "books": 1,
+    "team": "GB",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 4.5,
+      "over_american": 126,
+      "under_american": -161,
+      "fair_over": 0.4177
+     },
+     {
+      "book": "fanduel",
+      "line": 3.5,
+      "over_american": -172,
+      "under_american": 128,
+      "fair_over": 0.5905
+     }
+    ]
+   }
+  ],
+  "Isaac TeSlaa": [
+   {
+    "stat": "rec_yds",
+    "line": 22.5,
+    "fair_over": 0.5021,
+    "books": 1,
+    "team": "DET",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 22.5,
+      "over_american": -113,
+      "under_american": -111,
+      "fair_over": 0.5021
+     },
+     {
+      "book": "fanduel",
+      "line": 24.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 1.5,
+    "fair_over": 0.555,
+    "books": 2,
+    "team": "DET",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 1.5,
+      "over_american": -145,
+      "under_american": 114,
+      "fair_over": 0.5588
+     },
+     {
+      "book": "fanduel",
+      "line": 1.5,
+      "over_american": -144,
+      "under_american": 108,
+      "fair_over": 0.5511
+     }
+    ]
+   }
+  ],
+  "Savion Williams": [
+   {
+    "stat": "rec_yds",
+    "line": 18.5,
+    "fair_over": 0.5084,
+    "books": 1,
+    "team": "GB",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 18.5,
+      "over_american": -116,
+      "under_american": -108,
+      "fair_over": 0.5084
+     },
+     {
+      "book": "fanduel",
+      "line": 17.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 2.5,
+    "fair_over": 0.41,
+    "books": 2,
+    "team": "GB",
+    "game": "GB@DET",
+    "start_time": "2026-10-25T20:25:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 2.5,
+      "over_american": 116,
+      "under_american": -148,
+      "fair_over": 0.4369
+     },
+     {
+      "book": "fanduel",
+      "line": 2.5,
+      "over_american": 144,
+      "under_american": -194,
+      "fair_over": 0.3831
+     }
+    ]
+   }
+  ],
+  "Jaxon Smith-Njigba": [
+   {
+    "stat": "rec_yds",
+    "line": 91.5,
+    "fair_over": 0.5,
+    "books": 1,
+    "team": "SEA",
+    "game": "KC@SEA",
+    "start_time": "2026-10-26T00:20:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 91.5,
+      "over_american": -112,
+      "under_american": -112,
+      "fair_over": 0.5
+     },
+     {
+      "book": "fanduel",
+      "line": 92.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 6.5,
+    "fair_over": 0.5385,
+    "books": 2,
+    "team": "SEA",
+    "game": "KC@SEA",
+    "start_time": "2026-10-26T00:20:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 6.5,
+      "over_american": -131,
+      "under_american": 103,
+      "fair_over": 0.5351
+     },
+     {
+      "book": "fanduel",
+      "line": 6.5,
+      "over_american": -138,
+      "under_american": 104,
+      "fair_over": 0.5419
+     }
+    ]
+   }
+  ],
+  "Rashid Shaheed": [
+   {
+    "stat": "rec_yds",
+    "line": 25.5,
+    "fair_over": 0.4969,
+    "books": 2,
+    "team": "SEA",
+    "game": "KC@SEA",
+    "start_time": "2026-10-26T00:20:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 25.5,
+      "over_american": -109,
+      "under_american": -115,
+      "fair_over": 0.4937
+     },
+     {
+      "book": "fanduel",
+      "line": 25.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 2.5,
+    "fair_over": 0.4535,
+    "books": 2,
+    "team": "SEA",
+    "game": "KC@SEA",
+    "start_time": "2026-10-26T00:20:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 2.5,
+      "over_american": 112,
+      "under_american": -143,
+      "fair_over": 0.4449
+     },
+     {
+      "book": "fanduel",
+      "line": 2.5,
+      "over_american": 102,
+      "under_american": -136,
+      "fair_over": 0.4621
+     }
+    ]
+   }
+  ],
+  "Cooper Kupp": [
+   {
+    "stat": "rec_yds",
+    "line": 24.5,
+    "fair_over": 0.4937,
+    "books": 1,
+    "team": "SEA",
+    "game": "KC@SEA",
+    "start_time": "2026-10-26T00:20:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 24.5,
+      "over_american": -109,
+      "under_american": -115,
+      "fair_over": 0.4937
+     },
+     {
+      "book": "fanduel",
+      "line": 25.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 2.5,
+    "fair_over": 0.4483,
+    "books": 2,
+    "team": "SEA",
+    "game": "KC@SEA",
+    "start_time": "2026-10-26T00:20:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 2.5,
+      "over_american": 113,
+      "under_american": -145,
+      "fair_over": 0.4424
+     },
+     {
+      "book": "fanduel",
+      "line": 2.5,
+      "over_american": 106,
+      "under_american": -140,
+      "fair_over": 0.4542
+     }
+    ]
+   }
+  ],
+  "A.J. Barner": [
+   {
+    "stat": "rec_yds",
+    "line": 24.5,
+    "fair_over": 0.4916,
+    "books": 1,
+    "team": "SEA",
+    "game": "KC@SEA",
+    "start_time": "2026-10-26T00:20:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 24.5,
+      "over_american": -108,
+      "under_american": -116,
+      "fair_over": 0.4916
+     },
+     {
+      "book": "fanduel",
+      "line": 25.5,
+      "over_american": -114,
+      "under_american": -114,
+      "fair_over": 0.5
+     }
+    ]
+   },
+   {
+    "stat": "rec",
+    "line": 2.5,
+    "fair_over": 0.5612,
+    "books": 2,
+    "team": "SEA",
+    "game": "KC@SEA",
+    "start_time": "2026-10-26T00:20:00.0000000Z",
+    "quotes": [
+     {
+      "book": "draftkings",
+      "line": 2.5,
+      "over_american": -140,
+      "under_american": 110,
+      "fair_over": 0.5506
+     },
+     {
+      "book": "fanduel",
+      "line": 2.5,
+      "over_american": -158,
+      "under_american": 118,
+      "fair_over": 0.5717
      }
     ]
    }
   ]
  },
  "anytime_td": {
-  "Christian McCaffrey": [
-   {
-    "book": "draftkings",
-    "american": -275,
-    "implied": 0.7333,
-    "team": "SF",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": -270,
-    "implied": 0.7297,
-    "team": "SF",
-    "game": "WAS@SF"
-   }
-  ],
-  "Mike Evans": [
-   {
-    "book": "draftkings",
-    "american": -115,
-    "implied": 0.5349,
-    "team": "SF",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": -120,
-    "implied": 0.5455,
-    "team": "SF",
-    "game": "WAS@SF"
-   }
-  ],
-  "George Kittle": [
-   {
-    "book": "draftkings",
-    "american": 105,
-    "implied": 0.4878,
-    "team": "SF",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 115,
-    "implied": 0.4651,
-    "team": "SF",
-    "game": "WAS@SF"
-   }
-  ],
-  "Rachaad White": [
-   {
-    "book": "draftkings",
-    "american": 105,
-    "implied": 0.4878,
-    "team": "WAS",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 105,
-    "implied": 0.4878,
-    "team": "WAS",
-    "game": "WAS@SF"
-   }
-  ],
-  "Terry McLaurin": [
-   {
-    "book": "draftkings",
-    "american": 220,
-    "implied": 0.3125,
-    "team": "WAS",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 220,
-    "implied": 0.3125,
-    "team": "WAS",
-    "game": "WAS@SF"
-   }
-  ],
-  "Jayden Daniels": [
-   {
-    "book": "draftkings",
-    "american": 220,
-    "implied": 0.3125,
-    "team": "WAS",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 220,
-    "implied": 0.3125,
-    "team": "WAS",
-    "game": "WAS@SF"
-   }
-  ],
-  "Brandin Cooks": [
-   {
-    "book": "draftkings",
-    "american": 250,
-    "implied": 0.2857,
-    "team": "SF",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 250,
-    "implied": 0.2857,
-    "team": "SF",
-    "game": "WAS@SF"
-   }
-  ],
-  "Stefon Diggs": [
-   {
-    "book": "draftkings",
-    "american": 250,
-    "implied": 0.2857,
-    "team": "WAS",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 250,
-    "implied": 0.2857,
-    "team": "WAS",
-    "game": "WAS@SF"
-   }
-  ],
-  "Austin Ekeler": [
-   {
-    "book": "draftkings",
-    "american": 275,
-    "implied": 0.2667,
-    "team": "WAS",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 290,
-    "implied": 0.2564,
-    "team": "WAS",
-    "game": "WAS@SF"
-   }
-  ],
-  "Brock Purdy": [
-   {
-    "book": "draftkings",
-    "american": 290,
-    "implied": 0.2564,
-    "team": "SF",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 300,
-    "implied": 0.25,
-    "team": "SF",
-    "game": "WAS@SF"
-   }
-  ],
-  "Chigoziem Okonkwo": [
-   {
-    "book": "draftkings",
-    "american": 340,
-    "implied": 0.2273,
-    "team": "WAS",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 330,
-    "implied": 0.2326,
-    "team": "WAS",
-    "game": "WAS@SF"
-   }
-  ],
-  "Jacob Cowing": [
-   {
-    "book": "draftkings",
-    "american": 380,
-    "implied": 0.2083,
-    "team": "SF",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 360,
-    "implied": 0.2174,
-    "team": "SF",
-    "game": "WAS@SF"
-   }
-  ],
-  "Jordan Watkins": [
-   {
-    "book": "draftkings",
-    "american": 390,
-    "implied": 0.2041,
-    "team": "SF",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 360,
-    "implied": 0.2174,
-    "team": "SF",
-    "game": "WAS@SF"
-   }
-  ],
-  "Kaelon Black": [
-   {
-    "book": "draftkings",
-    "american": 400,
-    "implied": 0.2,
-    "team": "SF",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 400,
-    "implied": 0.2,
-    "team": "SF",
-    "game": "WAS@SF"
-   }
-  ],
-  "Antonio Williams": [
-   {
-    "book": "draftkings",
-    "american": 450,
-    "implied": 0.1818,
-    "team": "WAS",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 460,
-    "implied": 0.1786,
-    "team": "WAS",
-    "game": "WAS@SF"
-   }
-  ],
-  "Kyle Juszczyk": [
-   {
-    "book": "draftkings",
-    "american": 500,
-    "implied": 0.1667,
-    "team": "SF",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 550,
-    "implied": 0.1538,
-    "team": "SF",
-    "game": "WAS@SF"
-   }
-  ],
-  "SF 49ers D/ST": [
-   {
-    "book": "draftkings",
-    "american": 600,
-    "implied": 0.1429,
-    "team": null,
-    "game": "WAS@SF"
-   }
-  ],
-  "Treylon Burks": [
-   {
-    "book": "draftkings",
-    "american": 650,
-    "implied": 0.1333,
-    "team": "WAS",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 650,
-    "implied": 0.1333,
-    "team": "WAS",
-    "game": "WAS@SF"
-   }
-  ],
-  "Dyami Brown": [
-   {
-    "book": "draftkings",
-    "american": 650,
-    "implied": 0.1333,
-    "team": "WAS",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 650,
-    "implied": 0.1333,
-    "team": "WAS",
-    "game": "WAS@SF"
-   }
-  ],
-  "WAS Commanders D/ST": [
-   {
-    "book": "draftkings",
-    "american": 700,
-    "implied": 0.125,
-    "team": null,
-    "game": "WAS@SF"
-   }
-  ],
-  "Brayden Willis": [
-   {
-    "book": "draftkings",
-    "american": 800,
-    "implied": 0.1111,
-    "team": "SF",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 800,
-    "implied": 0.1111,
-    "team": "SF",
-    "game": "WAS@SF"
-   }
-  ],
-  "Luke Farrell": [
-   {
-    "book": "draftkings",
-    "american": 850,
-    "implied": 0.1053,
-    "team": "SF",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 800,
-    "implied": 0.1111,
-    "team": "SF",
-    "game": "WAS@SF"
-   }
-  ],
-  "John Bates": [
-   {
-    "book": "draftkings",
-    "american": 1300,
-    "implied": 0.0714,
-    "team": "WAS",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 1300,
-    "implied": 0.0714,
-    "team": "WAS",
-    "game": "WAS@SF"
-   }
-  ],
-  "Ben Sinnott": [
-   {
-    "book": "draftkings",
-    "american": 1400,
-    "implied": 0.0667,
-    "team": "WAS",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 1300,
-    "implied": 0.0714,
-    "team": "WAS",
-    "game": "WAS@SF"
-   }
-  ],
-  "Colson Yankoff": [
-   {
-    "book": "draftkings",
-    "american": 2000,
-    "implied": 0.0476,
-    "team": "WAS",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 2000,
-    "implied": 0.0476,
-    "team": "WAS",
-    "game": "WAS@SF"
-   }
-  ],
-  "Jordan James": [
-   {
-    "book": "draftkings",
-    "american": 2000,
-    "implied": 0.0476,
-    "team": "SF",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 3000,
-    "implied": 0.0323,
-    "team": "SF",
-    "game": "WAS@SF"
-   }
-  ],
-  "Luke McCaffrey": [
-   {
-    "book": "draftkings",
-    "american": 3000,
-    "implied": 0.0323,
-    "team": "WAS",
-    "game": "WAS@SF"
-   },
-   {
-    "book": "fanduel",
-    "american": 3000,
-    "implied": 0.0323,
-    "team": "WAS",
-    "game": "WAS@SF"
-   }
-  ],
   "D'Andre Swift": [
    {
     "book": "draftkings",
@@ -2920,8 +3403,8 @@
    },
    {
     "book": "fanduel",
-    "american": -165,
-    "implied": 0.6226,
+    "american": -155,
+    "implied": 0.6078,
     "team": "CHI",
     "game": "NE@CHI"
    }
@@ -2929,8 +3412,8 @@
   "Rhamondre Stevenson": [
    {
     "book": "draftkings",
-    "american": -120,
-    "implied": 0.5455,
+    "american": -110,
+    "implied": 0.5238,
     "team": "NE",
     "game": "NE@CHI"
    },
@@ -2945,8 +3428,8 @@
   "A.J. Brown": [
    {
     "book": "draftkings",
-    "american": 125,
-    "implied": 0.4444,
+    "american": 140,
+    "implied": 0.4167,
     "team": "NE",
     "game": "NE@CHI"
    },
@@ -2961,8 +3444,40 @@
   "Colston Loveland": [
    {
     "book": "draftkings",
-    "american": 180,
-    "implied": 0.3571,
+    "american": 170,
+    "implied": 0.3704,
+    "team": "CHI",
+    "game": "NE@CHI"
+   },
+   {
+    "book": "fanduel",
+    "american": 165,
+    "implied": 0.3774,
+    "team": "CHI",
+    "game": "NE@CHI"
+   }
+  ],
+  "Luther Burden III": [
+   {
+    "book": "draftkings",
+    "american": 175,
+    "implied": 0.3636,
+    "team": "CHI",
+    "game": "NE@CHI"
+   },
+   {
+    "book": "fanduel",
+    "american": 170,
+    "implied": 0.3704,
+    "team": "CHI",
+    "game": "NE@CHI"
+   }
+  ],
+  "Rome Odunze": [
+   {
+    "book": "draftkings",
+    "american": 175,
+    "implied": 0.3636,
     "team": "CHI",
     "game": "NE@CHI"
    },
@@ -2974,50 +3489,18 @@
     "game": "NE@CHI"
    }
   ],
-  "Rome Odunze": [
-   {
-    "book": "draftkings",
-    "american": 185,
-    "implied": 0.3509,
-    "team": "CHI",
-    "game": "NE@CHI"
-   },
-   {
-    "book": "fanduel",
-    "american": 180,
-    "implied": 0.3571,
-    "team": "CHI",
-    "game": "NE@CHI"
-   }
-  ],
-  "Luther Burden III": [
-   {
-    "book": "draftkings",
-    "american": 195,
-    "implied": 0.339,
-    "team": "CHI",
-    "game": "NE@CHI"
-   },
-   {
-    "book": "fanduel",
-    "american": 180,
-    "implied": 0.3571,
-    "team": "CHI",
-    "game": "NE@CHI"
-   }
-  ],
   "Roschon Johnson": [
    {
     "book": "draftkings",
-    "american": 210,
-    "implied": 0.3226,
+    "american": 220,
+    "implied": 0.3125,
     "team": "CHI",
     "game": "NE@CHI"
    },
    {
     "book": "fanduel",
-    "american": 220,
-    "implied": 0.3125,
+    "american": 230,
+    "implied": 0.303,
     "team": "CHI",
     "game": "NE@CHI"
    }
@@ -3025,15 +3508,15 @@
   "Hunter Henry": [
    {
     "book": "draftkings",
-    "american": 210,
-    "implied": 0.3226,
+    "american": 225,
+    "implied": 0.3077,
     "team": "NE",
     "game": "NE@CHI"
    },
    {
     "book": "fanduel",
-    "american": 230,
-    "implied": 0.303,
+    "american": 220,
+    "implied": 0.3125,
     "team": "NE",
     "game": "NE@CHI"
    }
@@ -3041,15 +3524,15 @@
   "TreVeyon Henderson": [
    {
     "book": "draftkings",
-    "american": 240,
-    "implied": 0.2941,
+    "american": 280,
+    "implied": 0.2632,
     "team": "NE",
     "game": "NE@CHI"
    },
    {
     "book": "fanduel",
-    "american": 250,
-    "implied": 0.2857,
+    "american": 290,
+    "implied": 0.2564,
     "team": "NE",
     "game": "NE@CHI"
    }
@@ -3057,15 +3540,15 @@
   "Drake Maye": [
    {
     "book": "draftkings",
-    "american": 300,
-    "implied": 0.25,
+    "american": 320,
+    "implied": 0.2381,
     "team": "NE",
     "game": "NE@CHI"
    },
    {
     "book": "fanduel",
-    "american": 310,
-    "implied": 0.2439,
+    "american": 320,
+    "implied": 0.2381,
     "team": "NE",
     "game": "NE@CHI"
    }
@@ -3073,8 +3556,8 @@
   "Demario Douglas": [
    {
     "book": "draftkings",
-    "american": 320,
-    "implied": 0.2381,
+    "american": 360,
+    "implied": 0.2174,
     "team": "NE",
     "game": "NE@CHI"
    },
@@ -3086,39 +3569,39 @@
     "game": "NE@CHI"
    }
   ],
-  "Kalif Raymond": [
+  "Caleb Williams": [
    {
     "book": "draftkings",
-    "american": 380,
-    "implied": 0.2083,
-    "team": "CHI",
-    "game": "NE@CHI"
-   },
-   {
-    "book": "fanduel",
     "american": 390,
     "implied": 0.2041,
     "team": "CHI",
     "game": "NE@CHI"
+   },
+   {
+    "book": "fanduel",
+    "american": 370,
+    "implied": 0.2128,
+    "team": "CHI",
+    "game": "NE@CHI"
    }
   ],
-  "Caleb Williams": [
+  "Kalif Raymond": [
    {
     "book": "draftkings",
-    "american": 380,
-    "implied": 0.2083,
+    "american": 400,
+    "implied": 0.2,
     "team": "CHI",
     "game": "NE@CHI"
    },
    {
     "book": "fanduel",
-    "american": 350,
-    "implied": 0.2222,
+    "american": 380,
+    "implied": 0.2083,
     "team": "CHI",
     "game": "NE@CHI"
    }
   ],
-  "Eli Raridon": [
+  "Efton Chism III": [
    {
     "book": "draftkings",
     "american": 475,
@@ -3128,25 +3611,25 @@
    },
    {
     "book": "fanduel",
-    "american": 500,
-    "implied": 0.1667,
+    "american": 470,
+    "implied": 0.1754,
     "team": "NE",
     "game": "NE@CHI"
    }
   ],
-  "Efton Chism III": [
+  "Cole Kmet": [
    {
     "book": "draftkings",
     "american": 500,
     "implied": 0.1667,
-    "team": "NE",
+    "team": "CHI",
     "game": "NE@CHI"
    },
    {
     "book": "fanduel",
-    "american": 480,
-    "implied": 0.1724,
-    "team": "NE",
+    "american": 550,
+    "implied": 0.1538,
+    "team": "CHI",
     "game": "NE@CHI"
    }
   ],
@@ -3159,43 +3642,43 @@
     "game": "NE@CHI"
    }
   ],
-  "NE Patriots D/ST": [
+  "Eli Raridon": [
    {
     "book": "draftkings",
     "american": 600,
     "implied": 0.1429,
-    "team": null,
-    "game": "NE@CHI"
-   }
-  ],
-  "Cole Kmet": [
-   {
-    "book": "draftkings",
-    "american": 650,
-    "implied": 0.1333,
-    "team": "CHI",
+    "team": "NE",
     "game": "NE@CHI"
    },
    {
     "book": "fanduel",
     "american": 550,
     "implied": 0.1538,
-    "team": "CHI",
+    "team": "NE",
+    "game": "NE@CHI"
+   }
+  ],
+  "NE Patriots D/ST": [
+   {
+    "book": "draftkings",
+    "american": 650,
+    "implied": 0.1333,
+    "team": null,
     "game": "NE@CHI"
    }
   ],
   "Kyle Williams": [
    {
     "book": "draftkings",
-    "american": 750,
-    "implied": 0.1176,
+    "american": 650,
+    "implied": 0.1333,
     "team": "NE",
     "game": "NE@CHI"
    },
    {
     "book": "fanduel",
-    "american": 900,
-    "implied": 0.1,
+    "american": 700,
+    "implied": 0.125,
     "team": "NE",
     "game": "NE@CHI"
    }
@@ -3203,15 +3686,15 @@
   "Corey Kiner": [
    {
     "book": "draftkings",
-    "american": 1100,
-    "implied": 0.0833,
+    "american": 900,
+    "implied": 0.1,
     "team": "NE",
     "game": "NE@CHI"
    },
    {
     "book": "fanduel",
-    "american": 1200,
-    "implied": 0.0769,
+    "american": 1000,
+    "implied": 0.0909,
     "team": "NE",
     "game": "NE@CHI"
    }
@@ -3219,8 +3702,8 @@
   "Sam Roush": [
    {
     "book": "draftkings",
-    "american": 1200,
-    "implied": 0.0769,
+    "american": 1100,
+    "implied": 0.0833,
     "team": "CHI",
     "game": "NE@CHI"
    },
@@ -3235,8 +3718,8 @@
   "Zavion Thomas": [
    {
     "book": "draftkings",
-    "american": 1500,
-    "implied": 0.0625,
+    "american": 1700,
+    "implied": 0.0556,
     "team": "CHI",
     "game": "NE@CHI"
    },
@@ -3245,6 +3728,38 @@
     "american": 1500,
     "implied": 0.0625,
     "team": "CHI",
+    "game": "NE@CHI"
+   }
+  ],
+  "Cameron Latu": [
+   {
+    "book": "draftkings",
+    "american": 1900,
+    "implied": 0.05,
+    "team": "NE",
+    "game": "NE@CHI"
+   },
+   {
+    "book": "fanduel",
+    "american": 1700,
+    "implied": 0.0556,
+    "team": "NE",
+    "game": "NE@CHI"
+   }
+  ],
+  "Tanner Arkin": [
+   {
+    "book": "draftkings",
+    "american": 1900,
+    "implied": 0.05,
+    "team": "NE",
+    "game": "NE@CHI"
+   },
+   {
+    "book": "fanduel",
+    "american": 1700,
+    "implied": 0.0556,
+    "team": "NE",
     "game": "NE@CHI"
    }
   ],
@@ -3258,25 +3773,9 @@
    },
    {
     "book": "fanduel",
-    "american": 2000,
-    "implied": 0.0476,
+    "american": 1800,
+    "implied": 0.0526,
     "team": "CHI",
-    "game": "NE@CHI"
-   }
-  ],
-  "Tanner Arkin": [
-   {
-    "book": "draftkings",
-    "american": 2200,
-    "implied": 0.0435,
-    "team": "NE",
-    "game": "NE@CHI"
-   },
-   {
-    "book": "fanduel",
-    "american": 2200,
-    "implied": 0.0435,
-    "team": "NE",
     "game": "NE@CHI"
    }
   ],
@@ -3290,51 +3789,24 @@
    },
    {
     "book": "fanduel",
-    "american": 2500,
-    "implied": 0.0385,
+    "american": 2700,
+    "implied": 0.0357,
     "team": "CHI",
-    "game": "NE@CHI"
-   }
-  ],
-  "Cameron Latu": [
-   {
-    "book": "draftkings",
-    "american": 2500,
-    "implied": 0.0385,
-    "team": "NE",
-    "game": "NE@CHI"
-   },
-   {
-    "book": "fanduel",
-    "american": 2200,
-    "implied": 0.0435,
-    "team": "NE",
     "game": "NE@CHI"
    }
   ],
   "Jaylen Warren": [
    {
     "book": "draftkings",
-    "american": -120,
-    "implied": 0.5455,
+    "american": -155,
+    "implied": 0.6078,
     "team": "PIT",
     "game": "PIT@NO"
-   }
-  ],
-  "Chris Olave": [
+   },
    {
-    "book": "draftkings",
-    "american": 115,
-    "implied": 0.4651,
-    "team": "NO",
-    "game": "PIT@NO"
-   }
-  ],
-  "DK Metcalf": [
-   {
-    "book": "draftkings",
-    "american": 155,
-    "implied": 0.3922,
+    "book": "fanduel",
+    "american": -145,
+    "implied": 0.5918,
     "team": "PIT",
     "game": "PIT@NO"
    }
@@ -3342,8 +3814,159 @@
   "Kendre Miller": [
    {
     "book": "draftkings",
-    "american": 175,
-    "implied": 0.3636,
+    "american": 145,
+    "implied": 0.4082,
+    "team": "NO",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 155,
+    "implied": 0.3922,
+    "team": "NO",
+    "game": "PIT@NO"
+   }
+  ],
+  "Chris Olave": [
+   {
+    "book": "draftkings",
+    "american": 185,
+    "implied": 0.3509,
+    "team": "NO",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 185,
+    "implied": 0.3509,
+    "team": "NO",
+    "game": "PIT@NO"
+   }
+  ],
+  "DK Metcalf": [
+   {
+    "book": "draftkings",
+    "american": 185,
+    "implied": 0.3509,
+    "team": "PIT",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 170,
+    "implied": 0.3704,
+    "team": "PIT",
+    "game": "PIT@NO"
+   }
+  ],
+  "Rico Dowdle": [
+   {
+    "book": "draftkings",
+    "american": 225,
+    "implied": 0.3077,
+    "team": "PIT",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 240,
+    "implied": 0.2941,
+    "team": "PIT",
+    "game": "PIT@NO"
+   }
+  ],
+  "Germie Bernard": [
+   {
+    "book": "draftkings",
+    "american": 245,
+    "implied": 0.2899,
+    "team": "PIT",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 230,
+    "implied": 0.303,
+    "team": "PIT",
+    "game": "PIT@NO"
+   }
+  ],
+  "Juwan Johnson": [
+   {
+    "book": "draftkings",
+    "american": 270,
+    "implied": 0.2703,
+    "team": "NO",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 290,
+    "implied": 0.2564,
+    "team": "NO",
+    "game": "PIT@NO"
+   }
+  ],
+  "Pat Freiermuth": [
+   {
+    "book": "draftkings",
+    "american": 295,
+    "implied": 0.2532,
+    "team": "PIT",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 270,
+    "implied": 0.2703,
+    "team": "PIT",
+    "game": "PIT@NO"
+   }
+  ],
+  "Devaughn Vele": [
+   {
+    "book": "draftkings",
+    "american": 300,
+    "implied": 0.25,
+    "team": "NO",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 280,
+    "implied": 0.2632,
+    "team": "NO",
+    "game": "PIT@NO"
+   }
+  ],
+  "Darnell Washington": [
+   {
+    "book": "draftkings",
+    "american": 300,
+    "implied": 0.25,
+    "team": "PIT",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 280,
+    "implied": 0.2632,
+    "team": "PIT",
+    "game": "PIT@NO"
+   }
+  ],
+  "Alvin Kamara": [
+   {
+    "book": "draftkings",
+    "american": 320,
+    "implied": 0.2381,
+    "team": "NO",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 290,
+    "implied": 0.2564,
     "team": "NO",
     "game": "PIT@NO"
    }
@@ -3351,17 +3974,241 @@
   "Tyler Shough": [
    {
     "book": "draftkings",
-    "american": 245,
-    "implied": 0.2899,
+    "american": 425,
+    "implied": 0.1905,
+    "team": "NO",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 430,
+    "implied": 0.1887,
     "team": "NO",
     "game": "PIT@NO"
    }
   ],
-  "Alvin Kamara": [
+  "Noah Fant": [
    {
     "book": "draftkings",
-    "american": 255,
-    "implied": 0.2817,
+    "american": 600,
+    "implied": 0.1429,
+    "team": "NO",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 700,
+    "implied": 0.125,
+    "team": "NO",
+    "game": "PIT@NO"
+   }
+  ],
+  "CJ Donaldson": [
+   {
+    "book": "draftkings",
+    "american": 650,
+    "implied": 0.1333,
+    "team": "NO",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 600,
+    "implied": 0.1429,
+    "team": "NO",
+    "game": "PIT@NO"
+   }
+  ],
+  "Bryce Lance": [
+   {
+    "book": "draftkings",
+    "american": 650,
+    "implied": 0.1333,
+    "team": "NO",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 650,
+    "implied": 0.1333,
+    "team": "NO",
+    "game": "PIT@NO"
+   }
+  ],
+  "PIT Steelers D/ST": [
+   {
+    "book": "draftkings",
+    "american": 750,
+    "implied": 0.1176,
+    "team": null,
+    "game": "PIT@NO"
+   }
+  ],
+  "NO Saints D/ST": [
+   {
+    "book": "draftkings",
+    "american": 800,
+    "implied": 0.1111,
+    "team": null,
+    "game": "PIT@NO"
+   }
+  ],
+  "Aaron Rodgers": [
+   {
+    "book": "draftkings",
+    "american": 1000,
+    "implied": 0.0909,
+    "team": "PIT",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 1000,
+    "implied": 0.0909,
+    "team": "PIT",
+    "game": "PIT@NO"
+   }
+  ],
+  "Robert Tonyan": [
+   {
+    "book": "draftkings",
+    "american": 1200,
+    "implied": 0.0769,
+    "team": "PIT",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 1100,
+    "implied": 0.0833,
+    "team": "PIT",
+    "game": "PIT@NO"
+   }
+  ],
+  "Kaden Wetjen": [
+   {
+    "book": "draftkings",
+    "american": 1400,
+    "implied": 0.0667,
+    "team": "PIT",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 1200,
+    "implied": 0.0769,
+    "team": "PIT",
+    "game": "PIT@NO"
+   }
+  ],
+  "Oscar Delp": [
+   {
+    "book": "draftkings",
+    "american": 1700,
+    "implied": 0.0556,
+    "team": "NO",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 1800,
+    "implied": 0.0526,
+    "team": "NO",
+    "game": "PIT@NO"
+   }
+  ],
+  "Barion Brown": [
+   {
+    "book": "draftkings",
+    "american": 1800,
+    "implied": 0.0526,
+    "team": "NO",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 1800,
+    "implied": 0.0526,
+    "team": "NO",
+    "game": "PIT@NO"
+   }
+  ],
+  "Travis Homer": [
+   {
+    "book": "draftkings",
+    "american": 2500,
+    "implied": 0.0385,
+    "team": "PIT",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 2000,
+    "implied": 0.0476,
+    "team": "PIT",
+    "game": "PIT@NO"
+   }
+  ],
+  "Riley Nowakowski": [
+   {
+    "book": "draftkings",
+    "american": 2500,
+    "implied": 0.0385,
+    "team": "PIT",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 2700,
+    "implied": 0.0357,
+    "team": "PIT",
+    "game": "PIT@NO"
+   }
+  ],
+  "Eli Heidenreich": [
+   {
+    "book": "draftkings",
+    "american": 2800,
+    "implied": 0.0345,
+    "team": "PIT",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 2000,
+    "implied": 0.0476,
+    "team": "PIT",
+    "game": "PIT@NO"
+   }
+  ],
+  "Cedric Tillman": [
+   {
+    "book": "draftkings",
+    "american": 3000,
+    "implied": 0.0323,
+    "team": "NO",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 3300,
+    "implied": 0.0294,
+    "team": "NO",
+    "game": "PIT@NO"
+   }
+  ],
+  "Treyton Welch": [
+   {
+    "book": "draftkings",
+    "american": 3500,
+    "implied": 0.0278,
+    "team": "NO",
+    "game": "PIT@NO"
+   },
+   {
+    "book": "fanduel",
+    "american": 4500,
+    "implied": 0.0217,
     "team": "NO",
     "game": "PIT@NO"
    }
@@ -3369,8 +4216,8 @@
   "Chuba Hubbard": [
    {
     "book": "draftkings",
-    "american": -175,
-    "implied": 0.6364,
+    "american": -170,
+    "implied": 0.6296,
     "team": "CAR",
     "game": "TB@CAR"
    }
@@ -3393,29 +4240,29 @@
     "game": "TB@CAR"
    }
   ],
-  "Emeka Egbuka": [
-   {
-    "book": "draftkings",
-    "american": 170,
-    "implied": 0.3704,
-    "team": "TB",
-    "game": "TB@CAR"
-   }
-  ],
   "Jalen Coker": [
    {
     "book": "draftkings",
-    "american": 190,
-    "implied": 0.3448,
+    "american": 185,
+    "implied": 0.3509,
     "team": "CAR",
+    "game": "TB@CAR"
+   }
+  ],
+  "Emeka Egbuka": [
+   {
+    "book": "draftkings",
+    "american": 185,
+    "implied": 0.3509,
+    "team": "TB",
     "game": "TB@CAR"
    }
   ],
   "Tommy Tremble": [
    {
     "book": "draftkings",
-    "american": 265,
-    "implied": 0.274,
+    "american": 275,
+    "implied": 0.2667,
     "team": "CAR",
     "game": "TB@CAR"
    }
@@ -3423,8 +4270,8 @@
   "Cade Otton": [
    {
     "book": "draftkings",
-    "american": 300,
-    "implied": 0.25,
+    "american": 320,
+    "implied": 0.2381,
     "team": "TB",
     "game": "TB@CAR"
    }
@@ -3432,8 +4279,8 @@
   "Woody Marks": [
    {
     "book": "draftkings",
-    "american": -125,
-    "implied": 0.5556,
+    "american": -130,
+    "implied": 0.5652,
     "team": "HOU",
     "game": "NYG@HOU"
    }
@@ -3447,20 +4294,20 @@
     "game": "NYG@HOU"
    }
   ],
-  "Isaiah Likely": [
+  "Malik Nabers": [
    {
     "book": "draftkings",
-    "american": 175,
-    "implied": 0.3636,
+    "american": 165,
+    "implied": 0.3774,
     "team": "NYG",
     "game": "NYG@HOU"
    }
   ],
-  "Malik Nabers": [
+  "Isaiah Likely": [
    {
     "book": "draftkings",
-    "american": 180,
-    "implied": 0.3571,
+    "american": 170,
+    "implied": 0.3704,
     "team": "NYG",
     "game": "NYG@HOU"
    }
@@ -3486,8 +4333,8 @@
   "Chase Brown": [
    {
     "book": "draftkings",
-    "american": -130,
-    "implied": 0.5652,
+    "american": -140,
+    "implied": 0.5833,
     "team": "CIN",
     "game": "CIN@BAL"
    }
@@ -3504,8 +4351,8 @@
   "Zay Flowers": [
    {
     "book": "draftkings",
-    "american": 140,
-    "implied": 0.4167,
+    "american": 130,
+    "implied": 0.4348,
     "team": "BAL",
     "game": "CIN@BAL"
    }
@@ -3513,8 +4360,8 @@
   "Tee Higgins": [
    {
     "book": "draftkings",
-    "american": 140,
-    "implied": 0.4167,
+    "american": 145,
+    "implied": 0.4082,
     "team": "CIN",
     "game": "CIN@BAL"
    }
@@ -3522,35 +4369,35 @@
   "Mark Andrews": [
    {
     "book": "draftkings",
-    "american": 200,
-    "implied": 0.3333,
+    "american": 190,
+    "implied": 0.3448,
     "team": "BAL",
     "game": "CIN@BAL"
-   }
-  ],
-  "Jonathan Taylor": [
-   {
-    "book": "draftkings",
-    "american": -135,
-    "implied": 0.5745,
-    "team": "IND",
-    "game": "IND@MIN"
    }
   ],
   "Aaron Jones": [
    {
     "book": "draftkings",
+    "american": -135,
+    "implied": 0.5745,
+    "team": "MIN",
+    "game": "IND@MIN"
+   }
+  ],
+  "Jonathan Taylor": [
+   {
+    "book": "draftkings",
     "american": -130,
     "implied": 0.5652,
-    "team": "MIN",
+    "team": "IND",
     "game": "IND@MIN"
    }
   ],
   "Justin Jefferson": [
    {
     "book": "draftkings",
-    "american": 135,
-    "implied": 0.4255,
+    "american": 160,
+    "implied": 0.3846,
     "team": "MIN",
     "game": "IND@MIN"
    }
@@ -3558,8 +4405,8 @@
   "Garrett Wilson": [
    {
     "book": "draftkings",
-    "american": 145,
-    "implied": 0.4082,
+    "american": 135,
+    "implied": 0.4255,
     "team": "NYJ",
     "game": "MIA@NYJ"
    }
@@ -3576,8 +4423,8 @@
   "Tony Pollard": [
    {
     "book": "draftkings",
-    "american": 115,
-    "implied": 0.4651,
+    "american": 110,
+    "implied": 0.4762,
     "team": "TEN",
     "game": "CLE@TEN"
    }
@@ -3585,8 +4432,8 @@
   "Denzel Boston": [
    {
     "book": "draftkings",
-    "american": 165,
-    "implied": 0.3774,
+    "american": 185,
+    "implied": 0.3509,
     "team": "CLE",
     "game": "CLE@TEN"
    }
@@ -3594,8 +4441,8 @@
   "Harold Fannin Jr.": [
    {
     "book": "draftkings",
-    "american": 170,
-    "implied": 0.3704,
+    "american": 200,
+    "implied": 0.3333,
     "team": "CLE",
     "game": "CLE@TEN"
    }
@@ -3612,8 +4459,8 @@
   "Trey McBride": [
    {
     "book": "draftkings",
-    "american": 115,
-    "implied": 0.4651,
+    "american": 120,
+    "implied": 0.4545,
     "team": "ARI",
     "game": "DEN@ARI"
    }
@@ -3630,8 +4477,8 @@
   "Courtland Sutton": [
    {
     "book": "draftkings",
-    "american": 210,
-    "implied": 0.3226,
+    "american": 200,
+    "implied": 0.3333,
     "team": "DEN",
     "game": "DEN@ARI"
    }
@@ -3639,8 +4486,15 @@
   "Jahmyr Gibbs": [
    {
     "book": "draftkings",
-    "american": -340,
-    "implied": 0.7727,
+    "american": -330,
+    "implied": 0.7674,
+    "team": "DET",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": -330,
+    "implied": 0.7674,
     "team": "DET",
     "game": "GB@DET"
    }
@@ -3648,17 +4502,47 @@
   "Amon-Ra St. Brown": [
    {
     "book": "draftkings",
+    "american": -135,
+    "implied": 0.5745,
+    "team": "DET",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": -140,
+    "implied": 0.5833,
+    "team": "DET",
+    "game": "GB@DET"
+   }
+  ],
+  "Josh Jacobs": [
+   {
+    "book": "draftkings",
     "american": -130,
     "implied": 0.5652,
-    "team": "DET",
+    "team": "GB",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": -120,
+    "implied": 0.5455,
+    "team": "GB",
     "game": "GB@DET"
    }
   ],
   "Christian Watson": [
    {
     "book": "draftkings",
-    "american": 115,
-    "implied": 0.4651,
+    "american": 125,
+    "implied": 0.4444,
+    "team": "GB",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": 120,
+    "implied": 0.4545,
     "team": "GB",
     "game": "GB@DET"
    }
@@ -3666,8 +4550,31 @@
   "Matthew Golden": [
    {
     "book": "draftkings",
-    "american": 135,
-    "implied": 0.4255,
+    "american": 150,
+    "implied": 0.4,
+    "team": "GB",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": 150,
+    "implied": 0.4,
+    "team": "GB",
+    "game": "GB@DET"
+   }
+  ],
+  "MarShawn Lloyd": [
+   {
+    "book": "draftkings",
+    "american": 160,
+    "implied": 0.3846,
+    "team": "GB",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": -120,
+    "implied": 0.5455,
     "team": "GB",
     "game": "GB@DET"
    }
@@ -3675,8 +4582,15 @@
   "Sam LaPorta": [
    {
     "book": "draftkings",
-    "american": 165,
-    "implied": 0.3774,
+    "american": 170,
+    "implied": 0.3704,
+    "team": "DET",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": 180,
+    "implied": 0.3571,
     "team": "DET",
     "game": "GB@DET"
    }
@@ -3684,8 +4598,15 @@
   "Tucker Kraft": [
    {
     "book": "draftkings",
-    "american": 165,
-    "implied": 0.3774,
+    "american": 180,
+    "implied": 0.3571,
+    "team": "GB",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": 175,
+    "implied": 0.3636,
     "team": "GB",
     "game": "GB@DET"
    }
@@ -3693,8 +4614,266 @@
   "Jameson Williams": [
    {
     "book": "draftkings",
-    "american": 170,
-    "implied": 0.3704,
+    "american": 200,
+    "implied": 0.3333,
+    "team": "DET",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": 185,
+    "implied": 0.3509,
+    "team": "DET",
+    "game": "GB@DET"
+   }
+  ],
+  "Pierre Strong Jr.": [
+   {
+    "book": "draftkings",
+    "american": 260,
+    "implied": 0.2778,
+    "team": "GB",
+    "game": "GB@DET"
+   }
+  ],
+  "Isaac TeSlaa": [
+   {
+    "book": "draftkings",
+    "american": 360,
+    "implied": 0.2174,
+    "team": "DET",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": 370,
+    "implied": 0.2128,
+    "team": "DET",
+    "game": "GB@DET"
+   }
+  ],
+  "DET Lions D/ST": [
+   {
+    "book": "draftkings",
+    "american": 550,
+    "implied": 0.1538,
+    "team": null,
+    "game": "GB@DET"
+   }
+  ],
+  "Brock Wright": [
+   {
+    "book": "draftkings",
+    "american": 550,
+    "implied": 0.1538,
+    "team": "DET",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": 650,
+    "implied": 0.1333,
+    "team": "DET",
+    "game": "GB@DET"
+   }
+  ],
+  "Sione Vaki": [
+   {
+    "book": "draftkings",
+    "american": 700,
+    "implied": 0.125,
+    "team": "DET",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": 800,
+    "implied": 0.1111,
+    "team": "DET",
+    "game": "GB@DET"
+   }
+  ],
+  "Bo Melton": [
+   {
+    "book": "draftkings",
+    "american": 700,
+    "implied": 0.125,
+    "team": "GB",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": 700,
+    "implied": 0.125,
+    "team": "GB",
+    "game": "GB@DET"
+   }
+  ],
+  "Savion Williams": [
+   {
+    "book": "draftkings",
+    "american": 700,
+    "implied": 0.125,
+    "team": "GB",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": 650,
+    "implied": 0.1333,
+    "team": "GB",
+    "game": "GB@DET"
+   }
+  ],
+  "GB Packers D/ST": [
+   {
+    "book": "draftkings",
+    "american": 750,
+    "implied": 0.1176,
+    "team": null,
+    "game": "GB@DET"
+   }
+  ],
+  "Jonnu Smith": [
+   {
+    "book": "draftkings",
+    "american": 750,
+    "implied": 0.1176,
+    "team": "GB",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": 900,
+    "implied": 0.1,
+    "team": "GB",
+    "game": "GB@DET"
+   }
+  ],
+  "Mark Redman": [
+   {
+    "book": "draftkings",
+    "american": 750,
+    "implied": 0.1176,
+    "team": "GB",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": 750,
+    "implied": 0.1176,
+    "team": "GB",
+    "game": "GB@DET"
+   }
+  ],
+  "Jordan Love": [
+   {
+    "book": "draftkings",
+    "american": 800,
+    "implied": 0.1111,
+    "team": "GB",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": 700,
+    "implied": 0.125,
+    "team": "GB",
+    "game": "GB@DET"
+   }
+  ],
+  "Jared Goff": [
+   {
+    "book": "draftkings",
+    "american": 950,
+    "implied": 0.0952,
+    "team": "DET",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": 850,
+    "implied": 0.1053,
+    "team": "DET",
+    "game": "GB@DET"
+   }
+  ],
+  "Josh Whyle": [
+   {
+    "book": "draftkings",
+    "american": 1300,
+    "implied": 0.0714,
+    "team": "GB",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": 1600,
+    "implied": 0.0588,
+    "team": "GB",
+    "game": "GB@DET"
+   }
+  ],
+  "Tyler Conklin": [
+   {
+    "book": "draftkings",
+    "american": 1600,
+    "implied": 0.0588,
+    "team": "DET",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": 1600,
+    "implied": 0.0588,
+    "team": "DET",
+    "game": "GB@DET"
+   }
+  ],
+  "Tay Martin": [
+   {
+    "book": "draftkings",
+    "american": 2500,
+    "implied": 0.0385,
+    "team": "DET",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": 2500,
+    "implied": 0.0385,
+    "team": "DET",
+    "game": "GB@DET"
+   }
+  ],
+  "Jackson Meeks": [
+   {
+    "book": "draftkings",
+    "american": 2500,
+    "implied": 0.0385,
+    "team": "DET",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": 2200,
+    "implied": 0.0435,
+    "team": "DET",
+    "game": "GB@DET"
+   }
+  ],
+  "Jacob Saylors": [
+   {
+    "book": "draftkings",
+    "american": 2800,
+    "implied": 0.0345,
+    "team": "DET",
+    "game": "GB@DET"
+   },
+   {
+    "book": "fanduel",
+    "american": 4000,
+    "implied": 0.0244,
     "team": "DET",
     "game": "GB@DET"
    }
@@ -3711,8 +4890,8 @@
   "Puka Nacua": [
    {
     "book": "draftkings",
-    "american": -145,
-    "implied": 0.5918,
+    "american": -140,
+    "implied": 0.5833,
     "team": "LA",
     "game": "LA@LV"
    }
@@ -3720,8 +4899,8 @@
   "Ashton Jeanty": [
    {
     "book": "draftkings",
-    "american": -110,
-    "implied": 0.5238,
+    "american": -120,
+    "implied": 0.5455,
     "team": "LV",
     "game": "LA@LV"
    }
@@ -3729,8 +4908,8 @@
   "Brock Bowers": [
    {
     "book": "draftkings",
-    "american": 110,
-    "implied": 0.4762,
+    "american": 120,
+    "implied": 0.4545,
     "team": "LV",
     "game": "LA@LV"
    }
@@ -3738,8 +4917,15 @@
   "Kenneth Walker III": [
    {
     "book": "draftkings",
-    "american": -160,
-    "implied": 0.6154,
+    "american": -125,
+    "implied": 0.5556,
+    "team": "KC",
+    "game": "KC@SEA"
+   },
+   {
+    "book": "fanduel",
+    "american": -125,
+    "implied": 0.5556,
     "team": "KC",
     "game": "KC@SEA"
    }
@@ -3747,26 +4933,355 @@
   "Jaxon Smith-Njigba": [
    {
     "book": "draftkings",
-    "american": 115,
-    "implied": 0.4651,
+    "american": 135,
+    "implied": 0.4255,
     "team": "SEA",
+    "game": "KC@SEA"
+   },
+   {
+    "book": "fanduel",
+    "american": 125,
+    "implied": 0.4444,
+    "team": "SEA",
+    "game": "KC@SEA"
+   }
+  ],
+  "Xavier Worthy": [
+   {
+    "book": "draftkings",
+    "american": 195,
+    "implied": 0.339,
+    "team": "KC",
+    "game": "KC@SEA"
+   },
+   {
+    "book": "fanduel",
+    "american": 200,
+    "implied": 0.3333,
+    "team": "KC",
+    "game": "KC@SEA"
+   }
+  ],
+  "Rashee Rice": [
+   {
+    "book": "draftkings",
+    "american": 200,
+    "implied": 0.3333,
+    "team": "KC",
+    "game": "KC@SEA"
+   },
+   {
+    "book": "fanduel",
+    "american": 200,
+    "implied": 0.3333,
+    "team": "KC",
     "game": "KC@SEA"
    }
   ],
   "Travis Kelce": [
    {
     "book": "draftkings",
-    "american": 165,
-    "implied": 0.3774,
+    "american": 240,
+    "implied": 0.2941,
     "team": "KC",
+    "game": "KC@SEA"
+   },
+   {
+    "book": "fanduel",
+    "american": 240,
+    "implied": 0.2941,
+    "team": "KC",
+    "game": "KC@SEA"
+   }
+  ],
+  "A.J. Barner": [
+   {
+    "book": "draftkings",
+    "american": 300,
+    "implied": 0.25,
+    "team": "SEA",
+    "game": "KC@SEA"
+   }
+  ],
+  "Rashid Shaheed": [
+   {
+    "book": "draftkings",
+    "american": 340,
+    "implied": 0.2273,
+    "team": "SEA",
+    "game": "KC@SEA"
+   },
+   {
+    "book": "fanduel",
+    "american": 350,
+    "implied": 0.2222,
+    "team": "SEA",
+    "game": "KC@SEA"
+   }
+  ],
+  "Jalen Royals": [
+   {
+    "book": "draftkings",
+    "american": 390,
+    "implied": 0.2041,
+    "team": "KC",
+    "game": "KC@SEA"
+   },
+   {
+    "book": "fanduel",
+    "american": 390,
+    "implied": 0.2041,
+    "team": "KC",
+    "game": "KC@SEA"
+   }
+  ],
+  "Cooper Kupp": [
+   {
+    "book": "draftkings",
+    "american": 425,
+    "implied": 0.1905,
+    "team": "SEA",
+    "game": "KC@SEA"
+   },
+   {
+    "book": "fanduel",
+    "american": 410,
+    "implied": 0.1961,
+    "team": "SEA",
+    "game": "KC@SEA"
+   }
+  ],
+  "SEA Seahawks D/ST": [
+   {
+    "book": "draftkings",
+    "american": 550,
+    "implied": 0.1538,
+    "team": null,
+    "game": "KC@SEA"
+   }
+  ],
+  "Patrick Mahomes": [
+   {
+    "book": "draftkings",
+    "american": 550,
+    "implied": 0.1538,
+    "team": "KC",
+    "game": "KC@SEA"
+   },
+   {
+    "book": "fanduel",
+    "american": 550,
+    "implied": 0.1538,
+    "team": "KC",
+    "game": "KC@SEA"
+   }
+  ],
+  "KC Chiefs D/ST": [
+   {
+    "book": "draftkings",
+    "american": 600,
+    "implied": 0.1429,
+    "team": null,
+    "game": "KC@SEA"
+   }
+  ],
+  "Noah Gray": [
+   {
+    "book": "draftkings",
+    "american": 650,
+    "implied": 0.1333,
+    "team": "KC",
+    "game": "KC@SEA"
+   },
+   {
+    "book": "fanduel",
+    "american": 700,
+    "implied": 0.125,
+    "team": "KC",
+    "game": "KC@SEA"
+   }
+  ],
+  "Tory Horton": [
+   {
+    "book": "draftkings",
+    "american": 750,
+    "implied": 0.1176,
+    "team": "SEA",
+    "game": "KC@SEA"
+   },
+   {
+    "book": "fanduel",
+    "american": 750,
+    "implied": 0.1176,
+    "team": "SEA",
+    "game": "KC@SEA"
+   }
+  ],
+  "Sam Darnold": [
+   {
+    "book": "draftkings",
+    "american": 800,
+    "implied": 0.1111,
+    "team": "SEA",
+    "game": "KC@SEA"
+   },
+   {
+    "book": "fanduel",
+    "american": 800,
+    "implied": 0.1111,
+    "team": "SEA",
+    "game": "KC@SEA"
+   }
+  ],
+  "Cyrus Allen": [
+   {
+    "book": "draftkings",
+    "american": 900,
+    "implied": 0.1,
+    "team": "KC",
+    "game": "KC@SEA"
+   },
+   {
+    "book": "fanduel",
+    "american": 950,
+    "implied": 0.0952,
+    "team": "KC",
+    "game": "KC@SEA"
+   }
+  ],
+  "Eric Saubert": [
+   {
+    "book": "draftkings",
+    "american": 1100,
+    "implied": 0.0833,
+    "team": "SEA",
+    "game": "KC@SEA"
+   },
+   {
+    "book": "fanduel",
+    "american": 1100,
+    "implied": 0.0833,
+    "team": "SEA",
+    "game": "KC@SEA"
+   }
+  ],
+  "Emmett Johnson": [
+   {
+    "book": "draftkings",
+    "american": 1200,
+    "implied": 0.0769,
+    "team": "KC",
+    "game": "KC@SEA"
+   },
+   {
+    "book": "fanduel",
+    "american": 1100,
+    "implied": 0.0833,
+    "team": "KC",
+    "game": "KC@SEA"
+   }
+  ],
+  "Brashard Smith": [
+   {
+    "book": "draftkings",
+    "american": 1800,
+    "implied": 0.0526,
+    "team": "KC",
+    "game": "KC@SEA"
+   },
+   {
+    "book": "fanduel",
+    "american": 1600,
+    "implied": 0.0588,
+    "team": "KC",
+    "game": "KC@SEA"
+   }
+  ],
+  "Jake Briningstool": [
+   {
+    "book": "draftkings",
+    "american": 2000,
+    "implied": 0.0476,
+    "team": "KC",
+    "game": "KC@SEA"
+   },
+   {
+    "book": "fanduel",
+    "american": 1900,
+    "implied": 0.05,
+    "team": "KC",
+    "game": "KC@SEA"
+   }
+  ],
+  "Jared Wiley": [
+   {
+    "book": "draftkings",
+    "american": 2200,
+    "implied": 0.0435,
+    "team": "KC",
+    "game": "KC@SEA"
+   },
+   {
+    "book": "fanduel",
+    "american": 1900,
+    "implied": 0.05,
+    "team": "KC",
+    "game": "KC@SEA"
+   }
+  ],
+  "Nick Kallerup": [
+   {
+    "book": "draftkings",
+    "american": 2500,
+    "implied": 0.0385,
+    "team": "SEA",
+    "game": "KC@SEA"
+   },
+   {
+    "book": "fanduel",
+    "american": 2200,
+    "implied": 0.0435,
+    "team": "SEA",
+    "game": "KC@SEA"
+   }
+  ],
+  "Nikko Remigio": [
+   {
+    "book": "draftkings",
+    "american": 3000,
+    "implied": 0.0323,
+    "team": "KC",
+    "game": "KC@SEA"
+   },
+   {
+    "book": "fanduel",
+    "american": 2500,
+    "implied": 0.0385,
+    "team": "KC",
+    "game": "KC@SEA"
+   }
+  ],
+  "Montorie Foster Jr.": [
+   {
+    "book": "draftkings",
+    "american": 3500,
+    "implied": 0.0278,
+    "team": "SEA",
+    "game": "KC@SEA"
+   },
+   {
+    "book": "fanduel",
+    "american": 3500,
+    "implied": 0.0278,
+    "team": "SEA",
     "game": "KC@SEA"
    }
   ],
   "Javonte Williams": [
    {
     "book": "draftkings",
-    "american": -190,
-    "implied": 0.6552,
+    "american": -185,
+    "implied": 0.6491,
     "team": "DAL",
     "game": "DAL@PHI"
    }
@@ -3774,8 +5289,8 @@
   "CeeDee Lamb": [
    {
     "book": "draftkings",
-    "american": 125,
-    "implied": 0.4444,
+    "american": 120,
+    "implied": 0.4545,
     "team": "DAL",
     "game": "DAL@PHI"
    }
@@ -3783,8 +5298,8 @@
   "George Pickens": [
    {
     "book": "draftkings",
-    "american": 155,
-    "implied": 0.3922,
+    "american": 145,
+    "implied": 0.4082,
     "team": "DAL",
     "game": "DAL@PHI"
    }
@@ -3801,46 +5316,64 @@
   "Jake Ferguson": [
    {
     "book": "draftkings",
-    "american": 260,
-    "implied": 0.2778,
+    "american": 270,
+    "implied": 0.2703,
     "team": "DAL",
     "game": "DAL@PHI"
    }
   ],
-  "Washington Defense": [
+  "Pittsburgh Defense": [
    {
     "book": "fanduel",
-    "american": 700,
-    "implied": 0.125,
+    "american": 600,
+    "implied": 0.1429,
     "team": null,
-    "game": "WAS@SF"
+    "game": "PIT@NO"
    }
   ],
-  "San Francisco Defense": [
+  "New Orleans Defense": [
+   {
+    "book": "fanduel",
+    "american": 850,
+    "implied": 0.1053,
+    "team": null,
+    "game": "PIT@NO"
+   }
+  ],
+  "Pierre Strong": [
+   {
+    "book": "fanduel",
+    "american": 270,
+    "implied": 0.2703,
+    "team": null,
+    "game": "GB@DET"
+   }
+  ],
+  "Green Bay Defense": [
    {
     "book": "fanduel",
     "american": 750,
     "implied": 0.1176,
     "team": null,
-    "game": "WAS@SF"
+    "game": "GB@DET"
    }
   ],
-  "Malik Turner": [
+  "Detroit Defense": [
    {
     "book": "fanduel",
-    "american": 1400,
-    "implied": 0.0667,
+    "american": 800,
+    "implied": 0.1111,
     "team": null,
-    "game": "WAS@SF"
+    "game": "GB@DET"
    }
   ],
-  "Romeo Doubs": [
+  "J. Michael Sturdivant": [
    {
     "book": "fanduel",
-    "american": 330,
-    "implied": 0.2326,
+    "american": 1900,
+    "implied": 0.05,
     "team": null,
-    "game": "NE@CHI"
+    "game": "GB@DET"
    }
   ],
   "New England Defense": [
@@ -3860,24 +5393,51 @@
     "team": null,
     "game": "NE@CHI"
    }
+  ],
+  "AJ Barner": [
+   {
+    "book": "fanduel",
+    "american": 300,
+    "implied": 0.25,
+    "team": "SEA",
+    "game": "KC@SEA"
+   }
+  ],
+  "Seattle Defense": [
+   {
+    "book": "fanduel",
+    "american": 750,
+    "implied": 0.1176,
+    "team": null,
+    "game": "KC@SEA"
+   }
+  ],
+  "Kansas City Defense": [
+   {
+    "book": "fanduel",
+    "american": 950,
+    "implied": 0.0952,
+    "team": null,
+    "game": "KC@SEA"
+   }
   ]
  },
- "total_props": 106,
- "total_players": 25,
- "two_book_props": 32,
+ "total_props": 137,
+ "total_players": 46,
+ "two_book_props": 57,
  "by_stat": {
-  "pass_yds": 4,
-  "pass_td": 4,
+  "pass_yds": 8,
+  "pass_td": 8,
   "pass_att": 4,
   "completions": 4,
-  "pass_int": 4,
+  "pass_int": 2,
   "pass_rush_yds": 4,
-  "rush_yds": 11,
+  "rush_yds": 13,
   "rush_att": 7,
-  "longest_completion": 4,
-  "rush_rec_yds": 5,
-  "rec_yds": 19,
-  "rec": 19,
-  "longest_rec": 17
+  "longest_completion": 2,
+  "rush_rec_yds": 6,
+  "rec_yds": 35,
+  "rec": 35,
+  "longest_rec": 9
  }
 }
