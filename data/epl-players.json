@@ -1,6 +1,6 @@
 {
  "season": "2026/2027",
- "fetched_at": "2026-10-19T22:19:22.175Z",
+ "fetched_at": "2026-10-21T12:00:04.598Z",
  "teams": {
   "8455": {
    "name": "Chelsea",
@@ -1119,10 +1119,10 @@
    "first_name": "Andrew",
    "second_name": "Robertson",
    "fpl_position": "DEF",
-   "status": "a",
-   "chance_next": null,
-   "news": null,
-   "news_added": null
+   "status": "d",
+   "chance_next": 75,
+   "news": "Foot injury - 75% chance of playing",
+   "news_added": "2026-10-19T22:30:08.861525Z"
   },
   "362694": {
    "name": "Luke Shaw",
@@ -1142,9 +1142,9 @@
    "first_name": "Luke",
    "second_name": "Shaw",
    "fpl_position": "DEF",
-   "status": "d",
-   "chance_next": 75,
-   "news": "Unspecified injury - 75% chance of playing",
+   "status": "i",
+   "chance_next": 0,
+   "news": "Unspecified injury - Unknown return date",
    "news_added": "2026-10-12T21:30:08.995810Z"
   },
   "410836": {
@@ -2657,10 +2657,10 @@
    "first_name": "Tosin",
    "second_name": "Adarabioyo",
    "fpl_position": "DEF",
-   "status": "a",
-   "chance_next": null,
-   "news": null,
-   "news_added": null
+   "status": "d",
+   "chance_next": 75,
+   "news": "Calf injury - 75% chance of playing",
+   "news_added": "2026-10-19T22:30:08.516742Z"
   },
   "688273": {
    "name": "Vitaly Janelt",
@@ -2749,10 +2749,10 @@
    "first_name": "Marcus",
    "second_name": "Rashford",
    "fpl_position": "MID",
-   "status": "a",
-   "chance_next": 100,
-   "news": null,
-   "news_added": "2026-09-21T10:30:09.221479Z"
+   "status": "d",
+   "chance_next": 75,
+   "news": "Hip injury - 75% chance of playing",
+   "news_added": "2026-10-20T20:00:09.925594Z"
   },
   "696443": {
    "name": "Issa Diop",
@@ -3097,9 +3097,9 @@
    "first_name": "Erling",
    "second_name": "Haaland",
    "fpl_position": "FWD",
-   "status": "d",
-   "chance_next": 75,
-   "news": "Unspecified injury - 75% chance of playing",
+   "status": "a",
+   "chance_next": 100,
+   "news": null,
    "news_added": "2026-10-19T13:00:10.543876Z"
   },
   "744494": {
@@ -3327,9 +3327,9 @@
    "first_name": "Aaron",
    "second_name": "Wan-Bissaka",
    "fpl_position": "DEF",
-   "status": "d",
-   "chance_next": 75,
-   "news": "Hamstring injury - 75% chance of playing",
+   "status": "i",
+   "chance_next": 0,
+   "news": "Hamstring injury - Expected back 21 Nov",
    "news_added": "2026-10-17T19:30:10.120990Z"
   },
   "760359": {
@@ -4363,10 +4363,10 @@
    "first_name": "Omar",
    "second_name": "Marmoush",
    "fpl_position": "FWD",
-   "status": "a",
-   "chance_next": null,
-   "news": null,
-   "news_added": null
+   "status": "d",
+   "chance_next": 75,
+   "news": "Calf injury - 75% chance of playing",
+   "news_added": "2026-10-19T22:30:08.721497Z"
   },
   "843040": {
    "name": "Pedro Neto",
@@ -6056,9 +6056,9 @@
    "first_name": "Ian",
    "second_name": "Maatsen",
    "fpl_position": "DEF",
-   "status": "i",
-   "chance_next": 0,
-   "news": "Ankle injury - Unknown return date",
+   "status": "d",
+   "chance_next": 75,
+   "news": "Ankle injury - 75% chance of playing",
    "news_added": "2026-09-12T18:00:08.729468Z"
   },
   "966027": {
@@ -6613,7 +6613,7 @@
    "fpl_position": "DEF",
    "status": "i",
    "chance_next": 0,
-   "news": "Hamstring injury - Unknown return date",
+   "news": "Hamstring injury - Expected back 2 Jan",
    "news_added": "2026-10-10T18:00:10.750593Z"
   },
   "1052898": {
@@ -6634,10 +6634,10 @@
    "first_name": "Destiny",
    "second_name": "Udogie",
    "fpl_position": "DEF",
-   "status": "a",
-   "chance_next": 100,
-   "news": null,
-   "news_added": "2026-09-11T18:00:09.092110Z"
+   "status": "d",
+   "chance_next": 75,
+   "news": "Knee injury - 75% chance of playing",
+   "news_added": "2026-10-19T22:30:08.875960Z"
   },
   "1053679": {
    "name": "Zion Suzuki",
@@ -7802,9 +7802,9 @@
    "first_name": "Lucas",
    "second_name": "Gourna-Douath",
    "fpl_position": "MID",
-   "status": "i",
-   "chance_next": 0,
-   "news": "Calf injury - Expected back 25 Oct",
+   "status": "d",
+   "chance_next": 50,
+   "news": "Calf injury - 50% chance of playing",
    "news_added": "2026-10-16T13:00:08.314070Z"
   },
   "1137407": {
@@ -7846,9 +7846,9 @@
    "first_name": "Piero",
    "second_name": "Hincapié",
    "fpl_position": "DEF",
-   "status": "i",
-   "chance_next": 0,
-   "news": "Ankle injury - Expected back 24 Oct",
+   "status": "d",
+   "chance_next": 75,
+   "news": "Ankle injury - 75% chance of playing",
    "news_added": "2026-10-12T15:00:07.550884Z"
   },
   "1137668": {
@@ -8214,9 +8214,9 @@
    "first_name": "Mohamed-Ali",
    "second_name": "Cho",
    "fpl_position": "MID",
-   "status": "i",
-   "chance_next": 0,
-   "news": "Unspecified injury - Expected back 25 Oct",
+   "status": "d",
+   "chance_next": 50,
+   "news": "Unspecified injury - 50% chance of playing",
    "news_added": "2026-10-16T17:30:09.623338Z"
   },
   "1185211": {
@@ -9167,9 +9167,9 @@
    "first_name": "Kobbie",
    "second_name": "Mainoo",
    "fpl_position": "MID",
-   "status": "d",
-   "chance_next": 75,
-   "news": "Unspecified injury - 75% chance of playing",
+   "status": "i",
+   "chance_next": 0,
+   "news": "Unspecified injury - Expected back 8 Nov",
    "news_added": "2026-10-12T21:30:09.006287Z"
   },
   "1292833": {
@@ -10895,10 +10895,10 @@
    "first_name": "Victor",
    "second_name": "Munoz",
    "fpl_position": "MID",
-   "status": "a",
-   "chance_next": null,
-   "news": null,
-   "news_added": null
+   "status": "d",
+   "chance_next": 75,
+   "news": "Knee injury - 75% chance of playing",
+   "news_added": "2026-10-20T18:30:09.999223Z"
   },
   "1553189": {
    "name": "Luka Lynch",
@@ -10985,10 +10985,10 @@
    "first_name": "Ayden",
    "second_name": "Heaven",
    "fpl_position": "DEF",
-   "status": "a",
-   "chance_next": null,
-   "news": null,
-   "news_added": null
+   "status": "d",
+   "chance_next": 75,
+   "news": "Illness - 75% chance of playing",
+   "news_added": "2026-10-20T20:00:09.902224Z"
   },
   "1561249": {
    "name": "Charalampos Kostoulas",
@@ -11715,8 +11715,8 @@
    "second_name": "Vaz",
    "fpl_position": "FWD",
    "status": "d",
-   "chance_next": 50,
-   "news": "Achilles injury - 50% chance of playing",
+   "chance_next": 75,
+   "news": "Achilles injury - 75% chance of playing",
    "news_added": "2026-10-17T17:00:08.108262Z"
   },
   "1720243": {

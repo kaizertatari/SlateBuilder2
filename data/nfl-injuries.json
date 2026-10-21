@@ -1,4 +1,4 @@
-{"fetched_at":"2026-10-19T22:18:33.751Z","season":2026,"rows":[
+{"fetched_at":"2026-10-21T12:30:07.268Z","season":2026,"rows":[
 {"player_id":"00-0034381","name":"Josh Sweat","position":"LB","team":"ARI","season":2026,"week":1,"game_type":"REG","practice_status":"Full Participation in Practice"},
 {"player_id":"00-0035859","name":"Blake Gillikin","position":"P","team":"ARI","season":2026,"week":1,"game_type":"REG","practice_status":"Full Participation in Practice"},
 {"player_id":"00-0039007","name":"Garrett Williams","position":"CB","team":"ARI","season":2026,"week":1,"game_type":"REG","report_status":"Out","practice_status":"Limited Participation in Practice","primary_injury":"Achilles"},
@@ -1787,5 +1787,28 @@
 {"player_id":"00-0039681","name":"Tyler Owens","position":"S","team":"WAS","season":2026,"week":6,"game_type":"REG","report_status":"Questionable","practice_status":"Limited Participation in Practice","primary_injury":"Hamstring"},
 {"player_id":"00-0039910","name":"Jayden Daniels","position":"QB","team":"WAS","season":2026,"week":6,"game_type":"REG","practice_status":"Full Participation in Practice"},
 {"player_id":"00-0040242","name":"Jacory Croskey-Merritt","position":"RB","team":"WAS","season":2026,"week":6,"game_type":"REG","report_status":"Out","practice_status":"Did Not Participate In Practice","primary_injury":"Groin"},
-{"player_id":"00-0040731","name":"Trey Amos","position":"CB","team":"WAS","season":2026,"week":6,"game_type":"REG","report_status":"Questionable","practice_status":"Full Participation in Practice","primary_injury":"Ankle"}
+{"player_id":"00-0040731","name":"Trey Amos","position":"CB","team":"WAS","season":2026,"week":6,"game_type":"REG","report_status":"Questionable","practice_status":"Full Participation in Practice","primary_injury":"Ankle"},
+{"player_id":"00-0035386","name":"T.J. Edwards","position":"LB","team":"CHI","season":2026,"week":7,"game_type":"REG","practice_status":"Did Not Participate In Practice"},
+{"player_id":"00-0036258","name":"Jonah Jackson","position":"G","team":"CHI","season":2026,"week":7,"game_type":"REG","practice_status":"Limited Participation in Practice"},
+{"player_id":"00-0037109","name":"Jack Sanborn","position":"LB","team":"CHI","season":2026,"week":7,"game_type":"REG","practice_status":"Did Not Participate In Practice"},
+{"player_id":"00-0039071","name":"Tyrique Stevenson","position":"CB","team":"CHI","season":2026,"week":7,"game_type":"REG","practice_status":"Full Participation in Practice"},
+{"player_id":"00-0040236","name":"Kyle Monangai","position":"RB","team":"CHI","season":2026,"week":7,"game_type":"REG","practice_status":"Did Not Participate In Practice"},
+{"player_id":"00-0041085","name":"Keyshaun Elliott","position":"LB","team":"CHI","season":2026,"week":7,"game_type":"REG","practice_status":"Full Participation in Practice"},
+{"player_id":"00-0031330","name":"Morgan Moses","position":"T","team":"NE","season":2026,"week":7,"game_type":"REG","practice_status":"Limited Participation in Practice"},
+{"player_id":"00-0033132","name":"Kevin Byard","position":"S","team":"NE","season":2026,"week":7,"game_type":"REG","practice_status":"Full Participation in Practice"},
+{"player_id":"00-0034778","name":"Carlton Davis III","position":"CB","team":"NE","season":2026,"week":7,"game_type":"REG","practice_status":"Limited Participation in Practice"},
+{"player_id":"00-0035676","name":"A.J. Brown","position":"WR","team":"NE","season":2026,"week":7,"game_type":"REG","practice_status":"Limited Participation in Practice"},
+{"player_id":"00-0035678","name":"Dre'Mont Jones","position":"LB","team":"NE","season":2026,"week":7,"game_type":"REG","practice_status":"Full Participation in Practice"},
+{"player_id":"00-0036813","name":"Christian Elliss","position":"LB","team":"NE","season":2026,"week":7,"game_type":"REG","practice_status":"Full Participation in Practice"},
+{"player_id":"00-0036979","name":"Alijah Vera-Tucker","position":"G","team":"NE","season":2026,"week":7,"game_type":"REG","practice_status":"Did Not Participate In Practice"},
+{"player_id":"00-0037413","name":"Ben Brown","position":"C","team":"NE","season":2026,"week":7,"game_type":"REG","practice_status":"Did Not Participate In Practice"},
+{"player_id":"00-0039851","name":"Drake Maye","position":"QB","team":"NE","season":2026,"week":7,"game_type":"REG","practice_status":"Full Participation in Practice"},
+{"player_id":"00-0040171","name":"Joshua Farmer","position":"DT","team":"NE","season":2026,"week":7,"game_type":"REG","practice_status":"Did Not Participate In Practice"},
+{"player_id":"00-0040200","name":"Andy Borregales","position":"K","team":"NE","season":2026,"week":7,"game_type":"REG","practice_status":"Full Participation in Practice"},
+{"player_id":"00-0040226","name":"Marcus Bryant","position":"T","team":"NE","season":2026,"week":7,"game_type":"REG","practice_status":"Full Participation in Practice"},
+{"player_id":"00-0040699","name":"Will Campbell","position":"T","team":"NE","season":2026,"week":7,"game_type":"REG","practice_status":"Full Participation in Practice"},
+{"player_id":"00-0040716","name":"Craig Woodson","position":"S","team":"NE","season":2026,"week":7,"game_type":"REG","practice_status":"Full Participation in Practice"},
+{"player_id":"00-0040734","name":"TreVeyon Henderson","position":"RB","team":"NE","season":2026,"week":7,"game_type":"REG","practice_status":"Full Participation in Practice"},
+{"player_id":"00-0041088","name":"Karon Prunty","position":"CB","team":"NE","season":2026,"week":7,"game_type":"REG","practice_status":"Limited Participation in Practice"},
+{"player_id":"00-0041316","name":"Channing Canada","position":"CB","team":"NE","season":2026,"week":7,"game_type":"REG","practice_status":"Limited Participation in Practice"}
 ]}
