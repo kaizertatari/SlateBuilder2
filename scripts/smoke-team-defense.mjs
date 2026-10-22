@@ -89,6 +89,13 @@ const near = (a, b) => Math.abs(a - b) < 0.011;
   const t = resolve({ live: { teams: { AAA: { def_rating: 112 }, BBB: { def_rating: 108 } } }, snapshot: prevSnap });
   ok(t.teams.AAA.weight === 1, "D10: live without GP is trusted fully");
 }
+{
+  // Opening week: BBB hasn't played, so live lists only AAA (curMean 112,
+  // priorMean 105 → BBB's prior re-centres to 117).
+  const t = resolve({ live: { teams: { AAA: { def_rating: 112, gp: 1 } } }, snapshot: prevSnap });
+  ok(t.teams.BBB && t.teams.BBB.weight === 0 && t.teams.BBB.gp === 0, "D11: team yet to play keeps its last-season row");
+  ok(near(t.teams.BBB.def_rating, 117) && t.teams.BBB.def_rank === 2, "D11: its prior is re-centred on the live mean");
+}
 
 console.log(`\nsmoke-team-defense: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -288,6 +288,19 @@ Deployment note: the `?ping=1` branch lives in `api/refresh-lines.js` and
 only exists in **Production = `main`** (pushes to `Testing` create
 Preview deploys only).
 
+## Refresh NBA player pool
+
+`npm run refresh-nba-players` (`--dry-run` to preview) rebuilds the NBA
+entries in `data/players.json` from all 30 current ESPN rosters, with NBA ids
+from the stats.nba.com playerindex for the current season. Existing entries
+keep their key and bbref slug (matched on ESPN id); players on no roster are
+dropped; WNBA entries are untouched. Then `node scripts/build-bbref-ids.mjs
+--missing --league NBA` (~3.5s/player), then re-run the PrizePicks refresh so
+the board's `player_key`/`nba_id` re-resolve against the new pool. Run at
+season start and after the trade deadline. Until 2026-10-21 the pool was the
+playoff-only set from `refresh-playoff-players.mjs`, which left ~half of a
+regular-season board as `player_not_configured` SKIPs.
+
 ## Refresh bbref splits
 
 `npm run refresh-bbref-splits` (annual; staleness triggers the

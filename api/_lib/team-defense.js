@@ -107,6 +107,12 @@ export function resolveDefenseTable({ live, snapshot, seasonType, seasonLabel, l
       const pr = p ? p.def_rating - priorMean + curMean : r.def_rating;
       blended[abbr] = { ...r, def_rating: +(w * r.def_rating + (1 - w) * pr).toFixed(2), weight: +w.toFixed(3) };
     }
+    // Opening week: the live table only lists teams that have played, so a
+    // team yet to tip off keeps its re-centred last-season row (weight 0).
+    for (const [abbr, p] of Object.entries(prior)) {
+      if (blended[abbr]) continue;
+      blended[abbr] = { ...p, def_rating: +(p.def_rating - priorMean + curMean).toFixed(2), gp: 0, weight: 0 };
+    }
     return table(blended, { source: `${current.source}+prior`, season: seasonLabel, as_of: current.as_of });
   }
   if (current) {
