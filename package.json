@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "refresh-players": "node scripts/refresh-playoff-players.mjs",
+    "refresh-nba-players": "node scripts/refresh-nba-players.mjs",
     "refresh-wnba-players": "node scripts/refresh-wnba-players.mjs",
     "refresh-epl-data": "node scripts/refresh-epl-data.mjs",
     "refresh-nfl-data": "node scripts/refresh-nfl-data.mjs",

@@ -145,13 +145,27 @@ async function scrapePrizePicksForLeague(leagueId, fetchJson = defaultFetchJson,
 // only resolves for WNBA scrape projections, even if a future NBA player
 // shared the name. Combo entries like "Cade Cunningham + James Harden" try
 // each component individually and return the first league-matching match.
+// PrizePicks drops generational suffixes ("Kelly Oubre" for players.json's
+// "Kelly Oubre Jr."), so a miss retries with the suffix stripped.
+const SUFFIX_RE = /\s+(jr|sr|ii|iii|iv|v)$/;
+const stripSuffix = (key) => key.replace(SUFFIX_RE, "");
+
+function lookupName(name, nameLookup, league) {
+  const key = normalizeName(name);
+  for (const k of [key, stripSuffix(key)]) {
+    const hit = nameLookup[k];
+    if (hit && hit.league === league) return hit;
+  }
+  return null;
+}
+
 function resolvePlayer(rawName, nameLookup, league) {
-  const direct = nameLookup[normalizeName(rawName)];
-  if (direct && direct.league === league) return direct;
+  const direct = lookupName(rawName, nameLookup, league);
+  if (direct) return direct;
   if (!rawName.includes("+")) return null;
   for (const part of rawName.split("+")) {
-    const hit = nameLookup[normalizeName(part)];
-    if (hit && hit.league === league) return hit;
+    const hit = lookupName(part, nameLookup, league);
+    if (hit) return hit;
   }
   return null;
 }
@@ -220,12 +234,15 @@ export async function scrapePrizePicksForToday(opts = {}) {
 
   const nameLookup = {};
   for (const [name, ids] of Object.entries(playerInfo)) {
-    nameLookup[normalizeName(name)] = {
+    const entry = {
       name,
       nba: ids.nba,
       espn: ids.espn,
       league: ids.league ?? "NBA",
     };
+    nameLookup[normalizeName(name)] = entry;
+    // Suffix-less alias; never shadows a real entry spelled that way.
+    nameLookup[stripSuffix(normalizeName(name))] ??= entry;
   }
 
   // Keep any projection whose game hasn't tipped yet. Calendar-date filtering
