@@ -36,7 +36,7 @@
   "Aaron Nesmith": {
     "nba": 1630174,
     "espn": 4396909,
-    "bbref": null,
+    "bbref": "nesmiaa01",
     "league": "NBA"
   },
   "Aaron Wiggins": {
@@ -48,13 +48,13 @@
   "Ace Bailey": {
     "nba": 1642846,
     "espn": 4873138,
-    "bbref": null,
+    "bbref": "baileac01",
     "league": "NBA"
   },
   "Aday Mara": {
     "nba": 1643530,
     "espn": 5174983,
-    "bbref": null,
+    "bbref": "maraad01",
     "league": "NBA"
   },
   "Adem Bona": {
@@ -66,7 +66,7 @@
   "Adou Thiero": {
     "nba": 1642876,
     "espn": 5060631,
-    "bbref": null,
+    "bbref": "thierad01",
     "league": "NBA"
   },
   "Aicha Coulibaly": {
@@ -86,19 +86,19 @@
   "AJ Dybantsa": {
     "nba": 1643407,
     "espn": 5142718,
-    "bbref": null,
+    "bbref": "dybanaj01",
     "league": "NBA"
   },
   "AJ Green": {
     "nba": 1631260,
     "espn": 4397475,
-    "bbref": null,
+    "bbref": "greenaj01",
     "league": "NBA"
   },
   "AJ Johnson": {
     "nba": 1642358,
     "espn": 5170947,
-    "bbref": null,
+    "bbref": "johnsaj01",
     "league": "NBA"
   },
   "Ajay Mitchell": {
@@ -110,13 +110,13 @@
   "AK Okereke": {
     "nba": 1643758,
     "espn": 5114350,
-    "bbref": null,
+    "bbref": "okereak01",
     "league": "NBA"
   },
   "Al Horford": {
     "nba": 201143,
     "espn": 3213,
-    "bbref": null,
+    "bbref": "horfoal01",
     "league": "NBA"
   },
   "Alanna Smith": {
@@ -142,19 +142,19 @@
   "Alex Karaban": {
     "nba": 1642284,
     "espn": 4917149,
-    "bbref": null,
+    "bbref": "karabal01",
     "league": "NBA"
   },
   "Alex Morales": {
     "nba": 1631457,
     "espn": 4593034,
-    "bbref": null,
+    "bbref": "moralal01",
     "league": "NBA"
   },
   "Alex Sarr": {
     "nba": 1642259,
     "espn": 5160992,
-    "bbref": null,
+    "bbref": "sarral01",
     "league": "NBA"
   },
   "Alex Wilson": {
@@ -174,7 +174,7 @@
   "Alijah Martin": {
     "nba": 1642918,
     "espn": 4702656,
-    "bbref": null,
+    "bbref": "martial01",
     "league": "NBA"
   },
   "Alissa Pili": {
@@ -194,7 +194,7 @@
   "Allen Graves": {
     "nba": 1643512,
     "espn": 5149115,
-    "bbref": null,
+    "bbref": "graveal01",
     "league": "NBA"
   },
   "Allisha Gray": {
@@ -233,7 +233,7 @@
   "Amari Williams": {
     "nba": 1642873,
     "espn": 4702745,
-    "bbref": null,
+    "bbref": "william01",
     "league": "NBA"
   },
   "Amaya Battle": {
@@ -286,13 +286,13 @@
   "Andrew Nembhard": {
     "nba": 1629614,
     "espn": 4395712,
-    "bbref": null,
+    "bbref": "nembhan01",
     "league": "NBA"
   },
   "Andrew Wiggins": {
     "nba": 203952,
     "espn": 3059319,
-    "bbref": null,
+    "bbref": "wiggian01",
     "league": "NBA"
   },
   "Aneesah Morrow": {
@@ -305,7 +305,7 @@
   "Anfernee Simons": {
     "nba": 1629014,
     "espn": 4351851,
-    "bbref": null,
+    "bbref": "simonan01",
     "league": "NBA"
   },
   "Angel Reese": {
@@ -350,7 +350,7 @@
   "Anthony Gill": {
     "nba": 1630264,
     "espn": 2581184,
-    "bbref": null,
+    "bbref": "gillan01",
     "league": "NBA"
   },
   "Antonia Delaere": {
@@ -370,7 +370,7 @@
   "Ariel Hukporti": {
     "nba": 1630574,
     "espn": 4871141,
-    "bbref": null,
+    "bbref": "hukpoar01",
     "league": "NBA"
   },
   "Arike Ogunbowale": {
@@ -383,13 +383,13 @@
   "Arthur Kaluma": {
     "nba": 1641751,
     "espn": 4433599,
-    "bbref": null,
+    "bbref": "kalumar01",
     "league": "NBA"
   },
   "Asa Newell": {
     "nba": 1642854,
     "espn": 4873201,
-    "bbref": null,
+    "bbref": "newelas01",
     "league": "NBA"
   },
   "Ashley Owusu": {
@@ -429,7 +429,7 @@
   "Austin Reaves": {
     "nba": 1630559,
     "espn": 4066457,
-    "bbref": null,
+    "bbref": "reaveau01",
     "league": "NBA"
   },
   "Awa Fam": {
@@ -476,7 +476,7 @@
   "Baba Miller": {
     "nba": 1642394,
     "espn": 5075626,
-    "bbref": null,
+    "bbref": "milleba01",
     "league": "NBA"
   },
   "Bam Adebayo": {
@@ -508,31 +508,31 @@
   "Ben Saraf": {
     "nba": 1642879,
     "espn": 5242502,
-    "bbref": null,
+    "bbref": "sarafbe01",
     "league": "NBA"
   },
   "Ben Sheppard": {
     "nba": 1641767,
     "espn": 4433076,
-    "bbref": null,
+    "bbref": "sheppbe01",
     "league": "NBA"
   },
   "Ben Simmons": {
     "nba": 1627732,
     "espn": 3907387,
-    "bbref": null,
+    "bbref": "simmobe01",
     "league": "NBA"
   },
   "Bennedict Mathurin": {
     "nba": 1631097,
     "espn": 4683634,
-    "bbref": null,
+    "bbref": "mathube01",
     "league": "NBA"
   },
   "Bennett Stirtz": {
     "nba": 1642892,
     "espn": 5241364,
-    "bbref": null,
+    "bbref": "stirtbe01",
     "league": "NBA"
   },
   "Betnijah Laney-Hamilton": {
@@ -545,25 +545,25 @@
   "Bilal Coulibaly": {
     "nba": 1641731,
     "espn": 5104155,
-    "bbref": null,
+    "bbref": "coulibi01",
     "league": "NBA"
   },
   "Bobby Portis": {
     "nba": 1626171,
     "espn": 3064482,
-    "bbref": null,
+    "bbref": "portibo01",
     "league": "NBA"
   },
   "Bogdan Bogdanovic": {
     "nba": 203992,
     "espn": 3037789,
-    "bbref": null,
+    "bbref": "bogdabo01",
     "league": "NBA"
   },
   "Bogoljub Markovic": {
     "nba": 1642881,
     "espn": 5214989,
-    "bbref": null,
+    "bbref": "markobo01",
     "league": "NBA"
   },
   "Bones Hyland": {
@@ -575,25 +575,25 @@
   "Braden Smith": {
     "nba": 1643552,
     "espn": 5105854,
-    "bbref": null,
+    "bbref": "smithbr01",
     "league": "NBA"
   },
   "Bradley Beal": {
     "nba": 203078,
     "espn": 6580,
-    "bbref": null,
+    "bbref": "bealbr01",
     "league": "NBA"
   },
   "Branden Carlson": {
     "nba": 1642382,
     "espn": 4592435,
-    "bbref": null,
+    "bbref": "carlsbr01",
     "league": "NBA"
   },
   "Brandin Podziemski": {
     "nba": 1641764,
     "espn": 4709138,
-    "bbref": null,
+    "bbref": "podzibr01",
     "league": "NBA"
   },
   "Brandon Ingram": {
@@ -605,19 +605,19 @@
   "Brandon Miller": {
     "nba": 1641706,
     "espn": 4433287,
-    "bbref": null,
+    "bbref": "millebr02",
     "league": "NBA"
   },
   "Brandon Williams": {
     "nba": 1630314,
     "espn": 4397040,
-    "bbref": null,
+    "bbref": "willibr03",
     "league": "NBA"
   },
   "Brayden Burries": {
     "nba": 1643415,
     "espn": 5082206,
-    "bbref": null,
+    "bbref": "burribr01",
     "league": "NBA"
   },
   "Breanna Stewart": {
@@ -644,7 +644,7 @@
   "Brice Sensabaugh": {
     "nba": 1641729,
     "espn": 5105839,
-    "bbref": null,
+    "bbref": "sensabr01",
     "league": "NBA"
   },
   "Bridget Carleton": {
@@ -684,43 +684,43 @@
   "Brook Lopez": {
     "nba": 201572,
     "espn": 3448,
-    "bbref": null,
+    "bbref": "lopezbr01",
     "league": "NBA"
   },
   "Brooks Barnhizer": {
     "nba": 1642964,
     "espn": 4684208,
-    "bbref": null,
+    "bbref": "barnhbr01",
     "league": "NBA"
   },
   "Bruce Thornton": {
     "nba": 1643570,
     "espn": 5105837,
-    "bbref": null,
+    "bbref": "thornbr01",
     "league": "NBA"
   },
   "Bryce Hopkins": {
     "nba": 1643624,
     "espn": 4565698,
-    "bbref": null,
+    "bbref": "hopkibr01",
     "league": "NBA"
   },
   "Bryce McGowens": {
     "nba": 1631121,
     "espn": 4576086,
-    "bbref": null,
+    "bbref": "mcgowbr01",
     "league": "NBA"
   },
   "Bub Carrington": {
     "nba": 1642267,
     "espn": 4845374,
-    "bbref": null,
+    "bbref": "carrica01",
     "league": "NBA"
   },
   "Buddy Hield": {
     "nba": 1627741,
     "espn": 2990984,
-    "bbref": null,
+    "bbref": "hieldbu01",
     "league": "NBA"
   },
   "Cade Cunningham": {
@@ -739,43 +739,43 @@
   "Caleb Love": {
     "nba": 1631126,
     "espn": 4433144,
-    "bbref": null,
+    "bbref": "loveca01",
     "league": "NBA"
   },
   "Caleb Martin": {
     "nba": 1628997,
     "espn": 3138160,
-    "bbref": null,
+    "bbref": "martica02",
     "league": "NBA"
   },
   "Caleb Wilson": {
     "nba": 1643410,
     "espn": 5095151,
-    "bbref": null,
+    "bbref": "wilsoca01",
     "league": "NBA"
   },
   "Cam Christie": {
     "nba": 1642353,
     "espn": 4845363,
-    "bbref": null,
+    "bbref": "chrisca02",
     "league": "NBA"
   },
   "Cam Spencer": {
     "nba": 1642285,
     "espn": 4433083,
-    "bbref": null,
+    "bbref": "spencca01",
     "league": "NBA"
   },
   "Cam Whitmore": {
     "nba": 1641715,
     "espn": 5105592,
-    "bbref": null,
+    "bbref": "whitmca01",
     "league": "NBA"
   },
   "Cameron Boozer": {
     "nba": 1643409,
     "espn": 5041935,
-    "bbref": null,
+    "bbref": "boozeca02",
     "league": "NBA"
   },
   "Cameron Brink": {
@@ -788,7 +788,7 @@
   "Cameron Carr": {
     "nba": 1643418,
     "espn": 5113969,
-    "bbref": null,
+    "bbref": "carrca01",
     "league": "NBA"
   },
   "Cameron Johnson": {
@@ -820,7 +820,7 @@
   "Carson Cooper": {
     "nba": 1643721,
     "espn": 5105817,
-    "bbref": null,
+    "bbref": "coopeca02",
     "league": "NBA"
   },
   "Carter Bryant": {
@@ -859,7 +859,7 @@
   "Cedric Coward": {
     "nba": 1642907,
     "espn": 4903027,
-    "bbref": null,
+    "bbref": "cowarce01",
     "league": "NBA"
   },
   "Chance Gray": {
@@ -872,7 +872,7 @@
   "Chaney Johnson": {
     "nba": 1643052,
     "espn": 5174655,
-    "bbref": null,
+    "bbref": "johnsch06",
     "league": "NBA"
   },
   "Charisma Osborne": {
@@ -885,7 +885,7 @@
   "Charles Bassey": {
     "nba": 1629646,
     "espn": 4397886,
-    "bbref": null,
+    "bbref": "bassech01",
     "league": "NBA"
   },
   "Charlisse Leger-Walker": {
@@ -898,7 +898,7 @@
   "Chaz Lanier": {
     "nba": 1642404,
     "espn": 4700852,
-    "bbref": null,
+    "bbref": "laniech01",
     "league": "NBA"
   },
   "Chelsea Gray": {
@@ -938,19 +938,19 @@
   "Chris Cenac Jr.": {
     "nba": 1643416,
     "espn": 5142621,
-    "bbref": null,
+    "bbref": "cenacch01",
     "league": "NBA"
   },
   "Chris Manon": {
     "nba": 1643024,
     "espn": 4702972,
-    "bbref": null,
+    "bbref": "manonch01",
     "league": "NBA"
   },
   "Chris Youngblood": {
     "nba": 1642959,
     "espn": 4706557,
-    "bbref": null,
+    "bbref": "youngch01",
     "league": "NBA"
   },
   "Christeen Iwuala": {
@@ -963,7 +963,7 @@
   "Christian Anderson": {
     "nba": 1643515,
     "espn": 5060701,
-    "bbref": null,
+    "bbref": "anderch02",
     "league": "NBA"
   },
   "Christian Braun": {
@@ -994,19 +994,19 @@
   "Coby White": {
     "nba": 1629632,
     "espn": 4395651,
-    "bbref": null,
+    "bbref": "whiteco01",
     "league": "NBA"
   },
   "Cody Williams": {
     "nba": 1642262,
     "espn": 4895758,
-    "bbref": null,
+    "bbref": "willico04",
     "league": "NBA"
   },
   "Colin Castleton": {
     "nba": 1630658,
     "espn": 4397204,
-    "bbref": null,
+    "bbref": "castlco01",
     "league": "NBA"
   },
   "Collin Gillespie": {
@@ -1024,13 +1024,13 @@
   "Collin Sexton": {
     "nba": 1629012,
     "espn": 4277811,
-    "bbref": null,
+    "bbref": "sextoco01",
     "league": "NBA"
   },
   "Cooper Flagg": {
     "nba": 1642843,
     "espn": 5041939,
-    "bbref": null,
+    "bbref": "flaggco01",
     "league": "NBA"
   },
   "Corey Kispert": {
@@ -1042,7 +1042,7 @@
   "Cormac Ryan": {
     "nba": 1642504,
     "espn": 4397114,
-    "bbref": null,
+    "bbref": "ryanco01",
     "league": "NBA"
   },
   "Costanza Verona": {
@@ -1076,19 +1076,19 @@
   "Craig Porter Jr.": {
     "nba": 1641854,
     "espn": 4701233,
-    "bbref": null,
+    "bbref": "portecr01",
     "league": "NBA"
   },
   "Daeqwon Plowden": {
     "nba": 1631342,
     "espn": 4279318,
-    "bbref": null,
+    "bbref": "plowdda01",
     "league": "NBA"
   },
   "Dailyn Swain": {
     "nba": 1643517,
     "espn": 4848625,
-    "bbref": null,
+    "bbref": "swainda01",
     "league": "NBA"
   },
   "Damian Lillard": {
@@ -1114,7 +1114,7 @@
   "Daniel Gafford": {
     "nba": 1629655,
     "espn": 4278049,
-    "bbref": null,
+    "bbref": "gaffoda01",
     "league": "NBA"
   },
   "Daniss Jenkins": {
@@ -1126,7 +1126,7 @@
   "Danny Wolf": {
     "nba": 1642874,
     "espn": 5107173,
-    "bbref": null,
+    "bbref": "wolfda01",
     "league": "NBA"
   },
   "Dara Mabrey": {
@@ -1146,7 +1146,7 @@
   "Darius Acuff Jr.": {
     "nba": 1643411,
     "espn": 5142620,
-    "bbref": null,
+    "bbref": "acuffda01",
     "league": "NBA"
   },
   "Darius Garland": {
@@ -1158,31 +1158,31 @@
   "DaRon Holmes II": {
     "nba": 1641747,
     "espn": 4433607,
-    "bbref": null,
+    "bbref": "holmeda01",
     "league": "NBA"
   },
   "Darryn Peterson": {
     "nba": 1643408,
     "espn": 5041955,
-    "bbref": null,
+    "bbref": "peterda02",
     "league": "NBA"
   },
   "David Jones Garcia": {
     "nba": 1642357,
     "espn": 4713010,
-    "bbref": null,
+    "bbref": "jonesda06",
     "league": "NBA"
   },
   "Davion Mitchell": {
     "nba": 1630558,
     "espn": 4278053,
-    "bbref": null,
+    "bbref": "mitchda01",
     "league": "NBA"
   },
   "Day'Ron Sharpe": {
     "nba": 1630549,
     "espn": 4432194,
-    "bbref": null,
+    "bbref": "sharpda01",
     "league": "NBA"
   },
   "De'Aaron Fox": {
@@ -1194,13 +1194,13 @@
   "De'Andre Hunter": {
     "nba": 1629631,
     "espn": 4065732,
-    "bbref": null,
+    "bbref": "huntede01",
     "league": "NBA"
   },
   "De'Anthony Melton": {
     "nba": 1629001,
     "espn": 4066436,
-    "bbref": null,
+    "bbref": "meltode01",
     "league": "NBA"
   },
   "Dean Wade": {
@@ -1218,7 +1218,7 @@
   "DeAndre Jordan": {
     "nba": 201599,
     "espn": 3442,
-    "bbref": null,
+    "bbref": "jordade01",
     "league": "NBA"
   },
   "Dearica Hamby": {
@@ -1231,7 +1231,7 @@
   "Dejounte Murray": {
     "nba": 1627749,
     "espn": 3907497,
-    "bbref": null,
+    "bbref": "murrade01",
     "league": "NBA"
   },
   "DeMar DeRozan": {
@@ -1255,13 +1255,13 @@
   "Dereck Lively II": {
     "nba": 1641726,
     "espn": 4683688,
-    "bbref": null,
+    "bbref": "livelde01",
     "league": "NBA"
   },
   "Derik Queen": {
     "nba": 1642852,
     "espn": 4869780,
-    "bbref": null,
+    "bbref": "queende01",
     "league": "NBA"
   },
   "Derin Erdogan": {
@@ -1274,7 +1274,7 @@
   "Derrick Jones Jr.": {
     "nba": 1627884,
     "espn": 3936099,
-    "bbref": null,
+    "bbref": "jonesde02",
     "league": "NBA"
   },
   "Derrick White": {
@@ -1298,7 +1298,7 @@
   "Devin Carter": {
     "nba": 1642269,
     "espn": 4433188,
-    "bbref": null,
+    "bbref": "cartede02",
     "league": "NBA"
   },
   "Devin Vassell": {
@@ -1337,13 +1337,13 @@
   "Dillon Mitchell": {
     "nba": 1641759,
     "espn": 5106283,
-    "bbref": null,
+    "bbref": "mitchdi01",
     "league": "NBA"
   },
   "Domantas Sabonis": {
     "nba": 1627734,
     "espn": 3155942,
-    "bbref": null,
+    "bbref": "sabondo01",
     "league": "NBA"
   },
   "Dominick Barlow": {
@@ -1393,25 +1393,25 @@
   "Drake Powell": {
     "nba": 1642962,
     "espn": 5037873,
-    "bbref": null,
+    "bbref": "poweldr01",
     "league": "NBA"
   },
   "Draymond Green": {
     "nba": 203110,
     "espn": 6589,
-    "bbref": null,
+    "bbref": "greendr01",
     "league": "NBA"
   },
   "Drew Timme": {
     "nba": 1631166,
     "espn": 4431695,
-    "bbref": null,
+    "bbref": "timmedr01",
     "league": "NBA"
   },
   "Dru Smith": {
     "nba": 1630696,
     "espn": 4066993,
-    "bbref": null,
+    "bbref": "smithdr01",
     "league": "NBA"
   },
   "Dulcy Fankam Mendjiadeu": {
@@ -1430,13 +1430,13 @@
   "Duop Reath": {
     "nba": 1641871,
     "espn": 4066268,
-    "bbref": null,
+    "bbref": "reathdu01",
     "league": "NBA"
   },
   "Dylan Cardwell": {
     "nba": 1642928,
     "espn": 4433174,
-    "bbref": null,
+    "bbref": "cardwdy01",
     "league": "NBA"
   },
   "Dylan Harper": {
@@ -1454,19 +1454,19 @@
   "Ebuka Okorie": {
     "nba": 1643536,
     "espn": 5258459,
-    "bbref": null,
+    "bbref": "okorieb01",
     "league": "NBA"
   },
   "Egor Demin": {
     "nba": 1642856,
     "espn": 5175643,
-    "bbref": null,
+    "bbref": "demineg01",
     "league": "NBA"
   },
   "Elijah Harkless": {
     "nba": 1641989,
     "espn": 4397449,
-    "bbref": null,
+    "bbref": "harklej01",
     "league": "NBA"
   },
   "Eliska Hamzova": {
@@ -1507,7 +1507,7 @@
   "Emanuel Sharp": {
     "nba": 1643567,
     "espn": 5106058,
-    "bbref": null,
+    "bbref": "sharpem01",
     "league": "NBA"
   },
   "Emese Hof": {
@@ -1548,7 +1548,7 @@
   "Ernest Udeh Jr.": {
     "nba": 1643640,
     "espn": 5106261,
-    "bbref": null,
+    "bbref": "udehjer01",
     "league": "NBA"
   },
   "Evan Mobley": {
@@ -1567,7 +1567,7 @@
   "Felix Okpara": {
     "nba": 1643590,
     "espn": 5105841,
-    "bbref": null,
+    "bbref": "okparfe01",
     "league": "NBA"
   },
   "Flau'jae Johnson": {
@@ -1613,19 +1613,19 @@
   "Gary Payton II": {
     "nba": 1627780,
     "espn": 3134903,
-    "bbref": null,
+    "bbref": "paytoga01",
     "league": "NBA"
   },
   "Gary Trent Jr.": {
     "nba": 1629018,
     "espn": 4277843,
-    "bbref": null,
+    "bbref": "trentga02",
     "league": "NBA"
   },
   "Georges Niang": {
     "nba": 1627777,
     "espn": 2990969,
-    "bbref": null,
+    "bbref": "niangge01",
     "league": "NBA"
   },
   "Georgia Amoore": {
@@ -1638,7 +1638,7 @@
   "GG Jackson": {
     "nba": 1641713,
     "espn": 5105550,
-    "bbref": null,
+    "bbref": "jacksgg01",
     "league": "NBA"
   },
   "Gianna Kneepkens": {
@@ -1677,25 +1677,25 @@
   "Gradey Dick": {
     "nba": 1641711,
     "espn": 5106258,
-    "bbref": null,
+    "bbref": "dickgr01",
     "league": "NBA"
   },
   "Graham Ike": {
     "nba": 1643633,
     "espn": 4703396,
-    "bbref": null,
+    "bbref": "ikegr01",
     "league": "NBA"
   },
   "Grant Nelson": {
     "nba": 1641761,
     "espn": 4702670,
-    "bbref": null,
+    "bbref": "nelsogr02",
     "league": "NBA"
   },
   "Grant Williams": {
     "nba": 1629684,
     "espn": 4066218,
-    "bbref": null,
+    "bbref": "willigr01",
     "league": "NBA"
   },
   "Grayson Allen": {
@@ -1707,7 +1707,7 @@
   "Gui Santos": {
     "nba": 1630611,
     "espn": 4997536,
-    "bbref": null,
+    "bbref": "santogu01",
     "league": "NBA"
   },
   "Hailey Van Lith": {
@@ -1734,7 +1734,7 @@
   "Hannes Steinbach": {
     "nba": 1643419,
     "espn": 5281370,
-    "bbref": null,
+    "bbref": "steinha02",
     "league": "NBA"
   },
   "Harmoni Turner": {
@@ -1753,19 +1753,19 @@
   "Harrison Ingram": {
     "nba": 1631127,
     "espn": 4433618,
-    "bbref": null,
+    "bbref": "ingraha01",
     "league": "NBA"
   },
   "Henri Veesaar": {
     "nba": 1643539,
     "espn": 5105571,
-    "bbref": null,
+    "bbref": "veesahe01",
     "league": "NBA"
   },
   "Herbert Jones": {
     "nba": 1630529,
     "espn": 4277813,
-    "bbref": null,
+    "bbref": "joneshe01",
     "league": "NBA"
   },
   "Holly Winterburn": {
@@ -1778,13 +1778,13 @@
   "Hugo Gonzalez": {
     "nba": 1642864,
     "espn": 5175647,
-    "bbref": null,
+    "bbref": "gonzahu01",
     "league": "NBA"
   },
   "Immanuel Quickley": {
     "nba": 1630193,
     "espn": 4395724,
-    "bbref": null,
+    "bbref": "quickim01",
     "league": "NBA"
   },
   "Indya Nivar": {
@@ -1797,13 +1797,13 @@
   "Isaac Jones": {
     "nba": 1642403,
     "espn": 5107818,
-    "bbref": null,
+    "bbref": "jonesis01",
     "league": "NBA"
   },
   "Isaac Okoro": {
     "nba": 1630171,
     "espn": 4432822,
-    "bbref": null,
+    "bbref": "okorois01",
     "league": "NBA"
   },
   "Isabelle Harrison": {
@@ -1816,19 +1816,19 @@
   "Isaiah Collier": {
     "nba": 1642268,
     "espn": 4683766,
-    "bbref": null,
+    "bbref": "colliis01",
     "league": "NBA"
   },
   "Isaiah Crawford": {
     "nba": 1642384,
     "espn": 4592857,
-    "bbref": null,
+    "bbref": "crawfis01",
     "league": "NBA"
   },
   "Isaiah Evans": {
     "nba": 1642912,
     "espn": 5061585,
-    "bbref": null,
+    "bbref": "evansis01",
     "league": "NBA"
   },
   "Isaiah Hartenstein": {
@@ -1840,7 +1840,7 @@
   "Isaiah Jackson": {
     "nba": 1630543,
     "espn": 4432170,
-    "bbref": null,
+    "bbref": "jacksis01",
     "league": "NBA"
   },
   "Isaiah Joe": {
@@ -1865,19 +1865,19 @@
   "Ivica Zubac": {
     "nba": 1627826,
     "espn": 4017837,
-    "bbref": null,
+    "bbref": "zubaciv01",
     "league": "NBA"
   },
   "Izaiyah Nelson": {
     "nba": 1643593,
     "espn": 5107251,
-    "bbref": null,
+    "bbref": "nelsoiz01",
     "league": "NBA"
   },
   "Ja Morant": {
     "nba": 1629630,
     "espn": 4279888,
-    "bbref": null,
+    "bbref": "moranja01",
     "league": "NBA"
   },
   "Ja'Kobe Walter": {
@@ -1889,7 +1889,7 @@
   "Ja'Kobi Gillespie": {
     "nba": 1643551,
     "espn": 5107968,
-    "bbref": null,
+    "bbref": "gilleja02",
     "league": "NBA"
   },
   "Jabari Smith Jr.": {
@@ -1901,7 +1901,7 @@
   "Jabari Walker": {
     "nba": 1631133,
     "espn": 4432446,
-    "bbref": null,
+    "bbref": "walkeja01",
     "league": "NBA"
   },
   "Jackie Young": {
@@ -1935,19 +1935,19 @@
   "Jaden Akins": {
     "nba": 1643022,
     "espn": 4683730,
-    "bbref": null,
+    "bbref": "akinsja01",
     "league": "NBA"
   },
   "Jaden Bradley": {
     "nba": 1643558,
     "espn": 4432737,
-    "bbref": null,
+    "bbref": "bradlja02",
     "league": "NBA"
   },
   "Jaden Hardy": {
     "nba": 1630702,
     "espn": 4868423,
-    "bbref": null,
+    "bbref": "hardyja02",
     "league": "NBA"
   },
   "Jaden McDaniels": {
@@ -1972,13 +1972,13 @@
   "Jahmai Mashack": {
     "nba": 1642942,
     "espn": 4683934,
-    "bbref": null,
+    "bbref": "mashaja01",
     "league": "NBA"
   },
   "Jaime Jaquez Jr.": {
     "nba": 1631170,
     "espn": 4432848,
-    "bbref": null,
+    "bbref": "jaqueja01",
     "league": "NBA"
   },
   "Jake LaRavia": {
@@ -2020,19 +2020,19 @@
   "Jalen Pickett": {
     "nba": 1629618,
     "espn": 4398390,
-    "bbref": null,
+    "bbref": "pickeja02",
     "league": "NBA"
   },
   "Jalen Slawson": {
     "nba": 1641771,
     "espn": 4398207,
-    "bbref": null,
+    "bbref": "slawsja01",
     "league": "NBA"
   },
   "Jalen Smith": {
     "nba": 1630188,
     "espn": 4397189,
-    "bbref": null,
+    "bbref": "smithja04",
     "league": "NBA"
   },
   "Jalen Suggs": {
@@ -2050,7 +2050,7 @@
   "Jalen Wilson": {
     "nba": 1630592,
     "espn": 4431714,
-    "bbref": null,
+    "bbref": "wilsoja03",
     "league": "NBA"
   },
   "Jalyn Brown": {
@@ -2081,7 +2081,7 @@
   "Jamaree Bouyea": {
     "nba": 1631123,
     "espn": 4280245,
-    "bbref": null,
+    "bbref": "bouyeja01",
     "league": "NBA"
   },
   "James Harden": {
@@ -2093,13 +2093,13 @@
   "James Wiseman": {
     "nba": 1630164,
     "espn": 4432808,
-    "bbref": null,
+    "bbref": "wisemja01",
     "league": "NBA"
   },
   "Jamir Watkins": {
     "nba": 1642364,
     "espn": 4606840,
-    "bbref": null,
+    "bbref": "watkija01",
     "league": "NBA"
   },
   "Jamison Battle": {
@@ -2125,7 +2125,7 @@
   "Jarace Walker": {
     "nba": 1641716,
     "espn": 5106060,
-    "bbref": null,
+    "bbref": "walkeja02",
     "league": "NBA"
   },
   "Jared McCain": {
@@ -2137,13 +2137,13 @@
   "Jaren Jackson Jr.": {
     "nba": 1628991,
     "espn": 4277961,
-    "bbref": null,
+    "bbref": "jacksja02",
     "league": "NBA"
   },
   "Jaron Pierre Jr.": {
     "nba": 1643555,
     "espn": 4703115,
-    "bbref": null,
+    "bbref": "pierrja01",
     "league": "NBA"
   },
   "Jarred Vanderbilt": {
@@ -2161,13 +2161,13 @@
   "Jase Richardson": {
     "nba": 1642859,
     "espn": 5239561,
-    "bbref": null,
+    "bbref": "richaja02",
     "league": "NBA"
   },
   "Javon Small": {
     "nba": 1642914,
     "espn": 4781746,
-    "bbref": null,
+    "bbref": "smallja01",
     "league": "NBA"
   },
   "Javonte Green": {
@@ -2185,13 +2185,13 @@
   "Jay Huff": {
     "nba": 1630643,
     "espn": 4065731,
-    "bbref": null,
+    "bbref": "huffja01",
     "league": "NBA"
   },
   "Jayden Quaintance": {
     "nba": 1643519,
     "espn": 5101845,
-    "bbref": null,
+    "bbref": "quainja01",
     "league": "NBA"
   },
   "Jaylen Brown": {
@@ -2209,13 +2209,13 @@
   "Jaylen Wells": {
     "nba": 1642377,
     "espn": 5112087,
-    "bbref": null,
+    "bbref": "wellsja01",
     "league": "NBA"
   },
   "Jaylin Sellers": {
     "nba": 1643637,
     "espn": 4898010,
-    "bbref": null,
+    "bbref": "selleja01",
     "league": "NBA"
   },
   "Jaylin Williams": {
@@ -2240,7 +2240,7 @@
   "Jayson Kent": {
     "nba": 1643257,
     "espn": 4703889,
-    "bbref": null,
+    "bbref": "kentja01",
     "league": "NBA"
   },
   "Jayson Tatum": {
@@ -2258,13 +2258,13 @@
   "Jeremiah Fears": {
     "nba": 1642847,
     "espn": 5144091,
-    "bbref": null,
+    "bbref": "fearsje01",
     "league": "NBA"
   },
   "Jericho Sims": {
     "nba": 1630579,
     "espn": 4277922,
-    "bbref": null,
+    "bbref": "simsje01",
     "league": "NBA"
   },
   "Jessica Shepard": {
@@ -2284,13 +2284,13 @@
   "Jett Howard": {
     "nba": 1641724,
     "espn": 5105806,
-    "bbref": null,
+    "bbref": "howarje01",
     "league": "NBA"
   },
   "Jevon Carter": {
     "nba": 1628975,
     "espn": 3133635,
-    "bbref": null,
+    "bbref": "carteje01",
     "league": "NBA"
   },
   "Jewell Loyd": {
@@ -2330,13 +2330,13 @@
   "Joan Beringer": {
     "nba": 1642866,
     "espn": 5279133,
-    "bbref": null,
+    "bbref": "berinjo01",
     "league": "NBA"
   },
   "Jock Landale": {
     "nba": 1629111,
     "espn": 3146557,
-    "bbref": null,
+    "bbref": "landajo01",
     "league": "NBA"
   },
   "Joel Embiid": {
@@ -2348,25 +2348,25 @@
   "John Collins": {
     "nba": 1628381,
     "espn": 3908845,
-    "bbref": null,
+    "bbref": "collijo01",
     "league": "NBA"
   },
   "John Tonje": {
     "nba": 1642910,
     "espn": 4593043,
-    "bbref": null,
+    "bbref": "tonjejo01",
     "league": "NBA"
   },
   "Johnny Furphy": {
     "nba": 1642277,
     "espn": 5157066,
-    "bbref": null,
+    "bbref": "furphjo01",
     "league": "NBA"
   },
   "Jonathan Isaac": {
     "nba": 1628371,
     "espn": 4065654,
-    "bbref": null,
+    "bbref": "isaacjo01",
     "league": "NBA"
   },
   "Jonathan Kuminga": {
@@ -2378,7 +2378,7 @@
   "Jonathan Mogbo": {
     "nba": 1642367,
     "espn": 5107897,
-    "bbref": null,
+    "bbref": "mogbojo01",
     "league": "NBA"
   },
   "Jonquel Jones": {
@@ -2397,7 +2397,7 @@
   "Jordan Goodwin": {
     "nba": 1630692,
     "espn": 4278402,
-    "bbref": null,
+    "bbref": "goodwjo01",
     "league": "NBA"
   },
   "Jordan Harrison": {
@@ -2410,7 +2410,7 @@
   "Jordan Hawkins": {
     "nba": 1641722,
     "espn": 4683750,
-    "bbref": null,
+    "bbref": "hawkijo01",
     "league": "NBA"
   },
   "Jordan Hobbs": {
@@ -2430,13 +2430,13 @@
   "Jordan McLaughlin": {
     "nba": 1629162,
     "espn": 3134916,
-    "bbref": null,
+    "bbref": "mclaujo01",
     "league": "NBA"
   },
   "Jordan Miller": {
     "nba": 1641757,
     "espn": 4396818,
-    "bbref": null,
+    "bbref": "millejo02",
     "league": "NBA"
   },
   "Jordan Obi": {
@@ -2449,7 +2449,7 @@
   "Jordan Poole": {
     "nba": 1629673,
     "espn": 4277956,
-    "bbref": null,
+    "bbref": "poolejo01",
     "league": "NBA"
   },
   "Jordan Walsh": {
@@ -2474,19 +2474,19 @@
   "Josh Dix": {
     "nba": 1643717,
     "espn": 5105800,
-    "bbref": null,
+    "bbref": "dixjo01",
     "league": "NBA"
   },
   "Josh Giddey": {
     "nba": 1630581,
     "espn": 4871145,
-    "bbref": null,
+    "bbref": "giddejo01",
     "league": "NBA"
   },
   "Josh Green": {
     "nba": 1630182,
     "espn": 4432811,
-    "bbref": null,
+    "bbref": "greenjo02",
     "league": "NBA"
   },
   "Josh Hart": {
@@ -2498,7 +2498,7 @@
   "Josh Minott": {
     "nba": 1631169,
     "espn": 4687718,
-    "bbref": null,
+    "bbref": "minotjo01",
     "league": "NBA"
   },
   "Josh Okogie": {
@@ -2510,7 +2510,7 @@
   "Joshua Jefferson": {
     "nba": 1643538,
     "espn": 4870564,
-    "bbref": null,
+    "bbref": "jeffejo01",
     "league": "NBA"
   },
   "Jovana Nogic": {
@@ -2535,13 +2535,13 @@
   "Julian Phillips": {
     "nba": 1641763,
     "espn": 5105553,
-    "bbref": null,
+    "bbref": "phillju01",
     "league": "NBA"
   },
   "Julian Reese": {
     "nba": 1642882,
     "espn": 4683742,
-    "bbref": null,
+    "bbref": "reeseju01",
     "league": "NBA"
   },
   "Julian Strawther": {
@@ -2580,7 +2580,7 @@
   "Justin Champagnie": {
     "nba": 1630551,
     "espn": 4432907,
-    "bbref": null,
+    "bbref": "champju01",
     "league": "NBA"
   },
   "Justin Edwards": {
@@ -2599,7 +2599,7 @@
   "Jusuf Nurkic": {
     "nba": 203994,
     "espn": 3102530,
-    "bbref": null,
+    "bbref": "nurkiju01",
     "league": "NBA"
   },
   "Kahleah Copper": {
@@ -2633,7 +2633,7 @@
   "Kam Jones": {
     "nba": 1642880,
     "espn": 4697268,
-    "bbref": null,
+    "bbref": "joneska03",
     "league": "NBA"
   },
   "Kamaria McDaniel": {
@@ -2667,7 +2667,7 @@
   "Karim Lopez": {
     "nba": 1643510,
     "espn": 5231919,
-    "bbref": null,
+    "bbref": "lopezka01",
     "league": "NBA"
   },
   "Karl-Anthony Towns": {
@@ -2686,13 +2686,13 @@
   "Karlo Matkovic": {
     "nba": 1631255,
     "espn": 4997538,
-    "bbref": null,
+    "bbref": "matkoka01",
     "league": "NBA"
   },
   "Kasparas Jakucionis": {
     "nba": 1642857,
     "espn": 5214640,
-    "bbref": null,
+    "bbref": "jakucka01",
     "league": "NBA"
   },
   "Kate Martin": {
@@ -2712,7 +2712,7 @@
   "Kawhi Leonard": {
     "nba": 202695,
     "espn": 6450,
-    "bbref": null,
+    "bbref": "leonaka01",
     "league": "NBA"
   },
   "Kayana Traylor": {
@@ -2746,19 +2746,19 @@
   "Keaton Wagler": {
     "nba": 1643413,
     "espn": 5254165,
-    "bbref": null,
+    "bbref": "wagleke01",
     "league": "NBA"
   },
   "Keegan Murray": {
     "nba": 1631099,
     "espn": 4594327,
-    "bbref": null,
+    "bbref": "murrake02",
     "league": "NBA"
   },
   "Kel'el Ware": {
     "nba": 1642276,
     "espn": 5105623,
-    "bbref": null,
+    "bbref": "wareke01",
     "league": "NBA"
   },
   "Keldon Johnson": {
@@ -2797,13 +2797,13 @@
   "Kenrich Williams": {
     "nba": 1629026,
     "espn": 3133626,
-    "bbref": null,
+    "bbref": "willike04",
     "league": "NBA"
   },
   "Kentavious Caldwell-Pope": {
     "nba": 203484,
     "espn": 2581018,
-    "bbref": null,
+    "bbref": "caldwke01",
     "league": "NBA"
   },
   "Keon Ellis": {
@@ -2815,13 +2815,13 @@
   "Keshad Johnson": {
     "nba": 1642352,
     "espn": 4431786,
-    "bbref": null,
+    "bbref": "johnske10",
     "league": "NBA"
   },
   "Keshon Gilbert": {
     "nba": 1642933,
     "espn": 4585618,
-    "bbref": null,
+    "bbref": "gilbeke01",
     "league": "NBA"
   },
   "Kevin Durant": {
@@ -2839,25 +2839,25 @@
   "Kevin McCullar Jr.": {
     "nba": 1641755,
     "espn": 4411057,
-    "bbref": null,
+    "bbref": "mcculke01",
     "league": "NBA"
   },
   "Kevon Looney": {
     "nba": 1626172,
     "espn": 3155535,
-    "bbref": null,
+    "bbref": "looneke01",
     "league": "NBA"
   },
   "Keyonte George": {
     "nba": 1641718,
     "espn": 4433627,
-    "bbref": null,
+    "bbref": "georgke01",
     "league": "NBA"
   },
   "Khalifa Diop": {
     "nba": 1631215,
     "espn": 4997530,
-    "bbref": null,
+    "bbref": "diopkh01",
     "league": "NBA"
   },
   "Khaman Maluach": {
@@ -2869,7 +2869,7 @@
   "Khris Middleton": {
     "nba": 203114,
     "espn": 6609,
-    "bbref": null,
+    "bbref": "middlkh01",
     "league": "NBA"
   },
   "Kia Nurse": {
@@ -2917,7 +2917,7 @@
   "Kingston Flemings": {
     "nba": 1643412,
     "espn": 5149077,
-    "bbref": null,
+    "bbref": "flemiki01",
     "league": "NBA"
   },
   "Kitija Laksa": {
@@ -2930,37 +2930,37 @@
   "Klay Thompson": {
     "nba": 202691,
     "espn": 6475,
-    "bbref": null,
+    "bbref": "thompkl01",
     "league": "NBA"
   },
   "Koa Peat": {
     "nba": 1643520,
     "espn": 5041953,
-    "bbref": null,
+    "bbref": "peatko01",
     "league": "NBA"
   },
   "Kobe Brown": {
     "nba": 1641738,
     "espn": 4431752,
-    "bbref": null,
+    "bbref": "brownko01",
     "league": "NBA"
   },
   "Kobe Sanders": {
     "nba": 1642920,
     "espn": 4702352,
-    "bbref": null,
+    "bbref": "sandeko01",
     "league": "NBA"
   },
   "Kon Knueppel": {
     "nba": 1642851,
     "espn": 5061575,
-    "bbref": null,
+    "bbref": "knuepko01",
     "league": "NBA"
   },
   "Kris Dunn": {
     "nba": 1627739,
     "espn": 2991139,
-    "bbref": null,
+    "bbref": "dunnkr01",
     "league": "NBA"
   },
   "Kris Murray": {
@@ -2972,7 +2972,7 @@
   "Kristaps Porzingis": {
     "nba": 204001,
     "espn": 3102531,
-    "bbref": null,
+    "bbref": "porzikr01",
     "league": "NBA"
   },
   "Kristy Wallace": {
@@ -2999,7 +2999,7 @@
   "Kylan Boswell": {
     "nba": 1643573,
     "espn": 4684269,
-    "bbref": null,
+    "bbref": "bosweky01",
     "league": "NBA"
   },
   "Kyle Anderson": {
@@ -3011,31 +3011,31 @@
   "Kyle Filipowski": {
     "nba": 1642271,
     "espn": 4684793,
-    "bbref": null,
+    "bbref": "filipky01",
     "league": "NBA"
   },
   "Kyle Kuzma": {
     "nba": 1628398,
     "espn": 3134907,
-    "bbref": null,
+    "bbref": "kuzmaky01",
     "league": "NBA"
   },
   "Kyrie Irving": {
     "nba": 202681,
     "espn": 6442,
-    "bbref": null,
+    "bbref": "irvinky01",
     "league": "NBA"
   },
   "Kyshawn George": {
     "nba": 1642273,
     "espn": 5174563,
-    "bbref": null,
+    "bbref": "georgky01",
     "league": "NBA"
   },
   "Labaron Philon Jr.": {
     "nba": 1642889,
     "espn": 4873090,
-    "bbref": null,
+    "bbref": "philola01",
     "league": "NBA"
   },
   "Laeticia Amihere": {
@@ -3074,7 +3074,7 @@
   "Larry Nance Jr.": {
     "nba": 1626204,
     "espn": 2580365,
-    "bbref": null,
+    "bbref": "nancela01",
     "league": "NBA"
   },
   "Latasha Lattimore": {
@@ -3115,13 +3115,13 @@
   "Lauri Markkanen": {
     "nba": 1628374,
     "espn": 4066336,
-    "bbref": null,
+    "bbref": "markkla01",
     "league": "NBA"
   },
   "Leaky Black": {
     "nba": 1641778,
     "espn": 4395650,
-    "bbref": null,
+    "bbref": "blackle01",
     "league": "NBA"
   },
   "LeBron James": {
@@ -3140,7 +3140,7 @@
   "Leonard Miller": {
     "nba": 1631159,
     "espn": 5044385,
-    "bbref": null,
+    "bbref": "millele01",
     "league": "NBA"
   },
   "Leonie Fiebich": {
@@ -3181,7 +3181,7 @@
   "Liam McNeeley": {
     "nba": 1642862,
     "espn": 5239590,
-    "bbref": null,
+    "bbref": "mcneeli01",
     "league": "NBA"
   },
   "Liatu King": {
@@ -3201,7 +3201,7 @@
   "LJ Cryer": {
     "nba": 1643018,
     "espn": 4433149,
-    "bbref": null,
+    "bbref": "cryerlj01",
     "league": "NBA"
   },
   "Lucy Olsen": {
@@ -3328,31 +3328,31 @@
   "Malachi Smith": {
     "nba": 1641869,
     "espn": 4397784,
-    "bbref": null,
+    "bbref": "smithma02",
     "league": "NBA"
   },
   "Malevy Leons": {
     "nba": 1642502,
     "espn": 4897449,
-    "bbref": null,
+    "bbref": "leonsma01",
     "league": "NBA"
   },
   "Malik Dia": {
     "nba": 1643738,
     "espn": 4712862,
-    "bbref": null,
+    "bbref": "diama01",
     "league": "NBA"
   },
   "Malik Monk": {
     "nba": 1628370,
     "espn": 4066262,
-    "bbref": null,
+    "bbref": "monkma01",
     "league": "NBA"
   },
   "Maliq Brown": {
     "nba": 1643576,
     "espn": 5105337,
-    "bbref": null,
+    "bbref": "brownma05",
     "league": "NBA"
   },
   "Mamignan Toure": {
@@ -3365,7 +3365,7 @@
   "Marcus Sasser": {
     "nba": 1631204,
     "espn": 4432107,
-    "bbref": null,
+    "bbref": "sassema01",
     "league": "NBA"
   },
   "Marcus Smart": {
@@ -3412,13 +3412,13 @@
   "Mario Hezonja": {
     "nba": 1626209,
     "espn": 2995706,
-    "bbref": null,
+    "bbref": "hezonma01",
     "league": "NBA"
   },
   "Mark Williams": {
     "nba": 1631109,
     "espn": 4701232,
-    "bbref": null,
+    "bbref": "willima07",
     "league": "NBA"
   },
   "Marta Suarez": {
@@ -3431,13 +3431,13 @@
   "Marvin Bagley III": {
     "nba": 1628963,
     "espn": 4277848,
-    "bbref": null,
+    "bbref": "baglema01",
     "league": "NBA"
   },
   "Matas Buzelis": {
     "nba": 1641824,
     "espn": 4711294,
-    "bbref": null,
+    "bbref": "buzelma01",
     "league": "NBA"
   },
   "Matisse Thybulle": {
@@ -3449,7 +3449,7 @@
   "Max Christie": {
     "nba": 1631108,
     "espn": 4432582,
-    "bbref": null,
+    "bbref": "chrisma02",
     "league": "NBA"
   },
   "Max Strus": {
@@ -3461,7 +3461,7 @@
   "Maxime Raynaud": {
     "nba": 1642875,
     "espn": 4898371,
-    "bbref": null,
+    "bbref": "raynama01",
     "league": "NBA"
   },
   "Maya Caldwell": {
@@ -3502,7 +3502,7 @@
   "Meleek Thomas": {
     "nba": 1643509,
     "espn": 5041951,
-    "bbref": null,
+    "bbref": "thomame01",
     "league": "NBA"
   },
   "Mercedes Russell": {
@@ -3515,13 +3515,13 @@
   "Micah Potter": {
     "nba": 1630695,
     "espn": 4066399,
-    "bbref": null,
+    "bbref": "pottemi01",
     "league": "NBA"
   },
   "Michael Porter Jr.": {
     "nba": 1629008,
     "espn": 4278104,
-    "bbref": null,
+    "bbref": "portemi01",
     "league": "NBA"
   },
   "Michaela Onyenwere": {
@@ -3560,13 +3560,13 @@
   "Mikel Brown Jr.": {
     "nba": 1643414,
     "espn": 5101761,
-    "bbref": null,
+    "bbref": "brownmi02",
     "league": "NBA"
   },
   "Miles Bridges": {
     "nba": 1628970,
     "espn": 4066383,
-    "bbref": null,
+    "bbref": "bridgmi02",
     "league": "NBA"
   },
   "Miles McBride": {
@@ -3584,13 +3584,13 @@
   "Mo Bamba": {
     "nba": 1628964,
     "espn": 4277919,
-    "bbref": null,
+    "bbref": "bambamo01",
     "league": "NBA"
   },
   "Mohamed Diawara": {
     "nba": 1642885,
     "espn": 5289900,
-    "bbref": null,
+    "bbref": "diawamo01",
     "league": "NBA"
   },
   "Monique Akoa Makani": {
@@ -3610,7 +3610,7 @@
   "Morez Johnson Jr.": {
     "nba": 1643516,
     "espn": 4873153,
-    "bbref": null,
+    "bbref": "johnsmo01",
     "league": "NBA"
   },
   "Morgan Maly": {
@@ -3623,13 +3623,13 @@
   "Moritz Wagner": {
     "nba": 1629021,
     "espn": 3150844,
-    "bbref": null,
+    "bbref": "wagnemo01",
     "league": "NBA"
   },
   "Moses Moody": {
     "nba": 1630541,
     "espn": 4432171,
-    "bbref": null,
+    "bbref": "moodymo01",
     "league": "NBA"
   },
   "Mouhamed Gueye": {
@@ -3641,13 +3641,13 @@
   "Moussa Cisse": {
     "nba": 1630619,
     "espn": 4701208,
-    "bbref": null,
+    "bbref": "cissemo01",
     "league": "NBA"
   },
   "Moussa Diabate": {
     "nba": 1631217,
     "espn": 4433249,
-    "bbref": null,
+    "bbref": "diabamo01",
     "league": "NBA"
   },
   "Myisha Hines-Allen": {
@@ -3660,13 +3660,13 @@
   "Myles Turner": {
     "nba": 1626167,
     "espn": 3133628,
-    "bbref": null,
+    "bbref": "turnemy01",
     "league": "NBA"
   },
   "Myron Gardner": {
     "nba": 1642066,
     "espn": 4431772,
-    "bbref": null,
+    "bbref": "gardnmy01",
     "league": "NBA"
   },
   "Nadia Fingall": {
@@ -3679,13 +3679,13 @@
   "Nae'Qwan Tomlin": {
     "nba": 1641772,
     "espn": 5106268,
-    "bbref": null,
+    "bbref": "tomlina01",
     "league": "NBA"
   },
   "Naji Marshall": {
     "nba": 1630230,
     "espn": 4278594,
-    "bbref": null,
+    "bbref": "marshna01",
     "league": "NBA"
   },
   "NaLyssa Smith": {
@@ -3726,13 +3726,13 @@
   "Nate Ament": {
     "nba": 1643417,
     "espn": 5164559,
-    "bbref": null,
+    "bbref": "amentna01",
     "league": "NBA"
   },
   "Nate Bittle": {
     "nba": 1642927,
     "espn": 4432586,
-    "bbref": null,
+    "bbref": "bittlna01",
     "league": "NBA"
   },
   "Natisha Hiedeman": {
@@ -3792,19 +3792,19 @@
   "Nic Claxton": {
     "nba": 1629651,
     "espn": 4278067,
-    "bbref": null,
+    "bbref": "claxtni01",
     "league": "NBA"
   },
   "Nick Martinelli": {
     "nba": 1643568,
     "espn": 5105832,
-    "bbref": null,
+    "bbref": "martini01",
     "league": "NBA"
   },
   "Nick Richards": {
     "nba": 1630208,
     "espn": 4278076,
-    "bbref": null,
+    "bbref": "richani01",
     "league": "NBA"
   },
   "Nickeil Alexander-Walker": {
@@ -3822,13 +3822,13 @@
   "Nikola Jovic": {
     "nba": 1631107,
     "espn": 4997528,
-    "bbref": null,
+    "bbref": "jovicni01",
     "league": "NBA"
   },
   "Nikola Topic": {
     "nba": 1642260,
     "espn": 5159925,
-    "bbref": null,
+    "bbref": "topicni01",
     "league": "NBA"
   },
   "Nikola Vucevic": {
@@ -3847,7 +3847,7 @@
   "Nique Clifford": {
     "nba": 1642363,
     "espn": 4702384,
-    "bbref": null,
+    "bbref": "cliffni01",
     "league": "NBA"
   },
   "Nneka Ogwumike": {
@@ -3860,19 +3860,19 @@
   "Noa Essengue": {
     "nba": 1642855,
     "espn": 5242496,
-    "bbref": null,
+    "bbref": "essenno01",
     "league": "NBA"
   },
   "Noah Clowney": {
     "nba": 1641730,
     "espn": 4712896,
-    "bbref": null,
+    "bbref": "clownno01",
     "league": "NBA"
   },
   "Noah Penda": {
     "nba": 1642869,
     "espn": 5214637,
-    "bbref": null,
+    "bbref": "pendano01",
     "league": "NBA"
   },
   "Noemie Brochant": {
@@ -3885,13 +3885,13 @@
   "Nolan Traore": {
     "nba": 1642849,
     "espn": 5279130,
-    "bbref": null,
+    "bbref": "traorno01",
     "league": "NBA"
   },
   "Norman Powell": {
     "nba": 1626181,
     "espn": 2595516,
-    "bbref": null,
+    "bbref": "powelno01",
     "league": "NBA"
   },
   "Ny'Ceara Pryor": {
@@ -3925,7 +3925,7 @@
   "Obi Toppin": {
     "nba": 1630167,
     "espn": 4278355,
-    "bbref": null,
+    "bbref": "toppiob01",
     "league": "NBA"
   },
   "Odyssey Sims": {
@@ -3958,7 +3958,7 @@
   "Olivier-Maxence Prosper": {
     "nba": 1641765,
     "espn": 4595400,
-    "bbref": null,
+    "bbref": "prospol01",
     "league": "NBA"
   },
   "Onyeka Okongwu": {
@@ -3977,7 +3977,7 @@
   "Oscar Tshiebwe": {
     "nba": 1631131,
     "espn": 4432827,
-    "bbref": null,
+    "bbref": "tshieos01",
     "league": "NBA"
   },
   "Oso Ighodaro": {
@@ -3989,25 +3989,25 @@
   "Otega Oweh": {
     "nba": 1642923,
     "espn": 5106270,
-    "bbref": null,
+    "bbref": "owehot01",
     "league": "NBA"
   },
   "Ousmane Dieng": {
     "nba": 1631172,
     "espn": 4997526,
-    "bbref": null,
+    "bbref": "diengou01",
     "league": "NBA"
   },
   "P.J. Washington": {
     "nba": 1629023,
     "espn": 4278078,
-    "bbref": null,
+    "bbref": "washipj01",
     "league": "NBA"
   },
   "Pacome Dadiet": {
     "nba": 1642359,
     "espn": 5211983,
-    "bbref": null,
+    "bbref": "dadiepa01",
     "league": "NBA"
   },
   "Paige Bueckers": {
@@ -4026,19 +4026,19 @@
   "Pascal Siakam": {
     "nba": 1627783,
     "espn": 3149673,
-    "bbref": null,
+    "bbref": "siakapa01",
     "league": "NBA"
   },
   "Pat Spencer": {
     "nba": 1630311,
     "espn": 4592714,
-    "bbref": null,
+    "bbref": "spencpa01",
     "league": "NBA"
   },
   "Patrick Williams": {
     "nba": 1630172,
     "espn": 4431687,
-    "bbref": null,
+    "bbref": "willipa01",
     "league": "NBA"
   },
   "Paul George": {
@@ -4050,7 +4050,7 @@
   "Paul Reed": {
     "nba": 1630194,
     "espn": 4278562,
-    "bbref": null,
+    "bbref": "reedpa01",
     "league": "NBA"
   },
   "Pauline Astier": {
@@ -4069,19 +4069,19 @@
   "Pelle Larsson": {
     "nba": 1641796,
     "espn": 4601025,
-    "bbref": null,
+    "bbref": "larsspe01",
     "league": "NBA"
   },
   "Pete Nance": {
     "nba": 1631250,
     "espn": 4397233,
-    "bbref": null,
+    "bbref": "nancepe01",
     "league": "NBA"
   },
   "Peyton Watson": {
     "nba": 1631212,
     "espn": 4576087,
-    "bbref": null,
+    "bbref": "watsope01",
     "league": "NBA"
   },
   "Peyton Williams": {
@@ -4094,19 +4094,19 @@
   "PJ Hall": {
     "nba": 1641790,
     "espn": 4701225,
-    "bbref": null,
+    "bbref": "hallpj01",
     "league": "NBA"
   },
   "Precious Achiuwa": {
     "nba": 1630173,
     "espn": 4431679,
-    "bbref": null,
+    "bbref": "achiupr01",
     "league": "NBA"
   },
   "Quadir Copeland": {
     "nba": 1643595,
     "espn": 4683860,
-    "bbref": null,
+    "bbref": "copelqu01",
     "league": "NBA"
   },
   "Quentin Grimes": {
@@ -4118,13 +4118,13 @@
   "Quenton Jackson": {
     "nba": 1631245,
     "espn": 4592829,
-    "bbref": null,
+    "bbref": "jacksqu01",
     "league": "NBA"
   },
   "Quinten Post": {
     "nba": 1642366,
     "espn": 4593016,
-    "bbref": null,
+    "bbref": "postqu01",
     "league": "NBA"
   },
   "Quionche Carter": {
@@ -4172,7 +4172,7 @@
   "Rasheer Fleming": {
     "nba": 1642853,
     "espn": 5105977,
-    "bbref": null,
+    "bbref": "flemira01",
     "league": "NBA"
   },
   "Raven Johnson": {
@@ -4192,13 +4192,13 @@
   "Rayan Rupert": {
     "nba": 1641712,
     "espn": 5099752,
-    "bbref": null,
+    "bbref": "ruperra01",
     "league": "NBA"
   },
   "RayJ Dennis": {
     "nba": 1642484,
     "espn": 4431941,
-    "bbref": null,
+    "bbref": "dennira01",
     "league": "NBA"
   },
   "Rebecca Allen": {
@@ -4218,7 +4218,7 @@
   "Reece Beekman": {
     "nba": 1641736,
     "espn": 4432187,
-    "bbref": null,
+    "bbref": "beekmre01",
     "league": "NBA"
   },
   "Reed Sheppard": {
@@ -4258,7 +4258,7 @@
   "Riley Minix": {
     "nba": 1642434,
     "espn": 5177362,
-    "bbref": null,
+    "bbref": "minixri01",
     "league": "NBA"
   },
   "RJ Barrett": {
@@ -4276,13 +4276,13 @@
   "Rocco Zikarsky": {
     "nba": 1642911,
     "espn": 5157587,
-    "bbref": null,
+    "bbref": "zikarro01",
     "league": "NBA"
   },
   "Ron Harper Jr.": {
     "nba": 1631199,
     "espn": 4397251,
-    "bbref": null,
+    "bbref": "harpero01",
     "league": "NBA"
   },
   "Ronald Holland II": {
@@ -4319,7 +4319,7 @@
   "Ryan Conwell": {
     "nba": 1643553,
     "espn": 5107157,
-    "bbref": null,
+    "bbref": "conwery01",
     "league": "NBA"
   },
   "Ryan Dunn": {
@@ -4331,19 +4331,19 @@
   "Ryan Kalkbrenner": {
     "nba": 1641750,
     "espn": 4576060,
-    "bbref": null,
+    "bbref": "kalkbry01",
     "league": "NBA"
   },
   "Ryan Nembhard": {
     "nba": 1642948,
     "espn": 4433629,
-    "bbref": null,
+    "bbref": "nembhry01",
     "league": "NBA"
   },
   "Ryan Rollins": {
     "nba": 1631157,
     "espn": 4591725,
-    "bbref": null,
+    "bbref": "rolliry01",
     "league": "NBA"
   },
   "Sabrina Ionescu": {
@@ -4363,7 +4363,7 @@
   "Saddiq Bey": {
     "nba": 1630180,
     "espn": 4397136,
-    "bbref": null,
+    "bbref": "beysa01",
     "league": "NBA"
   },
   "Sakima Walker": {
@@ -4415,7 +4415,7 @@
   "Santi Aldama": {
     "nba": 1630583,
     "espn": 4593125,
-    "bbref": null,
+    "bbref": "aldamsa01",
     "league": "NBA"
   },
   "Sarah Ashlee Barker": {
@@ -4454,7 +4454,7 @@
   "Scotty Pippen Jr.": {
     "nba": 1630590,
     "espn": 4431785,
-    "bbref": null,
+    "bbref": "pippesc02",
     "league": "NBA"
   },
   "Serah Williams": {
@@ -4467,7 +4467,7 @@
   "Sergio de Larrea": {
     "nba": 1643547,
     "espn": 5279129,
-    "bbref": null,
+    "bbref": "delarse01",
     "league": "NBA"
   },
   "Sevgi Uzun": {
@@ -4534,7 +4534,7 @@
   "Sidy Cissoko": {
     "nba": 1631321,
     "espn": 5081727,
-    "bbref": null,
+    "bbref": "cissosi01",
     "league": "NBA"
   },
   "Sika Kone": {
@@ -4547,13 +4547,13 @@
   "Simone Fontecchio": {
     "nba": 1631323,
     "espn": 3899664,
-    "bbref": null,
+    "bbref": "fontesi01",
     "league": "NBA"
   },
   "Sion James": {
     "nba": 1642883,
     "espn": 4602025,
-    "bbref": null,
+    "bbref": "jamessi01",
     "league": "NBA"
   },
   "Skylar Diggins": {
@@ -4619,7 +4619,7 @@
   "Steven Adams": {
     "nba": 203500,
     "espn": 2991235,
-    "bbref": null,
+    "bbref": "adamsst01",
     "league": "NBA"
   },
   "Sug Sutton": {
@@ -4632,7 +4632,7 @@
   "Svi Mykhailiuk": {
     "nba": 1629004,
     "espn": 3133602,
-    "bbref": null,
+    "bbref": "mykhasv01",
     "league": "NBA"
   },
   "Sydney Taylor": {
@@ -4645,7 +4645,7 @@
   "T.J. McConnell": {
     "nba": 204456,
     "espn": 2530530,
-    "bbref": null,
+    "bbref": "mccontj01",
     "league": "NBA"
   },
   "Ta'Niya Latson": {
@@ -4658,7 +4658,7 @@
   "Tacko Fall": {
     "nba": 1629605,
     "espn": 3904625,
-    "bbref": null,
+    "bbref": "fallta01",
     "league": "NBA"
   },
   "Taina Mair": {
@@ -4677,19 +4677,19 @@
   "Tarik Biberovic": {
     "nba": 1641844,
     "espn": 5148538,
-    "bbref": null,
+    "bbref": "biberta01",
     "league": "NBA"
   },
   "Tarris Reed Jr.": {
     "nba": 1643542,
     "espn": 5105809,
-    "bbref": null,
+    "bbref": "reedjta01",
     "league": "NBA"
   },
   "Taurean Prince": {
     "nba": 1627752,
     "espn": 2990962,
-    "bbref": null,
+    "bbref": "princta02",
     "league": "NBA"
   },
   "Taylor Bigby": {
@@ -4702,7 +4702,7 @@
   "Taylor Hendricks": {
     "nba": 1641707,
     "espn": 4684806,
-    "bbref": null,
+    "bbref": "hendrta01",
     "league": "NBA"
   },
   "Taylor Thierry": {
@@ -4750,7 +4750,7 @@
   "Terance Mann": {
     "nba": 1629611,
     "espn": 3907823,
-    "bbref": null,
+    "bbref": "mannte01",
     "league": "NBA"
   },
   "Terrence Shannon Jr.": {
@@ -4762,19 +4762,19 @@
   "Thomas Bryant": {
     "nba": 1628418,
     "espn": 3934723,
-    "bbref": null,
+    "bbref": "bryanth01",
     "league": "NBA"
   },
   "Thomas Sorber": {
     "nba": 1642850,
     "espn": 5061603,
-    "bbref": null,
+    "bbref": "sorbeth01",
     "league": "NBA"
   },
   "Tidjane Salaun": {
     "nba": 1642275,
     "espn": 5211176,
-    "bbref": null,
+    "bbref": "salauti01",
     "league": "NBA"
   },
   "Tiffany Hayes": {
@@ -4800,13 +4800,13 @@
   "Tobe Awaka": {
     "nba": 1643591,
     "espn": 5105555,
-    "bbref": null,
+    "bbref": "awakato01",
     "league": "NBA"
   },
   "Tobi Lawal": {
     "nba": 1643588,
     "espn": 5106040,
-    "bbref": null,
+    "bbref": "lawalto01",
     "league": "NBA"
   },
   "Tobias Harris": {
@@ -4818,7 +4818,7 @@
   "Tolu Smith": {
     "nba": 1642449,
     "espn": 4397882,
-    "bbref": null,
+    "bbref": "smithto05",
     "league": "NBA"
   },
   "Tonie Morgan": {
@@ -4849,61 +4849,61 @@
   "Trayce Jackson-Davis": {
     "nba": 1631218,
     "espn": 4431684,
-    "bbref": null,
+    "bbref": "jackstr02",
     "league": "NBA"
   },
   "Tre Donaldson": {
     "nba": 1643621,
     "espn": 4837356,
-    "bbref": null,
+    "bbref": "donaltr01",
     "league": "NBA"
   },
   "Tre Johnson": {
     "nba": 1642848,
     "espn": 5238230,
-    "bbref": null,
+    "bbref": "johnstr03",
     "league": "NBA"
   },
   "Tre Jones": {
     "nba": 1630200,
     "espn": 4395626,
-    "bbref": null,
+    "bbref": "jonestr01",
     "league": "NBA"
   },
   "Tre Mann": {
     "nba": 1630544,
     "espn": 4432819,
-    "bbref": null,
+    "bbref": "manntr01",
     "league": "NBA"
   },
   "Trendon Watford": {
     "nba": 1630570,
     "espn": 4431675,
-    "bbref": null,
+    "bbref": "watfotr01",
     "league": "NBA"
   },
   "Trevon Brazile": {
     "nba": 1642350,
     "espn": 4698719,
-    "bbref": null,
+    "bbref": "brazitr01",
     "league": "NBA"
   },
   "Trey Alexander": {
     "nba": 1641725,
     "espn": 4433268,
-    "bbref": null,
+    "bbref": "alexatr01",
     "league": "NBA"
   },
   "Trey Lyles": {
     "nba": 1626168,
     "espn": 3136196,
-    "bbref": null,
+    "bbref": "lylestr01",
     "league": "NBA"
   },
   "Trey Murphy III": {
     "nba": 1630530,
     "espn": 4397688,
-    "bbref": null,
+    "bbref": "murphtr02",
     "league": "NBA"
   },
   "Tristan da Silva": {
@@ -4915,19 +4915,19 @@
   "Tristan Enaruna": {
     "nba": 1642400,
     "espn": 4431734,
-    "bbref": null,
+    "bbref": "enarutr01",
     "league": "NBA"
   },
   "Tristan Vukcevic": {
     "nba": 1641774,
     "espn": 4997537,
-    "bbref": null,
+    "bbref": "vukcetr01",
     "league": "NBA"
   },
   "Ty Jerome": {
     "nba": 1629660,
     "espn": 4065733,
-    "bbref": null,
+    "bbref": "jeromty01",
     "league": "NBA"
   },
   "Tyasha Harris": {
@@ -4940,7 +4940,7 @@
   "Tyler Bilodeau": {
     "nba": 1643548,
     "espn": 5105626,
-    "bbref": null,
+    "bbref": "bilodty01",
     "league": "NBA"
   },
   "Tyler Herro": {
@@ -4952,13 +4952,13 @@
   "Tyler Kolek": {
     "nba": 1642278,
     "espn": 4433225,
-    "bbref": null,
+    "bbref": "kolekty01",
     "league": "NBA"
   },
   "Tyler Nickel": {
     "nba": 1643589,
     "espn": 4838721,
-    "bbref": null,
+    "bbref": "nickety01",
     "league": "NBA"
   },
   "Tyrese Haliburton": {
@@ -4976,7 +4976,7 @@
   "Tyrese Proctor": {
     "nba": 1642878,
     "espn": 5023693,
-    "bbref": null,
+    "bbref": "proctty01",
     "league": "NBA"
   },
   "Tyus Jones": {
@@ -4988,7 +4988,7 @@
   "Ugonna Onyenso": {
     "nba": 1642391,
     "espn": 5037878,
-    "bbref": null,
+    "bbref": "onyenug01",
     "league": "NBA"
   },
   "Valeriane Ayayi": {
@@ -5014,7 +5014,7 @@
   "Vit Krejci": {
     "nba": 1630249,
     "espn": 4578893,
-    "bbref": null,
+    "bbref": "krejcvi01",
     "league": "NBA"
   },
   "VJ Edgecombe": {
@@ -5026,19 +5026,19 @@
   "Vladislav Goldin": {
     "nba": 1642884,
     "espn": 4700818,
-    "bbref": null,
+    "bbref": "goldivl01",
     "league": "NBA"
   },
   "Walker Kessler": {
     "nba": 1631117,
     "espn": 4433136,
-    "bbref": null,
+    "bbref": "kesslwa01",
     "league": "NBA"
   },
   "Walter Clayton Jr.": {
     "nba": 1642383,
     "espn": 4896372,
-    "bbref": null,
+    "bbref": "claytwa01",
     "league": "NBA"
   },
   "Wendell Carter Jr.": {
@@ -5050,37 +5050,37 @@
   "Will Richard": {
     "nba": 1642954,
     "espn": 4897262,
-    "bbref": null,
+    "bbref": "richawi02",
     "league": "NBA"
   },
   "Will Riley": {
     "nba": 1642860,
     "espn": 5144126,
-    "bbref": null,
+    "bbref": "rileywi01",
     "league": "NBA"
   },
   "Yang Hansen": {
     "nba": 1642905,
     "espn": 5217746,
-    "bbref": null,
+    "bbref": "yangha01",
     "league": "NBA"
   },
   "Yanic Konan Niederhauser": {
     "nba": 1642949,
     "espn": 5108024,
-    "bbref": null,
+    "bbref": "konanya01",
     "league": "NBA"
   },
   "Yaxel Lendeborg": {
     "nba": 1642865,
     "espn": 5175737,
-    "bbref": null,
+    "bbref": "lendeya01",
     "league": "NBA"
   },
   "Yves Missi": {
     "nba": 1642274,
     "espn": 5061589,
-    "bbref": null,
+    "bbref": "missiyv01",
     "league": "NBA"
   },
   "Zaay Green": {
@@ -5093,19 +5093,19 @@
   "Zaccharie Risacher": {
     "nba": 1642258,
     "espn": 5211175,
-    "bbref": null,
+    "bbref": "risacza01",
     "league": "NBA"
   },
   "Zach Collins": {
     "nba": 1628380,
     "espn": 4066650,
-    "bbref": null,
+    "bbref": "colliza01",
     "league": "NBA"
   },
   "Zach Edey": {
     "nba": 1641744,
     "espn": 4600663,
-    "bbref": null,
+    "bbref": "edeyza01",
     "league": "NBA"
   },
   "Zach LaVine": {
@@ -5130,25 +5130,25 @@
   "Ziaire Williams": {
     "nba": 1630533,
     "espn": 4433137,
-    "bbref": null,
+    "bbref": "willizi02",
     "league": "NBA"
   },
   "Zion Williamson": {
     "nba": 1629627,
     "espn": 4395628,
-    "bbref": null,
+    "bbref": "willizi01",
     "league": "NBA"
   },
   "Zuby Ejiofor": {
     "nba": 1643544,
     "espn": 5106262,
-    "bbref": null,
+    "bbref": "ejiofzu01",
     "league": "NBA"
   },
   "Zyon Pullin": {
     "nba": 1642389,
     "espn": 4592979,
-    "bbref": null,
+    "bbref": "pullizy01",
     "league": "NBA"
   }
 }
