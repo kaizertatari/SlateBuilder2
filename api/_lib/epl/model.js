@@ -31,6 +31,9 @@
 import {
   mixtureLineProbs, mixtureMean, mulberry32, seedFrom, sampleCount, sampleBinomial,
 } from "./distributions.js";
+import {
+  fitMatchup, styleFactor, roleFactor, lineupX, unitXForRole, lineupFactor,
+} from "./matchup.js";
 
 export const MODEL_VERSION = 1;
 
@@ -263,7 +266,7 @@ export function teamTotal(tf, team, opp, home) {
  * @param {Object} [opts.registry]     data/epl-players.json — adds FPL
  *   status/news and prior-only entries for players with no minutes yet
  */
-export function fitModel(snapshot, { beforeRound = null, registry = null, teamShrinkFloor = TEAM_SHRINK_FLOOR } = {}) {
+export function fitModel(snapshot, { beforeRound = null, registry = null, teamShrinkFloor = TEAM_SHRINK_FLOOR, matchupOpts = {} } = {}) {
   const matches = (snapshot.matches || [])
     .filter((m) => beforeRound == null || m.round < beforeRound)
     .sort((a, b) => String(a.kickoff_utc).localeCompare(String(b.kickoff_utc)));
@@ -271,6 +274,12 @@ export function fitModel(snapshot, { beforeRound = null, registry = null, teamSh
   const rows = (snapshot.player_matches || []).filter((r) => matchIds.has(r.match_id));
   const teamMatches = buildTeamMatches(matches, rows);
   const tmIdx = new Map(teamMatches.map((x) => [`${x.match_id}|${x.team}`, x]));
+  const rowsByTM = new Map();
+  for (const r of rows) {
+    const k = `${r.match_id}|${r.team_id}`;
+    if (!rowsByTM.has(k)) rowsByTM.set(k, []);
+    rowsByTM.get(k).push(r);
+  }
 
   // Team factors: every share stat, plus shots on target conceded (keepers).
   const team_factors = {};
@@ -512,6 +521,10 @@ export function fitModel(snapshot, { beforeRound = null, registry = null, teamSh
     }
   }
 
+  // Matchup layers (position / style / lineup) — see matchup.js. Fitted on
+  // the same training window; projectPlayer applies them only when asked.
+  const matchup = fitMatchup({ matches, teamMatches, rowsByTM, players: out, team_factors, teamTotal, stats: SHARE_STATS, opts: matchupOpts });
+
   return {
     version: MODEL_VERSION,
     season: snapshot.season ?? null,
@@ -523,6 +536,7 @@ export function fitModel(snapshot, { beforeRound = null, registry = null, teamSh
     dispersion,
     league: { save_rate: round(leagueSaveRate, 4), sub_minutes: round(leagueSubMin, 1) },
     role_minutes: roleMinutes,
+    matchup,
     players: out,
   };
 }
@@ -600,9 +614,13 @@ function marketAdjust(stat, base, ctx, modelXgFor, modelXgAgainst) {
  * @param {"home"|"away"} args.venue
  * @param {Object} [args.minutes]      minutesScenarios override
  * @param {Object} [args.teamContext]  { xg_for, xg_against } from the market
+ * @param {Object} [args.layers]       matchup layers { position, style, lineup }
+ *   (matchup.js); null = the v1 model exactly
+ * @param {Iterable<string>} [args.oppStarters]  opponent XI (lineup layer)
+ * @param {Iterable<string>} [args.ownStarters]  own XI (keepers' lineup layer)
  * @returns {Object|null} per-90 means, team totals, scenarios, dispersion
  */
-export function projectPlayer(model, { playerId, opponentTeamId, venue, minutes = null, teamContext = null }) {
+export function projectPlayer(model, { playerId, opponentTeamId, venue, minutes = null, teamContext = null, layers = null, oppStarters = null, ownStarters = null }) {
   const p = model.players?.[playerId];
   if (!p) return null;
   const home = venue === "home";
@@ -612,14 +630,35 @@ export function projectPlayer(model, { playerId, opponentTeamId, venue, minutes 
   const xgFor = teamTotal(tf.xg, team, opp, home);
   const xgAgainst = teamTotal(tf.xg, opp, team, !home);
 
+  const mx = layers && model.matchup ? model.matchup : null;
+  const oppX = mx && layers.lineup ? lineupX(mx, opp, oppStarters, model.players) : null;
+  const ownX = mx && layers.lineup && p.gk ? lineupX(mx, team, ownStarters, model.players) : null;
+  const factors = mx ? {} : null;
+
   const teamTotals = {};
   const per90 = {};
   for (const s of SHARE_STATS) {
-    const T = marketAdjust(s, teamTotal(tf[s], team, opp, home), teamContext, xgFor, xgAgainst);
+    let T = marketAdjust(s, teamTotal(tf[s], team, opp, home), teamContext, xgFor, xgAgainst);
+    let f = 1;
+    if (mx) {
+      const st = layers.style ? styleFactor(mx, s, team, opp) : { f: 1, parts: [] };
+      const role = layers.position ? roleFactor(mx, s, opp, p.role) : 1;
+      const lu = layers.lineup ? lineupFactor(mx, s, unitXForRole(oppX, p.role)) : 1;
+      T *= st.f;
+      f = role * lu;
+      factors[s] = { style: round(st.f, 4), style_parts: st.parts.map((x) => ({ key: x.key, f: round(x.f, 4) })), role: round(role, 4), lineup: round(lu, 4) };
+    }
     teamTotals[s] = T;
-    per90[s] = (p.shares[s] ?? 0) * T;
+    per90[s] = (p.shares[s] ?? 0) * T * f;
   }
-  const sotAgainst = marketAdjust("sot_against", teamTotal(tf.sot, opp, team, !home), teamContext, xgFor, xgAgainst);
+  let sotAgainst = marketAdjust("sot_against", teamTotal(tf.sot, opp, team, !home), teamContext, xgFor, xgAgainst);
+  if (mx && p.gk) {
+    const st = layers.style ? styleFactor(mx, "sot", opp, team) : { f: 1, parts: [] };
+    const xMean = ownX ? Object.values(ownX).reduce((a, b) => a + b, 0) / Object.values(ownX).length : 0;
+    const lu = layers.lineup ? lineupFactor(mx, "sot_against", ownX ? xMean : null) : 1;
+    sotAgainst *= st.f * lu;
+    factors.sot_against = { style: round(st.f, 4), style_parts: st.parts.map((x) => ({ key: x.key, f: round(x.f, 4) })), role: 1, lineup: round(lu, 4) };
+  }
   teamTotals.sot_against = sotAgainst;
 
   const props = {};
@@ -653,6 +692,7 @@ export function projectPlayer(model, { playerId, opponentTeamId, venue, minutes 
     scenarios: minutesScenarios(p, minutes),
     team_totals: Object.fromEntries(Object.entries(teamTotals).map(([k, v]) => [k, round(v, 3)])),
     model_xg: { for: round(xgFor, 3), against: round(xgAgainst, 3) },
+    matchup: factors ? { layers, factors, opp_x: oppX, own_x: ownX } : null,
     props,
     cards: p.cards,
   };

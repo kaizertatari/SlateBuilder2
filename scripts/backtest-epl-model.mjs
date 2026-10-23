@@ -6,6 +6,8 @@
 //
 // Methods compared on identical predictions:
 //   model        full model (shares × two-way team totals, NB dispersion)
+//   pos / style / lineup / all   model + matchup layers (matchup.js); lineup
+//                uses the opponent's ACTUAL XI (= a confirmed sheet)
 //   no-opp       model with the opponent factor switched off
 //   no-team      model with both team factors switched off (share × league avg)
 //   player-p90   player's raw per-90 average (role average if < 90 minutes)
@@ -29,13 +31,23 @@ const STATS = [
   "shots", "sot", "key_passes", "passes_att", "crosses_att", "dribbles_att",
   "tackles", "clearances", "fouls", "fouled", "goals", "assists", "saves",
 ];
-const METHODS = ["model", "no-opp", "no-team", "player-p90", "role-p90"];
+const LAYERED = {
+  pos: { position: true },
+  style: { style: true },
+  lineup: { lineup: true },
+  all: { position: true, style: true, lineup: true },
+};
+const METHODS = ["model", ...Object.keys(LAYERED), "no-opp", "no-team", "player-p90", "role-p90"];
 
 const args = process.argv.slice(2);
 const fromIdx = args.indexOf("--from");
 const FROM_ROUND = fromIdx >= 0 ? Number(args[fromIdx + 1]) : 2;
 const kIdx = args.indexOf("--k-floor");
 const K_FLOOR = kIdx >= 0 ? Number(args[kIdx + 1]) : undefined; // default: model's TEAM_SHRINK_FLOOR
+const argNum = (flag) => (args.includes(flag) ? Number(args[args.indexOf(flag) + 1]) : undefined);
+const MATCHUP_OPTS = Object.fromEntries(Object.entries({ styleSigma: argNum("--style-sigma"), lineupSigma: argNum("--lineup-sigma"), posScale: argNum("--pos-scale"),
+  posGroups: args.includes("--pos-zone") ? "zone" : undefined, posPool: args.includes("--pos-pool") || undefined,
+}).filter(([, v]) => v != null));
 
 const clampP = (p) => Math.min(1 - 1e-6, Math.max(1e-6, p));
 
@@ -87,11 +99,18 @@ async function main() {
   let predictions = 0;
 
   for (const R of rounds) {
-    const model = fitModel(snapshot, { beforeRound: R, ...(K_FLOOR != null ? { teamShrinkFloor: K_FLOOR } : {}) });
+    const model = fitModel(snapshot, { beforeRound: R, matchupOpts: MATCHUP_OPTS, ...(K_FLOOR != null ? { teamShrinkFloor: K_FLOOR } : {}) });
     const variants = { model, "no-opp": ablate(model, { opp: true }), "no-team": ablate(model, { team: true }) };
     const raw = rawRates(snapshot, R, model);
     const targetIds = new Set(snapshot.matches.filter((m) => m.round === R).map((m) => m.match_id));
     const targetRows = snapshot.player_matches.filter((r) => targetIds.has(r.match_id));
+    const startersOf = new Map(); // `${match}|${team}` → XI
+    for (const r of targetRows) {
+      if (!r.started) continue;
+      const k = `${r.match_id}|${r.team_id}`;
+      if (!startersOf.has(k)) startersOf.set(k, []);
+      startersOf.get(k).push(r.player_id);
+    }
 
     // Minutes model: P(start) for every modelled player whose team plays in R.
     for (const r of targetRows) {
@@ -114,6 +133,10 @@ async function main() {
       const opp = home ? m.away.team_id : m.home.team_id;
       const venue = home ? "home" : "away";
       const proj = Object.fromEntries(Object.entries(variants).map(([k, v]) => [k, projectPlayer(v, { playerId: r.player_id, opponentTeamId: opp, venue, minutes: { minutes: r.minutes } })]));
+      const xi = { oppStarters: startersOf.get(`${r.match_id}|${opp}`) ?? null, ownStarters: startersOf.get(`${r.match_id}|${r.team_id}`) ?? null };
+      for (const [k, layers] of Object.entries(LAYERED)) {
+        proj[k] = projectPlayer(model, { playerId: r.player_id, opponentTeamId: opp, venue, minutes: { minutes: r.minutes }, layers, ...xi });
+      }
 
       for (const s of STATS) {
         const mp = proj.model.props[s];
@@ -124,6 +147,7 @@ async function main() {
         const over = y > line ? 1 : 0;
         const dists = {
           model: { mu: muModel, r: mp.r },
+          ...Object.fromEntries(Object.keys(LAYERED).map((k) => [k, { mu: (proj[k].props[s].per90 * r.minutes) / 90, r: mp.r }])),
           "no-opp": { mu: (proj["no-opp"].props[s].per90 * r.minutes) / 90, r: mp.r },
           "no-team": { mu: (proj["no-team"].props[s].per90 * r.minutes) / 90, r: mp.r },
           "player-p90": { mu: (raw.player(r.player_id, p.role, s) * r.minutes) / 90, r: Infinity },
@@ -152,7 +176,8 @@ async function main() {
 
   console.log(`EPL model walk-forward backtest — rounds ${rounds.join(", ")} (fit on earlier rounds only), ${predictions} player-stat predictions\n`);
   const pad = (s, n) => String(s).padStart(n);
-  console.log(`${"stat".padEnd(13)}${pad("n", 6)}   CRPS: ${METHODS.map((m) => pad(m, 10)).join("")}   logloss@line: ${METHODS.slice(0, 3).map((m) => pad(m, 8)).join("")}${pad("p90", 8)}`);
+  const LL = ["model", ...Object.keys(LAYERED), "no-opp", "player-p90"];
+  console.log(`${"stat".padEnd(13)}${pad("n", 6)}   CRPS: ${METHODS.map((m) => pad(m, 10)).join("")}   logloss@line: ${LL.map((m) => pad(m.replace("player-", ""), 8)).join("")}`);
   const totals = Object.fromEntries(METHODS.map((m) => [m, { n: 0, crps: 0, ll: 0 }]));
   for (const s of STATS) {
     const row = score[s];
@@ -160,7 +185,7 @@ async function main() {
     const n = row.model.n;
     const best = METHODS.reduce((b, m) => (row[m].crps < row[b].crps ? m : b), "model");
     const crps = METHODS.map((m) => pad((row[m].crps / n).toFixed(3) + (m === best ? "*" : " "), 10)).join("");
-    const ll = [...METHODS.slice(0, 3), "player-p90"].map((m) => pad((row[m].ll / n).toFixed(3), 8)).join("");
+    const ll = LL.map((m) => pad((row[m].ll / n).toFixed(4), 8)).join("");
     console.log(`${s.padEnd(13)}${pad(n, 6)}         ${crps}                 ${ll}`);
     for (const m of METHODS) {
       totals[m].n += n;
