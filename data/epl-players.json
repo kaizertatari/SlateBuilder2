@@ -1,6 +1,6 @@
 {
  "season": "2026/2027",
- "fetched_at": "2026-10-21T12:00:04.598Z",
+ "fetched_at": "2026-10-22T13:47:47.200Z",
  "teams": {
   "8455": {
    "name": "Chelsea",
@@ -2499,7 +2499,7 @@
    "fpl_position": "DEF",
    "status": "i",
    "chance_next": 0,
-   "news": "Calf injury - Expected back 25 Oct",
+   "news": "Calf injury - Expected back 8 Nov",
    "news_added": "2026-09-21T13:30:09.030724Z"
   },
   "664500": {
@@ -2587,9 +2587,9 @@
    "first_name": "Ben",
    "second_name": "Chilwell",
    "fpl_position": "DEF",
-   "status": "i",
-   "chance_next": 0,
-   "news": "Unspecified injury - Unknown return date",
+   "status": "a",
+   "chance_next": 100,
+   "news": null,
    "news_added": "2026-10-15T20:30:08.876514Z"
   },
   "674014": {
@@ -3735,9 +3735,9 @@
    "first_name": "Morgan",
    "second_name": "Gibbs-White",
    "fpl_position": "MID",
-   "status": "d",
-   "chance_next": 75,
-   "news": "Muscular injury - 75% chance of playing",
+   "status": "a",
+   "chance_next": 100,
+   "news": null,
    "news_added": "2026-10-16T17:30:09.546992Z"
   },
   "789571": {
@@ -5901,10 +5901,10 @@
    "first_name": "Bukayo",
    "second_name": "Saka",
    "fpl_position": "MID",
-   "status": "a",
-   "chance_next": null,
-   "news": null,
-   "news_added": null
+   "status": "d",
+   "chance_next": 50,
+   "news": "Thigh injury - 50% chance of playing",
+   "news_added": "2026-10-21T20:30:09.540957Z"
   },
   "962000": {
    "name": "Josh Eccles",
@@ -6056,9 +6056,9 @@
    "first_name": "Ian",
    "second_name": "Maatsen",
    "fpl_position": "DEF",
-   "status": "d",
-   "chance_next": 75,
-   "news": "Ankle injury - 75% chance of playing",
+   "status": "a",
+   "chance_next": 100,
+   "news": null,
    "news_added": "2026-09-12T18:00:08.729468Z"
   },
   "966027": {
@@ -6126,10 +6126,10 @@
    "first_name": "Quinten",
    "second_name": "Timber",
    "fpl_position": "MID",
-   "status": "a",
-   "chance_next": null,
-   "news": null,
-   "news_added": null
+   "status": "d",
+   "chance_next": 75,
+   "news": "Hamstring injury - 75% chance of playing",
+   "news_added": "2026-10-21T22:00:10.028638Z"
   },
   "974268": {
    "name": "Daniel Ballard",
@@ -6820,7 +6820,7 @@
    "fpl_position": "FWD",
    "status": "i",
    "chance_next": 0,
-   "news": "Shin injury - Expected back 31 Oct",
+   "news": "Shin injury - Unknown return date",
    "news_added": "2026-09-20T19:30:08.505755Z"
   },
   "1073980": {
@@ -7494,7 +7494,7 @@
    "fpl_position": "DEF",
    "status": "i",
    "chance_next": 0,
-   "news": "Unspecified injury - Expected back 2 Nov",
+   "news": "Knee injury - Expected back 7 Nov",
    "news_added": "2026-09-19T14:00:09.046677Z"
   },
   "1112684": {
@@ -8669,7 +8669,7 @@
    "fpl_position": "MID",
    "status": "i",
    "chance_next": 0,
-   "news": "Thigh injury - Unknown return date",
+   "news": "Thigh injury - Expected back 8 Nov",
    "news_added": "2026-10-05T09:30:09.910752Z"
   },
   "1250253": {
@@ -11253,9 +11253,9 @@
    "first_name": "George",
    "second_name": "Hemmings",
    "fpl_position": "MID",
-   "status": "d",
-   "chance_next": 75,
-   "news": "Knee injury - 75% chance of playing",
+   "status": "a",
+   "chance_next": 100,
+   "news": null,
    "news_added": "2026-10-10T18:00:10.386738Z"
   },
   "1613300": {
@@ -12025,9 +12025,9 @@
    "opta_id": "606798",
    "abbr": "AVL",
    "fpl_position": "DEF",
-   "status": "a",
-   "chance_next": null,
-   "news": null
+   "status": "u",
+   "chance_next": 0,
+   "news": "Has joined Getafe on loan for the rest of the season"
   },
   {
    "fpl_id": 39,
@@ -12104,7 +12104,7 @@
    "fpl_position": "DEF",
    "status": "i",
    "chance_next": 0,
-   "news": "Thigh injury - Unknown return date"
+   "news": "Thigh injury - Expected back 8 Nov"
   },
   {
    "fpl_id": 65,
@@ -12124,9 +12124,9 @@
    "opta_id": "560262",
    "abbr": "BOU",
    "fpl_position": "MID",
-   "status": "i",
-   "chance_next": 0,
-   "news": "Foot injury - Expected back 7 Nov"
+   "status": "d",
+   "chance_next": 50,
+   "news": "Foot injury - 50% chance of playing"
   },
   {
    "fpl_id": 80,
@@ -12401,7 +12401,7 @@
    "fpl_position": "GK",
    "status": "u",
    "chance_next": 0,
-   "news": "Has joined Leyton Orient on loan for the rest of the season"
+   "news": "not included in squad."
   },
   {
    "fpl_id": 178,
@@ -13180,9 +13180,9 @@
    "opta_id": "21205",
    "abbr": "MUN",
    "fpl_position": "GK",
-   "status": "i",
-   "chance_next": 0,
-   "news": "Hamstring injury - Unknown return date"
+   "status": "a",
+   "chance_next": 100,
+   "news": null
   },
   {
    "fpl_id": 425,

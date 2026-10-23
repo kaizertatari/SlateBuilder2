@@ -2,7 +2,7 @@
 "season": "2026/2027",
 "league": "EPL",
 "fotmob_league_id": 47,
-"fetched_at": "2026-10-21T12:00:04.598Z",
+"fetched_at": "2026-10-22T13:47:47.200Z",
 "fixtures": [
 {"match_id":"5795363","round":1,"kickoff_utc":"2026-08-21T19:00:00Z","home":{"team_id":"9825","name":"Arsenal","short":"Arsenal"},"away":{"team_id":"8669","name":"Coventry City","short":"Coventry"},"finished":true,"started":true,"cancelled":false,"score":"3 - 0","page_url":"/matches/coventry-city-vs-arsenal/2tttz6#5795363"},
 {"match_id":"5795364","round":1,"kickoff_utc":"2026-08-22T11:30:00Z","home":{"team_id":"8667","name":"Hull City","short":"Hull"},"away":{"team_id":"10260","name":"Manchester United","short":"Man United"},"finished":true,"started":true,"cancelled":false,"score":"2 - 0","page_url":"/matches/hull-city-vs-manchester-united/2yngir#5795364"},
