@@ -28,5 +28,15 @@ for %%L in (NBA WNBA) do (
   "C:\Program Files\nodejs\node.exe" scripts\build-basketball-opponent.mjs --league %%L --push >> "logs\opp-model.log" 2>&1
 )
 echo === %date% %time% end === >> "logs\opp-model.log"
+REM NBA team tracker (this season only): store last night's per-game box
+REM scores (traditional incl. starters/bench, misc, advanced, hustle, matchup
+REM defense; each game cross-checked vs ESPN + the game log refreshed above),
+REM then rebuild data\nba-team-tracker.json + logs\nba-team-tracker-latest.txt
+REM and re-check it against stats.nba.com's official team/player totals. A
+REM no-game day fetches nothing. Never touches rc. Output -> logs\nba-tracker.log.
+echo === %date% %time% start === >> "logs\nba-tracker.log"
+"C:\Program Files\nodejs\node.exe" scripts\refresh-nba-boxscores.mjs >> "logs\nba-tracker.log" 2>&1
+"C:\Program Files\nodejs\node.exe" scripts\build-nba-team-tracker.mjs >> "logs\nba-tracker.log" 2>&1
+echo === %date% %time% end === >> "logs\nba-tracker.log"
 echo === %date% %time% end exit=%rc% === >> "logs\grade.log"
 exit /b %rc%

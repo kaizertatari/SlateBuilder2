@@ -14,7 +14,7 @@ home-bridge daemon that the deployed UI forwards to.
 
 | Task | Schedule | What it runs |
 |---|---|---|
-| `grade-outcomes-daily` | 09:00 local (re-enabled 2026-10-13; was disabled 06-21 → 10-13 and still pointed at the old `Slate Builder` checkout) | `conhost.exe --headless scripts/grade-outcomes-task.bat` → `grade-outcomes.mjs` (basketball verdicts ↔ ESPN actuals, emits outcome events), then `export-graded.mjs` (copies every graded verdict↔outcome pair, all leagues incl. EPL graded at 07:00 by `EPL Daily`, into `data/graded/<league>/<YYYY-MM>.jsonl`). Log `logs\grade.log`. Then (shadow, never affects the exit code) refreshes the NBA + WNBA game logs and rebuilds + `--push`es the basketball opponent-factor artifacts (log `logs\opp-model.log`; see "Refresh basketball game logs"). ⚠️ Axiom retention is 30 days and a join needs both events alive, so `data/graded/` is the durable record — commit it with snapshot refreshes. |
+| `grade-outcomes-daily` | 09:00 local (re-enabled 2026-10-13; was disabled 06-21 → 10-13 and still pointed at the old `Slate Builder` checkout) | `conhost.exe --headless scripts/grade-outcomes-task.bat` → `grade-outcomes.mjs` (basketball verdicts ↔ ESPN actuals, emits outcome events), then `export-graded.mjs` (copies every graded verdict↔outcome pair, all leagues incl. EPL graded at 07:00 by `EPL Daily`, into `data/graded/<league>/<YYYY-MM>.jsonl`). Log `logs\grade.log`. Then (shadow, never affects the exit code) refreshes the NBA + WNBA game logs and rebuilds + `--push`es the basketball opponent-factor artifacts (log `logs\opp-model.log`; see "Refresh basketball game logs"), then stores last night's NBA box scores and rebuilds the team tracker (log `logs\nba-tracker.log`; see "NBA team tracker"). ⚠️ Axiom retention is 30 days and a join needs both events alive, so `data/graded/` is the durable record — commit it with snapshot refreshes. |
 | `PrizePicks Refresh Lines` | 00:00 / 06:00 / 12:00 / 18:00 | PrizePicks lines scrape → `data/prizepicks-lines.json` + blob |
 | `PrizePicks Refresh Odds` | 00:10 / 06:10 / 12:10 / 18:10 | `scripts/refresh-odds-task.bat` → DK+FD no-vig consensus → `data/odds.json` + blob (+10 min after lines so they stay in sync) |
 | `Funnel Watchdog` | every 15 min | `scripts/funnel-watchdog-task.bat` → self-heals the Tailscale funnel zombie (see below) |
@@ -405,6 +405,48 @@ engine's own mean 0.8236 → 0.7510).
 Backtest: `node scripts/backtest-basketball-opponent.mjs
 --league NBA [--grid]` (team layer: NBA mean log loss 0.66821 → 0.66579;
 position layer adds nothing, off).
+
+## NBA team tracker (this season only)
+
+Daily at the end of `grade-outcomes-task.bat`, right after the game-log
+refresh (log `logs\nba-tracker.log`); manual: `npm run refresh-nba-boxscores`
+then `npm run build-nba-team-tracker`. Run from home (stats.nba.com).
+
+1. `scripts/refresh-nba-boxscores.mjs` → `data/basketball/box/nba-<season>.json`:
+   per-game `boxscoretraditionalv3` (starter = non-empty `position`; the
+   starters/bench split), `boxscoremiscv3` (paint / fast-break / 2nd-chance /
+   off-TO points), `boxscoreadvancedv3` (possessions, player on-court
+   ORtg/DRtg, usage), `boxscorehustlev2` (contests, deflections, charges),
+   `boxscoredefensivev2` (matchup FG allowed). Incremental — only finished
+   game-log games not yet stored (plus games whose hustle/matchup feed was
+   absent for a whole team). The store resets when the season label changes.
+   Team TOV comes from the game log as `totals.tov_total` (the v3 box only
+   counts player turnovers; never below the box).
+2. Before a game is stored (`api/_lib/basketball/boxscores.js` `validateGame`
+   + source compare): starters + bench = team, player rows = team, starter
+   rows = starters block, exactly 5 starters, pts = 2·FGM + 3PM + FTM,
+   OREB + DREB = REB, plus-minus = margin, paint pts = opponent's "allowed",
+   240 (+25/OT) team-minutes; final score = ESPN exactly; every counted team
+   stat must agree with at least ONE of ESPN's team box / the league game log
+   (stat corrections lag one of them — 2026-10-25 SAC/MEM game log stale,
+   ESPN ±1 attempt on 10-23 SAC 3PA / 10-24 DAL FGA). A failing game is not
+   stored (retried next run) and the script exits 1.
+   `--check` re-validates every stored game, writes nothing.
+3. `scripts/build-nba-team-tracker.mjs` (`api/_lib/basketball/team-tracker.js`)
+   → `data/nba-team-tracker.json` + `logs/nba-team-tracker-latest.txt`:
+   team offense/defense (ORtg per own poss, DRtg per OPPONENT poss — the
+   official definitions; four factors, shot profile, paint/FB/2nd-chance,
+   deflections, contests), starters vs bench, opponent starters vs this
+   defense, league-tercile playstyle tags (offense: pace, 3PA rate, paint
+   share, fast-break share, AST%, OREB%, FT rate; defense: opp 3PA rate, opp
+   paint share, forced TOV%, opp FT rate, DREB%, block rate), opponent-
+   adjusted results vs each playstyle (game rating − (team + opp − league),
+   leave-one-out), and player offense/defense leaderboards (z-score composites,
+   formulas printed in the report). Then the official check: GP/W/L and every
+   counting stat vs `leaguedashteamstats` Totals (±1–2 = note), OFF/DEF
+   RATING + PACE within 1.0, every player's GP/PTS/REB/AST/STL/BLK/3PM/FGA vs
+   `leaguedashplayerstats` (per stat ±2 = note). FAIL → exit 1, artifact still
+   written with `validation`.
 
 ## Refresh EPL data (Premier League model, this season)
 
