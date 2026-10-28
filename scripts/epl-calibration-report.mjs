@@ -14,7 +14,7 @@
 // Usage: npm run epl-calibration-report  [-- --lookback 120]
 
 import { loadEnvLocal } from "./_env.mjs";
-import { queryAxiom } from "./_axiom.mjs";
+import { queryAxiomWindowed } from "./_axiom.mjs";
 import { EPL_POLICY } from "../api/_lib/epl/verdict.js";
 import { latestBeforeKickoff, joinKey, fitLogit, logit, sigmoid, scoreProbs, reliability, wilson } from "../api/_lib/epl/grading.js";
 
@@ -49,8 +49,8 @@ async function main() {
   if (!token) throw new Error("AXIOM_TOKEN not set");
   const D = `['${dataset}']`;
   const start = new Date(Date.now() - LOOKBACK_DAYS * 86400000).toISOString();
-  const verdicts = await queryAxiom(token, `${D} | where event_type == "verdict" and league == "EPL" and pre_filtered == false | limit 100000`, { start });
-  const outcomes = await queryAxiom(token, `${D} | where event_type == "outcome" and league == "EPL" | limit 100000`, { start });
+  const verdicts = await queryAxiomWindowed(token, `${D} | where event_type == "verdict" and league == "EPL" and pre_filtered == false`, { start });
+  const outcomes = await queryAxiomWindowed(token, `${D} | where event_type == "outcome" and league == "EPL"`, { start });
   const outByKey = new Map(outcomes.map((o) => [joinKey(o), o]));
   const latest = latestBeforeKickoff(verdicts);
   const joined = latest.map((v) => ({ ...v, outcome: outByKey.get(joinKey(v)) })).filter((r) => r.outcome);

@@ -20,7 +20,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadEnvLocal } from "./_env.mjs";
-import { queryAxiom } from "./_axiom.mjs";
+import { queryAxiomWindowed } from "./_axiom.mjs";
 import { getCsv } from "./refresh-nfl-data.mjs";
 import { parseWeeklyStats, parseSnapCounts, parseSchedule, parsePlayers } from "../api/_lib/nfl/nflverse.js";
 import { gradeVerdict, playedState, latestBeforeKickoff, joinKey, openClose, clvFor, SETTLE_AFTER_MS, SNAP_WAIT_MS } from "../api/_lib/nfl/grading.js";
@@ -62,8 +62,8 @@ async function main() {
   const D = `['${dataset}']`;
   const start = new Date(Date.now() - LOOKBACK_DAYS * 86400000).toISOString();
 
-  const verdicts = await queryAxiom(token, `${D} | where event_type == "verdict" and league == "NFL" and pre_filtered == false and source != "smoke-app" | limit 100000`, { start });
-  const outcomes = await queryAxiom(token, `${D} | where event_type == "outcome" and league == "NFL" | project player, prop_type, line, direction, game_start_time | limit 100000`, { start: new Date(Date.now() - (LOOKBACK_DAYS + 10) * 86400000).toISOString() });
+  const verdicts = await queryAxiomWindowed(token, `${D} | where event_type == "verdict" and league == "NFL" and pre_filtered == false and source != "smoke-app"`, { start });
+  const outcomes = await queryAxiomWindowed(token, `${D} | where event_type == "outcome" and league == "NFL"`, { tail: "| project player, prop_type, line, direction, game_start_time", start: new Date(Date.now() - (LOOKBACK_DAYS + 10) * 86400000).toISOString() });
   const graded = new Set(outcomes.map(joinKey));
   const now = Date.now();
   const pending = latestBeforeKickoff(verdicts).filter((v) =>

@@ -12,6 +12,13 @@
 //   node scripts/grade-outcomes.mjs --date 2026-05-19      # window ends on that UTC date
 //   node scripts/grade-outcomes.mjs --lookback 14          # extend backfill / retry window
 //   node scripts/grade-outcomes.mjs --dry-run              # show what would emit, don't write
+//   node scripts/grade-outcomes.mjs --league NBA           # grade one league only (NBA | WNBA)
+//
+// NBA and WNBA are graded by SEPARATE passes (no --league = an NBA pass, then
+// a WNBA pass; one failing doesn't stop the other). Each pass queries only its
+// own league, in day windows: Axiom caps a query at 50,000 rows, and on
+// 2026-10-28 the all-league 7-day window held 74k verdicts (mostly NFL
+// sweeps), so the newest NBA verdicts silently never graded.
 //
 // Default --date is today UTC (not yesterday): a 10am-ET run is 15:00 UTC,
 // and the prior ET evening's slate straddles the UTC midnight boundary
@@ -31,9 +38,10 @@ loadEnvLocal();
 
 import { getLastNGames } from "../api/_lib/espn-stats.js";
 import { currentSeason } from "../api/_lib/nba-stats.js";
+import { queryAxiomWindowed } from "./_axiom.mjs";
 
 const AXIOM_INGEST_URL_BASE = "https://api.axiom.co/v1/datasets";
-const AXIOM_QUERY_URL = "https://api.axiom.co/v1/datasets/_apl?format=tabular";
+const GRADED_LEAGUES = ["NBA", "WNBA"];
 
 // Per-stat extractor against an ESPN gamelog entry. Composites are summed
 // in JS so we don't depend on the gamelog shipping a PRA/PR/PA/RA field
@@ -69,7 +77,7 @@ const STAT_TO_ACTUAL = {
 
 // ─── Main ──────────────────────────────────────────────────────────────────
 
-async function main() {
+async function main(league) {
   const token = process.env.AXIOM_TOKEN;
   const dataset = process.env.AXIOM_DATASET || "props_verdict";
   if (!token) {
@@ -89,7 +97,7 @@ async function main() {
   const windowEnd = new Date(`${targetDate}T23:59:59.999Z`);
   const windowStart = new Date(windowEnd.getTime() - lookbackDays * 24 * 60 * 60 * 1000);
 
-  console.log(`=== grade-outcomes ===`);
+  console.log(`=== grade-outcomes ${league} ===`);
   console.log(`Target: ${targetDate}  Lookback: ${lookbackDays}d  Window: [${iso(windowStart)} → ${iso(windowEnd)}]`);
   console.log(`Dataset: ${dataset}${dryRun ? "  (DRY RUN)" : ""}`);
 
@@ -102,22 +110,15 @@ async function main() {
   // never been ingested throws "invalid field" at query time. Instead we
   // pull all verdict events in the window and filter in JS. Old-schema
   // events (without game_start_time / espn_id) drop out naturally.
-  // `| limit 100000` is REQUIRED: Axiom returns only 1000 rows when no limit is
-  // given, silently truncating the window. A busy slate logs >1000 verdicts in a
-  // few days, so without this the grader only ever sees an arbitrary 1000-row
-  // slice and leaves the rest ungraded — starving calibration of outcomes.
-  // Mirrors _axiom.mjs.
-  const verdictsRaw = await queryAxiom(token, dataset, {
-    apl: `['${dataset}'] | where event_type == "verdict" | limit 100000`,
-    startTime: iso(windowStart),
-    endTime: iso(windowEnd),
-  });
+  // Axiom returns 1,000 rows without a limit and at most 50,000 with one, so
+  // a single all-league query silently drops events (see header). Query this
+  // league only, one day window at a time (queryAxiomWindowed splits further
+  // and warns if a window still hits the cap).
+  const where = (type) => `['${dataset}'] | where event_type == "${type}" and league == "${league}"`;
+  const range = { start: iso(windowStart), end: iso(windowEnd) };
+  const verdictsRaw = await queryAxiomWindowed(token, where("verdict"), range);
   const verdicts = verdictsRaw.filter((v) => v.game_start_time && v.espn_id);
-  const outcomes = await queryAxiom(token, dataset, {
-    apl: `['${dataset}'] | where event_type == "outcome" | limit 100000`,
-    startTime: iso(windowStart),
-    endTime: iso(windowEnd),
-  });
+  const outcomes = await queryAxiomWindowed(token, where("outcome"), range);
   console.log(`Found ${verdicts.length}/${verdictsRaw.length} usable verdict events (with game_start_time + espn_id), ${outcomes.length} existing outcome events in window`);
 
   // Build a Set of join keys that ALREADY have outcomes — we won't regrade.
@@ -307,31 +308,7 @@ async function main() {
 }
 
 // ─── Axiom helpers ─────────────────────────────────────────────────────────
-
-async function queryAxiom(token, dataset, { apl, startTime, endTime }) {
-  const res = await fetch(AXIOM_QUERY_URL, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ apl, startTime, endTime }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Axiom query HTTP ${res.status}: ${body.slice(0, 300)}`);
-  }
-  const data = await res.json();
-  // Tabular response: { tables: [{ name, fields: [{name}], columns: [[v0,v1,...], ...] }] }
-  const table = data?.tables?.[0];
-  if (!table || !Array.isArray(table.fields) || !Array.isArray(table.columns)) return [];
-  const fields = table.fields.map((f) => f.name);
-  const rowCount = table.columns[0]?.length ?? 0;
-  const rows = [];
-  for (let i = 0; i < rowCount; i++) {
-    const row = {};
-    for (let c = 0; c < fields.length; c++) row[fields[c]] = table.columns[c][i];
-    rows.push(row);
-  }
-  return rows;
-}
+// Queries go through _axiom.mjs queryAxiomWindowed (row-cap safe).
 
 async function ingestEvents(token, dataset, events) {
   // Chunk to keep request bodies small. Axiom accepts JSON arrays.
@@ -448,11 +425,24 @@ function parseArgs(argv) {
     if (a === "--date") out.date = argv[++i];
     else if (a === "--lookback") out.lookback = parseInt(argv[++i], 10);
     else if (a === "--dry-run" || a === "--dryrun") out.dryRun = true;
+    else if (a === "--league") out.league = String(argv[++i] ?? "").toUpperCase();
   }
   return out;
 }
 
-main().catch((e) => {
-  console.error("Fatal:", e.message);
+// One pass per league; a failure in one is reported and the other still runs.
+const leagueArg = parseArgs(process.argv.slice(2)).league;
+if (leagueArg && !GRADED_LEAGUES.includes(leagueArg)) {
+  console.error(`--league must be one of ${GRADED_LEAGUES.join(", ")} (NFL and EPL have their own graders)`);
   process.exit(1);
-});
+}
+let failed = false;
+for (const league of leagueArg ? [leagueArg] : GRADED_LEAGUES) {
+  try {
+    await main(league);
+  } catch (e) {
+    failed = true;
+    console.error(`Fatal (${league}):`, e.message);
+  }
+}
+if (failed) process.exit(1);

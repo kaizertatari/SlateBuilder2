@@ -80,8 +80,20 @@ Task-To-Run path (`schtasks /Query /TN <name> /V /FO LIST`).
 
 ## Daily grader
 
-Manual: `npm run grade-outcomes`. Options: `--date YYYY-MM-DD`,
-`--lookback N` (default 7 days), `--dry-run`.
+Manual: `npm run grade-outcomes` (NBA pass, then a separate WNBA pass), or
+one league: `npm run grade-outcomes:nba` / `grade-outcomes:wnba`. Options:
+`--league NBA|WNBA`, `--date YYYY-MM-DD`, `--lookback N` (default 7 days),
+`--dry-run`. The scheduled task runs the two leagues as separate graders.
+
+**Axiom 50,000-row cap (2026-10-28):** Axiom returns at most 50,000 rows per
+query whatever `| limit` says. The old all-league 7-day pull held 74k verdicts
+(NFL sweeps log 20k+ on busy days), so NBA verdicts from 10-26 on silently
+never graded and `export-graded` dropped thousands of graded rows in every
+league. Every Axiom pull in the graders, `export-graded`, and the calibration
+reports now goes through `queryAxiomWindowed` (`scripts/_axiom.mjs`): one
+league, one day window per query, auto-split if a window still hits the cap.
+Any query returning exactly 50,000 rows prints a `⚠️ … TRUNCATED` warning —
+if it ever shows in `logs\grade.log`, results are incomplete.
 
 ## Refresh lines
 

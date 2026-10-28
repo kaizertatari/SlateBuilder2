@@ -79,6 +79,8 @@
     "backtest-basketball-opponent": "node scripts/backtest-basketball-opponent.mjs",
     "backtest-basketball-dist": "node scripts/backtest-basketball-dist.mjs",
     "grade-outcomes": "node scripts/grade-outcomes.mjs",
+    "grade-outcomes:nba": "node scripts/grade-outcomes.mjs --league NBA",
+    "grade-outcomes:wnba": "node scripts/grade-outcomes.mjs --league WNBA",
     "export-graded": "node scripts/export-graded.mjs",
     "calibration-all": "node scripts/calibration-all.mjs",
     "build-bbref-ids": "node scripts/build-bbref-ids.mjs",

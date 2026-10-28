@@ -19,7 +19,7 @@ import { loadEnvLocal } from "./_env.mjs";
 import { shadowTierFor } from "../api/_lib/rule-weights.js";
 loadEnvLocal();
 
-const QUERY_URL = "https://api.axiom.co/v1/datasets/_apl?format=tabular";
+import { queryAxiomWindowed } from "./_axiom.mjs";
 
 // Mirror of api/_lib/rules/_helpers.js ASSIST_CONTAINING — kept inline so
 // the report stays a standalone descriptive tool. If that set changes,
@@ -33,23 +33,6 @@ function parseArgs(argv) {
     else if (argv[i] === "--dataset") out.dataset = argv[++i];
   }
   return out;
-}
-
-async function queryAxiom(token, apl, startTime, endTime) {
-  const res = await fetch(QUERY_URL, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ apl, startTime, endTime }),
-  });
-  if (!res.ok) throw new Error(`Axiom HTTP ${res.status}: ${(await res.text().catch(() => "")).slice(0, 300)}`);
-  const data = await res.json();
-  const t = data?.tables?.[0];
-  if (!t?.fields || !t?.columns) return [];
-  const fields = t.fields.map((f) => f.name);
-  const n = t.columns[0]?.length ?? 0;
-  const rows = [];
-  for (let i = 0; i < n; i++) { const r = {}; fields.forEach((f, c) => (r[f] = t.columns[c][i])); rows.push(r); }
-  return rows;
 }
 
 const joinKey = (e) => [e.player, e.prop_type, Number(e.line), e.direction, e.game_start_time].map((x) => String(x ?? "")).join("|");
@@ -224,12 +207,12 @@ async function main() {
   // NOTE: no `| project` on verdicts. Axiom throws "invalid field" if you
   // name a field it has never ingested, and new fields (e.g. raw_score)
   // appear over time — pulling full rows is schema-proof.
-  // `| limit 100000` is REQUIRED: Axiom defaults to 1000 rows when no limit is
-  // given, which silently truncates both pulls (the join then drops most of the
-  // window — whole leagues can vanish). Mirrors _axiom.mjs.
-  const verdicts = (await queryAxiom(token, `['${dataset}'] | where event_type == "verdict" | limit 100000`, startISO, endISO))
+  // Windowed (queryAxiomWindowed): Axiom returns 1000 rows without a limit and
+  // at most 50,000 with one, and a single 90-day pull is far past that — the
+  // join would silently drop most of the window (whole leagues can vanish).
+  const verdicts = (await queryAxiomWindowed(token, `['${dataset}'] | where event_type == "verdict"`, { start: startISO, end: endISO }))
     .filter((v) => v.engine_mode === "rules");
-  const outcomes = await queryAxiom(token, `['${dataset}'] | where event_type == "outcome" | project player, prop_type, line, direction, game_start_time, hit_or_miss | limit 100000`, startISO, endISO);
+  const outcomes = await queryAxiomWindowed(token, `['${dataset}'] | where event_type == "outcome"`, { start: startISO, end: endISO, tail: "| project player, prop_type, line, direction, game_start_time, hit_or_miss" });
 
   const vByKey = new Map();
   for (const v of verdicts) { const k = joinKey(v), prev = vByKey.get(k); if (!prev || new Date(v._time) > new Date(prev._time)) vByKey.set(k, v); }
