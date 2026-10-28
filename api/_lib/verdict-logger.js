@@ -20,7 +20,8 @@
 
 import { getReqId } from "./request-context.js";
 import { PROP_TO_FIELD } from "./prop-types.js";
-import { calibratedProbOver, nbShiftOver } from "./basketball/dist.js";
+import { calibratedProbOver, nbShiftOver, shrinkMean, minutesProfile, EARLY_SEASON_K } from "./basketball/dist.js";
+import { lineProbs } from "./distributions.js";
 import { pipelineVerdict } from "./basketball/policy.js";
 import { projectProb } from "./projection.js";
 import { lookupMarket } from "./odds.js";
@@ -239,6 +240,11 @@ export function logVerdict({
     // fitted NB instead of the fixed-σ normal (goblins/demons sit 2–7 points
     // from the book line). Both logged until graded NBA lines pick one.
     ...nbPipeFields(groundTruth?.opp_factor?.dist, pipeMarket?.sources, input?.line, dist.dist_p_over, direction, oddsType),
+    // SHADOW early-season shrink (dist.js shrinkMean, 2026-10-28): the
+    // calibrated mean above shrunk toward the opponent model's prior-carrying
+    // mean by the player's games this season, then the same pipeline. Logged
+    // to be graded against pipe_* before anything uses it.
+    ...shrinkFields(groundTruth, dist.dist_mean, input?.line, direction, oddsType, pipeMarket?.no_vig_prob),
     primary_defender: groundTruth?.opponent_defense?.primary_defender?.player ?? null,
     is_playoff: !!groundTruth?.series,
     series_round: groundTruth?.series?.round ?? null,
@@ -572,6 +578,44 @@ function nbPipeFields(distParams, sources, line, pModelOver, direction, oddsType
     pipe_nb_prob: v ? +v.prob.toFixed(4) : null,
     pipe_nb_tier: v ? v.tier : null,
     pipe_nb_edge: v ? +v.edge.toFixed(4) : null,
+  };
+}
+
+// Shadow early-season shrink fields (see logVerdict). n = the player's games
+// this season (0 when ground truth fell back to last season); minutes = the
+// recency-weighted profile of his recent games. All null when the calibrated
+// mean, the opponent-model rate, minutes or the line is missing.
+export function shrinkFields(groundTruth, distMean, line, direction, oddsType, pMarketOver) {
+  const empty = { shrink_k: null, shrink_n: null, shrink_w: null, shrink_minutes: null, shrink_opp_mean: null, shrink_mean: null, shrink_p_over: null, shrink_dir_prob: null, shrink_pipe_prob: null, shrink_pipe_tier: null, shrink_pipe_edge: null };
+  // Validated on NBA only (walk-forward + real graded NBA lines).
+  if (groundTruth?.league !== "NBA") return empty;
+  const opp = groundTruth?.opp_factor;
+  const r = opp?.dist?.r, perMin = opp?.opp_per_min, target = typeof line === "number" ? line : Number(line);
+  if (typeof distMean !== "number" || typeof perMin !== "number" || !(r > 0) || !Number.isFinite(target)) return empty;
+  const season = groundTruth?.season;
+  const n = season?.is_prior_season ? 0 : Number(season?.averages?.games ?? 0);
+  // l5.games is newest-first; minutesProfile wants newest last.
+  const mins = (groundTruth?.l5?.is_prior_season ? [] : (groundTruth?.l5?.games ?? []))
+    .map((g) => Number(g.minutes)).filter((m) => m > 0).reverse();
+  const prof = minutesProfile(mins);
+  if (!prof) return empty;
+  const oppMean = perMin * prof.mean;
+  const s = shrinkMean({ mean: distMean, oppMean, n });
+  if (!s) return empty;
+  const pOver = +lineProbs(target, s.mean, r).over.toFixed(4);
+  const v = pipelineVerdict({ pModelOver: pOver, pMarketOver: typeof pMarketOver === "number" ? pMarketOver : null, direction, oddsType: oddsType || "standard" });
+  return {
+    shrink_k: EARLY_SEASON_K,
+    shrink_n: n,
+    shrink_w: +s.w.toFixed(3),
+    shrink_minutes: +prof.mean.toFixed(1),
+    shrink_opp_mean: +oppMean.toFixed(3),
+    shrink_mean: +s.mean.toFixed(3),
+    shrink_p_over: pOver,
+    shrink_dir_prob: direction === "UNDER" ? +(1 - pOver).toFixed(4) : pOver,
+    shrink_pipe_prob: v ? +v.prob.toFixed(4) : null,
+    shrink_pipe_tier: v ? v.tier : null,
+    shrink_pipe_edge: v ? +v.edge.toFixed(4) : null,
   };
 }
 

@@ -88,5 +88,34 @@ ok(minutesProfile([0, 0]) === null, "B: no minutes → null");
   ok(nbShiftOver({ pOver: 0.5, bookLine: 2.5, targetLine: 1.5, r: null }) === null, "H: missing r → null");
 }
 
+// I) Early-season shrink (SHADOW): weight n/(n+k) on the calibrated mean
+{
+  const { shrinkMean, EARLY_SEASON_K } = await import("../api/_lib/basketball/dist.js");
+  const { shrinkFields } = await import("../api/_lib/verdict-logger.js");
+  ok(EARLY_SEASON_K === 8, "I: k = 8");
+  const s0 = shrinkMean({ mean: 2, oppMean: 10, n: 0 });
+  ok(s0.w === 0 && s0.mean === 10, "I: no games this season → opponent-model mean");
+  const s8 = shrinkMean({ mean: 2, oppMean: 10, n: 8 });
+  ok(s8.w === 0.5 && s8.mean === 6, "I: n = k → halfway");
+  ok(shrinkMean({ mean: 2, oppMean: 10, n: 72 }).w === 0.9, "I: late season → mostly this season");
+  ok(shrinkMean({ mean: null, oppMean: 10, n: 3 }) === null, "I: missing mean → null");
+
+  // Capela-style case: 1.3 pts in 3 games, normal role says ~8 at 24 min.
+  const gt = {
+    league: "NBA",
+    season: { is_prior_season: false, averages: { games: 3 } },
+    l5: { is_prior_season: false, games: [{ minutes: 24 }, { minutes: 22 }, { minutes: 26 }] },
+    opp_factor: { dist: { r: 6 }, opp_per_min: 8 / 24 },
+  };
+  const f = shrinkFields(gt, 1.3, 6.5, "UNDER", "standard", 0.5);
+  ok(f.shrink_n === 3 && Math.abs(f.shrink_w - 3 / 11) < 1e-3, "I: n from season games, w = 3/11");
+  ok(f.shrink_mean > 1.3 && f.shrink_mean < f.shrink_opp_mean, `I: mean pulled toward the prior (${f.shrink_mean})`);
+  ok(f.shrink_dir_prob < 0.9, `I: UNDER no longer near-certain (${f.shrink_dir_prob})`);
+  ok(typeof f.shrink_pipe_prob === "number" && typeof f.shrink_pipe_tier === "string", "I: pipeline prob + tier logged");
+  ok(shrinkFields({ ...gt, league: "WNBA" }, 1.3, 6.5, "UNDER", "standard", 0.5).shrink_mean === null, "I: NBA only");
+  ok(shrinkFields({ ...gt, season: { is_prior_season: true, averages: { games: 70 } } }, 1.3, 6.5, "UNDER", "standard", 0.5).shrink_n === 0, "I: prior-season fallback → n = 0");
+  ok(shrinkFields({ ...gt, opp_factor: { dist: { r: 6 } } }, 1.3, 6.5, "UNDER", "standard", 0.5).shrink_mean === null, "I: no opponent-model rate → null");
+}
+
 console.log(`\nsmoke-basketball-dist: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
