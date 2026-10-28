@@ -170,6 +170,27 @@ export function fitDistParams(snap, { priorModel = null, step = 7, fit = fitOppo
   return out;
 }
 
+/**
+ * Early-season shrink (SHADOW, 2026-10-28). The calibrated mean leans on the
+ * player's few games this season; shrink it toward the opponent model's
+ * prior-carrying mean (per-minute rate that keeps last season × projected
+ * minutes × pace × team): μ = w·calibrated + (1−w)·opponent-model, w = n/(n+k),
+ * n = player's games this season.
+ * NBA evidence: walk-forward 2025-26 incl. games 1–4 (scripts that skip <5
+ * prior games never tested this) — calibrated mean worse than a coin flip
+ * through game 4 (log loss 1.71 / 1.12 / 0.79 / 0.74), shrunk ≈0.69 / 0.66 /
+ * 0.64 / 0.64, small gain all season; on 7,308 REAL graded NBA PrizePicks
+ * lines (games 1–4, 8 days): model 0.962 → 0.646 at k=8, and blended 50/50
+ * with the market it beats the market alone (0.627 vs 0.641, 95% CI below 0).
+ */
+export const EARLY_SEASON_K = 8;
+
+export function shrinkMean({ mean, oppMean, n, k = EARLY_SEASON_K }) {
+  if (typeof mean !== "number" || typeof oppMean !== "number" || !(n >= 0)) return null;
+  const w = n / (n + k);
+  return { mean: Math.max(1e-3, w * mean + (1 - w) * oppMean), w };
+}
+
 /** Calibrated P(over) for a prop given an engine mean and its matchup factor. */
 export function calibratedProbOver({ params, key, mean, factor = 1, line }) {
   const r = params?.r?.[key], c = params?.c?.[key];
