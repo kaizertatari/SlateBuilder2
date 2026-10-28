@@ -13,8 +13,14 @@ cd /d "%~dp0.."
 if not exist "logs" mkdir "logs"
 echo. >> "logs\grade.log"
 echo === %date% %time% start === >> "logs\grade.log"
-"C:\Program Files\nodejs\node.exe" scripts\grade-outcomes.mjs >> "logs\grade.log" 2>&1
-set "rc=%ERRORLEVEL%"
+REM Separate graders per league (2026-10-28): each pass queries only its own
+REM league in day windows, so neither can be starved by the other - or by
+REM NFL/EPL sweep volume - past Axiom's 50,000-row query cap.
+set "rc=0"
+"C:\Program Files\nodejs\node.exe" scripts\grade-outcomes.mjs --league NBA >> "logs\grade.log" 2>&1
+if errorlevel 1 set "rc=1"
+"C:\Program Files\nodejs\node.exe" scripts\grade-outcomes.mjs --league WNBA >> "logs\grade.log" 2>&1
+if errorlevel 1 set "rc=1"
 "C:\Program Files\nodejs\node.exe" scripts\export-graded.mjs >> "logs\grade.log" 2>&1
 if errorlevel 1 set "rc=1"
 REM Cross-league calibration report over data\graded\ (latest copy alone).

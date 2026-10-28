@@ -10,7 +10,7 @@
 // Usage: npm run grade-epl-outcomes  [-- --lookback 10] [-- --dry-run]
 
 import { loadEnvLocal } from "./_env.mjs";
-import { queryAxiom } from "./_axiom.mjs";
+import { queryAxiomWindowed } from "./_axiom.mjs";
 import { extractNextData, matchPageUrl, parseMatch } from "../api/_lib/epl/fotmob.js";
 import { gradeVerdict, latestBeforeKickoff, joinKey } from "../api/_lib/epl/grading.js";
 
@@ -56,8 +56,8 @@ async function main() {
   const D = `['${dataset}']`;
   const start = new Date(Date.now() - LOOKBACK_DAYS * 86400000).toISOString();
 
-  const verdicts = await queryAxiom(token, `${D} | where event_type == "verdict" and league == "EPL" and pre_filtered == false | limit 100000`, { start });
-  const outcomes = await queryAxiom(token, `${D} | where event_type == "outcome" and league == "EPL" | project player, prop_type, line, direction, game_start_time | limit 100000`, { start: new Date(Date.now() - (LOOKBACK_DAYS + 10) * 86400000).toISOString() });
+  const verdicts = await queryAxiomWindowed(token, `${D} | where event_type == "verdict" and league == "EPL" and pre_filtered == false`, { start });
+  const outcomes = await queryAxiomWindowed(token, `${D} | where event_type == "outcome" and league == "EPL"`, { tail: "| project player, prop_type, line, direction, game_start_time", start: new Date(Date.now() - (LOOKBACK_DAYS + 10) * 86400000).toISOString() });
   const graded = new Set(outcomes.map(joinKey));
   const now = Date.now();
   const pending = latestBeforeKickoff(verdicts).filter((v) =>
