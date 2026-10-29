@@ -117,5 +117,46 @@ ok(minutesProfile([0, 0]) === null, "B: no minutes → null");
   ok(shrinkFields({ ...gt, opp_factor: { dist: { r: 6 } } }, 1.3, 6.5, "UNDER", "standard", 0.5).shrink_mean === null, "I: no opponent-model rate → null");
 }
 
+// J) Known-lineup minutes (SHADOW): rotation, Out/Doubtful removal, rescale
+{
+  const { buildRotation, lineupMinutes, normName } = await import("../api/_lib/basketball/dist.js");
+  const { lineupFields } = await import("../api/_lib/verdict-logger.js");
+  ok(normName("Luka Dončić") === "luka doncic" && normName("Jaren Jackson Jr.") === "jaren jackson" && normName("Kel'el Ware") === "kelel ware", "J: name keys strip accents, suffixes, punctuation");
+  // Team AAA: 6 games; players 1–8 play 30 min every game, 9 played only game 1
+  // (out of the rotation), 10 joins in game 6 with 8 min → rotation sums to 248.
+  const team_games = [], rows = [];
+  for (let g = 1; g <= 6; g++) {
+    team_games.push({ game_id: `g${g}`, team: "AAA", opponent: "BBB", date: `2026-10-${String(20 + g).padStart(2, "0")}` });
+    for (let p = 1; p <= 8; p++) rows.push({ game_id: `g${g}`, team: "AAA", player_id: p, min: 30 });
+    if (g === 1) rows.push({ game_id: "g1", team: "AAA", player_id: 9, min: 10 });
+    if (g === 6) rows.push({ game_id: "g6", team: "AAA", player_id: 10, min: 8 });
+  }
+  const players = Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((p) => [p, { name: p === 2 ? "Nikola Jokić" : `Player ${p}` }]));
+  const rot = buildRotation({ players, team_games, rows }).AAA;
+  ok(rot.length === 9 && !rot.some((p) => p.id === "9") && rot.some((p) => p.id === "10"), "J: rotation = played in the team's last 5 games");
+  ok(rot.find((p) => p.id === "1").n === 6 && rot.find((p) => p.id === "1").m0 === 30, "J: games played + recency minutes");
+  const base = lineupMinutes({ rotation: rot, playerId: 1 });
+  ok(rot.find((p) => p.id === "10").p === 0.2 && rot.find((p) => p.id === "1").p === 1, "J: p = share of the team's last 5 games played");
+  // Expected minutes: me 30 + 7 teammates × 30 × p=1 + player 10 × 8 × p=0.2 = 241.6
+  ok(base && base.out.length === 0 && Math.abs(base.minutes - 30 * (240 / 241.6)) < 0.01, `J: no injuries → ≈ usual minutes (expected team total ≈ 240) (${base?.minutes.toFixed(2)})`);
+  const inj = lineupMinutes({ rotation: rot, playerId: 1, injuries: [{ player: "Nikola Jokic", status: "Out" }, { player: "Player 3", status: "Day-To-Day" }] });
+  ok(inj.out.length === 1 && inj.out[0] === "Nikola Jokić", "J: Out matched by name key; Day-To-Day still plays");
+  ok(inj.minutes > base.minutes && inj.minutes <= 44, `J: a teammate out → more minutes, capped (${inj.minutes.toFixed(2)})`);
+  ok(lineupMinutes({ rotation: rot, playerId: 99 }) === null && lineupMinutes({ rotation: null, playerId: 1 }) === null, "J: player outside the rotation / no rotation → null");
+  const gt = {
+    league: "NBA", opp_ctx: { playerId: 1 },
+    season: { is_prior_season: false, averages: { games: 6 } },
+    injuries: { player_team: [{ player: "Nikola Jokić", status: "Doubtful" }] },
+    opp_factor: { dist: { r: 6 }, opp_per_min: 0.5, team_rotation: rot },
+  };
+  const lf = lineupFields(gt, 20, 19.5, "OVER", "standard", 0.5);
+  ok(lf.lineup_out_n === 1 && lf.lineup_minutes > lf.lineup_m0, "J: Doubtful counts as out; minutes rise");
+  const { shrinkMean: sm } = await import("../api/_lib/basketball/dist.js");
+  const atM0 = sm({ mean: 20, oppMean: 0.5 * 30, n: 6 }).mean;
+  ok(lf.lineup_mean > atM0 && typeof lf.lineup_pipe_tier === "string", `J: mean rises vs the same shrink at usual minutes (${lf.lineup_mean} > ${atM0.toFixed(3)}); pipeline tier logged`);
+  ok(lineupFields({ ...gt, league: "WNBA" }, 20, 19.5, "OVER", "standard", 0.5).lineup_mean === null, "J: NBA only");
+  ok(lineupFields({ ...gt, opp_factor: { ...gt.opp_factor, team_rotation: null } }, 20, 19.5, "OVER", "standard", 0.5).lineup_mean === null, "J: no rotation in the artifact → null");
+}
+
 console.log(`\nsmoke-basketball-dist: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

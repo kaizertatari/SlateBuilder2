@@ -199,6 +199,15 @@ Manual: `npm run refresh-odds`. Logs: `logs/refresh-odds.log`. Runs the
 DK+FD scrape and no-vig consensus the slate builder prices against.
 Residential IP only (same constraint as lines).
 
+**Pregame capture (2026-10-28):** `refresh-odds-task.bat` then runs
+`scripts/capture-nba-pregame.mjs` (never affects the exit code): the ESPN NBA
+injury report + Vegas spread/total per game (from `odds.json`, games with a
+total ≥ 185 = NBA) appended to `data/basketball/pregame/nba-<season>.jsonl`,
+skipped when unchanged since the last capture. Neither is stored historically
+anywhere else — this is what future backtests of known-lineup minutes
+(`dist.js` `lineupMinutes`, logged as `lineup_*`) and blowout risk read.
+`--dry-run` reports without writing. Commit the file with snapshot refreshes.
+
 ## Inspect the slate snapshot
 
 `data/prizepicks-lines.json` is ~2 MB / 70k lines; never open it whole
