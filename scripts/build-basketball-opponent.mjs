@@ -16,7 +16,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { fitOpponentModel, compactModel } from "../api/_lib/basketball/opponent.js";
-import { fitDistParams } from "../api/_lib/basketball/dist.js";
+import { fitDistParams, buildRotation } from "../api/_lib/basketball/dist.js";
 import { currentSeason } from "../api/_lib/nba-stats.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -50,6 +50,10 @@ async function main() {
     fitted_at: new Date().toISOString(), data_through: dataThrough,
     current_games: cur.team_games.length / 2,
     dist,
+    // Known-lineup minutes (SHADOW): each team's current rotation with
+    // recency-weighted minutes — dist.js lineupMinutes drops teammates the
+    // injury report lists Out/Doubtful and rescales the rest to 240.
+    rotation: buildRotation(cur),
   });
   const file = path.join(ROOT, "data", `${LEAGUE.toLowerCase()}-opp-model.json`);
   await fs.writeFile(file, JSON.stringify(out) + "\n");

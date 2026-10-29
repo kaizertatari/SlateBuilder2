@@ -17,5 +17,9 @@ echo. >> "logs\refresh-odds.log"
 echo === %date% %time% start === >> "logs\refresh-odds.log"
 "C:\Program Files\nodejs\node.exe" scripts\scrape-odds.mjs >> "logs\refresh-odds.log" 2>&1
 set "rc=%ERRORLEVEL%"
+REM Pregame capture (2026-10-28): ESPN NBA injury report + Vegas spreads and
+REM totals -> data\basketball\pregame\ (not stored anywhere else historically;
+REM needed to backtest known-lineup minutes and blowout risk). Never touches rc.
+"C:\Program Files\nodejs\node.exe" scripts\capture-nba-pregame.mjs >> "logs\refresh-odds.log" 2>&1
 echo === %date% %time% end exit=%rc% === >> "logs\refresh-odds.log"
 exit /b %rc%

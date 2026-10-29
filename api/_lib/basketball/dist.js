@@ -195,6 +195,84 @@ export function shrinkMean({ mean, oppMean, n, k = EARLY_SEASON_K }) {
   return { mean: Math.max(1e-3, w * mean + (1 - w) * oppMean), w };
 }
 
+// ── Known-lineup minutes (SHADOW, 2026-10-28) ─────────────────────────────
+// Who plays moves minutes: a regular sitting frees ~30 minutes for the rest.
+// Backtest (NBA 2025-26 walk-forward, the players who actually played
+// rescaled to the team's 240): minutes MAE 4.86 → 4.63 at 20+ games and lower
+// in every slice; prop log score best in every slice; on 6,401 real graded
+// NBA lines the 50/50 pipeline moved from a tie with the market to just
+// under it (0.6345 vs 0.6367, CI spans 0). That used the ACTUAL lineup — an
+// upper bound. Live, the lineup = the recent rotation minus teammates the
+// injury report lists Out/Doubtful, so it is logged to be measured first.
+
+export const ROTATION_RECENT_GAMES = 5;   // in the rotation = played one of the team's last 5 games
+export const LINEUP_SCALE = { min: 0.75, max: 1.35 };
+export const LINEUP_MAX_MINUTES = 44;
+export const LINEUP_TEAM_MINUTES = 240;
+
+/** Name key for matching ESPN injury names to game-log names. */
+export function normName(s) {
+  return String(s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+    .replace(/[.'’-]/g, "").replace(/\b(jr|sr|ii|iii|iv)\b/g, "").replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Current rotation per team from a season snapshot: every player whose latest
+ * game (with minutes) is among his team's last ROTATION_RECENT_GAMES games,
+ * with his recency-weighted minutes (minutesProfile) and games played.
+ * @returns {Object<string, Array<{id:string,name:string,m0:number,n:number,last:string}>>}
+ */
+export function buildRotation(snap, { recentGames = ROTATION_RECENT_GAMES } = {}) {
+  const tg = new Map((snap?.team_games ?? []).map((t) => [`${t.game_id}|${t.team}`, t]));
+  const teamDates = new Map(), byPlayer = new Map();
+  for (const r of snap?.rows ?? []) {
+    const t = tg.get(`${r.game_id}|${r.team}`);
+    if (!t) continue;
+    if (!teamDates.has(t.team)) teamDates.set(t.team, new Set());
+    teamDates.get(t.team).add(t.date);
+    if (!(r.min > 0)) continue;
+    const id = String(r.player_id);
+    if (!byPlayer.has(id)) byPlayer.set(id, []);
+    byPlayer.get(id).push({ date: t.date, team: t.team, min: r.min });
+  }
+  const recent = new Map([...teamDates].map(([team, ds]) => [team, new Set([...ds].sort().slice(-recentGames))]));
+  const out = {};
+  for (const [id, games] of byPlayer) {
+    games.sort((a, b) => a.date.localeCompare(b.date));
+    const last = games.at(-1);
+    if (!recent.get(last.team)?.has(last.date)) continue;
+    const prof = minutesProfile(games.map((g) => g.min));
+    if (!prof) continue;
+    // p = share of the team's recent games he actually played (a deep-bench
+    // or often-resting player counts for part of his minutes).
+    const rs = recent.get(last.team);
+    const p = games.filter((g) => g.team === last.team && rs.has(g.date)).length / rs.size;
+    (out[last.team] ??= []).push({ id, name: snap.players?.[id]?.name ?? null, m0: +prof.mean.toFixed(2), n: games.length, last: last.date, p: +p.toFixed(3) });
+  }
+  return out;
+}
+
+/**
+ * Lineup-adjusted minutes for one player: drop rotation teammates listed
+ * Out/Doubtful, rescale the rest so the team sums to 240 (clamped), cap.
+ * @param {{ rotation: Array, playerId: string|number, injuries?: Array<{player:string,status:string}> }} a
+ * @returns {null | { m0:number, minutes:number, scale:number, out:string[] }}
+ */
+export function lineupMinutes({ rotation, playerId, injuries = [] }) {
+  if (!Array.isArray(rotation) || !rotation.length) return null;
+  const me = rotation.find((p) => String(p.id) === String(playerId));
+  if (!me) return null;
+  const outKeys = new Set((injuries ?? []).filter((i) => /^(out|doubtful)/i.test(String(i.status ?? ""))).map((i) => normName(i.player)));
+  const out = rotation.filter((p) => String(p.id) !== String(playerId) && outKeys.has(normName(p.name)));
+  // Expected team minutes: teammates weighted by how often they've played
+  // (p, default 1); the player being priced counts fully (PrizePicks voids a
+  // line when he doesn't play, so prices are conditional on him playing).
+  const avail = rotation.filter((p) => !out.includes(p));
+  const tot = avail.reduce((a, p) => a + p.m0 * (String(p.id) === String(playerId) ? 1 : (p.p ?? 1)), 0);
+  const scale = tot > 0 ? Math.min(LINEUP_SCALE.max, Math.max(LINEUP_SCALE.min, LINEUP_TEAM_MINUTES / tot)) : 1;
+  return { m0: me.m0, minutes: Math.min(LINEUP_MAX_MINUTES, me.m0 * scale), scale, out: out.map((p) => p.name) };
+}
+
 /** Calibrated P(over) for a prop given an engine mean and its matchup factor. */
 export function calibratedProbOver({ params, key, mean, factor = 1, line }) {
   const r = params?.r?.[key], c = params?.c?.[key];

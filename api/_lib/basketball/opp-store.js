@@ -63,7 +63,10 @@ export async function getOppFactor({ league, playerId, team, opponent, propType 
     // player's projected minutes (dist.js shrinkMean).
     const ctx = { playerId, team: statsAbbr(team, league), opponent: statsAbbr(opponent, league) };
     const perMin = key ? meanAt(model, ctx, key, 1, "team") : null;
-    return { ...f, fitted_at: model.fitted_at ?? null, data_through: model.data_through ?? null, dist, opp_per_min: perMin ?? null };
+    // Known-lineup minutes (SHADOW): the player's team rotation, for the
+    // logger's lineupMinutes (artifact built before 2026-10-28 has none).
+    const teamRotation = model.rotation?.[ctx.team] ?? null;
+    return { ...f, fitted_at: model.fitted_at ?? null, data_through: model.data_through ?? null, dist, opp_per_min: perMin ?? null, team_rotation: teamRotation };
   } catch {
     return null;
   }
