@@ -156,6 +156,31 @@ ok(minutesProfile([0, 0]) === null, "B: no minutes → null");
   ok(lf.lineup_mean > atM0 && typeof lf.lineup_pipe_tier === "string", `J: mean rises vs the same shrink at usual minutes (${lf.lineup_mean} > ${atM0.toFixed(3)}); pipeline tier logged`);
   ok(lineupFields({ ...gt, league: "WNBA" }, 20, 19.5, "OVER", "standard", 0.5).lineup_mean === null, "J: NBA only");
   ok(lineupFields({ ...gt, opp_factor: { ...gt.opp_factor, team_rotation: null } }, 20, 19.5, "OVER", "standard", 0.5).lineup_mean === null, "J: no rotation in the artifact → null");
+
+  // K) Damped / position-aware variant (lineup_damped_*): groups 1–3 G,
+  // 4–6 W, 7–8 + 10 B; Jokić (player 2) is a G here.
+  const { LINEUP_DAMPED } = await import("../api/_lib/basketball/dist.js");
+  const { lineupDampedFields } = await import("../api/_lib/verdict-logger.js");
+  const grp = (id) => (["1", "2", "3"].includes(id) ? "G" : ["4", "5", "6"].includes(id) ? "W" : "B");
+  const rotG = rot.map((p) => ({ ...p, group: grp(p.id) }));
+  const out2 = [{ player: "Nikola Jokic", status: "Out" }];
+  const same = (a, b) => Math.abs(a.minutes - b.minutes) < 1e-9 && a.scale === b.scale;
+  ok(same(lineupMinutes({ rotation: rotG, playerId: 1, injuries: out2, alpha: 0, beta: 1 }), lineupMinutes({ rotation: rotG, playerId: 1, injuries: out2 }))
+    && same(lineupMinutes({ rotation: rotG, playerId: 1, alpha: 0.5, beta: 0.5 }), lineupMinutes({ rotation: rotG, playerId: 1 })), "K: α0/β1 = proportional rule; nobody out → damping changes nothing");
+  // Explicit (non-default-path) α0/β1 must equal the proportional rule too.
+  const prop = lineupMinutes({ rotation: rotG, playerId: 4, injuries: out2 }), viaPos = lineupMinutes({ rotation: rotG, playerId: 4, injuries: out2, alpha: 0, beta: 0.9999999 });
+  ok(Math.abs(prop.minutes - viaPos.minutes) < 1e-4, `K: position formula at β→1, α=0 matches proportional (${prop.minutes.toFixed(4)} vs ${viaPos.minutes.toFixed(4)})`);
+  const und = lineupMinutes({ rotation: rotG, playerId: 1, injuries: out2 }), damp = lineupMinutes({ rotation: rotG, playerId: 1, injuries: out2, alpha: 0, beta: 0.5 });
+  ok(damp.minutes > base.minutes && damp.minutes < und.minutes, `K: β=0.5 gain sits between none and proportional (${base.minutes.toFixed(2)} < ${damp.minutes.toFixed(2)} < ${und.minutes.toFixed(2)})`);
+  const gMate = lineupMinutes({ rotation: rotG, playerId: 3, injuries: out2, alpha: 1, beta: 1 }), wMate = lineupMinutes({ rotation: rotG, playerId: 4, injuries: out2, alpha: 1, beta: 1 });
+  ok(gMate.minutes > wMate.minutes + 5, `K: α=1 sends a guard's minutes to guards (${gMate.minutes.toFixed(2)} vs wing ${wMate.minutes.toFixed(2)})`);
+  const noGrp = lineupMinutes({ rotation: rot, playerId: 1, injuries: out2, ...LINEUP_DAMPED }), dampA0 = lineupMinutes({ rotation: rotG, playerId: 1, injuries: out2, alpha: 0, beta: LINEUP_DAMPED.beta });
+  ok(Math.abs(noGrp.minutes - dampA0.minutes) < 1e-9, "K: rotation without groups (older artifact) → damping only");
+  const gtG = { ...gt, opp_factor: { ...gt.opp_factor, team_rotation: rotG } };
+  const ld = lineupDampedFields(gtG, 20, 19.5, "OVER", "standard", 0.5), lu2 = lineupFields(gtG, 20, 19.5, "OVER", "standard", 0.5);
+  const want = lineupMinutes({ rotation: rotG, playerId: 1, injuries: gt.injuries.player_team, ...LINEUP_DAMPED });
+  ok(ld.lineup_damped_minutes === +want.minutes.toFixed(1) && ld.lineup_damped_minutes !== lu2.lineup_minutes && typeof ld.lineup_damped_pipe_tier === "string", `K: lineup_damped_* priced at LINEUP_DAMPED minutes (${ld.lineup_damped_minutes} vs proportional ${lu2.lineup_minutes})`);
+  ok(lineupDampedFields({ ...gtG, league: "WNBA" }, 20, 19.5, "OVER", "standard", 0.5).lineup_damped_mean === null, "K: NBA only");
 }
 
 console.log(`\nsmoke-basketball-dist: ${pass} passed, ${fail} failed`);
