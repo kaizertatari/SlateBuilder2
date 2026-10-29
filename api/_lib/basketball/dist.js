@@ -179,9 +179,13 @@ export function fitDistParams(snap, { priorModel = null, step = 7, fit = fitOppo
  * NBA evidence: walk-forward 2025-26 incl. games 1–4 (scripts that skip <5
  * prior games never tested this) — calibrated mean worse than a coin flip
  * through game 4 (log loss 1.71 / 1.12 / 0.79 / 0.74), shrunk ≈0.69 / 0.66 /
- * 0.64 / 0.64, small gain all season; on 7,308 REAL graded NBA PrizePicks
- * lines (games 1–4, 8 days): model 0.962 → 0.646 at k=8, and blended 50/50
- * with the market it beats the market alone (0.627 vs 0.641, 95% CI below 0).
+ * 0.64 / 0.64, small gain all season. On REAL graded NBA PrizePicks lines
+ * (6,589 lines, games 1–4, 6 days; history cut at the ET game date): model
+ * alone 0.980 → 0.689, and the shrunk pipeline is well calibrated (Platt
+ * slope 1.09 vs 0.28 as logged) — but blended 50/50 it only TIES the market
+ * alone (0.643 vs 0.636, CI spans 0) and its would-be picks hit 52.9% vs
+ * 57.7% break-even. (An earlier "beats the market" read sliced the UTC date,
+ * which leaked late games into their own history.) See eval-opp-factor §5–6.
  */
 export const EARLY_SEASON_K = 8;
 
