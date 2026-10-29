@@ -410,6 +410,15 @@ normal in every slice (all 0.7449 → 0.7191) but the market-covered graded
 sample is mostly ONE night (2026-09-24), so both stay logged until graded
 NBA lines decide. `eval-opp-factor.mjs` section 4: pipeline
 vs engine log loss, market-weight refit, and would-be picks vs break-even.
+Section 5 (NBA): early-season shrink (`shrink_*`, logged since 2026-10-28;
+older lines recomputed walk-forward) — model alone, pipeline vs market
+alone, shrunk would-be picks. Section 6: calibration of the bet-side
+pipeline probability (reliability bands + walk-forward Platt by game day,
+recalibrated would-be picks). All walk-forward history is cut at the **ET**
+game date — slicing the UTC `game_start_time` leaks late games into their
+own history. First read (2026-10-28, 6 NBA days): shrink fixes the model
+(0.98 → 0.69) and its calibration (Platt slope 1.09 vs 0.28 as logged), but
+the pipeline still only ties the market alone; picks 52.9% vs 57.7% BE.
 Backtest: `node scripts/backtest-basketball-dist.mjs --league NBA [--graded]`
 (NBA main-line log loss 0.6902 → 0.6852; real graded WNBA lines with the
 engine's own mean 0.8236 → 0.7510).
