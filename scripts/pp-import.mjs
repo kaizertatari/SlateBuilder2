@@ -8,6 +8,10 @@
 // URLs to open + save (any filename; the league is read from the contents):
 //   NBA   https://api.prizepicks.com/projections?league_id=7&per_page=10&single_stat=true
 //   WNBA  https://api.prizepicks.com/projections?league_id=3&per_page=10&single_stat=true
+//   NFL   https://api.prizepicks.com/projections?league_id=9&per_page=10&single_stat=true
+//   EPL   https://api.prizepicks.com/projections?league_id=14&per_page=10&single_stat=true
+// One folder serves every refresh script (each takes only its own league):
+//   npm run refresh-pp:import   (NBA/WNBA + NFL + EPL)
 
 import fs from "node:fs";
 import path from "node:path";
@@ -24,6 +28,8 @@ function leagueIdOf(json, file) {
   const name = path.basename(file).toLowerCase();
   const m = name.match(/league_id[=_-]?(\d+)/);
   if (m) return m[1];
+  if (/nfl/.test(name)) return "9";
+  if (/epl/.test(name)) return "14";
   if (/wnba/.test(name)) return "3";
   if (/nba/.test(name)) return "7";
   return null;
@@ -79,4 +85,31 @@ export function makeImportFetchJson(boards) {
     const id = new URL(url).searchParams.get("league_id");
     return boards.get(id) ?? null;
   };
+}
+
+// --import <file|dir>... on a refresh script's argv → the import inputs, or
+// null when the flag is absent (scrape with the browser as usual).
+export function importArgs(argv) {
+  const at = argv.indexOf("--import");
+  if (at === -1) return null;
+  const inputs = [];
+  for (const a of argv.slice(at + 1)) {
+    if (a.startsWith("--")) break;
+    inputs.push(a);
+  }
+  if (!inputs.length) throw new Error("--import needs at least one file or directory");
+  return inputs;
+}
+
+// Drop-in for scrapePrizePicksViaBrowser(opts): with --import, serve the
+// saved boards through the same scrape pipeline; otherwise the browser.
+export async function scrapeOrImport(opts, argv = process.argv) {
+  const inputs = importArgs(argv);
+  if (!inputs) {
+    const { scrapePrizePicksViaBrowser } = await import("./scrape-prizepicks-browser.mjs");
+    return scrapePrizePicksViaBrowser(opts);
+  }
+  const { scrapePrizePicksForToday } = await import("./scrape-prizepicks.mjs");
+  const { headed: _headed, ...rest } = opts;
+  return scrapePrizePicksForToday({ ...rest, fetchJson: makeImportFetchJson(loadImportedBoards(inputs)), retryCooldownMs: 0 });
 }

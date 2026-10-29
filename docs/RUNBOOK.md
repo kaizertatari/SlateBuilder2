@@ -192,7 +192,11 @@ loads PrizePicks fine on the same IP, skip the scrape entirely:
    `data/pp-import/` (gitignored). Any filename or extension (Chrome may save it as
    `projections.customization`) — the league is read from the
    contents; if that fails, name it `pp-nba.json` / `pp-wnba.json`.
-2. `npm run refresh-prizepicks:import` — same parse → salvage → refuse-write
+   NFL = `league_id=9`, EPL = `league_id=14` — save each into the same folder;
+   every refresh script takes only its own league from it.
+2. `npm run refresh-pp:import` — all boards (basketball guarded import, then
+   NFL + EPL with `--push`; summary says which updated). Basketball only:
+   `npm run refresh-prizepicks:import` — same parse → salvage → refuse-write
    → validator → blob push as the guarded refresh. A league with no file is
    salvaged from the previous snapshot; files >2h old get a warning.
 3. Delete or overwrite the files next time so a stale board isn't re-imported.

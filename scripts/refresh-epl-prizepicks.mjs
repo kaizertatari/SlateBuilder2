@@ -12,10 +12,11 @@
 // (Stop-ScheduledTask "Refresh Bridge"), restart after (RUNBOOK).
 //
 // Usage: npm run refresh-epl-prizepicks  [-- --headed] [-- --push]
+//        node scripts/refresh-epl-prizepicks.mjs --push --import data/pp-import   (board saved from your own browser — pp-import.mjs)
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { scrapePrizePicksViaBrowser } from "./scrape-prizepicks-browser.mjs";
+import { scrapeOrImport } from "./pp-import.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = path.join(ROOT, "data/epl-pp-lines.json");
@@ -23,7 +24,7 @@ export const EPL_PP_LEAGUE = { league: "EPL", league_id: 14 };
 
 async function main() {
   console.log("=== refresh-epl-prizepicks ===");
-  const result = await scrapePrizePicksViaBrowser({
+  const result = await scrapeOrImport({
     headed: process.argv.includes("--headed"),
     leagues: [EPL_PP_LEAGUE],
     outputPath: OUT,

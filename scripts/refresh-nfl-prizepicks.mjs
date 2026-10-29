@@ -12,10 +12,11 @@
 // (Stop-ScheduledTask "Refresh Bridge"), restart after (RUNBOOK).
 //
 // Usage: npm run refresh-nfl-prizepicks [-- --league-id 9] [-- --headed] [-- --push]
+//        node scripts/refresh-nfl-prizepicks.mjs --push --import data/pp-import   (board saved from your own browser — pp-import.mjs)
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { scrapePrizePicksViaBrowser } from "./scrape-prizepicks-browser.mjs";
+import { scrapeOrImport } from "./pp-import.mjs";
 import { nflTeam } from "../api/_lib/nfl/names.js";
 import { mapNflStat } from "../api/_lib/nfl/verdict.js";
 
@@ -27,7 +28,7 @@ export const NFL_PP_LEAGUE = { league: "NFL", league_id: idArg >= 0 ? Number(arg
 
 async function main() {
   console.log(`=== refresh-nfl-prizepicks (league_id=${NFL_PP_LEAGUE.league_id}) ===`);
-  const result = await scrapePrizePicksViaBrowser({
+  const result = await scrapeOrImport({
     headed: args.includes("--headed"),
     leagues: [NFL_PP_LEAGUE],
     outputPath: OUT,

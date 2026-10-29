@@ -11,7 +11,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { loadEnvLocal } from "./_env.mjs";
 import { OUTPUT, scrapePrizePicksForToday } from "./scrape-prizepicks.mjs";
-import { loadImportedBoards, makeImportFetchJson } from "./pp-import.mjs";
+import { importArgs, loadImportedBoards, makeImportFetchJson } from "./pp-import.mjs";
 import { scrapePrizePicksViaBrowser } from "./scrape-prizepicks-browser.mjs";
 import { writeLines } from "../api/_lib/lines-store.js";
 
@@ -22,9 +22,7 @@ async function main() {
 
   // --import <file|dir>...: boards the operator saved from their own browser
   // (see pp-import.mjs) instead of the automated browser scrape.
-  const importAt = process.argv.indexOf("--import");
-  const importInputs = importAt === -1 ? [] : process.argv.slice(importAt + 1).filter((a) => !a.startsWith("--"));
-  if (importAt !== -1 && !importInputs.length) throw new Error("--import needs at least one file or directory");
+  const importInputs = importArgs(process.argv) ?? [];
 
   // Scrape WITHOUT writing. A 0-prop scrape (PerimeterX block, rate-limit 429,
   // cloud-IP block, PrizePicks outage) must never clobber the good local file
