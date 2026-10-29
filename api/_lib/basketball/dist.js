@@ -204,11 +204,20 @@ export function shrinkMean({ mean, oppMean, n, k = EARLY_SEASON_K }) {
 // under it (0.6345 vs 0.6367, CI spans 0). That used the ACTUAL lineup — an
 // upper bound. Live, the lineup = the recent rotation minus teammates the
 // injury report lists Out/Doubtful, so it is logged to be measured first.
+//
+// Damped variant (2026-10-29, logged side by side as lineup_damped_*): only
+// β of an out player's minutes reach the rotation (the rest go to the deep
+// bench), α of that shared within his position group (G/W/B). NBA 2025-26
+// walk-forward with an injury-report proxy (regulars who sat): β 0.4–0.5
+// best in every slice (20+ games log score 2.5240 → 2.5084, minutes MAE
+// 5.378 → 4.890); α 0.5 adds ~0.001, α 1 hurts. Real 2026-27 lines (6 early
+// days) lean undamped, within noise — eval-opp-factor §7 decides.
 
 export const ROTATION_RECENT_GAMES = 5;   // in the rotation = played one of the team's last 5 games
 export const LINEUP_SCALE = { min: 0.75, max: 1.35 };
 export const LINEUP_MAX_MINUTES = 44;
 export const LINEUP_TEAM_MINUTES = 240;
+export const LINEUP_DAMPED = { alpha: 0.5, beta: 0.5 };
 
 /** Name key for matching ESPN injury names to game-log names. */
 export function normName(s) {
@@ -247,7 +256,7 @@ export function buildRotation(snap, { recentGames = ROTATION_RECENT_GAMES } = {}
     // or often-resting player counts for part of his minutes).
     const rs = recent.get(last.team);
     const p = games.filter((g) => g.team === last.team && rs.has(g.date)).length / rs.size;
-    (out[last.team] ??= []).push({ id, name: snap.players?.[id]?.name ?? null, m0: +prof.mean.toFixed(2), n: games.length, last: last.date, p: +p.toFixed(3) });
+    (out[last.team] ??= []).push({ id, name: snap.players?.[id]?.name ?? null, group: snap.players?.[id]?.group ?? null, m0: +prof.mean.toFixed(2), n: games.length, last: last.date, p: +p.toFixed(3) });
   }
   return out;
 }
@@ -255,21 +264,42 @@ export function buildRotation(snap, { recentGames = ROTATION_RECENT_GAMES } = {}
 /**
  * Lineup-adjusted minutes for one player: drop rotation teammates listed
  * Out/Doubtful, rescale the rest so the team sums to 240 (clamped), cap.
- * @param {{ rotation: Array, playerId: string|number, injuries?: Array<{player:string,status:string}> }} a
+ * alpha/beta (default 0/1 = plain proportional rescale): the player gets his
+ * usual minutes scaled to the full rotation's 240, plus β of each out
+ * teammate's (equally scaled) minutes — α of it shared within the out
+ * player's position group, 1−α across everyone available, by usual minutes.
+ * @param {{ rotation: Array, playerId: string|number, injuries?: Array<{player:string,status:string}>, alpha?: number, beta?: number }} a
  * @returns {null | { m0:number, minutes:number, scale:number, out:string[] }}
  */
-export function lineupMinutes({ rotation, playerId, injuries = [] }) {
+export function lineupMinutes({ rotation, playerId, injuries = [], alpha = 0, beta = 1 }) {
   if (!Array.isArray(rotation) || !rotation.length) return null;
-  const me = rotation.find((p) => String(p.id) === String(playerId));
+  const isMe = (p) => String(p.id) === String(playerId);
+  const me = rotation.find(isMe);
   if (!me) return null;
   const outKeys = new Set((injuries ?? []).filter((i) => /^(out|doubtful)/i.test(String(i.status ?? ""))).map((i) => normName(i.player)));
-  const out = rotation.filter((p) => String(p.id) !== String(playerId) && outKeys.has(normName(p.name)));
+  const out = rotation.filter((p) => !isMe(p) && outKeys.has(normName(p.name)));
   // Expected team minutes: teammates weighted by how often they've played
   // (p, default 1); the player being priced counts fully (PrizePicks voids a
   // line when he doesn't play, so prices are conditional on him playing).
+  const w = (p) => p.m0 * (isMe(p) ? 1 : (p.p ?? 1));
   const avail = rotation.filter((p) => !out.includes(p));
-  const tot = avail.reduce((a, p) => a + p.m0 * (String(p.id) === String(playerId) ? 1 : (p.p ?? 1)), 0);
-  const scale = tot > 0 ? Math.min(LINEUP_SCALE.max, Math.max(LINEUP_SCALE.min, LINEUP_TEAM_MINUTES / tot)) : 1;
+  const tot = avail.reduce((a, p) => a + w(p), 0);
+  let raw;
+  if (alpha === 0 && beta === 1) raw = tot > 0 ? LINEUP_TEAM_MINUTES / tot : 1;
+  else {
+    const totAll = tot + out.reduce((a, p) => a + w(p), 0);
+    const s0 = totAll > 0 ? LINEUP_TEAM_MINUTES / totAll : 1;
+    let add = 0;
+    for (const o of out) {
+      const freed = beta * s0 * w(o);
+      const sameTot = o.group ? avail.filter((p) => p.group === o.group).reduce((a, p) => a + w(p), 0) : 0;
+      const a = sameTot > 0 ? alpha : 0;
+      if (a > 0 && me.group === o.group) add += a * freed * me.m0 / sameTot;
+      if (tot > 0) add += (1 - a) * freed * me.m0 / tot;
+    }
+    raw = me.m0 > 0 ? (me.m0 * s0 + add) / me.m0 : 1;
+  }
+  const scale = Math.min(LINEUP_SCALE.max, Math.max(LINEUP_SCALE.min, raw));
   return { m0: me.m0, minutes: Math.min(LINEUP_MAX_MINUTES, me.m0 * scale), scale, out: out.map((p) => p.name) };
 }
 

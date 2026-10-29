@@ -29,7 +29,7 @@ import { fitOpponentModel, opponentFactor } from "../api/_lib/basketball/opponen
 import { toEspnAbbr, toNbaAbbr } from "../api/_lib/espn.js";
 import { mulberry32, lineProbs } from "../api/_lib/distributions.js";
 import { normCdf } from "../api/_lib/projection.js";
-import { PROP_KEY, meanAt, minutesProfile, shrinkMean } from "../api/_lib/basketball/dist.js";
+import { PROP_KEY, meanAt, minutesProfile, shrinkMean, buildRotation, lineupMinutes, LINEUP_DAMPED } from "../api/_lib/basketball/dist.js";
 import { pipelineVerdict, BASKETBALL_POLICY } from "../api/_lib/basketball/policy.js";
 import { tierForEdge } from "../api/_lib/pick-policy.js";
 
@@ -344,6 +344,95 @@ if (LEAGUE === "NBA") {
       const hit = avg(picks.map((x) => x.hit)), be = avg(picks.map((x) => x.be)), pred = avg(picks.map((x) => x.cal));
       console.log(`  recalibrated would-be picks (${name}): n=${picks.length}  hit ${(100 * hit).toFixed(1)}%  predicted ${(100 * pred).toFixed(1)}%  break-even ${(100 * be).toFixed(1)}%`);
     }
+  }
+}
+
+// 7) Known-lineup minutes: proportional (lineup_*) vs damped + position-
+//    aware (lineup_damped_*, LINEUP_DAMPED), NBA. Recomputed for every graded
+//    line rather than read from the log (prod logs neither until main moves):
+//    rotation from the game logs strictly before the ET game date, injuries
+//    from the LAST pregame capture (data/basketball/pregame/, the real ESPN
+//    report) taken before tip; lines with no capture before tip are skipped.
+//    Then the §5 shrunk mean at those minutes, priced on the fitted NB.
+if (LEAGUE === "NBA") {
+  const artFile = path.join(ROOT, "data", "nba-opp-model.json");
+  const R = fs.existsSync(artFile) ? (JSON.parse(fs.readFileSync(artFile, "utf8")).dist?.r ?? {}) : {};
+  const captures = [];
+  const pgDir = path.join(ROOT, "data", "basketball", "pregame");
+  for (const f of fs.existsSync(pgDir) ? fs.readdirSync(pgDir).filter((f) => f.endsWith(".jsonl")) : []) {
+    for (const ln of fs.readFileSync(path.join(pgDir, f), "utf8").split("\n")) {
+      if (!ln.trim()) continue;
+      const c = JSON.parse(ln);
+      captures.push({ t: Date.parse(c.captured_at), injuries: (c.injuries ?? []).flatMap((tm) => tm.injuries ?? []) });
+    }
+  }
+  captures.sort((a, b) => a.t - b.t);
+  const captureBefore = (iso) => { const tip = Date.parse(iso); let c = null; for (const x of captures) { if (x.t < tip && x.t > tip - 36 * 3600e3) c = x; } return c; };
+  const rotCache = new Map();
+  const rotationOn = (date) => {
+    if (rotCache.has(date)) return rotCache.get(date);
+    const snap = loadSnap(seasonOf(date));
+    const tgs = (snap?.team_games ?? []).filter((t) => t.date < date);
+    const keep = new Set(tgs.map((t) => `${t.game_id}|${t.team}`));
+    const rot = snap ? buildRotation({ players: snap.players, team_games: tgs, rows: snap.rows.filter((r) => keep.has(`${r.game_id}|${r.team}`)) }) : {};
+    rotCache.set(date, rot);
+    return rot;
+  };
+  const L = [], skip = { noCapture: 0, noRotation: 0, noModel: 0 };
+  for (const r of rows) {
+    if (typeof r.dist_mean !== "number") continue;
+    const key = PROP_KEY[String(r.prop_type).replace(/\s+(OVER|UNDER)$/i, "").trim()];
+    const mu = String(r.outcome?.matchup ?? "").match(/^(\S+)\s+(?:@|vs\.?)\s+(\S+)$/);
+    const pid = r.nba_id ?? r.outcome?.nba_id;
+    if (!key || !(R[key] > 0) || !mu || !pid) continue;
+    const cap = captureBefore(r.game_start_time);
+    if (!cap) { skip.noCapture++; continue; }
+    const date = etDate(r.game_start_time), team = statsAbbr(mu[1]);
+    const rot = rotationOn(date)[team];
+    const me = rot?.find((p) => String(p.id) === String(pid));
+    if (!me) { skip.noRotation++; continue; }
+    const m = backfillModel(date);
+    const ctx = { playerId: pid, team, opponent: statsAbbr(mu[2]) };
+    const line = Number(r.line);
+    const price = (mins) => { const om = m ? meanAt(m, ctx, key, mins, "team") : null; const s = om != null ? shrinkMean({ mean: r.dist_mean * (mins / me.m0), oppMean: om, n: me.n }) : null; return s ? lineProbs(line, s.mean, R[key]).over : null; };
+    const prop = lineupMinutes({ rotation: rot, playerId: pid, injuries: cap.injuries });
+    const damp = lineupMinutes({ rotation: rot, playerId: pid, injuries: cap.injuries, ...LINEUP_DAMPED });
+    const p = { usual: price(me.m0), prop: price(prop.minutes), damp: price(damp.minutes) };
+    if (p.usual == null || p.prop == null || p.damp == null) { skip.noModel++; continue; }
+    const over = r.outcome.actual_value > line ? 1 : 0, type = r.odds_type || "standard";
+    const mkt = typeof r.pipe_market_over === "number" ? r.pipe_market_over : null;
+    const pv = (q) => pipelineVerdict({ pModelOver: q, pMarketOver: mkt, direction: r.direction, oddsType: type });
+    const toOver = (q) => (r.direction === "UNDER" ? 1 - q : q);
+    const vp = pv(p.prop), vd = pv(p.damp);
+    L.push({
+      day: date, type, over, hit: r.direction === "UNDER" ? 1 - over : over, mkt, outN: prop.out.length, ...p,
+      pipeProp: vp ? toOver(vp.prob) : null, pipeDamp: vd ? toOver(vd.prob) : null,
+      tierProp: vp?.tier, tierDamp: vd?.tier, betProp: vp?.prob, betDamp: vd?.prob, be: vd?.break_even ?? null,
+      dMin: damp.minutes - prop.minutes,
+    });
+  }
+  console.log(`\nKnown-lineup minutes (proportional lineup_* vs damped lineup_damped_* α=${LINEUP_DAMPED.alpha} β=${LINEUP_DAMPED.beta}), real pregame injury reports: ${L.length} graded lines over ${new Set(L.map((x) => x.day)).size} days (skipped: no capture before tip ${skip.noCapture}, not in rotation ${skip.noRotation}, no model ${skip.noModel}); ${captures.length} captures`);
+  const cmp = (set, a, b) => {
+    const d = avg(set.map((x) => lossOf(x[b], x.over) - lossOf(x[a], x.over)));
+    const ci = bootstrapDays(set, (x) => lossOf(x[b], x.over) - lossOf(x[a], x.over));
+    return `${a} ${avg(set.map((x) => lossOf(x[a], x.over))).toFixed(4)}  ${b} ${avg(set.map((x) => lossOf(x[b], x.over))).toFixed(4)}  change ${d >= 0 ? "+" : ""}${d.toFixed(4)} [95% ${ci.lo.toFixed(4)}, ${ci.hi.toFixed(4)}] over ${ci.days} days`;
+  };
+  for (const [name, set] of [["all", L], ["teammate out", L.filter((x) => x.outN > 0)]]) {
+    if (set.length < 20) { console.log(`  ${name}: ${set.length} lines — too few yet`); continue; }
+    console.log(`  model alone  ${name.padEnd(12)} n=${String(set.length).padStart(5)}  ${cmp(set, "usual", "prop")}`);
+    console.log(`  model alone  ${name.padEnd(12)} n=${String(set.length).padStart(5)}  ${cmp(set, "prop", "damp")}`);
+    const wm = set.filter((x) => x.mkt != null && x.pipeProp != null && x.pipeDamp != null);
+    if (wm.length >= 20) {
+      console.log(`  pipeline     ${name.padEnd(12)} n=${String(wm.length).padStart(5)}  ${cmp(wm, "mkt", "pipeProp")}`);
+      console.log(`  pipeline     ${name.padEnd(12)} n=${String(wm.length).padStart(5)}  ${cmp(wm, "mkt", "pipeDamp")}`);
+    }
+    if (name === "teammate out") console.log(`  damped − proportional minutes on these lines: mean ${avg(set.map((x) => x.dMin)).toFixed(2)}`);
+  }
+  for (const [label, tk, pk] of [["proportional", "tierProp", "betProp"], ["damped", "tierDamp", "betDamp"]]) {
+    const picks = L.filter((x) => x.type === "standard" && (x[tk] === "A" || x[tk] === "B"));
+    if (!picks.length) { console.log(`  ${label} would-be picks (standard): none yet`); continue; }
+    const hit = avg(picks.map((x) => x.hit)), be = avg(picks.map((x) => x.be)), pred = avg(picks.map((x) => x[pk]));
+    console.log(`  ${label} would-be picks (standard): n=${picks.length}  hit ${(100 * hit).toFixed(1)}%  predicted ${(100 * pred).toFixed(1)}%  break-even ${(100 * be).toFixed(1)}%  ${picks.length >= MIN_STANDARD && hit > be ? "✓" : "✗"} (need ≥ ${MIN_STANDARD} and hit > break-even)`);
   }
 }
 

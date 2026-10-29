@@ -20,7 +20,7 @@
 
 import { getReqId } from "./request-context.js";
 import { PROP_TO_FIELD } from "./prop-types.js";
-import { calibratedProbOver, nbShiftOver, shrinkMean, minutesProfile, lineupMinutes, EARLY_SEASON_K } from "./basketball/dist.js";
+import { calibratedProbOver, nbShiftOver, shrinkMean, minutesProfile, lineupMinutes, EARLY_SEASON_K, LINEUP_DAMPED } from "./basketball/dist.js";
 import { lineProbs } from "./distributions.js";
 import { pipelineVerdict } from "./basketball/policy.js";
 import { projectProb } from "./projection.js";
@@ -247,8 +247,11 @@ export function logVerdict({
     ...shrinkFields(groundTruth, dist.dist_mean, input?.line, direction, oddsType, pipeMarket?.no_vig_prob),
     // SHADOW known-lineup minutes (dist.js lineupMinutes, 2026-10-28): the
     // shrunk mean above with minutes from the rotation minus teammates the
-    // injury report lists Out/Doubtful, rescaled to 240.
+    // injury report lists Out/Doubtful, rescaled to 240. lineup_damped_*: the
+    // same with an out teammate's minutes damped and shared by position
+    // (LINEUP_DAMPED, 2026-10-29) — both logged until graded lines pick one.
     ...lineupFields(groundTruth, dist.dist_mean, input?.line, direction, oddsType, pipeMarket?.no_vig_prob),
+    ...lineupDampedFields(groundTruth, dist.dist_mean, input?.line, direction, oddsType, pipeMarket?.no_vig_prob),
     primary_defender: groundTruth?.opponent_defense?.primary_defender?.player ?? null,
     is_playoff: !!groundTruth?.series,
     series_round: groundTruth?.series?.round ?? null,
@@ -629,19 +632,9 @@ export function shrinkFields(groundTruth, distMean, line, direction, oddsType, p
 // NBA only; all null without a rotation (artifact predates it), the player
 // outside the rotation, or a missing calibrated mean / opponent rate / line.
 export function lineupFields(groundTruth, distMean, line, direction, oddsType, pMarketOver) {
-  const empty = { lineup_m0: null, lineup_minutes: null, lineup_scale: null, lineup_out_n: null, lineup_out: null, lineup_mean: null, lineup_p_over: null, lineup_dir_prob: null, lineup_pipe_prob: null, lineup_pipe_tier: null, lineup_pipe_edge: null };
-  if (groundTruth?.league !== "NBA") return empty;
-  const opp = groundTruth?.opp_factor;
-  const r = opp?.dist?.r, perMin = opp?.opp_per_min, target = typeof line === "number" ? line : Number(line);
-  if (typeof distMean !== "number" || typeof perMin !== "number" || !(r > 0) || !Number.isFinite(target)) return empty;
-  const lu = lineupMinutes({ rotation: opp?.team_rotation, playerId: groundTruth?.opp_ctx?.playerId, injuries: groundTruth?.injuries?.player_team ?? [] });
-  if (!lu || !(lu.m0 > 0)) return empty;
-  const season = groundTruth?.season;
-  const n = season?.is_prior_season ? 0 : Number(season?.averages?.games ?? 0);
-  const s = shrinkMean({ mean: distMean * (lu.minutes / lu.m0), oppMean: perMin * lu.minutes, n });
-  if (!s) return empty;
-  const pOver = +lineProbs(target, s.mean, r).over.toFixed(4);
-  const v = pipelineVerdict({ pModelOver: pOver, pMarketOver: typeof pMarketOver === "number" ? pMarketOver : null, direction, oddsType: oddsType || "standard" });
+  const lp = lineupPriced(groundTruth, distMean, line, direction, oddsType, pMarketOver);
+  if (!lp) return { lineup_m0: null, lineup_minutes: null, lineup_scale: null, lineup_out_n: null, lineup_out: null, lineup_mean: null, lineup_p_over: null, lineup_dir_prob: null, lineup_pipe_prob: null, lineup_pipe_tier: null, lineup_pipe_edge: null };
+  const { lu, s, pOver, v } = lp;
   return {
     lineup_m0: +lu.m0.toFixed(1),
     lineup_minutes: +lu.minutes.toFixed(1),
@@ -655,6 +648,43 @@ export function lineupFields(groundTruth, distMean, line, direction, oddsType, p
     lineup_pipe_tier: v ? v.tier : null,
     lineup_pipe_edge: v ? +v.edge.toFixed(4) : null,
   };
+}
+
+// Shadow damped-lineup fields: lineupFields with LINEUP_DAMPED (dist.js);
+// m0 and the out list are the same as lineup_*, so not repeated.
+export function lineupDampedFields(groundTruth, distMean, line, direction, oddsType, pMarketOver) {
+  const lp = lineupPriced(groundTruth, distMean, line, direction, oddsType, pMarketOver, LINEUP_DAMPED);
+  if (!lp) return { lineup_damped_minutes: null, lineup_damped_scale: null, lineup_damped_mean: null, lineup_damped_p_over: null, lineup_damped_dir_prob: null, lineup_damped_pipe_prob: null, lineup_damped_pipe_tier: null, lineup_damped_pipe_edge: null };
+  const { lu, s, pOver, v } = lp;
+  return {
+    lineup_damped_minutes: +lu.minutes.toFixed(1),
+    lineup_damped_scale: +lu.scale.toFixed(3),
+    lineup_damped_mean: +s.mean.toFixed(3),
+    lineup_damped_p_over: pOver,
+    lineup_damped_dir_prob: direction === "UNDER" ? +(1 - pOver).toFixed(4) : pOver,
+    lineup_damped_pipe_prob: v ? +v.prob.toFixed(4) : null,
+    lineup_damped_pipe_tier: v ? v.tier : null,
+    lineup_damped_pipe_edge: v ? +v.edge.toFixed(4) : null,
+  };
+}
+
+// Lineup minutes → shrunk mean → P(over) → pipeline, shared by the two
+// lineup field sets; opts = lineupMinutes alpha/beta. Null when NBA-only,
+// rotation, player, calibrated mean, opponent rate or line is missing.
+function lineupPriced(groundTruth, distMean, line, direction, oddsType, pMarketOver, opts = {}) {
+  if (groundTruth?.league !== "NBA") return null;
+  const opp = groundTruth?.opp_factor;
+  const r = opp?.dist?.r, perMin = opp?.opp_per_min, target = typeof line === "number" ? line : Number(line);
+  if (typeof distMean !== "number" || typeof perMin !== "number" || !(r > 0) || !Number.isFinite(target)) return null;
+  const lu = lineupMinutes({ rotation: opp?.team_rotation, playerId: groundTruth?.opp_ctx?.playerId, injuries: groundTruth?.injuries?.player_team ?? [], ...opts });
+  if (!lu || !(lu.m0 > 0)) return null;
+  const season = groundTruth?.season;
+  const n = season?.is_prior_season ? 0 : Number(season?.averages?.games ?? 0);
+  const s = shrinkMean({ mean: distMean * (lu.minutes / lu.m0), oppMean: perMin * lu.minutes, n });
+  if (!s) return null;
+  const pOver = +lineProbs(target, s.mean, r).over.toFixed(4);
+  const v = pipelineVerdict({ pModelOver: pOver, pMarketOver: typeof pMarketOver === "number" ? pMarketOver : null, direction, oddsType: oddsType || "standard" });
+  return { lu, s, pOver, v };
 }
 
 // Shadow calibrated-distribution fields (see logVerdict). All null when the
