@@ -183,6 +183,20 @@ slider mid-drag (2026-08-01). Routine:
 NBA and WC boards may error ("Failed to fetch") even when cleared — WNBA is
 the only health signal.
 
+**Manual board import (since 2026-10-29):** when the automated browser is
+hard-blocked ("Access temporarily restricted") but the operator's own browser
+loads PrizePicks fine on the same IP, skip the scrape entirely:
+1. In your normal browser, open
+   `https://api.prizepicks.com/projections?league_id=7&per_page=10&single_stat=true`
+   (NBA; WNBA = `league_id=3`) and save the page (Ctrl+S, "JSON"/raw) into
+   `data/pp-import/` (gitignored). Any filename or extension (Chrome may save it as
+   `projections.customization`) — the league is read from the
+   contents; if that fails, name it `pp-nba.json` / `pp-wnba.json`.
+2. `npm run refresh-prizepicks:import` — same parse → salvage → refuse-write
+   → validator → blob push as the guarded refresh. A league with no file is
+   salvaged from the previous snapshot; files >2h old get a warning.
+3. Delete or overwrite the files next time so a stale board isn't re-imported.
+
 **League thinning / salvage:** since 2026-06-12 the scraper has a salvage
 guard (`salvageLeagueFromSnapshot` in `scripts/scrape-prizepicks.mjs`, smoke
 `smoke:scrape-salvage`): a league whose fetch fails after retry is

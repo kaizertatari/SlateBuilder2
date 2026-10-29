@@ -45,3 +45,4 @@ tmp/prizepicks-entries-raw.json
 
 # FotMob scrape browser profile (session/header cookies) — never commit
 .fotmob-profile/
+data/pp-import/
