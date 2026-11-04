@@ -27,13 +27,21 @@
 
 import { simulatePlayer, gameContext, priceLine } from "./model.js";
 import { tiltToMarket, tiltedLineProbs } from "../distributions.js";
-import { blendProb, tierForEdge, capTier, clampP } from "../pick-policy.js";
+import { blendProb, tierForEdge, capTier, clampP, logit, sigmoid } from "../pick-policy.js";
 import { buildPlayerResolver, nflTeam } from "./names.js";
 
 export const NFL_POLICY = {
-  version: 1,
+  version: 2,
   // The books are sharper than a week-6 model: market-heavy pooling.
+  // Refit 2026-11-03 on 21,412 graded lines (3 weeks): best 0.3 overall,
+  // in-sample and leave-one-week-out (0.5491 vs market 0.5506) — kept.
   blend: { model: 0.3, market: 0.7 },
+  // Log-odds shift on the blended P per line type (v2, 2026-11-03). Demon
+  // overs realized 20.0% vs 23.4% blended on 10,461 graded lines, −2.7 to
+  // −3.6 pts every week and at every distance from the book line; a shift
+  // fit on earlier weeks scored the next week 0.4305 vs 0.4340 raw (a full
+  // Platt curve tied, with an unstable slope). Model-only P is never shifted.
+  lineShift: { demon: -0.226 },
   modelOnlyShrink: 0.5,
   tierEdge: { A: 0.05, B: 0.015 },
   maxTier: "A",
@@ -238,7 +246,9 @@ export function nflVerdict(prop, direction, ctx, policy = NFL_POLICY) {
     }
   }
 
-  const { prob, modelOnly } = blendProb({ pModel, pMarket, blend: policy.blend, modelOnlyShrink: policy.modelOnlyShrink });
+  const { prob: probRaw, modelOnly } = blendProb({ pModel, pMarket, blend: policy.blend, modelOnlyShrink: policy.modelOnlyShrink });
+  const shift = modelOnly ? 0 : (policy.lineShift?.[oddsType] ?? 0);
+  const prob = shift ? sigmoid(logit(clampP(probRaw)) + shift) : probRaw;
   const tiered = tierForEdge(prob, oddsType, policy, { modelOnly });
   const be = tiered.break_even;
   let tier = tiered.tier;
@@ -263,7 +273,7 @@ export function nflVerdict(prop, direction, ctx, policy = NFL_POLICY) {
     modelOnly
       ? "no book price — logged, not tiered"
       : `books ${Math.round(pMarket * 100)}% (${quote.kind === "anytime" ? "anytime TD" : `${quote.line}`} at ${Math.round(quote.fair_over * 100)}% over, ${quote.books} book${quote.books > 1 ? "s" : ""}; level-matched mean ${marketMean.toFixed(1)})`,
-    `${modelOnly ? "adjusted" : "blend"} ${(prob * 100).toFixed(1)}% vs break-even ${(be * 100).toFixed(1)}% → ${tier}`,
+    `${modelOnly ? "adjusted" : "blend"} ${shift ? `${(probRaw * 100).toFixed(1)}% → ${oddsType}-calibrated ` : ""}${(prob * 100).toFixed(1)}% vs break-even ${(be * 100).toFixed(1)}% → ${tier}`,
   ].join(" · ");
 
   return {
@@ -286,7 +296,7 @@ export function nflVerdict(prop, direction, ctx, policy = NFL_POLICY) {
       book_line: quote?.line ?? null, book_fair_over: quote ? r3(quote.fair_over) : null, books: quote?.books ?? 0,
       model_only: modelOnly, injury: inj?.report_status ?? null, pos: mp.pos,
       game_line: { home_margin: g.homeMargin, total: g.total, source: g.lineSource },
-      policy_version: policy.version,
+      policy_version: policy.version, prob_raw: r3(probRaw), line_shift: shift || null,
     },
   };
 }

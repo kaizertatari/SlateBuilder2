@@ -450,6 +450,9 @@ export function logNflVerdicts(verdicts, { source = "analyze-all" } = {}) {
     nfl_edge: v.edge ?? null,
     nfl_p_model: v.detail?.p_model ?? null,
     nfl_p_market: v.detail?.p_market ?? null,
+    // Blended P before the per-line-type shift (NFL_POLICY.lineShift, v2).
+    nfl_prob_raw: v.detail?.prob_raw ?? null,
+    nfl_line_shift: v.detail?.line_shift ?? null,
     nfl_mean: v.detail?.mean ?? null,
     nfl_market_mean: v.detail?.market_mean ?? null,
     nfl_tilt: v.detail?.tilt ?? null,
