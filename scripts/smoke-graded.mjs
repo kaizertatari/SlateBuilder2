@@ -4,7 +4,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { joinGraded, mergeIntoStore, readGraded, monthOf } from "./_graded.mjs";
+import { joinGraded, mergeIntoStore, readGraded, monthOf, compactStore, storeKey } from "./_graded.mjs";
 
 let pass = 0, fail = 0;
 const check = (name, ok) => { ok ? pass++ : fail++; console.log(`${ok ? "PASS" : "FAIL"}  ${name}`); };
@@ -52,6 +52,21 @@ try {
   check("read-back returns every row once", back.length === 3);
   check("read-back carries the regrade", back.find((r) => r.line === 10.5 && r.league === "WNBA")?.outcome.hit_or_miss === "push");
   check("league + sinceMonth filters", readGraded({ dir, league: "EPL" }).length === 1 && readGraded({ dir, sinceMonth: "2026-10" }).length === 1);
+  // A build-slate leg logs PrizePicks' start time (-04:00) for the same game
+  // the engine verdict logged in Z: one row, the tiered engine verdict wins.
+  const slateKo = "2026-09-20T19:00:00.000-04:00";
+  const legV = { ...base, game_start_time: slateKo, _time: "2026-09-20T21:00:00Z", event_type: "verdict", source: "build-slate" };
+  const legO = { ...outcomes[0], game_start_time: slateKo, _time: "2026-09-24T09:00:00Z" };
+  const joinedTwins = joinGraded([...verdicts, legV], [...outcomes, legO]);
+  check("join collapses a slate leg into its engine twin (tier kept)", joinedTwins.length === 3 && joinedTwins.find((r) => r.line === 10.5 && r.league === "WNBA")?.tier === "A");
+  const d = mergeIntoStore(joinGraded([legV], [legO]), { dir });
+  check("newer-graded untiered leg never replaces the engine row", d.files[0].added === 0 && d.files[0].replaced === 0);
+  const wnbaFile = path.join(dir, "WNBA", "2026-09.jsonl");
+  fs.appendFileSync(wnbaFile, JSON.stringify({ ...base, game_start_time: slateKo, logged_at: "2026-09-20T21:00:00Z", source: "build-slate", outcome: { hit_or_miss: "hit", graded_at: "2026-09-24T09:00:00Z" } }) + "\n");
+  const compacted = compactStore({ dir });
+  check("compactStore collapses a stored duplicate", compacted.length === 1 && compacted[0].before === compacted[0].after + 1);
+  check("compactStore is idempotent", compactStore({ dir }).length === 0 && readGraded({ dir, league: "WNBA" }).find((r) => r.line === 10.5)?.tier === "A");
+  check("storeKey normalises the start time", storeKey({ ...base, game_start_time: slateKo }) === storeKey({ ...base, game_start_time: "2026-09-20T23:00Z" }));
   const dryDir = path.join(dir, "dry");
   mergeIntoStore(rows, { dir: dryDir, dry: true });
   check("dry run writes nothing", !fs.existsSync(dryDir));
