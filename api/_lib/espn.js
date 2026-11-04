@@ -199,7 +199,7 @@ export async function findNextGameForTeamAbbr(abbr, daysAhead = 7, { league = "N
     const games = dayResults[i];
     if (!games?.length) continue;
     const found = games.find(
-      (g) => g.home.abbr === upper || g.away.abbr === upper
+      (g) => (g.home.abbr === upper || g.away.abbr === upper) && g.state !== "post"
     );
     if (found) return { game: found, days_out: i };
   }
