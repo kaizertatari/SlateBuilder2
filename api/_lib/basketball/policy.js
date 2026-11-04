@@ -6,11 +6,14 @@
 //   model    calibrated NB P(over) (dist.js) at the PrizePicks line
 //   market   de-vigged sportsbook consensus P(over) shifted to that line
 //            (odds.js lookupMarket → result.market.no_vig_prob)
-//   blend    log-odds pool, 50/50. On the 74 graded standard WNBA lines with
-//            a market (2026-10-19): engine 0.7303, calibrated 0.6974, market
-//            0.6927, blend 0.6876 at 50% market (flat 40–70%) — too few lines
-//            to tune, so the EPL weight is reused; refit on graded NBA lines
-//            during shadow (eval-opp-factor section 4).
+//   blend    log-odds pool, 20% model / 80% market (version 2, 2026-11-03).
+//            Version 1 was 50/50 (EPL weight, 74 graded WNBA lines). Refit on
+//            14,183 graded NBA lines with a market: P(over) log loss falls
+//            monotonically toward the market (0.6779 at 50/50, 0.6424 market
+//            only) with the unshrunk mean; with the early-season shrunk mean
+//            the in-sample best is 0.2 (0.6507 vs market 0.6518), though
+//            leave-one-day-out (5 days) still favours the market. The model is
+//            the shrunk mean on NBA (verdict-logger pipe_model_src).
 //   no market → model-only: logged and priced, never tiered (EPL lesson:
 //            model-only picks lost; basketball has no evidence either way yet)
 
@@ -20,11 +23,11 @@ import { blendProb, tierForEdge } from "../pick-policy.js";
 // 2026-10-19: keep standard picks, warn; goblins left unchanged). Remove when
 // the pipeline replaces the engine's tiers.
 export const ENGINE_STANDARD_WARNING =
-  "⚠️ Unvalidated: basketball engine picks on standard lines hit 45% vs the 57.7% break-even on 51 graded WNBA picks (6 game days, as of 2026-10-19). A probability pipeline is being validated in shadow until ~Nov 3.";
+  "⚠️ Unvalidated: basketball engine picks on standard lines hit 52.3% vs the 57.7% break-even on 3,706 graded NBA picks (14 game days, as of 2026-11-03). A probability pipeline is still being validated in shadow.";
 
 export const BASKETBALL_POLICY = {
-  version: 1,
-  blend: { model: 0.5, market: 0.5 },
+  version: 2,
+  blend: { model: 0.2, market: 0.8 },
   modelOnlyShrink: 0.5,
   tierEdge: { A: 0.05, B: 0.015 },
   maxTier: "A",

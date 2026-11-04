@@ -193,7 +193,7 @@ for (const [name, set] of [["standard lines", priced.filter((i) => i.type === "s
   } else console.log(`  vs engine: ${withEng.length} lines — too few yet`);
   const mk = P.filter((x) => typeof x.mkt === "number" && typeof x.dist === "number");
   if (mk.length >= 20) {
-    console.log(`  market-weight refit on ${mk.length} lines with a market (log loss of P(over); policy uses 0.5):`);
+    console.log(`  market-weight refit on ${mk.length} lines with a market (log loss of P(over); policy uses ${BASKETBALL_POLICY.blend.market}):`);
     console.log("   " + [0, 0.25, 0.5, 0.6, 0.7, 0.8, 1].map((w) => `${w}→${avg(mk.map((x) => ll(sig((1 - w) * logit(clamp(x.dist)) + w * logit(clamp(x.mkt))), x.over))).toFixed(4)}`).join("  "));
   }
   // Market shifted by the fitted NB (pipe_nb_*) vs the fixed-σ normal
