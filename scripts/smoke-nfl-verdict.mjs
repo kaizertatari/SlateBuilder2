@@ -85,6 +85,10 @@ check("a PrizePicks line well under the book line → OVER tiered", soft.tier !=
 check("tiers never exceed A (uncalibrated)", soft.tier === "A" || soft.tier === "B");
 check("blend sits between model and market", soft.prob >= Math.min(soft.detail.p_model, soft.detail.p_market) - 1e-3 && soft.prob <= Math.max(soft.detail.p_model, soft.detail.p_market) + 1e-3);
 check("verdicts are deterministic (seeded)", v(prop("Sam Darnold", "Pass Yards", 195.5)).prob === nflVerdict(prop("Sam Darnold", "Pass Yards", 195.5), "OVER", buildNflContext({ model, odds, now: NOW })).prob);
+const demon = v(prop("Sam Darnold", "Pass Yards", 245.5, { odds_type: "demon" }));
+const demonRaw = nflVerdict(prop("Sam Darnold", "Pass Yards", 245.5, { odds_type: "demon" }), "OVER", ctx, { ...NFL_POLICY, lineShift: {} });
+check("demon: blended P shifted down in log-odds (lineShift v2)", near(Math.log(demon.prob / (1 - demon.prob)) - Math.log(demonRaw.prob / (1 - demonRaw.prob)), NFL_POLICY.lineShift.demon, 0.01) && demon.detail.prob_raw === demonRaw.prob, `${demonRaw.prob} → ${demon.prob}`);
+check("standard: no line shift", soft.detail.line_shift === null && soft.detail.prob_raw === soft.prob);
 const kick = v(prop("Jason Myers", "FG Made", 1.5));
 check("model-only stat is priced + logged but never tiered", kick.tier === "SKIP" && !kick.pre_filtered && kick.prob != null && kick.rules_fired.includes("nfl-model-only"), JSON.stringify(kick.rules_fired));
 const td = v(prop("Jaxon Smith-Njigba", "Rush+Rec TDs", 0.5));
