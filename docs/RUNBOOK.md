@@ -23,6 +23,17 @@ home-bridge daemon that the deployed UI forwards to.
 | `EPL Daily` | 07:00 | `scripts/epl-daily-task.bat` → `refresh-epl-data --push` → `build-epl-model --push` → `grade-epl-outcomes` → `export-graded --league EPL` → `epl-calibration-report` (reads `data/graded/EPL/`; each step runs regardless of the previous). Logs `logs\epl-daily.log`, latest report alone in `logs\epl-calibration-latest.txt` |
 | `Refresh Bridge` | at logon (daemon) | `powershell.exe -WindowStyle Hidden -File scripts/refresh-bridge-task.ps1` → job-object-wrapped, self-restarting `scripts/refresh-bridge.mjs`. Replaced the NSSM service 2026-07-07; launcher rewritten from `.vbs` 2026-07-30 — see "Refresh-bridge daemon" |
 
+**⛔ Automated PrizePicks scraping is OFF (2026-10-30, by the owner's decision).**
+`PrizePicks Refresh Lines`, `NFL Refresh Board`, `EPL Refresh Board` and
+`Refresh Bridge` are **Disabled** (`Disable-ScheduledTask`, still registered).
+The board for every league now comes only from the manual import ("Manual
+board import": save the projections JSON from your own browser into
+`data/pp-import/`, then `npm run refresh-pp:import`). Do not re-enable these
+tasks or restart the bridge without the owner's say-so. With the bridge down,
+the deployed UI's REFRESH LINES button cannot refresh anything. Odds, grading,
+EPL/NFL daily + sweeps keep running: none of them scrapes PrizePicks, they
+read the last imported board.
+
 **EPL tasks (registered 2026-09-19):** actions are `conhost.exe --headless
 "<repo>\scripts\epl-*-task.bat"` (WorkingDirectory = repo) so the 30-minute
 sweep never flashes a console window. Consequence: `LastTaskResult` is the
@@ -186,7 +197,10 @@ the only health signal.
 **Manual board import (since 2026-10-29):** when the automated browser is
 hard-blocked ("Access temporarily restricted") but the operator's own browser
 loads PrizePicks fine on the same IP, skip the scrape entirely:
-1. In your normal browser, open
+1. Simplest (verified 2026-10-31): ONE file for every league —
+   `https://api.prizepicks.com/projections?per_page=10&single_stat=true`
+   (no `league_id`; ~56 MB, 33 leagues) saved into `data/pp-import/` as the
+   only file there; the importer splits it by league. Or per league: open
    `https://api.prizepicks.com/projections?league_id=7&per_page=10&single_stat=true`
    (NBA; WNBA = `league_id=3`) and save the page (Ctrl+S, "JSON"/raw) into
    `data/pp-import/` (gitignored). Any filename or extension (Chrome may save it as
