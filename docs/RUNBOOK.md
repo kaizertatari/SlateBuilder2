@@ -20,7 +20,7 @@ home-bridge daemon that the deployed UI forwards to.
 | `Funnel Watchdog` | every 15 min | `scripts/funnel-watchdog-task.bat` → self-heals the Tailscale funnel zombie (see below) |
 | `EPL Refresh Board` | 00:20 / 06:20 / 12:20 / 18:20 | `scripts/epl-board-task.bat` → PrizePicks EPL board (league 14) → `data/epl-pp-lines.json`; 20 min after `PrizePicks Refresh Lines` so the two browser scrapes never share the profile at once. Same PX slider exposure — refuses to write an empty board (the sweeps keep using the last good one). Runs with `--push`, so the Blob copy the deployed app reads first is updated too. Log `logs\epl-board.log` |
 | `EPL Matchday Sweep` | every 30 min, 04:30–16:00 | `scripts/epl-matchday-task.bat` → `scripts/epl-matchday.mjs`: silent no-op unless an EPL fixture kicks off within 90 min; then `scrape-epl-odds --push` + `sweep-epl-board` (Axiom). No browser. Log `logs\epl-matchday.log` (only written when it acts) |
-| `EPL Daily` | 07:00 | `scripts/epl-daily-task.bat` → `refresh-epl-data --push` → `build-epl-model --push` → `grade-epl-outcomes` → `epl-calibration-report` (each step runs regardless of the previous). Logs `logs\epl-daily.log`, latest report alone in `logs\epl-calibration-latest.txt` |
+| `EPL Daily` | 07:00 | `scripts/epl-daily-task.bat` → `refresh-epl-data --push` → `build-epl-model --push` → `grade-epl-outcomes` → `export-graded --league EPL` → `epl-calibration-report` (reads `data/graded/EPL/`; each step runs regardless of the previous). Logs `logs\epl-daily.log`, latest report alone in `logs\epl-calibration-latest.txt` |
 | `Refresh Bridge` | at logon (daemon) | `powershell.exe -WindowStyle Hidden -File scripts/refresh-bridge-task.ps1` → job-object-wrapped, self-restarting `scripts/refresh-bridge.mjs`. Replaced the NSSM service 2026-07-07; launcher rewritten from `.vbs` 2026-07-30 — see "Refresh-bridge daemon" |
 
 **EPL tasks (registered 2026-09-19):** actions are `conhost.exe --headless
@@ -618,7 +618,10 @@ The loop that earns the EPL slate its way out of shadow mode:
    void, integer-line tie → push. One outcome per join key (same keys as the
    basketball grader; `league: "EPL"`). Idempotent — already-graded lines are
    skipped. Daily is enough.
-3. **Report** — `npm run epl-calibration-report [-- --lookback 120]`: pick hit
+3. **Report** — `npm run epl-calibration-report [-- --lookback <days>]` (reads the durable
+   graded store `data/graded/EPL/`, all history by default — run
+   `node scripts/export-graded.mjs --league EPL` first; it read Axiom until
+   2026-11-03, whose 30-day retention dropped older matchweeks): pick hit
    rates (tier / odds type / stat / lineup state / model-only vs blend, Wilson
    intervals, vs break-even); reliability of the blended P; log loss + Brier
    of model vs market vs blend on the same lines; a ridge-regularised refit of

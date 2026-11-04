@@ -1,4 +1,5 @@
-// EPL calibration report — joins graded EPL verdicts (Axiom) and answers:
+// EPL calibration report — reads the durable graded store (data/graded/EPL/,
+// written by export-graded) and answers:
 //   1. How are the picks doing? hit rate by tier / odds type / stat / lineup
 //      state vs the break-even, with Wilson intervals.
 //   2. Are the probabilities calibrated? reliability of the blended P, and
@@ -8,20 +9,21 @@
 //      model-only lines.
 //   4. Can the slate come out of shadow mode? explicit unlock checklist.
 //
-// Uses the last verdict priced before kickoff per line (closest to the
-// confirmed lineup). Pushes and voids are excluded from hit rates.
+// Store rows are already the last verdict priced before kickoff per line
+// (closest to the confirmed lineup); rows only logged after kickoff are
+// dropped. Pushes and voids are excluded from hit rates. Until 2026-11-03 this
+// read Axiom, whose 30-day retention silently dropped older matchweeks from
+// the unlock count.
 //
-// Usage: npm run epl-calibration-report  [-- --lookback 120]
+// Usage: npm run epl-calibration-report  [-- --lookback <days>]  (default: all)
 
-import { loadEnvLocal } from "./_env.mjs";
-import { queryAxiomWindowed } from "./_axiom.mjs";
 import { EPL_POLICY } from "../api/_lib/epl/verdict.js";
-import { latestBeforeKickoff, joinKey, fitLogit, logit, sigmoid, scoreProbs, reliability, wilson } from "../api/_lib/epl/grading.js";
+import { fitLogit, logit, sigmoid, scoreProbs, reliability, wilson } from "../api/_lib/epl/grading.js";
+import { readGraded } from "./_graded.mjs";
 
-loadEnvLocal();
 const args = process.argv.slice(2);
 const lbIdx = args.indexOf("--lookback");
-const LOOKBACK_DAYS = lbIdx >= 0 ? Number(args[lbIdx + 1]) : 120;
+const LOOKBACK_DAYS = lbIdx >= 0 ? Number(args[lbIdx + 1]) : null;
 export const UNLOCK = { minStandardPicks: 150, maxCalibrationGap: 0.03 };
 
 const pct = (x) => (x == null ? "  —  " : `${(x * 100).toFixed(1)}%`);
@@ -44,26 +46,19 @@ function hitTable(title, rows, keyFn) {
 }
 
 async function main() {
-  const token = process.env.AXIOM_TOKEN;
-  const dataset = process.env.AXIOM_DATASET || "props_verdict";
-  if (!token) throw new Error("AXIOM_TOKEN not set");
-  const D = `['${dataset}']`;
-  const start = new Date(Date.now() - LOOKBACK_DAYS * 86400000).toISOString();
-  const verdicts = await queryAxiomWindowed(token, `${D} | where event_type == "verdict" and league == "EPL" and pre_filtered == false`, { start });
-  const outcomes = await queryAxiomWindowed(token, `${D} | where event_type == "outcome" and league == "EPL"`, { start });
-  const outByKey = new Map(outcomes.map((o) => [joinKey(o), o]));
-  const latest = latestBeforeKickoff(verdicts);
-  const joined = latest.map((v) => ({ ...v, outcome: outByKey.get(joinKey(v)) })).filter((r) => r.outcome);
+  const since = LOOKBACK_DAYS != null ? Date.now() - LOOKBACK_DAYS * 86400000 : -Infinity;
+  const stored = readGraded({ league: "EPL" });
+  const joined = stored.filter((r) => !r.pre_filtered && !r.logged_after_kickoff && r.outcome && Date.parse(r.game_start_time) >= since);
   const settled = joined
     .filter((r) => r.outcome.hit_or_miss === "hit" || r.outcome.hit_or_miss === "miss")
     .map((r) => ({ ...r, y: r.outcome.hit_or_miss === "hit" ? 1 : 0 }));
   const counts = {};
   for (const r of joined) counts[r.outcome.hit_or_miss] = (counts[r.outcome.hit_or_miss] || 0) + 1;
 
-  console.log(`EPL calibration report — lookback ${LOOKBACK_DAYS}d, policy v${EPL_POLICY.version}`);
-  console.log(`  ${verdicts.length} verdict events → ${latest.length} lines (last before kickoff) → ${joined.length} graded ${JSON.stringify(counts)}`);
+  console.log(`EPL calibration report — graded store, ${LOOKBACK_DAYS != null ? `last ${LOOKBACK_DAYS}d` : "all history"}, policy v${EPL_POLICY.version}`);
+  console.log(`  ${stored.length} stored lines → ${joined.length} graded before kickoff ${JSON.stringify(counts)}`);
   if (!settled.length) {
-    console.log("\n  No settled EPL lines yet — run `npm run grade-epl-outcomes` after matches finish.");
+    console.log("\n  No settled EPL lines yet — run `npm run grade-epl-outcomes` then `node scripts/export-graded.mjs --league EPL` after matches finish.");
     return;
   }
 
