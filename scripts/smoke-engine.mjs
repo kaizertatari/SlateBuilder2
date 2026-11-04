@@ -988,5 +988,20 @@ console.log("\n[z5] postseason variance window");
   assert("[z5] nothing available → null", playoffExtendedGames(null, null) === null);
 }
 
+// ESPN gamelog bucket: the play-in bucket ("… Play In Regular Season") sits
+// above the real regular season and must not be taken for it.
+{
+  const { findBucket } = await import("../api/_lib/espn-stats.js");
+  const types = [
+    { displayName: "2025-26 Postseason" },
+    { displayName: "2025-26 Play In Regular Season" },
+    { displayName: "2025-26 Regular Season" },
+    { displayName: "2025-26 Preseason" },
+  ];
+  assert("[espn] regular bucket skips the play-in bucket", findBucket(types, false)?.displayName === "2025-26 Regular Season");
+  assert("[espn] postseason bucket unchanged", findBucket(types, true)?.displayName === "2025-26 Postseason");
+  assert("[espn] play-in only → no regular bucket", findBucket([{ displayName: "2025-26 Play-In Regular Season" }], false) === null);
+}
+
 console.log(`\n=== smoke-engine: ${passed} pass, ${failed} fail ===`);
 process.exit(failed > 0 ? 1 : 0);

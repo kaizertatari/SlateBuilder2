@@ -145,10 +145,14 @@ async function fetchGamelog(athleteId, endYear, league = "NBA") {
   }
 }
 
-function findBucket(seasonTypes, postseason) {
+// ESPN lists the NBA play-in as its own bucket, "2025-26 Play In Regular
+// Season", ABOVE the real "2025-26 Regular Season" — matching /regular/ alone
+// returned the 1–2 play-in games as a play-in team's whole season (opening
+// night 2026-10-20: Avdija's L5 + season average = one 41-point game).
+export function findBucket(seasonTypes, postseason) {
   if (!Array.isArray(seasonTypes)) return null;
   const re = postseason ? /post/i : /regular/i;
-  return seasonTypes.find((s) => re.test(s.displayName)) ?? null;
+  return seasonTypes.find((s) => re.test(s.displayName) && !/play[\s-]?in/i.test(s.displayName)) ?? null;
 }
 
 function flatEvents(bucket) {
