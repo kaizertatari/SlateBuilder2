@@ -68,6 +68,11 @@ export function logVerdict({
   // The market rule only runs inside the engine, so pre-filtered lines carry
   // no market — look it up the same way (rule-market-edge) for the pipeline.
   const pipeMarket = result?.market ?? shadowMarket(groundTruth, stat, input?.line);
+  // Early-season shrink (NBA only; all null elsewhere). Policy v2
+  // (2026-11-03): the pipeline prices the SHRUNK model when there is one —
+  // one-game means had driven the 90–100% bucket to a 29% hit rate.
+  const shrink = shrinkFields(groundTruth, dist.dist_mean, input?.line, direction, oddsType, pipeMarket?.no_vig_prob);
+  const pipeModelOver = shrink.shrink_p_over ?? dist.dist_p_over;
 
   const event = {
     _time: new Date().toISOString(),
@@ -231,20 +236,22 @@ export function logVerdict({
     ...dist,
     dist_mean_src: dist.dist_p_over != null ? pipeMean.src : null,
     // SHADOW basketball probability pipeline step 2 (basketball/policy.js):
-    // calibrated model P blended 50/50 in log-odds with the de-vigged market
+    // calibrated model P (shrunk on NBA, pipe_model_src) blended 20/80 in
+    // log-odds (policy v2; v1 = 50/50) with the de-vigged market
     // at the line, tiered on the shared pick-policy contract. pipe_tier is
     // what the pipeline WOULD issue — graded against break-even in shadow.
     pipe_market_src: result?.market ? "engine" : (pipeMarket ? "lookup" : null),
-    ...pipeFields(dist.dist_p_over, pipeMarket?.no_vig_prob, direction, oddsType),
+    pipe_model_src: shrink.shrink_p_over != null ? "shrink" : (dist.dist_p_over != null ? "dist" : null),
+    ...pipeFields(pipeModelOver, pipeMarket?.no_vig_prob, direction, oddsType),
     // Same pipeline with the book prices moved to the PrizePicks line by the
     // fitted NB instead of the fixed-σ normal (goblins/demons sit 2–7 points
     // from the book line). Both logged until graded NBA lines pick one.
-    ...nbPipeFields(groundTruth?.opp_factor?.dist, pipeMarket?.sources, input?.line, dist.dist_p_over, direction, oddsType),
+    ...nbPipeFields(groundTruth?.opp_factor?.dist, pipeMarket?.sources, input?.line, pipeModelOver, direction, oddsType),
     // SHADOW early-season shrink (dist.js shrinkMean, 2026-10-28): the
     // calibrated mean above shrunk toward the opponent model's prior-carrying
     // mean by the player's games this season, then the same pipeline. Logged
     // to be graded against pipe_* before anything uses it.
-    ...shrinkFields(groundTruth, dist.dist_mean, input?.line, direction, oddsType, pipeMarket?.no_vig_prob),
+    ...shrink,
     // SHADOW known-lineup minutes (dist.js lineupMinutes, 2026-10-28): the
     // shrunk mean above with minutes from the rotation minus teammates the
     // injury report lists Out/Doubtful, rescaled to 240. lineup_damped_*: the
