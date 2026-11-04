@@ -9,7 +9,7 @@
 
 import { loadEnvLocal } from "./_env.mjs";
 import { queryAxiomWindowed } from "./_axiom.mjs";
-import { joinGraded, mergeIntoStore } from "./_graded.mjs";
+import { joinGraded, mergeIntoStore, compactStore } from "./_graded.mjs";
 loadEnvLocal();
 
 const args = process.argv.slice(2);
@@ -33,7 +33,10 @@ async function main() {
     const rows = joinGraded(verdicts, outcomes);
     console.log(`export-graded ${league}${DRY ? " (DRY RUN)" : ""}: ${verdicts.length} verdicts, ${outcomes.length} outcomes → ${rows.length} joined rows`);
     const { files, skipped } = mergeIntoStore(rows, { dry: DRY });
-    for (const f of files) console.log(`  ${f.file.padEnd(22)} +${f.added} new, ${f.replaced} regraded, ${f.total} total`);
+    for (const f of files) console.log(`  ${f.file.padEnd(22)} +${f.added} new, ${f.replaced} regraded${f.compacted ? `, ${f.compacted} duplicates collapsed` : ""}, ${f.total} total`);
+    // Files this run didn't touch can still hold duplicates stored before the
+    // store key normalised start times (2026-11-03).
+    for (const c of compactStore({ league, dry: DRY })) console.log(`  ${c.file.padEnd(22)} ${c.before} → ${c.after} rows (duplicates collapsed)`);
     if (skipped) console.log(`  ${skipped} rows skipped (unparseable game_start_time)`);
     const orphans = outcomes.length - rows.length;
     if (orphans > 0) console.log(`  ${orphans} outcome events without a surviving verdict (duplicates or verdict aged out)`);
