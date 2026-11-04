@@ -5,7 +5,9 @@
 // scrapePrizePicksForToday as its fetchJson. Parsing, salvage, refuse-write and
 // the validator are unchanged.
 //
-// URLs to open + save (any filename; the league is read from the contents):
+// One URL for every league (the file is split by league on import):
+//   ALL   https://api.prizepicks.com/projections?per_page=10&single_stat=true
+// Or per league (any filename; the league is read from the contents):
 //   NBA   https://api.prizepicks.com/projections?league_id=7&per_page=10&single_stat=true
 //   WNBA  https://api.prizepicks.com/projections?league_id=3&per_page=10&single_stat=true
 //   NFL   https://api.prizepicks.com/projections?league_id=9&per_page=10&single_stat=true
@@ -63,14 +65,29 @@ export function loadImportedBoards(inputs) {
       console.warn(`  ! ${file}: no data[] array — not a projections response, skipped`);
       continue;
     }
+    const ageMs = Date.now() - fs.statSync(file).mtimeMs;
+    const age = `${Math.round(ageMs / 60000)} min old`;
+    if (ageMs > STALE_WARN_MS) console.warn(`  ! ${file}: ${age} — lines may have moved; re-save for a fresh board`);
+    // An all-leagues response (URL without league_id) mixes leagues in data[]:
+    // split it into one board per league, each keeping the shared included[].
+    const byLeague = new Map();
+    for (const d of json.data) {
+      const lid = d?.relationships?.league?.data?.id;
+      if (lid == null) continue;
+      if (!byLeague.has(String(lid))) byLeague.set(String(lid), []);
+      byLeague.get(String(lid)).push(d);
+    }
+    if (byLeague.size > 1) {
+      for (const [id, data] of byLeague) boards.set(id, { ...json, data });
+      const counts = [...byLeague].map(([id, data]) => `${id}:${data.length}`).join(" ");
+      console.log(`  imported ${byLeague.size} leagues from ${path.basename(file)} (league_id:items ${counts}, ${age})`);
+      continue;
+    }
     const id = leagueIdOf(json, file);
     if (!id) {
       console.warn(`  ! ${file}: could not tell the league — rename it e.g. pp-nba.json / pp-wnba.json`);
       continue;
     }
-    const ageMs = Date.now() - fs.statSync(file).mtimeMs;
-    const age = `${Math.round(ageMs / 60000)} min old`;
-    if (ageMs > STALE_WARN_MS) console.warn(`  ! ${file}: ${age} — lines may have moved; re-save for a fresh board`);
     console.log(`  imported league_id=${id} from ${path.basename(file)} (${json.data.length} items, ${age})`);
     boards.set(id, json);
   }
