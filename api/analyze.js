@@ -166,6 +166,10 @@ export async function gatherGroundTruth({ player, propType, line, teamAbbrHint =
   };
 
   let game = findGameForTeamAbbr(games, info.team_abbr, { league });
+  // ESPN's undated scoreboard keeps showing last night's slate until late
+  // morning ET — a finished game there is not "today's" game for a team on a
+  // back-to-back, so look ahead instead.
+  if (game?.state === "post") game = null;
   let daysOut = 0;
   if (!game) {
     const next = await findNextGameForTeamAbbr(info.team_abbr, 7, { league });
