@@ -400,19 +400,19 @@ await test("EPL board readable + analyze-all prices a player", async () => {
   const tc = eplBody.tier_counts || {};
   const sum = (tc.S || 0) + (tc.A || 0) + (tc.B || 0) + (tc.SKIP || 0) + (tc.UNKNOWN || 0);
   if (sum !== eplBody.total_analyzed) throw new Error(`tier_counts sum ${sum} ≠ total_analyzed ${eplBody.total_analyzed}`);
-  if (eplBody.league !== "EPL" || !eplBody.calibration_pending) throw new Error("EPL response not marked league/calibration_pending");
+  if (eplBody.league !== "EPL" || eplBody.calibration_pending) throw new Error("EPL response not marked league, or still calibration_pending");
   return { note: `${eplSample}: analyzed=${eplBody.total_analyzed} A=${tc.A} B=${tc.B} SKIP=${tc.SKIP} lineups=${(eplBody.lineup_states || []).join("/") || "none"}` };
 });
 await test("EPL picks: no S-tier, OVER-only on goblin/demon, probability + break-even present", () => {
   if (!eplBody) return { skip: "no EPL body" };
   for (const r of eplBody.top_10 || []) {
-    if (r.tier === "S") throw new Error(`${r.player} ${r.prop_type}: S-tier while EPL is uncalibrated`);
+    if (r.tier === "S") throw new Error(`${r.player} ${r.prop_type}: S-tier (EPL_POLICY caps at A)`);
     if (r.odds_type !== "standard" && r.direction !== "OVER") throw new Error(`${r.player} ${r.prop_type}: ${r.odds_type} UNDER`);
     if (!(r.prob > 0 && r.prob < 1) || !(r.break_even > 0)) throw new Error(`${r.player} ${r.prop_type}: prob/break-even missing`);
   }
   return { note: `${eplBody.top_10?.length || 0} picks checked` };
 });
-await test("EPL build-slate: paused (shadow mode), preview without EV", async () => {
+await test("EPL build-slate: live — publishes a slate or a plain abstain, never a preview", async () => {
   if (!eplSample) return { skip: "no EPL board" };
   const { POST } = await import("../api/build-slate.js");
   const res = await POST(new Request("http://localhost/api/build-slate", {
@@ -422,9 +422,9 @@ await test("EPL build-slate: paused (shadow mode), preview without EV", async ()
   }));
   const b = await res.json();
   if (b.error) throw new Error(b.error);
-  if (!b.abstained || !b.calibration_pending || b.slate) throw new Error("EPL slate must stay paused while calibration is pending");
-  if (b.best_rejected) throw new Error("no EV numbers while uncalibrated");
-  return { note: `priced ${b.props_priced}/${b.props_examined}; preview ${b.preview ? `${b.preview.legs.length} legs` : b.preview_reason}` };
+  if (b.league !== "EPL" || b.calibration_pending || b.preview !== undefined) throw new Error("EPL slate must be live (no calibration_pending / preview)");
+  if (b.abstained ? !b.reason : !(b.slate?.legs?.length > 0)) throw new Error("EPL: slate without legs, or abstain without a reason");
+  return { note: `priced ${b.props_priced}/${b.props_examined}; ${b.slate ? `slate ${b.slate.legs.length} legs, EV ${b.slate.ev ?? "?"}` : `abstain: ${b.reason}`}` };
 });
 
 header("8e. NBA shadow mode (SLATE_PENDING_LEAGUES.NBA)");
@@ -456,7 +456,7 @@ await test("NBA analyze-all: response marked calibration_pending", async () => {
   return { note: `${nba[0]}: analyzed=${b.total_analyzed}` };
 });
 
-header("8f. NFL (own board, NFL verdict engine; shadow mode)");
+header("8f. NFL (own board, NFL verdict engine; live)");
 // These run on synthetic lines — never log them to Axiom, or the NFL grader
 // would settle lines that were never on the board.
 const savedAxiomToken = process.env.AXIOM_TOKEN;
@@ -479,15 +479,15 @@ await test("NFL analyze path prices a book-quoted player off the real artifacts"
   const tc = b.tier_counts || {};
   const sum = (tc.S || 0) + (tc.A || 0) + (tc.B || 0) + (tc.SKIP || 0) + (tc.UNKNOWN || 0);
   if (sum !== b.total_analyzed) throw new Error(`tier_counts sum ${sum} ≠ total_analyzed ${b.total_analyzed}`);
-  if (b.league !== "NFL" || !b.calibration_pending) throw new Error("NFL response not marked league/calibration_pending");
+  if (b.league !== "NFL" || b.calibration_pending) throw new Error("NFL response not marked league, or still calibration_pending");
   for (const r of b.top_10 || []) {
-    if (r.tier === "S") throw new Error(`${r.prop_type}: S-tier while NFL is uncalibrated`);
+    if (r.tier === "S") throw new Error(`${r.prop_type}: S-tier (NFL_POLICY caps at A)`);
     if (!(r.prob > 0 && r.prob < 1) || !(r.break_even > 0)) throw new Error(`${r.prop_type}: prob/break-even missing`);
   }
   const started = (b.skipped || []).filter((s) => s.reason === "game_started").length;
   return { note: `${name}: analyzed=${b.total_analyzed} A=${tc.A} B=${tc.B} SKIP=${tc.SKIP}${started ? ` (${started} past kickoff)` : ""}` };
 });
-await test("NFL build-slate: paused (shadow mode), no EV", async () => {
+await test("NFL build-slate: live — publishes a slate or a plain abstain, never a preview", async () => {
   const { POST } = await import("../api/build-slate.js");
   const res = await POST(new Request("http://localhost/api/build-slate", {
     method: "POST",
@@ -496,9 +496,9 @@ await test("NFL build-slate: paused (shadow mode), no EV", async () => {
   }));
   const b = await res.json();
   if (b.error) throw new Error(b.error);
-  if (b.league !== "NFL" || !b.abstained || !b.calibration_pending || b.slate) throw new Error("NFL slate must stay paused while calibration is pending");
-  if (b.best_rejected) throw new Error("no EV numbers while uncalibrated");
-  return { note: `priced ${b.props_priced}/${b.props_examined}${b.props_examined ? "" : " (no NFL board captured yet)"}` };
+  if (b.league !== "NFL" || b.calibration_pending || b.preview !== undefined) throw new Error("NFL slate must be live (no calibration_pending / preview)");
+  if (b.abstained ? !b.reason : !(b.slate?.legs?.length > 0)) throw new Error("NFL: slate without legs, or abstain without a reason");
+  return { note: `priced ${b.props_priced}/${b.props_examined}; ${b.slate ? `slate ${b.slate.legs.length} legs, EV ${b.slate.ev ?? "?"}` : `abstain: ${b.reason}`}` };
 });
 await test("NFL lines endpoint serves its own snapshot", async () => {
   const { GET } = await import("../api/lines.js");

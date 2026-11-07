@@ -78,8 +78,8 @@ function formatLinesFetchedAt(iso) {
 }
 
 export default function App() {
-  // Default to WNBA: it's the only slate-calibrated league (NBA + EPL run in
-  // shadow mode — see SLATE_PENDING_LEAGUES).
+  // Default to WNBA (slate-calibrated, like EPL + NFL; NBA runs in shadow
+  // mode — see SLATE_PENDING_LEAGUES).
   const [league, setLeague] = useState("WNBA");
   // Multi-player selection. Order preserved so the chip row is stable;
   // togglePlayer is the single mutation site so duplicates can't accrete.

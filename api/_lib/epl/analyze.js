@@ -3,7 +3,7 @@
 // exactly like basketball ones — but priced by the EPL verdict engine.
 
 import { selectLinesForStat } from "../select-lines.js";
-import { mapPrizePicksStatType } from "../prop-types.js";
+import { mapPrizePicksStatType, SLATE_PENDING_LEAGUES } from "../prop-types.js";
 import { logEplVerdicts } from "../verdict-logger.js";
 import { getEplContext } from "./store.js";
 import { eplVerdict } from "./verdict.js";
@@ -81,6 +81,6 @@ export async function analyzeEplPlayer({ player, props, allowedStats = null, dir
     top_10: results.slice(0, 10),
     skipped: skipped.length ? skipped : undefined,
     lineup_states: lineupStates,
-    calibration_pending: true,
+    calibration_pending: SLATE_PENDING_LEAGUES.EPL ? true : undefined,
   };
 }

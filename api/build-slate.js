@@ -10,7 +10,7 @@
 // box-score gating can be layered later for props the market doesn't cover.
 //
 // Body: {
-//   league?: "WNBA"|"NBA", statTypes?: string[], oddsTypes?: string[],
+//   league?: "WNBA"|"NBA"|"EPL"|"NFL", statTypes?: string[], oddsTypes?: string[],
 //   games?: string[], direction?: "OVER"|"UNDER",
 //   targetMultiplier?: number (3), mode?: "power"|"flex" ("power"),
 //   size?: number (3), maxPerGame?: number (1)
@@ -150,66 +150,49 @@ async function handlePost(req, reqId) {
     const oddsTypes = Array.isArray(rawOdds) ? rawOdds.map((t) => String(t).toLowerCase()).filter((t) => ALL_ODDS_TYPES.includes(t)) : ["standard"];
     const allowedStats = Array.isArray(statTypes) && statTypes.length ? new Set(statTypes) : new Set(STATS);
 
-    // Premier League: its own board, priced by the EPL verdict engine (model +
-    // market blend). Shadow mode — calibration pending — so the slate is
-    // withheld, but the would-be slate is returned as a clearly-labelled
-    // PREVIEW and every priced leg is logged for the EPL grader.
-    if (reqLeague === "EPL") {
-      const epl = await collectEplCandidates({
+    // EPL + NFL: their own boards, priced by their own verdict engines (model +
+    // market blend). Every priced leg is logged for the league's grader. While
+    // a league is in SLATE_PENDING_LEAGUES the slate is withheld and the
+    // would-be slate comes back as a clearly-labelled PREVIEW without EV;
+    // once calibrated it is published like WNBA's.
+    const OWN_BOARD = {
+      EPL: { collect: collectEplCandidates, log: logEplVerdicts, blurb: "Probabilities blend the player model with DK/FD ladders; not yet graded." },
+      NFL: { collect: collectNflCandidates, log: logNflVerdicts, blurb: "Probabilities blend the player simulation with DK/FD prices; not yet graded." },
+    };
+    if (OWN_BOARD[reqLeague]) {
+      const own = OWN_BOARD[reqLeague];
+      const pool = await own.collect({
         allowedStats: Array.isArray(statTypes) && statTypes.length ? new Set(statTypes) : null,
         oddsTypes,
         games,
         direction,
       });
-      logEplVerdicts(epl.verdicts, { source: "build-slate" });
-      const preview = buildSlate(epl.candidates, { targetMultiplier, mode, size, maxPerGame });
-      return Response.json({
+      own.log(pool.verdicts, { source: "build-slate" });
+      const result = buildSlate(pool.candidates, { targetMultiplier, mode, size, maxPerGame });
+      const meta = {
         request_id: reqId,
-        league: "EPL",
-        lines_fetched_at: epl.lines_fetched_at,
-        odds_fetched_at: epl.odds_fetched_at,
-        odds_sources: epl.odds_sources,
+        league: reqLeague,
+        lines_fetched_at: pool.lines_fetched_at,
+        odds_fetched_at: pool.odds_fetched_at,
+        odds_sources: pool.odds_sources,
+      };
+      const counts = { props_examined: pool.considered, props_priced: pool.candidates.length };
+      if (!isPending) {
+        return Response.json({ ...meta, ...result, ...counts }, { headers: { "X-Cache": "MISS" } });
+      }
+      return Response.json({
+        ...meta,
         abstained: true,
         calibration_pending: true,
-        reason: `EPL slates are paused pending calibration (target ${SLATE_PENDING_LEAGUES.EPL}). Probabilities blend the player model with DK/FD ladders; not yet graded.`,
+        reason: `${reqLeague} slates are paused pending calibration (target ${SLATE_PENDING_LEAGUES[reqLeague]}). ${own.blurb}`,
         slate: null,
-        preview: preview.slate ? { ...preview.slate, uncalibrated: true } : null,
-        preview_reason: preview.slate ? null : preview.reason,
+        preview: result.slate ? { ...result.slate, uncalibrated: true } : null,
+        preview_reason: result.slate ? null : result.reason,
         // No EV numbers while uncalibrated — a near-miss "EV" would be as
         // fictitious as the preview's own.
         best_rejected: null,
-        considered: epl.candidates.length,
-        props_examined: epl.considered,
-        props_priced: epl.candidates.length,
-      }, { headers: { "X-Cache": "MISS" } });
-    }
-
-    // NFL: same shadow-mode shape as EPL, priced by the NFL verdict engine.
-    if (reqLeague === "NFL") {
-      const nfl = await collectNflCandidates({
-        allowedStats: Array.isArray(statTypes) && statTypes.length ? new Set(statTypes) : null,
-        oddsTypes,
-        games,
-        direction,
-      });
-      logNflVerdicts(nfl.verdicts, { source: "build-slate" });
-      const preview = buildSlate(nfl.candidates, { targetMultiplier, mode, size, maxPerGame });
-      return Response.json({
-        request_id: reqId,
-        league: "NFL",
-        lines_fetched_at: nfl.lines_fetched_at,
-        odds_fetched_at: nfl.odds_fetched_at,
-        odds_sources: nfl.odds_sources,
-        abstained: true,
-        calibration_pending: true,
-        reason: `NFL slates are paused pending calibration (target ${SLATE_PENDING_LEAGUES.NFL}). Probabilities blend the player simulation with DK/FD prices; not yet graded.`,
-        slate: null,
-        preview: preview.slate ? { ...preview.slate, uncalibrated: true } : null,
-        preview_reason: preview.slate ? null : preview.reason,
-        best_rejected: null,
-        considered: nfl.candidates.length,
-        props_examined: nfl.considered,
-        props_priced: nfl.candidates.length,
+        considered: pool.candidates.length,
+        ...counts,
       }, { headers: { "X-Cache": "MISS" } });
     }
 

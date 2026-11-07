@@ -3,6 +3,7 @@
 // it unchanged, priced by the NFL verdict engine.
 
 import { selectLinesForStat } from "../select-lines.js";
+import { SLATE_PENDING_LEAGUES } from "../prop-types.js";
 import { logNflVerdicts } from "../verdict-logger.js";
 import { getNflContext } from "./store.js";
 import { nflVerdict, mapNflStat, NFL_STAT_LABEL } from "./verdict.js";
@@ -79,6 +80,6 @@ export async function analyzeNflPlayer({ player, props, allowedStats = null, dir
     tier_counts: tierCounts,
     top_10: results.slice(0, 10),
     skipped: skipped.length ? skipped : undefined,
-    calibration_pending: true,
+    calibration_pending: SLATE_PENDING_LEAGUES.NFL ? true : undefined,
   };
 }

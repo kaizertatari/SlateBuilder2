@@ -608,12 +608,13 @@ which routes to the EPL verdict engine (`api/_lib/epl/verdict.js`, policy in
   unconfirmed lineup with P(start) < 70% caps at B; < 2 appearances caps at
   B; P(play) < 50% SKIPs; no S-tier. Tiers: blended P − break-even ≥ 5 pts →
   A, ≥ 1.5 pts → B (standard break-even 57.7%, 2-pick power).
-- **Slate builder**: `SLATE_PENDING_LEAGUES.EPL` — shadow mode. Every priced
-  leg is logged (`logEplVerdicts`, `engine_mode: "epl-v1"`, FotMob player/
-  match ids, no espn_id so the basketball grader skips them) and the slate is
-  withheld; the response carries a would-be `preview` (legs + probabilities,
-  no EV) that the UI labels uncalibrated. Unlock once the EPL grader has
-  ~150 graded picks and calibration holds.
+- **Slate builder**: LIVE since 2026-11-07 (`SLATE_CALIBRATED_LEAGUES`,
+  owner's call at 137 graded standard picks hitting 68.6% vs 57.7%
+  break-even, predicted-vs-realized 0.3 pts). Every priced leg is logged
+  (`logEplVerdicts`, `engine_mode: "epl-v1"`, FotMob player/match ids, no
+  espn_id so the basketball grader skips them) and the slate is published
+  with EV. Putting EPL back in `SLATE_PENDING_LEAGUES` restores the shadow
+  shape (slate withheld, would-be `preview` without EV).
 
 ## EPL grading + calibration (shadow mode → unlock)
 
@@ -700,8 +701,9 @@ after inactives (~90 min before kickoff).
   Questionable → cap B; Out last week with no report yet → cap B; backup QB
   passing with no book price → SKIP. Caps at B: no games this season,
   absent 2+ weeks, changed team, tilt > 1.5 sd. No S-tier.
-- **Slate builder**: `SLATE_PENDING_LEAGUES.NFL` — shadow mode, same shape as
-  EPL (preview without EV). Verdicts log as `engine_mode: "nfl-v1"` with
+- **Slate builder**: LIVE since 2026-11-07 (`SLATE_CALIBRATED_LEAGUES`,
+  owner's call at 102 graded standard picks hitting 62.7% vs 57.7%,
+  predicted-vs-realized 0.6 pts); same gate as EPL. Verdicts log as `engine_mode: "nfl-v1"` with
   `gsis_id` + `nfl_game_id` and `nfl_*` probability fields
   (`calibration-all` reads them).
 
