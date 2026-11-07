@@ -23,6 +23,17 @@ home-bridge daemon that the deployed UI forwards to.
 | `EPL Daily` | 07:00 | `scripts/epl-daily-task.bat` → `refresh-epl-data --push` → `build-epl-model --push` → `grade-epl-outcomes` → `export-graded --league EPL` → `epl-calibration-report` (reads `data/graded/EPL/`; each step runs regardless of the previous). Logs `logs\epl-daily.log`, latest report alone in `logs\epl-calibration-latest.txt` |
 | `Refresh Bridge` | at logon (daemon) | `powershell.exe -WindowStyle Hidden -File scripts/refresh-bridge-task.ps1` → job-object-wrapped, self-restarting `scripts/refresh-bridge.mjs`. Replaced the NSSM service 2026-07-07; launcher rewritten from `.vbs` 2026-07-30 — see "Refresh-bridge daemon" |
 
+**⛔ Automated PrizePicks scraping is OFF (2026-10-30, by the owner's decision).**
+`PrizePicks Refresh Lines`, `NFL Refresh Board`, `EPL Refresh Board` and
+`Refresh Bridge` are **Disabled** (`Disable-ScheduledTask`, still registered).
+The board for every league now comes only from the manual import ("Manual
+board import": save the projections JSON from your own browser into
+`data/pp-import/`, then `npm run refresh-pp:import`). Do not re-enable these
+tasks or restart the bridge without the owner's say-so. With the bridge down,
+the deployed UI's REFRESH LINES button cannot refresh anything. Odds, grading,
+EPL/NFL daily + sweeps keep running: none of them scrapes PrizePicks, they
+read the last imported board.
+
 **EPL tasks (registered 2026-09-19):** actions are `conhost.exe --headless
 "<repo>\scripts\epl-*-task.bat"` (WorkingDirectory = repo) so the 30-minute
 sweep never flashes a console window. Consequence: `LastTaskResult` is the
@@ -186,7 +197,10 @@ the only health signal.
 **Manual board import (since 2026-10-29):** when the automated browser is
 hard-blocked ("Access temporarily restricted") but the operator's own browser
 loads PrizePicks fine on the same IP, skip the scrape entirely:
-1. In your normal browser, open
+1. Simplest (verified 2026-10-31): ONE file for every league —
+   `https://api.prizepicks.com/projections?per_page=10&single_stat=true`
+   (no `league_id`; ~56 MB, 33 leagues) saved into `data/pp-import/` as the
+   only file there; the importer splits it by league. Or per league: open
    `https://api.prizepicks.com/projections?league_id=7&per_page=10&single_stat=true`
    (NBA; WNBA = `league_id=3`) and save the page (Ctrl+S, "JSON"/raw) into
    `data/pp-import/` (gitignored). Any filename or extension (Chrome may save it as
@@ -594,12 +608,13 @@ which routes to the EPL verdict engine (`api/_lib/epl/verdict.js`, policy in
   unconfirmed lineup with P(start) < 70% caps at B; < 2 appearances caps at
   B; P(play) < 50% SKIPs; no S-tier. Tiers: blended P − break-even ≥ 5 pts →
   A, ≥ 1.5 pts → B (standard break-even 57.7%, 2-pick power).
-- **Slate builder**: `SLATE_PENDING_LEAGUES.EPL` — shadow mode. Every priced
-  leg is logged (`logEplVerdicts`, `engine_mode: "epl-v1"`, FotMob player/
-  match ids, no espn_id so the basketball grader skips them) and the slate is
-  withheld; the response carries a would-be `preview` (legs + probabilities,
-  no EV) that the UI labels uncalibrated. Unlock once the EPL grader has
-  ~150 graded picks and calibration holds.
+- **Slate builder**: LIVE since 2026-11-07 (`SLATE_CALIBRATED_LEAGUES`,
+  owner's call at 137 graded standard picks hitting 68.6% vs 57.7%
+  break-even, predicted-vs-realized 0.3 pts). Every priced leg is logged
+  (`logEplVerdicts`, `engine_mode: "epl-v1"`, FotMob player/match ids, no
+  espn_id so the basketball grader skips them) and the slate is published
+  with EV. Putting EPL back in `SLATE_PENDING_LEAGUES` restores the shadow
+  shape (slate withheld, would-be `preview` without EV).
 
 ## EPL grading + calibration (shadow mode → unlock)
 
@@ -686,8 +701,9 @@ after inactives (~90 min before kickoff).
   Questionable → cap B; Out last week with no report yet → cap B; backup QB
   passing with no book price → SKIP. Caps at B: no games this season,
   absent 2+ weeks, changed team, tilt > 1.5 sd. No S-tier.
-- **Slate builder**: `SLATE_PENDING_LEAGUES.NFL` — shadow mode, same shape as
-  EPL (preview without EV). Verdicts log as `engine_mode: "nfl-v1"` with
+- **Slate builder**: LIVE since 2026-11-07 (`SLATE_CALIBRATED_LEAGUES`,
+  owner's call at 102 graded standard picks hitting 62.7% vs 57.7%,
+  predicted-vs-realized 0.6 pts); same gate as EPL. Verdicts log as `engine_mode: "nfl-v1"` with
   `gsis_id` + `nfl_game_id` and `nfl_*` probability fields
   (`calibration-all` reads them).
 

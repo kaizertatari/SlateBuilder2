@@ -3,9 +3,14 @@
 // Axiom keeps 30 days, and a graded result needs BOTH its verdict and its
 // outcome event alive to be joined. export-graded.mjs copies each joined pair
 // here so calibration can span seasons. One JSON object per line, one line per
-// join key (player|prop|line|direction|game_start_time), bucketed by the
-// game's UTC month. Rows are only ever added or replaced by a newer grade —
-// never deleted — so re-running the export is idempotent.
+// store key (league|player|prop|line|direction|game start as ISO), bucketed by
+// the game's UTC month. build-slate legs log PrizePicks' start time
+// ("…T19:00:00.000-04:00") and engine verdicts ESPN's ("…T23:00Z") for the
+// same game: the store key normalises the time so a slate leg and the engine
+// verdict it repeats share one row (the tiered engine verdict is kept —
+// preferRow). Verdict↔outcome joining still uses the exact string (rowKey).
+// Rows are only ever added, replaced by a preferred row, or collapsed into
+// their store-key twin — so re-running the export is idempotent.
 //
 // Row shape: the verdict's non-null fields (Axiom `_time` → `logged_at`) plus
 //   outcome: { hit_or_miss, actual_value, ..., graded_at }
@@ -30,6 +35,33 @@ function compact(e, drop) {
 
 /** Store key: league + the shared verdict↔outcome join key. */
 export const rowKey = (r) => `${r.league ?? ""}|${joinKey(r)}`;
+
+/** Store key: rowKey with game_start_time normalised to an ISO instant. */
+export const storeKey = (r) => {
+  const t = Date.parse(r.game_start_time);
+  const start = Number.isFinite(t) ? new Date(t).toISOString() : (r.game_start_time ?? "");
+  return [r.league ?? "", r.player ?? "", r.prop_type ?? "", Number(r.line), r.direction ?? "", start].join("|");
+};
+
+// One row per store key: a tiered verdict over an untiered slate leg, then
+// one logged before kickoff, then the newer grade.
+const rank = (r) => (r.tier ? 2 : 0) + (r.logged_after_kickoff ? 0 : 1);
+/** True when `next` should replace `prev` under the same store key. */
+export function preferRow(prev, next) {
+  const a = rank(prev), b = rank(next);
+  if (a !== b) return b > a;
+  return Date.parse(next.outcome?.graded_at) > Date.parse(prev.outcome?.graded_at);
+}
+
+function collapse(rows) {
+  const out = new Map();
+  for (const r of rows) {
+    const k = storeKey(r);
+    const prev = out.get(k);
+    if (!prev || preferRow(prev, r)) out.set(k, r);
+  }
+  return out;
+}
 
 /** game_start_time → "YYYY-MM" (UTC), or null when unparseable. */
 export function monthOf(gameStart) {
@@ -68,7 +100,7 @@ export function joinGraded(verdicts, outcomes) {
     row.outcome = outcome;
     rows.push(row);
   }
-  return rows;
+  return [...collapse(rows).values()];
 }
 
 const fileFor = (dir, league, month) => path.join(dir, String(league || "UNKNOWN"), `${month}.jsonl`);
@@ -79,11 +111,18 @@ function readJsonl(file) {
 }
 
 const sortRows = (rows) =>
-  rows.sort((a, b) => String(a.game_start_time).localeCompare(String(b.game_start_time)) || rowKey(a).localeCompare(rowKey(b)));
+  rows.sort((a, b) => String(a.game_start_time).localeCompare(String(b.game_start_time)) || storeKey(a).localeCompare(storeKey(b)));
+
+function writeStore(file, stored) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, sortRows([...stored.values()]).map((r) => JSON.stringify(r)).join("\n") + "\n");
+}
 
 /**
- * Merge rows into the store. A stored row is replaced only by a strictly newer
- * grade (outcome.graded_at). Returns per-file counts; writes nothing when dry.
+ * Merge rows into the store. A stored row is replaced only by a preferred row
+ * (preferRow: tiered over untiered, pre- over post-kickoff, then a strictly
+ * newer outcome.graded_at). Duplicate store keys already in a touched file are
+ * collapsed (`compacted`). Returns per-file counts; writes nothing when dry.
  */
 export function mergeIntoStore(rows, { dir = GRADED_DIR, dry = false } = {}) {
   const byFile = new Map();
@@ -97,21 +136,43 @@ export function mergeIntoStore(rows, { dir = GRADED_DIR, dry = false } = {}) {
   }
   const report = [];
   for (const [file, incoming] of byFile) {
-    const stored = new Map(readJsonl(file).map((r) => [rowKey(r), r]));
+    const existing = readJsonl(file);
+    const stored = collapse(existing);
+    const compacted = existing.length - stored.size;
     let added = 0, replaced = 0;
     for (const r of incoming) {
-      const k = rowKey(r);
+      const k = storeKey(r);
       const prev = stored.get(k);
       if (!prev) { stored.set(k, r); added++; }
-      else if (Date.parse(r.outcome?.graded_at) > Date.parse(prev.outcome?.graded_at)) { stored.set(k, r); replaced++; }
+      else if (preferRow(prev, r)) { stored.set(k, r); replaced++; }
     }
-    if (!dry && (added || replaced)) {
-      fs.mkdirSync(path.dirname(file), { recursive: true });
-      fs.writeFileSync(file, sortRows([...stored.values()]).map((r) => JSON.stringify(r)).join("\n") + "\n");
-    }
-    report.push({ file: path.relative(dir, file), added, replaced, total: stored.size });
+    if (!dry && (added || replaced || compacted)) writeStore(file, stored);
+    report.push({ file: path.relative(dir, file), added, replaced, compacted, total: stored.size });
   }
   return { files: report.sort((a, b) => a.file.localeCompare(b.file)), skipped };
+}
+
+/**
+ * Collapse duplicate store keys in every stored file (optionally one league).
+ * Idempotent; returns the files it shrank. Writes nothing when dry.
+ */
+export function compactStore({ dir = GRADED_DIR, league, dry = false } = {}) {
+  if (!fs.existsSync(dir)) return [];
+  const leagues = league ? [league] : fs.readdirSync(dir).filter((d) => fs.statSync(path.join(dir, d)).isDirectory());
+  const out = [];
+  for (const lg of leagues) {
+    const ldir = path.join(dir, lg);
+    if (!fs.existsSync(ldir)) continue;
+    for (const f of fs.readdirSync(ldir).filter((x) => x.endsWith(".jsonl")).sort()) {
+      const file = path.join(ldir, f);
+      const existing = readJsonl(file);
+      const stored = collapse(existing);
+      if (stored.size === existing.length) continue;
+      if (!dry) writeStore(file, stored);
+      out.push({ file: path.relative(dir, file), before: existing.length, after: stored.size });
+    }
+  }
+  return out;
 }
 
 /** Read stored rows, optionally for one league and/or from a game month on. */

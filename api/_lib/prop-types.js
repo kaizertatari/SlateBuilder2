@@ -85,17 +85,17 @@ export const STATS_BY_LEAGUE = {
 // validated — otherwise the market-fair probs are trusted blind and read as
 // wildly +EV (see slate-builder-pivot). PENDING maps league → the target
 // checkpoint surfaced to users while its outcomes are still ungraded.
-export const SLATE_CALIBRATED_LEAGUES = ["WNBA"];
+// EPL + NFL went live 2026-11-07 by the owner's call (EPL 137 / NFL 102
+// graded standard picks, both above break-even and within 1 pt of predicted).
+export const SLATE_CALIBRATED_LEAGUES = ["WNBA", "EPL", "NFL"];
 // Shadow mode: verdicts + would-be slates are computed and logged, but no
-// slate EV is published until the target below is met. EPL: until ~150 EPL
-// picks are graded. NBA (2026-10-13): the basketball rules engine graded
-// badly on WNBA 09-13→10-13 (tiers inverted, model probs worse than a coin
-// flip), so NBA stays in shadow until basketball is ported to the
-// probability + market-blend pipeline and re-validated.
+// slate EV is published until the target below is met. NBA (2026-10-13): the
+// basketball rules engine graded badly on WNBA 09-13→10-13 (tiers inverted,
+// model probs worse than a coin flip), so NBA stays in shadow until
+// basketball is ported to the probability + market-blend pipeline and
+// re-validated.
 export const SLATE_PENDING_LEAGUES = {
-  EPL: "~150 graded EPL picks",
   NBA: "basketball port to the probability pipeline + ~150 graded NBA picks",
-  NFL: "~150 graded NFL picks",
 };
 
 // Stat name → key inside an averages object (groundTruth.season.averages,
